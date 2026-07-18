@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 import type { Property } from "@/data/properties";
+import { getARModelUrl, getARModel } from "@/data/ar-models";
 
 interface PropertyCardProps {
   property: Property;
@@ -80,6 +82,40 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
             className={`transition-colors ${isFav ? "fill-red-500 text-red-500" : "text-white"}`}
           />
         </button>
+
+        {getARModel(property.slug) && (
+          <div
+            role="link"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(getARModelUrl(property.slug), "_blank", "noopener,noreferrer");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(getARModelUrl(property.slug), "_blank", "noopener,noreferrer");
+              }
+            }}
+            className="absolute bottom-4 right-4 z-10 flex cursor-pointer items-center gap-2 rounded-full bg-black/40 px-2.5 py-1.5 backdrop-blur-sm transition-all hover:bg-black/60"
+            aria-label="Ver en realidad aumentada"
+          >
+            <div className="rounded-sm bg-white p-1">
+              <QRCodeSVG
+                value={getARModelUrl(property.slug)}
+                size={24}
+                bgColor="#ffffff"
+                fgColor="#1A1A1A"
+                level="L"
+              />
+            </div>
+            <span className="pr-1 text-[9px] font-bold uppercase tracking-wider text-white/90">
+              AR
+            </span>
+          </div>
+        )}
 
         {property.tags.length > 0 && (
           <div className="absolute left-4 top-4 z-10 flex flex-wrap gap-2">

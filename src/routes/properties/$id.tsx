@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Download } from "lucide-react";
 import propertyAzure from "@/assets/property-azure.jpg";
 import propertySierra from "@/assets/property-sierra.jpg";
 import propertyHorizon from "@/assets/property-horizon.jpg";
@@ -107,6 +108,30 @@ function getPropertyData(id: string) {
       ],
       floorPlan: "6 suites · spa · terraza 120m² · garaje 4 plazas",
       year: 2024,
+    },
+    "casa-campestre": {
+      name: "Casa Campestre AUTEM",
+      location: "Barú, CO",
+      price: "Desde $680K USD",
+      m2: "388 m²",
+      bedrooms: 3,
+      bathrooms: 3,
+      description:
+        "Casa estilo farmhouse de un piso con alberca privada y jardín tropical en Barú.",
+      longDescription:
+        "Casa Campestre AUTEM es una residencia de estilo campestre americano ubicada en Barú. Con 388 m² de construcción en una sola planta, ofrece un diseño cálido y funcional con techos altos de vigas de madera, amplios espacios abiertos y una integración total con el jardín tropical circundante. La alberca rectangular privada y las zonas de estar exterior la hacen ideal para familias que buscan comodidad y contacto con la naturaleza.",
+      image: propertyHorizon,
+      features: [
+        "Alberca rectangular privada",
+        "Jardín tropical amplio",
+        "Techos altos con vigas de madera",
+        "Integración interior-exterior",
+        "Cocina gourmet abierta",
+        "Terraza cubierta con asador",
+      ],
+      floorPlan: "3 habitaciones · 1 planta · alberca · jardín",
+      year: 2025,
+      floorPlanPdf: `${import.meta.env.BASE_URL}models/export.pdf`,
     },
   };
   return properties[id as keyof typeof properties] || null;
@@ -290,6 +315,43 @@ function PropertyDetail() {
                 <p className="mt-4 text-sm text-muted-foreground">{property.floorPlan}</p>
               </div>
 
+              {/* Floor Plan PDF */}
+              {"floorPlanPdf" in property && property.floorPlanPdf && (
+                <div className="mb-12">
+                  <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                    Planos y fachadas
+                  </span>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Planta amueblada, planta técnica con medidas y las 4 fachadas del proyecto.
+                  </p>
+                  <div className="mt-6 overflow-hidden rounded-xl border border-border">
+                    <iframe
+                      src={property.floorPlanPdf}
+                      title={`Planos de ${property.name}`}
+                      className="h-[600px] w-full"
+                    />
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <a
+                      href={property.floorPlanPdf}
+                      download
+                      className="inline-flex items-center gap-2 border border-border px-5 py-2.5 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+                    >
+                      <Download size={14} />
+                      Descargar PDF
+                    </a>
+                    <a
+                      href="https://wa.me/573007200894?text=Hola%20AUTEM%2C%20me%20interesan%20los%20planos%20t%C3%A9cnicos%20(CAD%2FBIM)%20de%20esta%20propiedad."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 border border-border px-5 py-2.5 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+                    >
+                      Solicitar planos técnicos (CAD/BIM)
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {/* Location */}
               <div className="mb-12">
                 <span className="text-xs font-bold uppercase tracking-widest text-accent">
@@ -353,6 +415,16 @@ function PropertyDetail() {
                     >
                       Solicitar información
                     </a>
+                    {"floorPlanPdf" in property && property.floorPlanPdf && (
+                      <a
+                        href={property.floorPlanPdf}
+                        download
+                        className="flex w-full items-center justify-center gap-2 border border-border px-6 py-4 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+                      >
+                        <Download size={14} />
+                        Ficha técnica (PDF)
+                      </a>
+                    )}
                   </div>
                 </div>
 

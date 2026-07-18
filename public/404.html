@@ -8,7 +8,7 @@
       // Encodes the current path into a query string and redirects to the
       // base directory so index.html can decode it back for client-side routing.
       // pathSegmentsToKeep = 1 because GitHub Pages always serves from /{repo-name}/
-      var pathSegmentsToKeep = 0;
+      var pathSegmentsToKeep = 1;
       var l = window.location;
       l.replace(
         l.protocol + "//" + l.hostname + (l.port ? ":" + l.port : "") +

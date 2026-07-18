@@ -23,6 +23,10 @@ const AR_MODELS: Record<string, ARModel> = {
     glb: `${import.meta.env.BASE_URL}models/the-summit-penthouse.glb`,
     usdz: `${import.meta.env.BASE_URL}models/the-summit-penthouse.usdz`,
   },
+  "casa-campestre": {
+    glb: `${import.meta.env.BASE_URL}models/export.glb`,
+    usdz: `${import.meta.env.BASE_URL}models/casa-campestre.usdz`,
+  },
 };
 
 export function getARModel(propertySlug: string): ARModel | null {

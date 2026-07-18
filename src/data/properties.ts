@@ -27,6 +27,7 @@ export interface Property {
   features: string[];
   floorPlan: string;
   year: number;
+  floorPlanPdf?: string;
 }
 
 export const ZONAS = [
@@ -331,6 +332,38 @@ export const properties: Property[] = [
     ],
     floorPlan: "5 suites · rooftop 150m² · ascensor privado",
     year: 2024,
+  },
+  {
+    id: "casa-campestre",
+    slug: "casa-campestre",
+    name: "Casa Campestre AUTEM",
+    location: "Barú, CO",
+    zona: "Barú",
+    price: "Desde $680K USD",
+    priceNumeric: 680000,
+    m2: 388,
+    bedrooms: 3,
+    bathrooms: 3,
+    type: "villa",
+    tags: ["AR Ready", "Nuevo lanzamiento"],
+    image: propertyHorizon,
+    lat: 10.2985,
+    lng: -75.5725,
+    description:
+      "Casa estilo farmhouse de un piso con alberca privada y jardín tropical en Barú.",
+    longDescription:
+      "Casa Campestre AUTEM es una residencia de estilo campestre americano ubicada en Barú. Con 388 m² de construcción en una sola planta, ofrece un diseño cálido y funcional con techos altos de vigas de madera, amplios espacios abiertos y una integración total con el jardín tropical circundante. La alberca rectangular privada y las zonas de estar exterior la hacen ideal para familias que buscan comodidad y contacto con la naturaleza.",
+    features: [
+      "Alberca rectangular privada",
+      "Jardín tropical amplio",
+      "Techos altos con vigas de madera",
+      "Integración interior-exterior",
+      "Cocina gourmet abierta",
+      "Terraza cubierta con asador",
+    ],
+    floorPlan: "3 habitaciones · 1 planta · alberca · jardín",
+    year: 2025,
+    floorPlanPdf: `${import.meta.env.BASE_URL}models/export.pdf`,
   },
 ];
 
