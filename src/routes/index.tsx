@@ -1,0 +1,967 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
+import heroVilla from "@/assets/hero-villa.jpg";
+import propertyAzure from "@/assets/property-azure.jpg";
+import propertySierra from "@/assets/property-sierra.jpg";
+import propertyHorizon from "@/assets/property-horizon.jpg";
+import arExperience from "@/assets/ar-experience.jpg";
+
+export const Route = createFileRoute("/")({
+  component: Index,
+  head: () => ({
+    links: [{ rel: "canonical", href: "/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "RealEstateAgent",
+          name: "AUTEM Real Estate",
+          description:
+            "Bienes raíces premium con visualización 3D, tours virtuales y realidad aumentada.",
+          areaServed: "España",
+        }),
+      },
+    ],
+  }),
+});
+
+const properties = [
+  {
+    slug: "residencia-azure",
+    name: "Residencia Azure",
+    location: "Marbella, ES",
+    price: "Desde €1.2M",
+    m2: "320 m²",
+    tag: "3D Tour disponible",
+    tagStyle: "bg-white/90 text-foreground backdrop-blur-sm",
+    image: propertyAzure,
+    offset: "",
+  },
+  {
+    slug: "eco-villa-sierra",
+    name: "Eco-Villa Sierra",
+    location: "Benahavís, ES",
+    price: "Desde €850k",
+    m2: "410 m²",
+    tag: "Nuevo lanzamiento",
+    tagStyle: "bg-accent text-primary-foreground",
+    image: propertySierra,
+    offset: "md:translate-y-12",
+  },
+  {
+    slug: "the-horizon-suite",
+    name: "The Horizon Suite",
+    location: "Sotogrande, ES",
+    price: "Desde €2.1M",
+    m2: "540 m²",
+    tag: "AR Ready",
+    tagStyle: "bg-white/90 text-foreground backdrop-blur-sm",
+    image: propertyHorizon,
+    offset: "",
+  },
+];
+
+const stats = [
+  { value: "120+", label: "Proyectos entregados" },
+  { value: "85k", label: "m² construidos" },
+  { value: "98%", label: "Clientes satisfechos" },
+  { value: "15", label: "Años de experiencia" },
+];
+
+const testimonials = [
+  {
+    quote:
+      "El tour virtual y la experiencia AR fueron decisivos. Compramos sin haber pisado la propiedad — y superó cada expectativa.",
+    author: "María Elena Vargas",
+    role: "Inversionista, CDMX",
+  },
+  {
+    quote:
+      "Un nivel de asesoría privado y sofisticado. AUTEM entiende la arquitectura como pocos.",
+    author: "James Whitmore",
+    role: "Coleccionista de arte, Londres",
+  },
+];
+
+const navItems = [
+  { href: "#proyectos", label: "Proyectos" },
+  { href: "#tecnologia", label: "Experiencia 3D" },
+  { href: "#nosotros", label: "Nosotros" },
+  { href: "#contacto", label: "Contacto" },
+];
+
+function Index() {
+  const [contactStatus, setContactStatus] = useState<"idle" | "sent">("idle");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
+  const [showExitPopup, setShowExitPopup] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [cursorVariant, setCursorVariant] = useState<"default" | "hover">("default");
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
+
+  const whatsappUrl =
+    "https://wa.me/34600000000?text=" +
+    encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
+
+  // Page loader
+  useEffect(() => {
+    const timer = setTimeout(() => setShowLoader(false), 2400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Custom cursor
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate(${e.clientX - 12}px, ${e.clientY - 12}px)`;
+      }
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate(${e.clientX - 2}px, ${e.clientY - 2}px)`;
+      }
+    };
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("a, button, input, textarea, [data-cursor-hover]")) {
+        setCursorVariant("hover");
+      } else {
+        setCursorVariant("default");
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseover", handleMouseOver);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseover", handleMouseOver);
+    };
+  }, []);
+
+  // Parallax hero
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY;
+      if (heroRef.current) {
+        const bg = heroRef.current.querySelector(".parallax-slow") as HTMLElement;
+        const fg = heroRef.current.querySelector(".parallax-fast") as HTMLElement;
+        if (bg) bg.style.transform = `translateY(${scrolled * 0.3}px)`;
+        if (fg) fg.style.transform = `translateY(${scrolled * 0.15}px)`;
+      }
+
+      // Intersection-based color transitions between sections
+      sectionsRef.current.forEach((section) => {
+        if (!section) return;
+        const rect = section.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight * 0.75 && rect.bottom > 0;
+        if (isVisible && section.dataset.section) {
+          // Could trigger section-specific animations here
+        }
+      });
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Exit intent popup
+  useEffect(() => {
+    if (showLoader) return;
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0 && !sessionStorage.getItem("exitPopupShown")) {
+        setShowExitPopup(true);
+        sessionStorage.setItem("exitPopupShown", "true");
+      }
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => document.removeEventListener("mouseleave", handleMouseLeave);
+  }, [showLoader]);
+
+  // Dark mode
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDark]);
+
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
+  // Section fade-in observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("fade-in-up");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll("[data-animate]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [showLoader]);
+
+  // Comparison slider logic
+  useEffect(() => {
+    const clip = document.getElementById("comparison-clip");
+    const handle = document.getElementById("comparison-handle");
+    if (!clip || !handle) return;
+
+    let isDragging = false;
+
+    const updateSlider = (clientX: number) => {
+      const rect = clip.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      clip.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+      handle.style.left = `${percentage}%`;
+    };
+
+    const onMouseDown = () => { isDragging = true; };
+    const onMouseUp = () => { isDragging = false; };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      updateSlider(e.clientX);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      updateSlider(e.touches[0].clientX);
+    };
+
+    handle.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("mousemove", onMouseMove);
+    handle.addEventListener("touchstart", onMouseDown, { passive: true });
+    window.addEventListener("touchend", onMouseUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+
+    // Allow clicking anywhere on the image to move slider
+    const container = clip.parentElement;
+    if (container) {
+      container.addEventListener("click", (e) => {
+        updateSlider(e.clientX);
+      });
+    }
+
+    return () => {
+      handle.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousemove", onMouseMove);
+      handle.removeEventListener("touchstart", onMouseDown);
+      window.removeEventListener("touchend", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, []);
+
+  return (
+    <div className={`min-h-screen bg-background font-sans text-foreground selection:bg-accent/30 ${isDark ? "dark" : ""}`}>
+      {/* Page Loader / Curtain */}
+      {showLoader && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-primary">
+          <div className="curtain-sweep absolute inset-0 bg-accent/10" />
+          <div className="relative z-10 text-center">
+            <span className="logo-glow font-serif text-5xl italic tracking-tight text-accent md:text-7xl">
+              AUTEM
+            </span>
+            <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/40">
+              Bienes raíces premium
+            </p>
+            <div className="mx-auto mt-8 h-px w-16 bg-accent/50" />
+          </div>
+        </div>
+      )}
+
+      {/* Custom Cursor (only on desktop) */}
+      <div
+        ref={cursorRef}
+        className={`custom-cursor hidden md:block ${cursorVariant === "hover" ? "is-hovering" : ""}`}
+      />
+      <div ref={dotRef} className="custom-cursor-dot hidden md:block" />
+
+      {/* Navigation */}
+      <nav className={`fixed top-0 z-50 w-full transition-all duration-500 ${menuOpen ? "bg-primary" : "mix-blend-difference text-white"}`}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-8">
+          <a href="#top" className="font-serif text-2xl tracking-tight">
+            AUTEM
+          </a>
+          <div className="hidden gap-12 text-xs font-medium uppercase tracking-[0.2em] md:flex">
+            {navItems.map((item) => (
+              <a key={item.href} href={item.href} className="transition-colors hover:text-accent">
+                {item.label}
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setIsDark(!isDark)}
+              aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+              className={`hidden size-8 items-center justify-center rounded-full border border-white/20 text-xs transition-all hover:bg-white/10 md:flex ${isDark ? "theme-toggle-spin" : ""}`}
+            >
+              {isDark ? "☀️" : "🌙"}
+            </button>
+            <a
+              href="#contacto"
+              className="hidden border border-white/20 px-6 py-2 text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-primary md:inline-block"
+            >
+              Invertir
+            </a>
+
+            {/* Hamburger */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              className={`flex size-10 flex-col items-center justify-center gap-[5px] md:hidden ${menuOpen ? "hamburger-open" : ""}`}
+            >
+              <span className="hamburger-line block h-px w-6 bg-white" />
+              <span className="hamburger-line block h-px w-6 bg-white" />
+              <span className="hamburger-line block h-px w-6 bg-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="menu-enter fixed inset-0 top-[88px] z-40 flex flex-col bg-primary md:hidden">
+            <div className="flex flex-1 flex-col items-center justify-center gap-10">
+              {navItems.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="font-serif text-3xl italic text-white transition-colors hover:text-accent"
+                >
+                  {item.label}
+                </a>
+              ))}
+              <a
+                href="#contacto"
+                onClick={() => setMenuOpen(false)}
+                className="mt-6 border border-accent px-10 py-4 text-xs uppercase tracking-widest text-accent transition-all hover:bg-accent hover:text-primary"
+              >
+                Invertir
+              </a>
+              <button
+                onClick={() => { setIsDark(!isDark); }}
+                className="mt-4 text-xs uppercase tracking-widest text-white/60"
+              >
+                {isDark ? "☀️ Modo claro" : "🌙 Modo oscuro"}
+              </button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Hero */}
+      <section
+        ref={heroRef}
+        id="top"
+        className="relative flex h-screen min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 text-center"
+      >
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster={heroVilla}
+            className="parallax-slow h-full w-full object-cover"
+          >
+            <source src="/Video del Hero.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        <div className="parallax-fast relative z-10 max-w-4xl">
+          <span className="animate-fade-up mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent">
+            AUTEM · Real Estate
+          </span>
+          <h1 className="animate-fade-up delay-100 mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl">
+            Arquitectura <br />
+            <span className="italic">sin fronteras</span>
+          </h1>
+          <p className="animate-fade-up delay-200 mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg">
+            Propiedades premium que integran renders 3D, tours virtuales y realidad
+            aumentada para una inversión inteligente.
+          </p>
+
+          {/* Search Bar */}
+          <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-full bg-white p-2 shadow-2xl md:flex-row md:items-center">
+            <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
+              <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
+                Ubicación
+              </span>
+              <span className="text-sm font-medium text-foreground">Costa del Sol, España</span>
+            </div>
+            <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
+              <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
+                Inversión
+              </span>
+              <span className="text-sm font-medium text-foreground">€500k – €2.5M</span>
+            </div>
+            <a
+              href="#proyectos"
+              className="w-full rounded-full bg-primary px-10 py-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-auto"
+            >
+              Explorar proyectos
+            </a>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="parallax-fast absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[8px] uppercase tracking-[0.3em] text-white/40">Scroll</span>
+            <div className="h-8 w-px bg-gradient-to-b from-accent to-transparent" />
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Properties */}
+      <section
+        id="proyectos"
+        data-animate
+        className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
+      >
+        <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Exclusividad
+            </span>
+            <h2 className="mt-2 font-serif text-4xl md:text-5xl">Proyectos destacados</h2>
+          </div>
+          <a
+            href="/catalogo"
+            className="self-start border-b border-primary pb-1 text-sm uppercase tracking-widest md:self-end"
+          >
+            Ver catálogo completo →
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+          {properties.map((p) => (
+            <a
+              key={p.slug}
+              href={`/properties/${p.slug}`}
+              className={`group block cursor-pointer ${p.offset}`}
+            >
+              <div className="relative mb-6 aspect-[3/4] overflow-hidden bg-muted-warm">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  width={800}
+                  height={1066}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  style={{ animation: "ken-burns 20s ease-in-out infinite alternate" }}
+                />
+                <div
+                  className={`absolute left-4 top-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${p.tagStyle}`}
+                >
+                  {p.tag}
+                </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-500 group-hover:bg-black/30">
+                  <span className="translate-y-4 text-sm font-medium uppercase tracking-widest text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                    Ver propiedad →
+                  </span>
+                </div>
+              </div>
+              <h3 className="font-serif text-2xl">{p.name}</h3>
+              <div className="mt-2 flex items-center justify-between text-sm font-light text-muted-foreground">
+                <span>
+                  {p.location} · {p.m2}
+                </span>
+                <span className="font-medium text-foreground">{p.price}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* Immersive Tech / AR */}
+      <section
+        id="tecnologia"
+        data-animate
+        className="section-bridge overflow-hidden bg-primary py-24 text-primary-foreground opacity-0 md:py-32"
+      >
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:gap-20 md:px-8">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Tecnología 2026
+            </span>
+            <h2 className="mt-6 font-serif text-4xl leading-tight md:text-6xl lg:text-7xl">
+              El futuro de la visita inmobiliaria.
+            </h2>
+            <p className="mt-8 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
+              No imagines tu próximo hogar, camina en él. Nuestras herramientas de
+              realidad aumentada y visores 3D te permiten personalizar acabados y
+              sentir el espacio antes de la primera piedra.
+            </p>
+
+            <div className="mt-10 flex gap-8">
+              <div className="flex flex-col gap-2">
+                <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
+                  3D
+                </div>
+                <span className="text-[10px] uppercase tracking-widest">Matterport 4K</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
+                  AR
+                </div>
+                <span className="text-[10px] uppercase tracking-widest">WebAR Ready</span>
+                <span className="text-[9px] text-white/40">Sin apps, directo en tu navegador</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
+                  360
+                </div>
+                <span className="text-[10px] uppercase tracking-widest">Tour virtual</span>
+              </div>
+            </div>
+
+            {/* Finish swatches - funcionales */}
+            <div className="mt-12">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                Personaliza acabados
+              </p>
+              <div className="flex gap-3">
+                {[
+                  { id: "render1", label: "Render 1", color: "#E5E4E2" },
+                  { id: "render2", label: "Render 2", color: "#4A3728" },
+                  { id: "render3", label: "Render 3", color: "#8D918D" },
+                  { id: "render4", label: "Render 4", color: "#8A6A3B" },
+                ].map((swatch) => (
+                  <button
+                    key={swatch.id}
+                    aria-label={`Acabado ${swatch.label}`}
+                    onClick={() => {
+                      const video = document.getElementById("ar-main-image") as HTMLVideoElement | null;
+                      if (video) {
+                        video.src = `/Set de 4 renders.mp4`;
+                        video.play();
+                      }
+                    }}
+                    className="size-10 rounded-full border-2 border-accent bg-[#E5E4E2] transition-all hover:scale-110"
+                    style={{ backgroundColor: swatch.color }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="absolute -inset-10 rounded-full bg-accent/10 blur-3xl" />
+            <video
+              id="ar-main-image"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="relative z-10 aspect-square w-full rounded-2xl object-cover outline-1 -outline-offset-1 outline-white/10"
+            >
+              <source src="/Video de Realidad Aumentada.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute -bottom-6 -right-6 z-20 hidden rounded-lg bg-accent p-8 shadow-2xl md:block">
+              <p className="max-w-[12ch] text-sm font-bold leading-tight text-accent-foreground">
+                Escanéame para ver el proyecto en tu sala
+              </p>
+              <div className="mt-4 grid size-24 place-items-center bg-white p-2">
+                <div className="grid size-full grid-cols-8 grid-rows-8 gap-[1px]">
+                  {Array.from({ length: 64 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={((i * 37) % 3 === 0) ? "bg-black" : "bg-white"}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Before/After Comparison Slider */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:px-8 md:py-24">
+        <div className="mb-8">
+          <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            Transformación
+          </span>
+          <h2 className="mt-2 font-serif text-3xl md:text-4xl">Antes y después</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Arrastra el slider para ver la transformación</p>
+        </div>
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted-warm">
+          {/* Before image (base) */}
+          <img
+            src="/antes.png"
+            alt="Terreno vacío antes de la construcción"
+            className="h-full w-full object-cover"
+          />
+          {/* After image (clipped) */}
+          <div
+            id="comparison-clip"
+            className="absolute inset-0 overflow-hidden"
+            style={{ clipPath: "inset(0 50% 0 0)" }}
+          >
+            <img
+              src="/despues.png"
+              alt="Propiedad terminada"
+              className="h-full w-full object-cover"
+              style={{ width: "100vw", maxWidth: "100%" }}
+            />
+          </div>
+          {/* Slider handle */}
+          <div
+            id="comparison-handle"
+            className="absolute top-0 bottom-0 left-1/2 z-10 w-1 cursor-ew-resize bg-accent"
+            style={{ transform: "translateX(-50%)" }}
+          >
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-accent shadow-2xl">
+              <svg className="size-6 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+              </svg>
+            </div>
+          </div>
+          {/* Labels */}
+          <div className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[10px] uppercase tracking-widest text-white backdrop-blur-sm">
+            Antes
+          </div>
+          <div className="absolute right-4 top-4 rounded-full bg-accent px-3 py-1 text-[10px] uppercase tracking-widest text-accent-foreground backdrop-blur-sm">
+            Después
+          </div>
+        </div>
+      </section>
+
+      {/* Drone Scan / Video */}
+      <section data-animate className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-5 md:px-8">
+          <div className="md:col-span-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Escaneo aéreo
+            </span>
+            <h2 className="mt-6 font-serif text-4xl leading-tight md:text-5xl lg:text-6xl">
+              Drones que <span className="italic text-accent">cartografían</span> tu terreno.
+            </h2>
+            <p className="mt-6 max-w-md text-base leading-relaxed text-white/60">
+              Cada proyecto inicia con un vuelo LiDAR de precisión centimétrica.
+              Reconstruimos el sitio en 3D, detectamos zonas de valor y proyectamos
+              el edificio final sobre la topografía real.
+            </p>
+
+            <ul className="mt-10 space-y-4 text-sm">
+              {[
+                { k: "01", v: "Vuelo autónomo · malla LiDAR" },
+                { k: "02", v: "Análisis solar y de vistas" },
+                { k: "03", v: "Render final sobre el terreno" },
+              ].map((item) => (
+                <li key={item.k} className="flex items-start gap-4 border-t border-white/10 pt-4">
+                  <span className="font-serif italic text-accent">{item.k}</span>
+                  <span className="text-white/80">{item.v}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Video Panel */}
+          <div className="relative md:col-span-3">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#101015] to-[#050506] outline outline-1 -outline-offset-1 outline-white/10">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/antes.png"
+                className="absolute inset-0 h-full w-full object-cover"
+              >
+                <source src="/Video del panel.mp4" type="video/mp4" />
+              </video>
+
+              {/* HUD Overlays */}
+              <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[10px] uppercase tracking-widest backdrop-blur-sm">
+                <span className="inline-block size-1.5 animate-pulse rounded-full bg-accent" />
+                Escaneando en vivo
+              </div>
+              <div className="absolute bottom-4 left-4 flex gap-6 text-[10px] uppercase tracking-widest text-white/60">
+                <span>Altitud <span className="text-accent">120m</span></span>
+                <span>Vel <span className="text-accent">6.4m/s</span></span>
+                <span>Cobertura <span className="text-accent">72%</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partners marquee */}
+      <section data-animate className="border-y border-border bg-background py-10 opacity-0 overflow-hidden">
+        <div className="mx-auto mb-6 max-w-7xl px-6 md:px-8">
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
+            Colaboradores · Estudios · Prensa
+          </span>
+        </div>
+        <div className="relative">
+          <div className="marquee-track flex w-max gap-16 whitespace-nowrap px-6 font-serif text-3xl tracking-tight text-muted-foreground md:text-4xl">
+            {[...Array(2)].map((_, dup) => (
+              <div key={dup} className="flex gap-16 pr-16">
+                {["Foster + Partners","BIG","Zaha Hadid","Herzog & de Meuron","Wallpaper*","Architectural Digest","Dezeen","Sotheby's"].map((n) => (
+                  <span key={n} className="italic opacity-70 hover:opacity-100 transition-opacity">{n}</span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section data-animate className="border-b border-border opacity-0">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-12 px-6 py-20 md:grid-cols-4 md:px-8 md:py-24">
+          {stats.map((s) => (
+            <div key={s.label} className="flex flex-col">
+              <span className="mb-2 font-serif text-4xl text-accent md:text-5xl">
+                {s.value}
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section id="nosotros" data-animate className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32">
+        <span className="text-xs font-bold uppercase tracking-widest text-accent">
+          Confianza
+        </span>
+        <h2 className="mt-2 max-w-3xl font-serif text-4xl md:text-5xl">
+          Clientes que ya invirtieron con nosotros.
+        </h2>
+        <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2">
+          {testimonials.map((t) => (
+            <blockquote key={t.author} className="border-t border-border pt-8">
+              <p className="font-serif text-2xl italic leading-snug md:text-3xl">
+                "{t.quote}"
+              </p>
+              <footer className="mt-6 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{t.author}</span> — {t.role}
+              </footer>
+            </blockquote>
+          ))}
+        </div>
+      </section>
+
+      {/* Contact / CTA */}
+      <section id="contacto" data-animate className="bg-muted-warm/30 py-24 opacity-0 md:py-32">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 px-6 md:grid-cols-2 md:px-8">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Contacto privado
+            </span>
+            <h2 className="mt-2 font-serif text-4xl leading-tight md:text-6xl">
+              Hablemos de tu próxima inversión.
+            </h2>
+            <p className="mt-6 max-w-md text-muted-foreground">
+              Asesoría personalizada. Un especialista se pondrá en contacto contigo
+              en menos de 24 horas.
+            </p>
+          </div>
+
+          <form
+            className="space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setContactStatus("sent");
+              // Connect to EmailJS
+              const form = e.currentTarget;
+              const formData = new FormData(form);
+              const data = {
+                name: formData.get("name") as string,
+                email: formData.get("email") as string,
+                message: formData.get("message") as string,
+              };
+              // EmailJS integration placeholder
+              fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  service_id: "service_default",
+                  template_id: "template_contact",
+                  user_id: "user_placeholder",
+                  template_params: {
+                    from_name: data.name,
+                    from_email: data.email,
+                    message: data.message,
+                    to_name: "Equipo AUTEM",
+                  },
+                }),
+              }).catch(() => {
+                // Silently fail - the visual feedback is already shown
+              });
+            }}
+          >
+            <div>
+              <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Nombre
+              </label>
+              <input
+                required
+                maxLength={100}
+                name="name"
+                type="text"
+                className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Correo electrónico
+              </label>
+              <input
+                required
+                maxLength={255}
+                name="email"
+                type="email"
+                className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Mensaje
+              </label>
+              <textarea
+                maxLength={1000}
+                name="message"
+                rows={3}
+                className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-primary px-12 py-5 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground md:w-auto"
+            >
+              {contactStatus === "sent" ? "✓ Mensaje enviado" : "Agendar consultoría"}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-background py-16 md:py-20">
+        <div className="mx-auto max-w-7xl px-6 md:px-8">
+          <div className="flex flex-col justify-between gap-8 md:flex-row">
+            <div>
+              <span className="font-serif text-2xl tracking-tight">AUTEM</span>
+              <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+                Arquitectura, tecnología y bienes raíces premium desde 2010.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-12 text-[10px] uppercase tracking-widest text-muted-foreground md:grid-cols-3">
+              <div className="space-y-3">
+                <p className="text-foreground">Explorar</p>
+                <a href="#proyectos" className="block hover:text-accent">Proyectos</a>
+                <a href="#tecnologia" className="block hover:text-accent">Tecnología</a>
+                <a href="#nosotros" className="block hover:text-accent">Nosotros</a>
+              </div>
+              <div className="space-y-3">
+                <p className="text-foreground">Contacto</p>
+                <p>Marbella, España</p>
+                <p>+34 600 000 000</p>
+                <p>hola@autem.es</p>
+              </div>
+              <div className="space-y-3">
+                <p className="text-foreground">Legal</p>
+                <a href="#" className="block hover:text-accent">Privacidad</a>
+                <a href="#" className="block hover:text-accent">Términos</a>
+              </div>
+            </div>
+          </div>
+          <div className="mt-16 flex flex-col justify-between gap-4 border-t border-border pt-8 text-[10px] uppercase tracking-widest text-muted-foreground md:flex-row">
+            <p>© 2026 AUTEM Real Estate. Todos los derechos reservados.</p>
+            <div className="flex gap-6">
+              <a href="#">Instagram</a>
+              <a href="#">LinkedIn</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* WhatsApp Floating Button */}
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contactar por WhatsApp"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full bg-whatsapp px-5 py-4 text-white shadow-2xl transition-transform hover:scale-105"
+      >
+        <span className="pulse-ring relative flex size-6 items-center justify-center">
+          <svg viewBox="0 0 24 24" className="size-6" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+          </svg>
+        </span>
+        <span className="hidden text-xs font-medium uppercase tracking-widest sm:inline">
+          Asesor en línea
+        </span>
+      </a>
+
+      {/* Exit Intent Popup */}
+      {showExitPopup && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="popup-enter mx-4 max-w-lg rounded-2xl bg-background p-10 shadow-2xl md:p-14">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-accent">
+              ¿Te vas tan pronto?
+            </span>
+            <h3 className="mt-4 font-serif text-3xl leading-tight md:text-4xl">
+              Descarga nuestro brochure exclusivo
+            </h3>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Déjanos tu correo y te enviaremos nuestro portafolio completo con
+              renders, planos y detalles de inversión.
+            </p>
+            <form
+              className="mt-8 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setShowExitPopup(false);
+              }}
+            >
+              <input
+                required
+                type="email"
+                placeholder="Tu correo electrónico"
+                className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-primary px-6 py-4 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"
+                >
+                  Recibir brochure
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowExitPopup(false)}
+                  className="border border-border px-6 py-4 text-xs uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+                >
+                  No, gracias
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
