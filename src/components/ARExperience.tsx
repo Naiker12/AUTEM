@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useDeviceDetection, type DeviceInfo } from "@/hooks/useDeviceDetection";
+import { getARModelUrl } from "@/data/ar-models";
 
 const ModelViewer = lazy(() =>
   import("@google/model-viewer").then(() => ({
@@ -29,7 +30,8 @@ const FINISHES = [
   { id: "gold", label: "Dorado", color: "#8A6A3B", material: "Latón cepillado" },
 ];
 
-const AR_URL = "https://naiker12.github.io/AUTEM/";
+const PILOT_PROPERTY = "the-horizon-suite";
+const AR_URL = getARModelUrl(PILOT_PROPERTY);
 
 function FirstTutorial({ onDismiss }: { onDismiss: () => void }) {
   return (
