@@ -1,10 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import heroVilla from "@/assets/hero-villa.jpg";
 import propertyAzure from "@/assets/property-azure.jpg";
 import propertySierra from "@/assets/property-sierra.jpg";
 import propertyHorizon from "@/assets/property-horizon.jpg";
 import arExperience from "@/assets/ar-experience.jpg";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import PropertyCard from "@/components/PropertyCard";
+import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -26,41 +30,10 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const properties = [
-  {
-    slug: "residencia-azure",
-    name: "Residencia Azure",
-    location: "Marbella, ES",
-    price: "Desde €1.2M",
-    m2: "320 m²",
-    tag: "3D Tour disponible",
-    tagStyle: "bg-white/90 text-foreground backdrop-blur-sm",
-    image: propertyAzure,
-    offset: "",
-  },
-  {
-    slug: "eco-villa-sierra",
-    name: "Eco-Villa Sierra",
-    location: "Benahavís, ES",
-    price: "Desde €850k",
-    m2: "410 m²",
-    tag: "Nuevo lanzamiento",
-    tagStyle: "bg-accent text-primary-foreground",
-    image: propertySierra,
-    offset: "md:translate-y-12",
-  },
-  {
-    slug: "the-horizon-suite",
-    name: "The Horizon Suite",
-    location: "Sotogrande, ES",
-    price: "Desde €2.1M",
-    m2: "540 m²",
-    tag: "AR Ready",
-    tagStyle: "bg-white/90 text-foreground backdrop-blur-sm",
-    image: propertyHorizon,
-    offset: "",
-  },
-];
+const featuredSlugs = ["residencia-azure", "eco-villa-sierra", "the-horizon-suite"];
+const featuredProperties = properties.filter((p) => featuredSlugs.includes(p.slug));
+
+const featuredOffsets = ["", "md:translate-y-12", ""];
 
 const stats = [
   { value: "120+", label: "Proyectos entregados" },
@@ -77,8 +50,7 @@ const testimonials = [
     role: "Inversionista, CDMX",
   },
   {
-    quote:
-      "Un nivel de asesoría privado y sofisticado. AUTEM entiende la arquitectura como pocos.",
+    quote: "Un nivel de asesoría privado y sofisticado. AUTEM entiende la arquitectura como pocos.",
     author: "James Whitmore",
     role: "Coleccionista de arte, Londres",
   },
@@ -93,10 +65,8 @@ const navItems = [
 
 function Index() {
   const [contactStatus, setContactStatus] = useState<"idle" | "sent">("idle");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   const [showExitPopup, setShowExitPopup] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [cursorVariant, setCursorVariant] = useState<"default" | "hover">("default");
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -179,25 +149,6 @@ function Index() {
     return () => document.removeEventListener("mouseleave", handleMouseLeave);
   }, [showLoader]);
 
-  // Dark mode
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDark]);
-
-  // Lock body scroll when menu is open
-  useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [menuOpen]);
-
   // Section fade-in observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -209,7 +160,7 @@ function Index() {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     document.querySelectorAll("[data-animate]").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -231,8 +182,12 @@ function Index() {
       handle.style.left = `${percentage}%`;
     };
 
-    const onMouseDown = () => { isDragging = true; };
-    const onMouseUp = () => { isDragging = false; };
+    const onMouseDown = () => {
+      isDragging = true;
+    };
+    const onMouseUp = () => {
+      isDragging = false;
+    };
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       updateSlider(e.clientX);
@@ -268,7 +223,7 @@ function Index() {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-background font-sans text-foreground selection:bg-accent/30 ${isDark ? "dark" : ""}`}>
+    <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
       {/* Page Loader / Curtain */}
       {showLoader && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-primary">
@@ -293,78 +248,7 @@ function Index() {
       <div ref={dotRef} className="custom-cursor-dot hidden md:block" />
 
       {/* Navigation */}
-      <nav className={`fixed top-0 z-50 w-full transition-all duration-500 ${menuOpen ? "bg-primary" : "mix-blend-difference text-white"}`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-8">
-          <a href="#top" className="font-serif text-2xl tracking-tight">
-            AUTEM
-          </a>
-          <div className="hidden gap-12 text-xs font-medium uppercase tracking-[0.2em] md:flex">
-            {navItems.map((item) => (
-              <a key={item.href} href={item.href} className="transition-colors hover:text-accent">
-                {item.label}
-              </a>
-            ))}
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
-              className={`hidden size-8 items-center justify-center rounded-full border border-white/20 text-xs transition-all hover:bg-white/10 md:flex ${isDark ? "theme-toggle-spin" : ""}`}
-            >
-              {isDark ? "☀️" : "🌙"}
-            </button>
-            <a
-              href="#contacto"
-              className="hidden border border-white/20 px-6 py-2 text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-primary md:inline-block"
-            >
-              Invertir
-            </a>
-
-            {/* Hamburger */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-              className={`flex size-10 flex-col items-center justify-center gap-[5px] md:hidden ${menuOpen ? "hamburger-open" : ""}`}
-            >
-              <span className="hamburger-line block h-px w-6 bg-white" />
-              <span className="hamburger-line block h-px w-6 bg-white" />
-              <span className="hamburger-line block h-px w-6 bg-white" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="menu-enter fixed inset-0 top-[88px] z-40 flex flex-col bg-primary md:hidden">
-            <div className="flex flex-1 flex-col items-center justify-center gap-10">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="font-serif text-3xl italic text-white transition-colors hover:text-accent"
-                >
-                  {item.label}
-                </a>
-              ))}
-              <a
-                href="#contacto"
-                onClick={() => setMenuOpen(false)}
-                className="mt-6 border border-accent px-10 py-4 text-xs uppercase tracking-widest text-accent transition-all hover:bg-accent hover:text-primary"
-              >
-                Invertir
-              </a>
-              <button
-                onClick={() => { setIsDark(!isDark); }}
-                className="mt-4 text-xs uppercase tracking-widest text-white/60"
-              >
-                {isDark ? "☀️ Modo claro" : "🌙 Modo oscuro"}
-              </button>
-            </div>
-          </div>
-        )}
-      </nav>
+      <Navbar variant="home" />
 
       {/* Hero */}
       <section
@@ -395,8 +279,8 @@ function Index() {
             <span className="italic">sin fronteras</span>
           </h1>
           <p className="animate-fade-up delay-200 mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg">
-            Propiedades premium que integran renders 3D, tours virtuales y realidad
-            aumentada para una inversión inteligente.
+            Propiedades premium que integran renders 3D, tours virtuales y realidad aumentada para
+            una inversión inteligente.
           </p>
 
           {/* Search Bar */}
@@ -453,11 +337,11 @@ function Index() {
         </div>
 
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-          {properties.map((p) => (
+          {featuredProperties.map((p, i) => (
             <a
               key={p.slug}
               href={`/properties/${p.slug}`}
-              className={`group block cursor-pointer ${p.offset}`}
+              className={`group block cursor-pointer ${featuredOffsets[i] || ""}`}
             >
               <div className="relative mb-6 aspect-[3/4] overflow-hidden bg-muted-warm">
                 <img
@@ -469,12 +353,11 @@ function Index() {
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   style={{ animation: "ken-burns 20s ease-in-out infinite alternate" }}
                 />
-                <div
-                  className={`absolute left-4 top-4 px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${p.tagStyle}`}
-                >
-                  {p.tag}
-                </div>
-                {/* Hover overlay */}
+                {p.tags.length > 0 && (
+                  <div className="absolute left-4 top-4 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-foreground backdrop-blur-sm">
+                    {p.tags[0]}
+                  </div>
+                )}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-500 group-hover:bg-black/30">
                   <span className="translate-y-4 text-sm font-medium uppercase tracking-widest text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
                     Ver propiedad →
@@ -484,7 +367,7 @@ function Index() {
               <h3 className="font-serif text-2xl">{p.name}</h3>
               <div className="mt-2 flex items-center justify-between text-sm font-light text-muted-foreground">
                 <span>
-                  {p.location} · {p.m2}
+                  {p.location} · {p.m2} m²
                 </span>
                 <span className="font-medium text-foreground">{p.price}</span>
               </div>
@@ -508,9 +391,9 @@ function Index() {
               El futuro de la visita inmobiliaria.
             </h2>
             <p className="mt-8 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
-              No imagines tu próximo hogar, camina en él. Nuestras herramientas de
-              realidad aumentada y visores 3D te permiten personalizar acabados y
-              sentir el espacio antes de la primera piedra.
+              No imagines tu próximo hogar, camina en él. Nuestras herramientas de realidad
+              aumentada y visores 3D te permiten personalizar acabados y sentir el espacio antes de
+              la primera piedra.
             </p>
 
             <div className="mt-10 flex gap-8">
@@ -551,7 +434,9 @@ function Index() {
                     key={swatch.id}
                     aria-label={`Acabado ${swatch.label}`}
                     onClick={() => {
-                      const video = document.getElementById("ar-main-image") as HTMLVideoElement | null;
+                      const video = document.getElementById(
+                        "ar-main-image",
+                      ) as HTMLVideoElement | null;
                       if (video) {
                         video.src = `/Set de 4 renders.mp4`;
                         video.play();
@@ -584,10 +469,7 @@ function Index() {
               <div className="mt-4 grid size-24 place-items-center bg-white p-2">
                 <div className="grid size-full grid-cols-8 grid-rows-8 gap-[1px]">
                   {Array.from({ length: 64 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={((i * 37) % 3 === 0) ? "bg-black" : "bg-white"}
-                    />
+                    <div key={i} className={(i * 37) % 3 === 0 ? "bg-black" : "bg-white"} />
                   ))}
                 </div>
               </div>
@@ -603,7 +485,9 @@ function Index() {
             Transformación
           </span>
           <h2 className="mt-2 font-serif text-3xl md:text-4xl">Antes y después</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Arrastra el slider para ver la transformación</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Arrastra el slider para ver la transformación
+          </p>
         </div>
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted-warm">
           {/* Before image (base) */}
@@ -632,8 +516,18 @@ function Index() {
             style={{ transform: "translateX(-50%)" }}
           >
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-accent shadow-2xl">
-              <svg className="size-6 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+              <svg
+                className="size-6 text-accent-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                />
               </svg>
             </div>
           </div>
@@ -648,7 +542,10 @@ function Index() {
       </section>
 
       {/* Drone Scan / Video */}
-      <section data-animate className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32">
+      <section
+        data-animate
+        className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32"
+      >
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-5 md:px-8">
           <div className="md:col-span-2">
             <span className="text-xs font-bold uppercase tracking-widest text-accent">
@@ -658,9 +555,9 @@ function Index() {
               Drones que <span className="italic text-accent">cartografían</span> tu terreno.
             </h2>
             <p className="mt-6 max-w-md text-base leading-relaxed text-white/60">
-              Cada proyecto inicia con un vuelo LiDAR de precisión centimétrica.
-              Reconstruimos el sitio en 3D, detectamos zonas de valor y proyectamos
-              el edificio final sobre la topografía real.
+              Cada proyecto inicia con un vuelo LiDAR de precisión centimétrica. Reconstruimos el
+              sitio en 3D, detectamos zonas de valor y proyectamos el edificio final sobre la
+              topografía real.
             </p>
 
             <ul className="mt-10 space-y-4 text-sm">
@@ -697,9 +594,15 @@ function Index() {
                 Escaneando en vivo
               </div>
               <div className="absolute bottom-4 left-4 flex gap-6 text-[10px] uppercase tracking-widest text-white/60">
-                <span>Altitud <span className="text-accent">120m</span></span>
-                <span>Vel <span className="text-accent">6.4m/s</span></span>
-                <span>Cobertura <span className="text-accent">72%</span></span>
+                <span>
+                  Altitud <span className="text-accent">120m</span>
+                </span>
+                <span>
+                  Vel <span className="text-accent">6.4m/s</span>
+                </span>
+                <span>
+                  Cobertura <span className="text-accent">72%</span>
+                </span>
               </div>
             </div>
           </div>
@@ -707,7 +610,10 @@ function Index() {
       </section>
 
       {/* Partners marquee */}
-      <section data-animate className="border-y border-border bg-background py-10 opacity-0 overflow-hidden">
+      <section
+        data-animate
+        className="border-y border-border bg-background py-10 opacity-0 overflow-hidden"
+      >
         <div className="mx-auto mb-6 max-w-7xl px-6 md:px-8">
           <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
             Colaboradores · Estudios · Prensa
@@ -717,8 +623,19 @@ function Index() {
           <div className="marquee-track flex w-max gap-16 whitespace-nowrap px-6 font-serif text-3xl tracking-tight text-muted-foreground md:text-4xl">
             {[...Array(2)].map((_, dup) => (
               <div key={dup} className="flex gap-16 pr-16">
-                {["Foster + Partners","BIG","Zaha Hadid","Herzog & de Meuron","Wallpaper*","Architectural Digest","Dezeen","Sotheby's"].map((n) => (
-                  <span key={n} className="italic opacity-70 hover:opacity-100 transition-opacity">{n}</span>
+                {[
+                  "Foster + Partners",
+                  "BIG",
+                  "Zaha Hadid",
+                  "Herzog & de Meuron",
+                  "Wallpaper*",
+                  "Architectural Digest",
+                  "Dezeen",
+                  "Sotheby's",
+                ].map((n) => (
+                  <span key={n} className="italic opacity-70 hover:opacity-100 transition-opacity">
+                    {n}
+                  </span>
                 ))}
               </div>
             ))}
@@ -731,9 +648,7 @@ function Index() {
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-12 px-6 py-20 md:grid-cols-4 md:px-8 md:py-24">
           {stats.map((s) => (
             <div key={s.label} className="flex flex-col">
-              <span className="mb-2 font-serif text-4xl text-accent md:text-5xl">
-                {s.value}
-              </span>
+              <span className="mb-2 font-serif text-4xl text-accent md:text-5xl">{s.value}</span>
               <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                 {s.label}
               </span>
@@ -743,19 +658,19 @@ function Index() {
       </section>
 
       {/* Testimonials */}
-      <section id="nosotros" data-animate className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32">
-        <span className="text-xs font-bold uppercase tracking-widest text-accent">
-          Confianza
-        </span>
+      <section
+        id="nosotros"
+        data-animate
+        className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
+      >
+        <span className="text-xs font-bold uppercase tracking-widest text-accent">Confianza</span>
         <h2 className="mt-2 max-w-3xl font-serif text-4xl md:text-5xl">
           Clientes que ya invirtieron con nosotros.
         </h2>
         <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2">
           {testimonials.map((t) => (
             <blockquote key={t.author} className="border-t border-border pt-8">
-              <p className="font-serif text-2xl italic leading-snug md:text-3xl">
-                "{t.quote}"
-              </p>
+              <p className="font-serif text-2xl italic leading-snug md:text-3xl">"{t.quote}"</p>
               <footer className="mt-6 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{t.author}</span> — {t.role}
               </footer>
@@ -775,8 +690,8 @@ function Index() {
               Hablemos de tu próxima inversión.
             </h2>
             <p className="mt-6 max-w-md text-muted-foreground">
-              Asesoría personalizada. Un especialista se pondrá en contacto contigo
-              en menos de 24 horas.
+              Asesoría personalizada. Un especialista se pondrá en contacto contigo en menos de 24
+              horas.
             </p>
           </div>
 
@@ -859,44 +774,7 @@ function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-background py-16 md:py-20">
-        <div className="mx-auto max-w-7xl px-6 md:px-8">
-          <div className="flex flex-col justify-between gap-8 md:flex-row">
-            <div>
-              <span className="font-serif text-2xl tracking-tight">AUTEM</span>
-              <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-                Arquitectura, tecnología y bienes raíces premium desde 2010.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-12 text-[10px] uppercase tracking-widest text-muted-foreground md:grid-cols-3">
-              <div className="space-y-3">
-                <p className="text-foreground">Explorar</p>
-                <a href="#proyectos" className="block hover:text-accent">Proyectos</a>
-                <a href="#tecnologia" className="block hover:text-accent">Tecnología</a>
-                <a href="#nosotros" className="block hover:text-accent">Nosotros</a>
-              </div>
-              <div className="space-y-3">
-                <p className="text-foreground">Contacto</p>
-                <p>Marbella, España</p>
-                <p>+34 600 000 000</p>
-                <p>hola@autem.es</p>
-              </div>
-              <div className="space-y-3">
-                <p className="text-foreground">Legal</p>
-                <a href="#" className="block hover:text-accent">Privacidad</a>
-                <a href="#" className="block hover:text-accent">Términos</a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-16 flex flex-col justify-between gap-4 border-t border-border pt-8 text-[10px] uppercase tracking-widest text-muted-foreground md:flex-row">
-            <p>© 2026 AUTEM Real Estate. Todos los derechos reservados.</p>
-            <div className="flex gap-6">
-              <a href="#">Instagram</a>
-              <a href="#">LinkedIn</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* WhatsApp Floating Button */}
       <a
@@ -927,8 +805,8 @@ function Index() {
               Descarga nuestro brochure exclusivo
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Déjanos tu correo y te enviaremos nuestro portafolio completo con
-              renders, planos y detalles de inversión.
+              Déjanos tu correo y te enviaremos nuestro portafolio completo con renders, planos y
+              detalles de inversión.
             </p>
             <form
               className="mt-8 space-y-4"

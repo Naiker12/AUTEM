@@ -3,6 +3,8 @@ import { useState } from "react";
 import propertyAzure from "@/assets/property-azure.jpg";
 import propertySierra from "@/assets/property-sierra.jpg";
 import propertyHorizon from "@/assets/property-horizon.jpg";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/properties/$id")({
   component: PropertyDetail,
@@ -20,7 +22,12 @@ export const Route = createFileRoute("/properties/$id")({
           image: getPropertyData(params.id)?.image || "",
           offers: {
             "@type": "Offer",
-            price: getPropertyData(params.id)?.price.replace("Desde ", "").replace("€", "").replace("M", "000000").replace("k", "000") || "0",
+            price:
+              getPropertyData(params.id)
+                ?.price.replace("Desde ", "")
+                .replace("€", "")
+                .replace("M", "000000")
+                .replace("k", "000") || "0",
             priceCurrency: "EUR",
           },
         }),
@@ -139,40 +146,20 @@ function PropertyDetail() {
 
   const monthlyPayment =
     mortgageAmount > 0 && mortgageYears > 0 && mortgageRate > 0
-      ? ((mortgageAmount * (mortgageRate / 100 / 12)) /
-          (1 - Math.pow(1 + mortgageRate / 100 / 12, -mortgageYears * 12)))
+      ? (mortgageAmount * (mortgageRate / 100 / 12)) /
+        (1 - Math.pow(1 + mortgageRate / 100 / 12, -mortgageYears * 12))
       : 0;
 
   const whatsappUrl =
     "https://wa.me/34600000000?text=" +
     encodeURIComponent(
-      `Hola AUTEM, me interesa la propiedad "${property.name}" en ${property.location}.`
+      `Hola AUTEM, me interesa la propiedad "${property.name}" en ${property.location}.`,
     );
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
       {/* Navigation */}
-      <nav className="fixed top-0 z-50 w-full bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-8">
-          <Link to="/" className="font-serif text-2xl tracking-tight">
-            AUTEM
-          </Link>
-          <div className="hidden gap-12 text-xs font-medium uppercase tracking-[0.2em] md:flex">
-            <a href="/#proyectos" className="transition-colors hover:text-accent">Proyectos</a>
-            <a href="/#tecnologia" className="transition-colors hover:text-accent">Experiencia 3D</a>
-            <a href="/#nosotros" className="transition-colors hover:text-accent">Nosotros</a>
-            <a href="/#contacto" className="transition-colors hover:text-accent">Contacto</a>
-          </div>
-          <a
-            href={`${whatsappUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border border-primary/20 px-6 py-2 text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground"
-          >
-            Agendar visita
-          </a>
-        </div>
-      </nav>
+      <Navbar variant="inner" />
 
       {/* Gallery */}
       <section className="pt-24">
@@ -210,7 +197,9 @@ function PropertyDetail() {
                 key={i}
                 onClick={() => setSelectedImage(i)}
                 className={`aspect-[3/2] w-32 overflow-hidden rounded-lg border-2 transition-all ${
-                  selectedImage === i ? "border-accent" : "border-transparent opacity-60 hover:opacity-100"
+                  selectedImage === i
+                    ? "border-accent"
+                    : "border-transparent opacity-60 hover:opacity-100"
                 }`}
               >
                 <img
@@ -280,7 +269,9 @@ function PropertyDetail() {
                   </span>
                 </div>
                 <div className="text-center">
-                  <span className="block font-serif text-3xl text-accent">{property.bathrooms}</span>
+                  <span className="block font-serif text-3xl text-accent">
+                    {property.bathrooms}
+                  </span>
                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Baños
                   </span>
@@ -304,9 +295,24 @@ function PropertyDetail() {
                 <div className="flex h-full w-full items-center justify-center">
                   <div className="text-center">
                     <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-accent/10">
-                      <svg className="size-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <svg
+                        className="size-8 text-accent"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
                       </svg>
                     </div>
                     <p className="font-serif text-xl">{property.location}</p>
@@ -455,44 +461,7 @@ function PropertyDetail() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-background py-16 md:py-20">
-        <div className="mx-auto max-w-7xl px-6 md:px-8">
-          <div className="flex flex-col justify-between gap-8 md:flex-row">
-            <div>
-              <Link to="/" className="font-serif text-2xl tracking-tight">AUTEM</Link>
-              <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-                Arquitectura, tecnología y bienes raíces premium desde 2010.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-12 text-[10px] uppercase tracking-widest text-muted-foreground md:grid-cols-3">
-              <div className="space-y-3">
-                <p className="text-foreground">Explorar</p>
-                <a href="/#proyectos" className="block hover:text-accent">Proyectos</a>
-                <a href="/#tecnologia" className="block hover:text-accent">Tecnología</a>
-                <a href="/#nosotros" className="block hover:text-accent">Nosotros</a>
-              </div>
-              <div className="space-y-3">
-                <p className="text-foreground">Contacto</p>
-                <p>Marbella, España</p>
-                <p>+34 600 000 000</p>
-                <p>hola@autem.es</p>
-              </div>
-              <div className="space-y-3">
-                <p className="text-foreground">Legal</p>
-                <a href="#" className="block hover:text-accent">Privacidad</a>
-                <a href="#" className="block hover:text-accent">Términos</a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-16 flex flex-col justify-between gap-4 border-t border-border pt-8 text-[10px] uppercase tracking-widest text-muted-foreground md:flex-row">
-            <p>© 2026 AUTEM Real Estate. Todos los derechos reservados.</p>
-            <div className="flex gap-6">
-              <a href="#">Instagram</a>
-              <a href="#">LinkedIn</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
