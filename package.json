@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@google/model-viewer": "^4.3.1",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -53,6 +54,7 @@
     "input-otp": "^1.4.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",

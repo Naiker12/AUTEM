@@ -4,11 +4,11 @@ import heroVilla from "@/assets/hero-villa.jpg";
 import propertyAzure from "@/assets/property-azure.jpg";
 import propertySierra from "@/assets/property-sierra.jpg";
 import propertyHorizon from "@/assets/property-horizon.jpg";
-import arExperience from "@/assets/ar-experience.jpg";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import MagneticButton from "@/components/MagneticButton";
+import ARExperience from "@/components/ARExperience";
 import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
@@ -379,111 +379,7 @@ function Index() {
         </section>
 
         {/* Immersive Tech / AR */}
-        <section
-          id="tecnologia"
-          data-animate
-          className="section-bridge overflow-hidden bg-primary py-24 text-primary-foreground opacity-0 md:py-32"
-        >
-          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:gap-20 md:px-8">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                Tecnología 2026
-              </span>
-              <h2 className="mt-6 font-serif text-4xl leading-tight md:text-6xl lg:text-7xl">
-                El futuro de la visita inmobiliaria.
-              </h2>
-              <p className="mt-8 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
-                No imagines tu próximo hogar, camina en él. Nuestras herramientas de realidad
-                aumentada y visores 3D te permiten personalizar acabados y sentir el espacio antes
-                de la primera piedra.
-              </p>
-
-              <div className="mt-10 flex gap-8">
-                <div className="flex flex-col gap-2">
-                  <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
-                    3D
-                  </div>
-                  <span className="text-[10px] uppercase tracking-widest">Matterport 4K</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
-                    AR
-                  </div>
-                  <span className="text-[10px] uppercase tracking-widest">WebAR Ready</span>
-                  <span className="text-[9px] text-white/40">
-                    Sin apps, directo en tu navegador
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
-                    360
-                  </div>
-                  <span className="text-[10px] uppercase tracking-widest">Tour virtual</span>
-                </div>
-              </div>
-
-              {/* Finish swatches - funcionales */}
-              <div className="mt-12">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
-                  Personaliza acabados
-                </p>
-                <div className="flex gap-3">
-                  {[
-                    { id: "render1", label: "Render 1", color: "#E5E4E2" },
-                    { id: "render2", label: "Render 2", color: "#4A3728" },
-                    { id: "render3", label: "Render 3", color: "#8D918D" },
-                    { id: "render4", label: "Render 4", color: "#8A6A3B" },
-                  ].map((swatch) => (
-                    <button
-                      key={swatch.id}
-                      aria-label={`Acabado ${swatch.label}`}
-                      onClick={() => {
-                        const video = document.getElementById(
-                          "ar-main-image",
-                        ) as HTMLVideoElement | null;
-                        if (video) {
-                          video.src = `/set-de-4-renders.mp4`;
-                          video.play();
-                        }
-                      }}
-                      className="size-10 rounded-full border-2 border-accent bg-[#E5E4E2] transition-all hover:scale-110"
-                      style={{ backgroundColor: swatch.color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute -inset-10 rounded-full bg-accent/10 blur-3xl" />
-              <video
-                id="ar-main-image"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="relative z-10 aspect-square w-full rounded-2xl object-cover outline-1 -outline-offset-1 outline-white/10"
-              >
-                <source
-                  src={`${import.meta.env.BASE_URL}video-de-realidad-aumentada.mp4`}
-                  type="video/mp4"
-                />
-              </video>
-              <div className="absolute -bottom-6 -right-6 z-20 hidden rounded-lg bg-accent p-8 shadow-2xl md:block">
-                <p className="max-w-[12ch] text-sm font-bold leading-tight text-accent-foreground">
-                  Escanéame para ver el proyecto en tu sala
-                </p>
-                <div className="mt-4 grid size-24 place-items-center bg-white p-2">
-                  <div className="grid size-full grid-cols-8 grid-rows-8 gap-[1px]">
-                    {Array.from({ length: 64 }).map((_, i) => (
-                      <div key={i} className={(i * 37) % 3 === 0 ? "bg-black" : "bg-white"} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <ARExperience />
 
         {/* Before/After Comparison Slider */}
         <section className="mx-auto max-w-7xl px-6 py-16 md:px-8 md:py-24">
