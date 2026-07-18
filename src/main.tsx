@@ -1,16 +1,11 @@
 import { createRoot } from "react-dom/client";
-import { RouterProvider, ScrollRestoration } from "@tanstack/react-router";
+import { RouterProvider } from "@tanstack/react-router";
 import { getRouter } from "./router";
 
 const router = getRouter();
 
 function App() {
-  return (
-    <>
-      <RouterProvider router={router} />
-      <ScrollRestoration />
-    </>
-  );
+  return <RouterProvider router={router} />;
 }
 
 const rootElement = document.getElementById("root");
