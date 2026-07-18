@@ -8,6 +8,7 @@ import arExperience from "@/assets/ar-experience.jpg";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
+import MagneticButton from "@/components/MagneticButton";
 import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/")({
           name: "AUTEM Real Estate",
           description:
             "Bienes raíces premium con visualización 3D, tours virtuales y realidad aumentada.",
-          areaServed: "España",
+          areaServed: "Colombia",
         }),
       },
     ],
@@ -47,12 +48,12 @@ const testimonials = [
     quote:
       "El tour virtual y la experiencia AR fueron decisivos. Compramos sin haber pisado la propiedad — y superó cada expectativa.",
     author: "María Elena Vargas",
-    role: "Inversionista, CDMX",
+    role: "Inversionista, Bogotá",
   },
   {
     quote: "Un nivel de asesoría privado y sofisticado. AUTEM entiende la arquitectura como pocos.",
     author: "James Whitmore",
-    role: "Coleccionista de arte, Londres",
+    role: "Coleccionista de arte, Medellín",
   },
 ];
 
@@ -75,7 +76,7 @@ function Index() {
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
 
   const whatsappUrl =
-    "https://wa.me/34600000000?text=" +
+    "https://wa.me/573007200894?text=" +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
   // Page loader
@@ -250,531 +251,542 @@ function Index() {
       {/* Navigation */}
       <Navbar variant="home" />
 
-      {/* Hero */}
-      <section
-        ref={heroRef}
-        id="top"
-        className="relative flex h-screen min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 text-center"
-      >
-        <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            poster={heroVilla}
-            className="parallax-slow h-full w-full object-cover"
-          >
-            <source src={`${import.meta.env.BASE_URL}video-del-hero.mp4`} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-
-        <div className="parallax-fast relative z-10 max-w-4xl">
-          <span className="animate-fade-up mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent">
-            AUTEM · Real Estate
-          </span>
-          <h1 className="animate-fade-up delay-100 mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl">
-            Arquitectura <br />
-            <span className="italic">sin fronteras</span>
-          </h1>
-          <p className="animate-fade-up delay-200 mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg">
-            Propiedades premium que integran renders 3D, tours virtuales y realidad aumentada para
-            una inversión inteligente.
-          </p>
-
-          {/* Search Bar */}
-          <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-full bg-white p-2 shadow-2xl md:flex-row md:items-center">
-            <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
-              <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
-                Ubicación
-              </span>
-              <span className="text-sm font-medium text-foreground">Costa del Sol, España</span>
-            </div>
-            <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
-              <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
-                Inversión
-              </span>
-              <span className="text-sm font-medium text-foreground">€500k – €2.5M</span>
-            </div>
-            <a
-              href="#proyectos"
-              className="w-full rounded-full bg-primary px-10 py-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-auto"
-            >
-              Explorar proyectos
-            </a>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="parallax-fast absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[8px] uppercase tracking-[0.3em] text-white/40">Scroll</span>
-            <div className="h-8 w-px bg-gradient-to-b from-accent to-transparent" />
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Properties */}
-      <section
-        id="proyectos"
-        data-animate
-        className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
-      >
-        <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
-              Exclusividad
-            </span>
-            <h2 className="mt-2 font-serif text-4xl md:text-5xl">Proyectos destacados</h2>
-          </div>
-          <a
-            href={`${import.meta.env.BASE_URL}catalogo`}
-            className="self-start border-b border-primary pb-1 text-sm uppercase tracking-widest md:self-end"
-          >
-            Ver catálogo completo →
-          </a>
-        </div>
-
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-          {featuredProperties.map((p, i) => (
-            <a
-              key={p.slug}
-              href={`/properties/${p.slug}`}
-              className={`group block cursor-pointer ${featuredOffsets[i] || ""}`}
-            >
-              <div className="relative mb-6 aspect-[3/4] overflow-hidden bg-muted-warm">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  width={800}
-                  height={1066}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  style={{ animation: "ken-burns 20s ease-in-out infinite alternate" }}
-                />
-                {p.tags.length > 0 && (
-                  <div className="absolute left-4 top-4 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-foreground backdrop-blur-sm">
-                    {p.tags[0]}
-                  </div>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-500 group-hover:bg-black/30">
-                  <span className="translate-y-4 text-sm font-medium uppercase tracking-widest text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-                    Ver propiedad →
-                  </span>
-                </div>
-              </div>
-              <h3 className="font-serif text-2xl">{p.name}</h3>
-              <div className="mt-2 flex items-center justify-between text-sm font-light text-muted-foreground">
-                <span>
-                  {p.location} · {p.m2} m²
-                </span>
-                <span className="font-medium text-foreground">{p.price}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      {/* Immersive Tech / AR */}
-      <section
-        id="tecnologia"
-        data-animate
-        className="section-bridge overflow-hidden bg-primary py-24 text-primary-foreground opacity-0 md:py-32"
-      >
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:gap-20 md:px-8">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
-              Tecnología 2026
-            </span>
-            <h2 className="mt-6 font-serif text-4xl leading-tight md:text-6xl lg:text-7xl">
-              El futuro de la visita inmobiliaria.
-            </h2>
-            <p className="mt-8 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
-              No imagines tu próximo hogar, camina en él. Nuestras herramientas de realidad
-              aumentada y visores 3D te permiten personalizar acabados y sentir el espacio antes de
-              la primera piedra.
-            </p>
-
-            <div className="mt-10 flex gap-8">
-              <div className="flex flex-col gap-2">
-                <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
-                  3D
-                </div>
-                <span className="text-[10px] uppercase tracking-widest">Matterport 4K</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
-                  AR
-                </div>
-                <span className="text-[10px] uppercase tracking-widest">WebAR Ready</span>
-                <span className="text-[9px] text-white/40">Sin apps, directo en tu navegador</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
-                  360
-                </div>
-                <span className="text-[10px] uppercase tracking-widest">Tour virtual</span>
-              </div>
-            </div>
-
-            {/* Finish swatches - funcionales */}
-            <div className="mt-12">
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
-                Personaliza acabados
-              </p>
-              <div className="flex gap-3">
-                {[
-                  { id: "render1", label: "Render 1", color: "#E5E4E2" },
-                  { id: "render2", label: "Render 2", color: "#4A3728" },
-                  { id: "render3", label: "Render 3", color: "#8D918D" },
-                  { id: "render4", label: "Render 4", color: "#8A6A3B" },
-                ].map((swatch) => (
-                  <button
-                    key={swatch.id}
-                    aria-label={`Acabado ${swatch.label}`}
-                    onClick={() => {
-                      const video = document.getElementById(
-                        "ar-main-image",
-                      ) as HTMLVideoElement | null;
-                      if (video) {
-                        video.src = `/set-de-4-renders.mp4`;
-                        video.play();
-                      }
-                    }}
-                    className="size-10 rounded-full border-2 border-accent bg-[#E5E4E2] transition-all hover:scale-110"
-                    style={{ backgroundColor: swatch.color }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="absolute -inset-10 rounded-full bg-accent/10 blur-3xl" />
+      <main id="main-content">
+        {/* Hero */}
+        <section
+          ref={heroRef}
+          id="top"
+          className="relative flex h-screen min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 text-center"
+        >
+          <div className="absolute inset-0 z-0">
             <video
-              id="ar-main-image"
               autoPlay
               loop
               muted
               playsInline
-              className="relative z-10 aspect-square w-full rounded-2xl object-cover outline-1 -outline-offset-1 outline-white/10"
+              poster={heroVilla}
+              className="parallax-slow h-full w-full object-cover"
             >
-              <source
-                src={`${import.meta.env.BASE_URL}video-de-realidad-aumentada.mp4`}
-                type="video/mp4"
-              />
+              <source src={`${import.meta.env.BASE_URL}video-del-hero.mp4`} type="video/mp4" />
             </video>
-            <div className="absolute -bottom-6 -right-6 z-20 hidden rounded-lg bg-accent p-8 shadow-2xl md:block">
-              <p className="max-w-[12ch] text-sm font-bold leading-tight text-accent-foreground">
-                Escanéame para ver el proyecto en tu sala
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+
+          <div className="parallax-fast relative z-10 max-w-4xl">
+            <span className="animate-fade-up mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent">
+              AUTEM · Real Estate
+            </span>
+            <h1 className="animate-fade-up delay-100 mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl">
+              Arquitectura <br />
+              <span className="italic">sin fronteras</span>
+            </h1>
+            <p className="animate-fade-up delay-200 mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg">
+              Propiedades premium que integran renders 3D, tours virtuales y realidad aumentada para
+              una inversión inteligente.
+            </p>
+
+            {/* Search Bar */}
+            <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-full bg-white p-2 shadow-2xl md:flex-row md:items-center">
+              <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
+                <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
+                  Ubicación
+                </span>
+                <span className="text-sm font-medium text-foreground">Caribe Colombiano</span>
+              </div>
+              <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
+                <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
+                  Inversión
+                </span>
+                <span className="text-sm font-medium text-foreground">$500K – $2.5M</span>
+              </div>
+              <MagneticButton
+                strength={0.2}
+                className="w-full rounded-full bg-primary px-10 py-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-auto"
+              >
+                <a href="#proyectos">Explorar proyectos</a>
+              </MagneticButton>
+            </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="parallax-fast absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[8px] uppercase tracking-[0.3em] text-white/40">Scroll</span>
+              <div className="h-8 w-px bg-gradient-to-b from-accent to-transparent" />
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Properties */}
+        <section
+          id="proyectos"
+          data-animate
+          className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
+        >
+          <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                Exclusividad
+              </span>
+              <h2 className="mt-2 font-serif text-4xl md:text-5xl">Proyectos destacados</h2>
+            </div>
+            <a
+              href={`${import.meta.env.BASE_URL}catalogo`}
+              className="self-start border-b border-primary pb-1 text-sm uppercase tracking-widest md:self-end"
+            >
+              Ver catálogo completo →
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+            {featuredProperties.map((p, i) => (
+              <a
+                key={p.slug}
+                href={`/properties/${p.slug}`}
+                className={`group block cursor-pointer ${featuredOffsets[i] || ""}`}
+              >
+                <div className="relative mb-6 aspect-[3/4] overflow-hidden bg-muted-warm">
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    width={800}
+                    height={1066}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    style={{ animation: "ken-burns 20s ease-in-out infinite alternate" }}
+                  />
+                  {p.tags.length > 0 && (
+                    <div className="absolute left-4 top-4 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-foreground backdrop-blur-sm">
+                      {p.tags[0]}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-500 group-hover:bg-black/30">
+                    <span className="translate-y-4 text-sm font-medium uppercase tracking-widest text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                      Ver propiedad →
+                    </span>
+                  </div>
+                </div>
+                <h3 className="font-serif text-2xl">{p.name}</h3>
+                <div className="mt-2 flex items-center justify-between text-sm font-light text-muted-foreground">
+                  <span>
+                    {p.location} · {p.m2} m²
+                  </span>
+                  <span className="font-medium text-foreground">{p.price}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Immersive Tech / AR */}
+        <section
+          id="tecnologia"
+          data-animate
+          className="section-bridge overflow-hidden bg-primary py-24 text-primary-foreground opacity-0 md:py-32"
+        >
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:gap-20 md:px-8">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                Tecnología 2026
+              </span>
+              <h2 className="mt-6 font-serif text-4xl leading-tight md:text-6xl lg:text-7xl">
+                El futuro de la visita inmobiliaria.
+              </h2>
+              <p className="mt-8 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
+                No imagines tu próximo hogar, camina en él. Nuestras herramientas de realidad
+                aumentada y visores 3D te permiten personalizar acabados y sentir el espacio antes
+                de la primera piedra.
               </p>
-              <div className="mt-4 grid size-24 place-items-center bg-white p-2">
-                <div className="grid size-full grid-cols-8 grid-rows-8 gap-[1px]">
-                  {Array.from({ length: 64 }).map((_, i) => (
-                    <div key={i} className={(i * 37) % 3 === 0 ? "bg-black" : "bg-white"} />
+
+              <div className="mt-10 flex gap-8">
+                <div className="flex flex-col gap-2">
+                  <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
+                    3D
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest">Matterport 4K</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
+                    AR
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest">WebAR Ready</span>
+                  <span className="text-[9px] text-white/40">
+                    Sin apps, directo en tu navegador
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex size-12 items-center justify-center rounded-full border border-white/20 font-serif italic text-accent">
+                    360
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest">Tour virtual</span>
+                </div>
+              </div>
+
+              {/* Finish swatches - funcionales */}
+              <div className="mt-12">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                  Personaliza acabados
+                </p>
+                <div className="flex gap-3">
+                  {[
+                    { id: "render1", label: "Render 1", color: "#E5E4E2" },
+                    { id: "render2", label: "Render 2", color: "#4A3728" },
+                    { id: "render3", label: "Render 3", color: "#8D918D" },
+                    { id: "render4", label: "Render 4", color: "#8A6A3B" },
+                  ].map((swatch) => (
+                    <button
+                      key={swatch.id}
+                      aria-label={`Acabado ${swatch.label}`}
+                      onClick={() => {
+                        const video = document.getElementById(
+                          "ar-main-image",
+                        ) as HTMLVideoElement | null;
+                        if (video) {
+                          video.src = `/set-de-4-renders.mp4`;
+                          video.play();
+                        }
+                      }}
+                      className="size-10 rounded-full border-2 border-accent bg-[#E5E4E2] transition-all hover:scale-110"
+                      style={{ backgroundColor: swatch.color }}
+                    />
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Before/After Comparison Slider */}
-      <section className="mx-auto max-w-7xl px-6 py-16 md:px-8 md:py-24">
-        <div className="mb-8">
-          <span className="text-xs font-bold uppercase tracking-widest text-accent">
-            Transformación
-          </span>
-          <h2 className="mt-2 font-serif text-3xl md:text-4xl">Antes y después</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Arrastra el slider para ver la transformación
-          </p>
-        </div>
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted-warm">
-          {/* Before image (base) */}
-          <img
-            src={`${import.meta.env.BASE_URL}antes.png`}
-            alt="Terreno vacío antes de la construcción"
-            className="h-full w-full object-cover"
-          />
-          {/* After image (clipped) */}
-          <div
-            id="comparison-clip"
-            className="absolute inset-0 overflow-hidden"
-            style={{ clipPath: "inset(0 50% 0 0)" }}
-          >
-            <img
-              src={`${import.meta.env.BASE_URL}despues.png`}
-              alt="Propiedad terminada"
-              className="h-full w-full object-cover"
-              style={{ width: "100vw", maxWidth: "100%" }}
-            />
-          </div>
-          {/* Slider handle */}
-          <div
-            id="comparison-handle"
-            className="absolute top-0 bottom-0 left-1/2 z-10 w-1 cursor-ew-resize bg-accent"
-            style={{ transform: "translateX(-50%)" }}
-          >
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-accent shadow-2xl">
-              <svg
-                className="size-6 text-accent-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 9l4-4 4 4m0 6l-4 4-4-4"
-                />
-              </svg>
-            </div>
-          </div>
-          {/* Labels */}
-          <div className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[10px] uppercase tracking-widest text-white backdrop-blur-sm">
-            Antes
-          </div>
-          <div className="absolute right-4 top-4 rounded-full bg-accent px-3 py-1 text-[10px] uppercase tracking-widest text-accent-foreground backdrop-blur-sm">
-            Después
-          </div>
-        </div>
-      </section>
-
-      {/* Drone Scan / Video */}
-      <section
-        data-animate
-        className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32"
-      >
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-5 md:px-8">
-          <div className="md:col-span-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
-              Escaneo aéreo
-            </span>
-            <h2 className="mt-6 font-serif text-4xl leading-tight md:text-5xl lg:text-6xl">
-              Drones que <span className="italic text-accent">cartografían</span> tu terreno.
-            </h2>
-            <p className="mt-6 max-w-md text-base leading-relaxed text-white/60">
-              Cada proyecto inicia con un vuelo LiDAR de precisión centimétrica. Reconstruimos el
-              sitio en 3D, detectamos zonas de valor y proyectamos el edificio final sobre la
-              topografía real.
-            </p>
-
-            <ul className="mt-10 space-y-4 text-sm">
-              {[
-                { k: "01", v: "Vuelo autónomo · malla LiDAR" },
-                { k: "02", v: "Análisis solar y de vistas" },
-                { k: "03", v: "Render final sobre el terreno" },
-              ].map((item) => (
-                <li key={item.k} className="flex items-start gap-4 border-t border-white/10 pt-4">
-                  <span className="font-serif italic text-accent">{item.k}</span>
-                  <span className="text-white/80">{item.v}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Video Panel */}
-          <div className="relative md:col-span-3">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#101015] to-[#050506] outline outline-1 -outline-offset-1 outline-white/10">
+            <div className="relative">
+              <div className="absolute -inset-10 rounded-full bg-accent/10 blur-3xl" />
               <video
+                id="ar-main-image"
                 autoPlay
                 loop
                 muted
                 playsInline
-                poster={`${import.meta.env.BASE_URL}antes.png`}
-                className="absolute inset-0 h-full w-full object-cover"
+                className="relative z-10 aspect-square w-full rounded-2xl object-cover outline-1 -outline-offset-1 outline-white/10"
               >
-                <source src={`${import.meta.env.BASE_URL}video-del-panel.mp4`} type="video/mp4" />
+                <source
+                  src={`${import.meta.env.BASE_URL}video-de-realidad-aumentada.mp4`}
+                  type="video/mp4"
+                />
               </video>
-
-              {/* HUD Overlays */}
-              <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[10px] uppercase tracking-widest backdrop-blur-sm">
-                <span className="inline-block size-1.5 animate-pulse rounded-full bg-accent" />
-                Escaneando en vivo
-              </div>
-              <div className="absolute bottom-4 left-4 flex gap-6 text-[10px] uppercase tracking-widest text-white/60">
-                <span>
-                  Altitud <span className="text-accent">120m</span>
-                </span>
-                <span>
-                  Vel <span className="text-accent">6.4m/s</span>
-                </span>
-                <span>
-                  Cobertura <span className="text-accent">72%</span>
-                </span>
+              <div className="absolute -bottom-6 -right-6 z-20 hidden rounded-lg bg-accent p-8 shadow-2xl md:block">
+                <p className="max-w-[12ch] text-sm font-bold leading-tight text-accent-foreground">
+                  Escanéame para ver el proyecto en tu sala
+                </p>
+                <div className="mt-4 grid size-24 place-items-center bg-white p-2">
+                  <div className="grid size-full grid-cols-8 grid-rows-8 gap-[1px]">
+                    {Array.from({ length: 64 }).map((_, i) => (
+                      <div key={i} className={(i * 37) % 3 === 0 ? "bg-black" : "bg-white"} />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Partners marquee */}
-      <section
-        data-animate
-        className="border-y border-border bg-background py-10 opacity-0 overflow-hidden"
-      >
-        <div className="mx-auto mb-6 max-w-7xl px-6 md:px-8">
-          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
-            Colaboradores · Estudios · Prensa
-          </span>
-        </div>
-        <div className="relative">
-          <div className="marquee-track flex w-max gap-16 whitespace-nowrap px-6 font-serif text-3xl tracking-tight text-muted-foreground md:text-4xl">
-            {[...Array(2)].map((_, dup) => (
-              <div key={dup} className="flex gap-16 pr-16">
+        {/* Before/After Comparison Slider */}
+        <section className="mx-auto max-w-7xl px-6 py-16 md:px-8 md:py-24">
+          <div className="mb-8">
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Transformación
+            </span>
+            <h2 className="mt-2 font-serif text-3xl md:text-4xl">Antes y después</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Arrastra el slider para ver la transformación
+            </p>
+          </div>
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted-warm">
+            {/* Before image (base) */}
+            <img
+              src={`${import.meta.env.BASE_URL}antes.png`}
+              alt="Terreno vacío antes de la construcción"
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+            {/* After image (clipped) */}
+            <div
+              id="comparison-clip"
+              className="absolute inset-0 overflow-hidden"
+              style={{ clipPath: "inset(0 50% 0 0)" }}
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}despues.png`}
+                alt="Propiedad terminada"
+                loading="lazy"
+                className="h-full w-full object-cover"
+                style={{ width: "100vw", maxWidth: "100%" }}
+              />
+            </div>
+            {/* Slider handle */}
+            <div
+              id="comparison-handle"
+              className="absolute top-0 bottom-0 left-1/2 z-10 w-1 cursor-ew-resize bg-accent"
+              style={{ transform: "translateX(-50%)" }}
+            >
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-accent shadow-2xl">
+                <svg
+                  className="size-6 text-accent-foreground"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                  />
+                </svg>
+              </div>
+            </div>
+            {/* Labels */}
+            <div className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[10px] uppercase tracking-widest text-white backdrop-blur-sm">
+              Antes
+            </div>
+            <div className="absolute right-4 top-4 rounded-full bg-accent px-3 py-1 text-[10px] uppercase tracking-widest text-accent-foreground backdrop-blur-sm">
+              Después
+            </div>
+          </div>
+        </section>
+
+        {/* Drone Scan / Video */}
+        <section
+          data-animate
+          className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32"
+        >
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-5 md:px-8">
+            <div className="md:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                Escaneo aéreo
+              </span>
+              <h2 className="mt-6 font-serif text-4xl leading-tight md:text-5xl lg:text-6xl">
+                Drones que <span className="italic text-accent">cartografían</span> tu terreno.
+              </h2>
+              <p className="mt-6 max-w-md text-base leading-relaxed text-white/60">
+                Cada proyecto inicia con un vuelo LiDAR de precisión centimétrica. Reconstruimos el
+                sitio en 3D, detectamos zonas de valor y proyectamos el edificio final sobre la
+                topografía real.
+              </p>
+
+              <ul className="mt-10 space-y-4 text-sm">
                 {[
-                  "Foster + Partners",
-                  "BIG",
-                  "Zaha Hadid",
-                  "Herzog & de Meuron",
-                  "Wallpaper*",
-                  "Architectural Digest",
-                  "Dezeen",
-                  "Sotheby's",
-                ].map((n) => (
-                  <span key={n} className="italic opacity-70 hover:opacity-100 transition-opacity">
-                    {n}
-                  </span>
+                  { k: "01", v: "Vuelo autónomo · malla LiDAR" },
+                  { k: "02", v: "Análisis solar y de vistas" },
+                  { k: "03", v: "Render final sobre el terreno" },
+                ].map((item) => (
+                  <li key={item.k} className="flex items-start gap-4 border-t border-white/10 pt-4">
+                    <span className="font-serif italic text-accent">{item.k}</span>
+                    <span className="text-white/80">{item.v}</span>
+                  </li>
                 ))}
+              </ul>
+            </div>
+
+            {/* Video Panel */}
+            <div className="relative md:col-span-3">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#101015] to-[#050506] outline outline-1 -outline-offset-1 outline-white/10">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster={`${import.meta.env.BASE_URL}antes.png`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                >
+                  <source src={`${import.meta.env.BASE_URL}video-del-panel.mp4`} type="video/mp4" />
+                </video>
+
+                {/* HUD Overlays */}
+                <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[10px] uppercase tracking-widest backdrop-blur-sm">
+                  <span className="inline-block size-1.5 animate-pulse rounded-full bg-accent" />
+                  Escaneando en vivo
+                </div>
+                <div className="absolute bottom-4 left-4 flex gap-6 text-[10px] uppercase tracking-widest text-white/60">
+                  <span>
+                    Altitud <span className="text-accent">120m</span>
+                  </span>
+                  <span>
+                    Vel <span className="text-accent">6.4m/s</span>
+                  </span>
+                  <span>
+                    Cobertura <span className="text-accent">72%</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Partners marquee */}
+        <section
+          data-animate
+          className="border-y border-border bg-background py-10 opacity-0 overflow-hidden"
+        >
+          <div className="mx-auto mb-6 max-w-7xl px-6 md:px-8">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
+              Colaboradores · Estudios · Prensa
+            </span>
+          </div>
+          <div className="relative">
+            <div className="marquee-track flex w-max gap-16 whitespace-nowrap px-6 font-serif text-3xl tracking-tight text-muted-foreground md:text-4xl">
+              {[...Array(2)].map((_, dup) => (
+                <div key={dup} className="flex gap-16 pr-16">
+                  {[
+                    "Foster + Partners",
+                    "BIG",
+                    "Zaha Hadid",
+                    "Herzog & de Meuron",
+                    "Wallpaper*",
+                    "Architectural Digest",
+                    "Dezeen",
+                    "Sotheby's",
+                  ].map((n) => (
+                    <span
+                      key={n}
+                      className="italic opacity-70 hover:opacity-100 transition-opacity"
+                    >
+                      {n}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Stats */}
+        <section data-animate className="border-b border-border opacity-0">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-12 px-6 py-20 md:grid-cols-4 md:px-8 md:py-24">
+            {stats.map((s) => (
+              <div key={s.label} className="flex flex-col">
+                <span className="mb-2 font-serif text-4xl text-accent md:text-5xl">{s.value}</span>
+                <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  {s.label}
+                </span>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Stats */}
-      <section data-animate className="border-b border-border opacity-0">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-12 px-6 py-20 md:grid-cols-4 md:px-8 md:py-24">
-          {stats.map((s) => (
-            <div key={s.label} className="flex flex-col">
-              <span className="mb-2 font-serif text-4xl text-accent md:text-5xl">{s.value}</span>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                {s.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section
-        id="nosotros"
-        data-animate
-        className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
-      >
-        <span className="text-xs font-bold uppercase tracking-widest text-accent">Confianza</span>
-        <h2 className="mt-2 max-w-3xl font-serif text-4xl md:text-5xl">
-          Clientes que ya invirtieron con nosotros.
-        </h2>
-        <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2">
-          {testimonials.map((t) => (
-            <blockquote key={t.author} className="border-t border-border pt-8">
-              <p className="font-serif text-2xl italic leading-snug md:text-3xl">"{t.quote}"</p>
-              <footer className="mt-6 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{t.author}</span> — {t.role}
-              </footer>
-            </blockquote>
-          ))}
-        </div>
-      </section>
-
-      {/* Contact / CTA */}
-      <section id="contacto" data-animate className="bg-muted-warm/30 py-24 opacity-0 md:py-32">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 px-6 md:grid-cols-2 md:px-8">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
-              Contacto privado
-            </span>
-            <h2 className="mt-2 font-serif text-4xl leading-tight md:text-6xl">
-              Hablemos de tu próxima inversión.
-            </h2>
-            <p className="mt-6 max-w-md text-muted-foreground">
-              Asesoría personalizada. Un especialista se pondrá en contacto contigo en menos de 24
-              horas.
-            </p>
+        {/* Testimonials */}
+        <section
+          id="nosotros"
+          data-animate
+          className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
+        >
+          <span className="text-xs font-bold uppercase tracking-widest text-accent">Confianza</span>
+          <h2 className="mt-2 max-w-3xl font-serif text-4xl md:text-5xl">
+            Clientes que ya invirtieron con nosotros.
+          </h2>
+          <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2">
+            {testimonials.map((t) => (
+              <blockquote key={t.author} className="border-t border-border pt-8">
+                <p className="font-serif text-2xl italic leading-snug md:text-3xl">"{t.quote}"</p>
+                <footer className="mt-6 text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{t.author}</span> — {t.role}
+                </footer>
+              </blockquote>
+            ))}
           </div>
+        </section>
 
-          <form
-            className="space-y-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setContactStatus("sent");
-              // Connect to EmailJS
-              const form = e.currentTarget;
-              const formData = new FormData(form);
-              const data = {
-                name: formData.get("name") as string,
-                email: formData.get("email") as string,
-                message: formData.get("message") as string,
-              };
-              // EmailJS integration placeholder
-              fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  service_id: "service_default",
-                  template_id: "template_contact",
-                  user_id: "user_placeholder",
-                  template_params: {
-                    from_name: data.name,
-                    from_email: data.email,
-                    message: data.message,
-                    to_name: "Equipo AUTEM",
-                  },
-                }),
-              }).catch(() => {
-                // Silently fail - the visual feedback is already shown
-              });
-            }}
-          >
+        {/* Contact / CTA */}
+        <section id="contacto" data-animate className="bg-muted-warm/30 py-24 opacity-0 md:py-32">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 px-6 md:grid-cols-2 md:px-8">
             <div>
-              <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Nombre
-              </label>
-              <input
-                required
-                maxLength={100}
-                name="name"
-                type="text"
-                className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
-              />
+              <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                Contacto privado
+              </span>
+              <h2 className="mt-2 font-serif text-4xl leading-tight md:text-6xl">
+                Hablemos de tu próxima inversión.
+              </h2>
+              <p className="mt-6 max-w-md text-muted-foreground">
+                Asesoría personalizada. Un especialista se pondrá en contacto contigo en menos de 24
+                horas.
+              </p>
             </div>
-            <div>
-              <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Correo electrónico
-              </label>
-              <input
-                required
-                maxLength={255}
-                name="email"
-                type="email"
-                className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Mensaje
-              </label>
-              <textarea
-                maxLength={1000}
-                name="message"
-                rows={3}
-                className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-primary px-12 py-5 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground md:w-auto"
+
+            <form
+              className="space-y-6"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const formData = new FormData(form);
+                if (formData.get("website")) return;
+                setContactStatus("sent");
+                const data = {
+                  name: formData.get("name") as string,
+                  email: formData.get("email") as string,
+                  message: formData.get("message") as string,
+                };
+                fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    service_id: "service_default",
+                    template_id: "template_contact",
+                    user_id: "user_placeholder",
+                    template_params: {
+                      from_name: data.name,
+                      from_email: data.email,
+                      message: data.message,
+                      to_name: "Equipo AUTEM",
+                    },
+                  }),
+                }).catch(() => {});
+              }}
             >
-              {contactStatus === "sent" ? "✓ Mensaje enviado" : "Agendar consultoría"}
-            </button>
-          </form>
-        </div>
-      </section>
+              <div className="absolute left-[-9999px]" aria-hidden="true">
+                <label htmlFor="website">No llenes esto</label>
+                <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Nombre
+                </label>
+                <input
+                  required
+                  maxLength={100}
+                  name="name"
+                  type="text"
+                  className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Correo electrónico
+                </label>
+                <input
+                  required
+                  maxLength={255}
+                  name="email"
+                  type="email"
+                  className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Mensaje
+                </label>
+                <textarea
+                  maxLength={1000}
+                  name="message"
+                  rows={3}
+                  className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+                />
+              </div>
+              <MagneticButton
+                type="submit"
+                strength={0.15}
+                className="w-full bg-primary px-12 py-5 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground md:w-auto"
+              >
+                {contactStatus === "sent" ? "✓ Mensaje enviado" : "Agendar consultoría"}
+              </MagneticButton>
+            </form>
+          </div>
+        </section>
+      </main>
 
       {/* Footer */}
       <Footer />
@@ -825,12 +837,13 @@ function Index() {
                 className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
               />
               <div className="flex gap-3">
-                <button
+                <MagneticButton
                   type="submit"
+                  strength={0.15}
                   className="flex-1 bg-primary px-6 py-4 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"
                 >
                   Recibir brochure
-                </button>
+                </MagneticButton>
                 <button
                   type="button"
                   onClick={() => setShowExitPopup(false)}

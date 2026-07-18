@@ -3,6 +3,8 @@ import { Outlet, Link, createRootRoute, useRouter, HeadContent } from "@tanstack
 import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
+import ScrollProgress from "../components/ScrollProgress";
+import PageTransition from "../components/PageTransition";
 
 function NotFoundComponent() {
   return (
@@ -89,19 +91,6 @@ export const Route = createRootRoute({
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.ico`, type: "image/x-icon" },
-      {
-        rel: "preconnect",
-        href: "https://fonts.googleapis.com",
-      },
-      {
-        rel: "preconnect",
-        href: "https://fonts.gstatic.com",
-        crossOrigin: "anonymous",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..500;1,9..144,300..500&family=Inter:wght@300;400;500;600&display=swap",
-      },
     ],
   }),
   component: RootComponent,
@@ -114,8 +103,17 @@ const queryClient = new QueryClient();
 function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ScrollProgress />
       <HeadContent />
-      <Outlet />
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[9999] focus:bg-accent focus:px-4 focus:py-2 focus:text-xs focus:font-bold focus:text-accent-foreground focus:shadow-lg focus:outline-none"
+      >
+        Saltar al contenido
+      </a>
+      <PageTransition>
+        <Outlet />
+      </PageTransition>
     </QueryClientProvider>
   );
 }

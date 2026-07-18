@@ -19,7 +19,7 @@ export default function Navbar({ variant }: NavbarProps) {
   const isHome = variant === "home";
 
   const whatsappUrl =
-    "https://wa.me/34600000000?text=" +
+    "https://wa.me/573007200894?text=" +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
   useEffect(() => {

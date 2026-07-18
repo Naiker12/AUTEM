@@ -1,12 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect, Suspense, lazy } from "react";
-import { MapPin, Grid3X3, List } from "lucide-react";
+import { MapPin, Grid3X3 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
-import CatalogFilters, { type CatalogFiltersState } from "@/components/CatalogFilters";
+import CatalogFilters, {
+  type CatalogFiltersState,
+  type FilterCounts,
+} from "@/components/CatalogFilters";
 import SkeletonCard from "@/components/SkeletonCard";
-import { properties, type Property } from "@/data/properties";
+import {
+  properties,
+  ZONAS,
+  PROPERTY_TYPES,
+  TECH_TAGS,
+  type Property,
+  type PropertyType,
+  type TechTag,
+} from "@/data/properties";
 
 const MapView = lazy(() => import("@/components/MapView"));
 
@@ -87,6 +98,32 @@ function applyFilters(all: Property[], filters: CatalogFiltersState): Property[]
   return result;
 }
 
+function computeFilterCounts(filters: CatalogFiltersState): FilterCounts {
+  return {
+    tipo: Object.fromEntries(
+      PROPERTY_TYPES.map((t) => [
+        t.value,
+        applyFilters(properties, { ...filters, tipo: [t.value] }).length,
+      ]),
+    ) as Record<PropertyType, number>,
+    zona: Object.fromEntries(
+      ZONAS.map((z) => [z, applyFilters(properties, { ...filters, zona: z }).length]),
+    ) as Record<string, number>,
+    habitaciones: Object.fromEntries(
+      [1, 2, 3, 4, 5].map((n) => [
+        n,
+        applyFilters(properties, { ...filters, habitaciones: n }).length,
+      ]),
+    ) as Record<number, number>,
+    tech: Object.fromEntries(
+      TECH_TAGS.map((t) => [
+        t.value,
+        applyFilters(properties, { ...filters, techTags: [t.value] }).length,
+      ]),
+    ) as Record<TechTag, number>,
+  };
+}
+
 const ITEMS_PER_PAGE = 6;
 
 export const Route = createFileRoute("/catalogo")({
@@ -101,6 +138,41 @@ export const Route = createFileRoute("/catalogo")({
     sort: search.sort || "relevancia",
   }),
 });
+
+function ViewToggle({
+  viewMode,
+  onChange,
+}: {
+  viewMode: "grid" | "map";
+  onChange: (mode: "grid" | "map") => void;
+}) {
+  return (
+    <div className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+      <button
+        onClick={() => onChange("grid")}
+        className={`flex size-7 items-center justify-center rounded-md transition-all ${
+          viewMode === "grid"
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        aria-label="Vista cuadrícula"
+      >
+        <Grid3X3 size={14} />
+      </button>
+      <button
+        onClick={() => onChange("map")}
+        className={`flex size-7 items-center justify-center rounded-md transition-all ${
+          viewMode === "map"
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        aria-label="Vista mapa"
+      >
+        <MapPin size={14} />
+      </button>
+    </div>
+  );
+}
 
 function CatalogoPage() {
   const searchParams = Route.useSearch();
@@ -122,6 +194,7 @@ function CatalogoPage() {
   }, []);
 
   const filtered = useMemo(() => applyFilters(properties, filters), [filters]);
+  const filterCounts = useMemo(() => computeFilterCounts(filters), [filters]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
@@ -146,134 +219,140 @@ function CatalogoPage() {
     return "Catálogo completo";
   }, [filters.zona, filters.tipo]);
 
+  useEffect(() => {
+    document.title = title !== "Catálogo completo" ? `${title} | AUTEM` : "Catálogo | AUTEM";
+  }, [title]);
+
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
       <Navbar variant="inner" />
 
-      <section className="px-6 pt-28 pb-8 md:px-8 md:pt-32">
-        <div className="mx-auto max-w-7xl">
-          <span className="text-xs font-bold uppercase tracking-widest text-accent">Explorar</span>
-          <h1 className="mt-2 font-serif text-4xl md:text-5xl">{title}</h1>
-          <p className="mt-3 text-muted-foreground">
-            <span className="font-medium text-foreground">{filtered.length}</span>{" "}
-            {filtered.length === 1 ? "propiedad disponible" : "propiedades disponibles"}
-          </p>
-        </div>
-      </section>
-
-      <section className="sticky top-[72px] z-40 border-b border-border bg-background/90 px-6 backdrop-blur-md md:px-8">
-        <div className="mx-auto max-w-7xl py-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <CatalogFilters
-                filters={filters}
-                onChange={handleFiltersChange}
-                totalResults={filtered.length}
-              />
-            </div>
-            <div className="flex items-center gap-1 rounded-lg border border-border p-1">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`flex size-8 items-center justify-center rounded-md transition-all ${
-                  viewMode === "grid"
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="Vista cuadrícula"
-              >
-                <Grid3X3 size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode("map")}
-                className={`flex size-8 items-center justify-center rounded-md transition-all ${
-                  viewMode === "map"
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="Vista mapa"
-              >
-                <MapPin size={16} />
-              </button>
-            </div>
+      <main id="main-content">
+        <section className="px-6 pt-28 pb-6 md:px-8 md:pt-32">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-accent">
+              Explorar
+            </span>
+            <h1 className="mt-2 font-serif text-3xl md:text-4xl lg:text-5xl">{title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{filtered.length}</span>{" "}
+              {filtered.length === 1 ? "propiedad disponible" : "propiedades disponibles"}
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-12 md:px-8">
-        {viewMode === "grid" ? (
-          <>
-            {isLoading ? (
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
-                <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-                  <List size={24} className="text-muted-foreground" />
-                </div>
-                <h3 className="font-serif text-2xl">No encontramos propiedades</h3>
-                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                  No hay propiedades que coincidan con estos filtros. Intenta ajustar los criterios
-                  de búsqueda.
+        <div className="mx-auto max-w-7xl px-6 md:px-8">
+          <div className="flex gap-0 lg:gap-10">
+            {/* ── Desktop sidebar ── */}
+            <aside className="hidden lg:block w-72 shrink-0">
+              <div className="sticky top-[72px] max-h-[calc(100vh-72px)] overflow-y-auto pt-6 pb-8 pr-6 border-r border-border/30">
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Filtros
                 </p>
-                <button
-                  onClick={() =>
-                    handleFiltersChange({
-                      zona: "all",
-                      tipo: [],
-                      precioMin: 0,
-                      precioMax: 5000000,
-                      habitaciones: null,
-                      techTags: [],
-                      sort: "relevancia",
-                    })
-                  }
-                  className="mt-6 border-b border-accent pb-1 text-sm font-medium text-accent transition-colors hover:text-foreground"
-                >
-                  Limpiar filtros
-                </button>
+                <CatalogFilters
+                  mode="sidebar"
+                  filters={filters}
+                  onChange={handleFiltersChange}
+                  counts={filterCounts}
+                />
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                  {visible.map((p) => (
-                    <PropertyCard key={p.id} property={p} />
-                  ))}
-                </div>
+            </aside>
 
-                {hasMore && (
-                  <div className="mt-12 flex justify-center">
-                    <button
-                      onClick={() => setVisibleCount((c) => c + ITEMS_PER_PAGE)}
-                      className="border border-border px-10 py-3 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+            {/* ── Content ── */}
+            <div className="flex-1 min-w-0">
+              {/* Mobile controls bar */}
+              <div className="lg:hidden sticky top-[72px] z-40 -mx-6 border-b border-border/40 bg-background/90 px-6 py-3 backdrop-blur-md">
+                <div className="flex items-center justify-between gap-3">
+                  <CatalogFilters
+                    mode="sheet"
+                    filters={filters}
+                    onChange={handleFiltersChange}
+                    totalResults={filtered.length}
+                    counts={filterCounts}
+                  />
+                  <ViewToggle viewMode={viewMode} onChange={setViewMode} />
+                </div>
+              </div>
+
+              {/* Desktop content header */}
+              <div className="hidden lg:flex items-center justify-between border-b border-border/30 py-5">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{filtered.length}</span>{" "}
+                  {filtered.length === 1 ? "propiedad" : "propiedades"}
+                </p>
+                <ViewToggle viewMode={viewMode} onChange={setViewMode} />
+              </div>
+
+              {/* Grid / Map */}
+              <div className="py-8">
+                {viewMode === "grid" ? (
+                  <>
+                    {isLoading ? (
+                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <SkeletonCard key={i} />
+                        ))}
+                      </div>
+                    ) : filtered.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <div className="mb-6 flex size-14 items-center justify-center rounded-full bg-muted">
+                          <MapPin size={20} className="text-muted-foreground" />
+                        </div>
+                        <h3 className="font-serif text-2xl">No encontramos propiedades</h3>
+                        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                          No hay propiedades que coincidan con estos filtros. Intenta ajustar los
+                          criterios de búsqueda.
+                        </p>
+                        <button
+                          onClick={() => handleFiltersChange(defaultFilters)}
+                          className="mt-6 border-b border-accent pb-1 text-sm font-medium text-accent transition-colors hover:text-foreground"
+                        >
+                          Limpiar filtros
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                          {visible.map((p) => (
+                            <PropertyCard key={p.id} property={p} />
+                          ))}
+                        </div>
+
+                        {hasMore && (
+                          <div className="mt-10 flex justify-center">
+                            <button
+                              onClick={() => setVisibleCount((c) => c + ITEMS_PER_PAGE)}
+                              className="border border-border px-10 py-3 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+                            >
+                              Cargar más ({filtered.length - visibleCount} restantes)
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="h-[600px] overflow-hidden rounded-2xl border border-border">
+                    <Suspense
+                      fallback={
+                        <div className="flex h-full items-center justify-center bg-muted">
+                          <div className="text-sm text-muted-foreground">Cargando mapa…</div>
+                        </div>
+                      }
                     >
-                      Cargar más ({filtered.length - visibleCount} restantes)
-                    </button>
+                      <MapView properties={filtered} />
+                    </Suspense>
                   </div>
                 )}
-              </>
-            )}
-          </>
-        ) : (
-          <div className="h-[600px] overflow-hidden rounded-2xl border border-border">
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center bg-muted">
-                  <div className="text-sm text-muted-foreground">Cargando mapa…</div>
-                </div>
-              }
-            >
-              <MapView properties={filtered} />
-            </Suspense>
+              </div>
+            </div>
           </div>
-        )}
-      </section>
+        </div>
+      </main>
 
       <section className="border-t border-border bg-muted/30 px-6 py-20 md:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="text-xs font-bold uppercase tracking-widest text-accent">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-accent">
             Asesoría personalizada
           </span>
           <h2 className="mt-4 font-serif text-3xl md:text-4xl">¿No encuentras lo que buscas?</h2>
@@ -282,7 +361,7 @@ function CatalogoPage() {
             perfecta para tu inversión.
           </p>
           <a
-            href="https://wa.me/34600000000?text=Hola%20AUTEM%2C%20me%20gustar%C3%ADa%20una%20asesor%C3%ADa%20personalizada."
+            href="https://wa.me/573007200894?text=Hola%20AUTEM%2C%20me%20gustar%C3%ADa%20una%20asesor%C3%ADa%20personalizada."
             target="_blank"
             rel="noopener noreferrer"
             className="mt-8 inline-block bg-primary px-10 py-4 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"

@@ -7,8 +7,8 @@ interface MapViewProps {
   properties: Property[];
 }
 
-const DEFAULT_CENTER: L.LatLngExpression = [36.5, -4.9];
-const DEFAULT_ZOOM = 10;
+const DEFAULT_CENTER: L.LatLngExpression = [10.391, -75.514];
+const DEFAULT_ZOOM = 13;
 
 function createIcon(): L.DivIcon {
   return L.divIcon({

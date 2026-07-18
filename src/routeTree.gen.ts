@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root"
+import { Route as PoliticaPrivacidadRouteImport } from "./routes/politica-privacidad"
 import { Route as CatalogoRouteImport } from "./routes/catalogo"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as PropertiesIdRouteImport } from "./routes/properties/$id"
 
+const PoliticaPrivacidadRoute = PoliticaPrivacidadRouteImport.update({
+  id: "/politica-privacidad",
+  path: "/politica-privacidad",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CatalogoRoute = CatalogoRouteImport.update({
   id: "/catalogo",
   path: "/catalogo",
@@ -32,35 +38,47 @@ const PropertiesIdRoute = PropertiesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/properties/$id": typeof PropertiesIdRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/properties/$id": typeof PropertiesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/properties/$id": typeof PropertiesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: "/" | "/catalogo" | "/properties/$id"
+  fullPaths: "/" | "/catalogo" | "/politica-privacidad" | "/properties/$id"
   fileRoutesByTo: FileRoutesByTo
-  to: "/" | "/catalogo" | "/properties/$id"
-  id: "__root__" | "/" | "/catalogo" | "/properties/$id"
+  to: "/" | "/catalogo" | "/politica-privacidad" | "/properties/$id"
+  id:
+    "__root__" | "/" | "/catalogo" | "/politica-privacidad" | "/properties/$id"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CatalogoRoute: typeof CatalogoRoute
+  PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
 }
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
+    "/politica-privacidad": {
+      id: "/politica-privacidad"
+      path: "/politica-privacidad"
+      fullPath: "/politica-privacidad"
+      preLoaderRoute: typeof PoliticaPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/catalogo": {
       id: "/catalogo"
       path: "/catalogo"
@@ -88,6 +106,7 @@ declare module "@tanstack/react-router" {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CatalogoRoute: CatalogoRoute,
+  PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
   PropertiesIdRoute: PropertiesIdRoute,
 }
 export const routeTree = rootRouteImport

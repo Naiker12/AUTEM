@@ -31,15 +31,15 @@ export default function Footer() {
             </div>
             <div className="space-y-3">
               <p className="text-foreground">Contacto</p>
-              <p>Marbella, España</p>
-              <p>+34 600 000 000</p>
+              <p>Cartagena, Colombia</p>
+              <p>+57 300 720 0894</p>
               <p>hola@autem.es</p>
             </div>
             <div className="space-y-3">
               <p className="text-foreground">Legal</p>
-              <a href="#" className="block hover:text-accent">
+              <Link to="/politica-privacidad" className="block hover:text-accent">
                 Privacidad
-              </a>
+              </Link>
               <a href="#" className="block hover:text-accent">
                 Términos
               </a>

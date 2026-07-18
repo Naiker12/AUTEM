@@ -65,6 +65,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
           alt={property.name}
           width={800}
           height={600}
+          loading="lazy"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-108"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
