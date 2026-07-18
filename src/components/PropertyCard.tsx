@@ -99,7 +99,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
                 window.open(getARModelUrl(property.slug), "_blank", "noopener,noreferrer");
               }
             }}
-            className="absolute bottom-4 right-4 z-10 flex cursor-pointer items-center gap-2 rounded-full bg-black/40 px-2.5 py-1.5 backdrop-blur-sm transition-all hover:bg-black/60"
+            className="absolute bottom-4 right-4 z-20 flex cursor-pointer items-center gap-2 rounded-full bg-black/40 px-2.5 py-1.5 backdrop-blur-sm transition-all hover:bg-black/60"
             aria-label="Ver en realidad aumentada"
           >
             <div className="rounded-sm bg-white p-1">
@@ -139,7 +139,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
           </div>
         </div>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/20 group-hover:opacity-100">
+        <div className="absolute inset-0 z-[5] flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/20 group-hover:opacity-100">
           <span className="rounded-full border border-white/40 bg-black/30 px-6 py-2 text-xs uppercase tracking-widest text-white backdrop-blur-sm">
             Ver detalles
           </span>
