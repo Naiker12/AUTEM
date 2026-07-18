@@ -265,7 +265,7 @@ function Index() {
             poster={heroVilla}
             className="parallax-slow h-full w-full object-cover"
           >
-            <source src="/video-del-hero.mp4" type="video/mp4" />
+            <source src={`${import.meta.env.BASE_URL}video-del-hero.mp4`} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/40" />
         </div>
@@ -329,7 +329,7 @@ function Index() {
             <h2 className="mt-2 font-serif text-4xl md:text-5xl">Proyectos destacados</h2>
           </div>
           <a
-            href="/catalogo"
+            href={`${import.meta.env.BASE_URL}catalogo`}
             className="self-start border-b border-primary pb-1 text-sm uppercase tracking-widest md:self-end"
           >
             Ver catálogo completo →
@@ -460,7 +460,10 @@ function Index() {
               playsInline
               className="relative z-10 aspect-square w-full rounded-2xl object-cover outline-1 -outline-offset-1 outline-white/10"
             >
-              <source src="/video-de-realidad-aumentada.mp4" type="video/mp4" />
+              <source
+                src={`${import.meta.env.BASE_URL}video-de-realidad-aumentada.mp4`}
+                type="video/mp4"
+              />
             </video>
             <div className="absolute -bottom-6 -right-6 z-20 hidden rounded-lg bg-accent p-8 shadow-2xl md:block">
               <p className="max-w-[12ch] text-sm font-bold leading-tight text-accent-foreground">
@@ -492,7 +495,7 @@ function Index() {
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted-warm">
           {/* Before image (base) */}
           <img
-            src="/antes.png"
+            src={`${import.meta.env.BASE_URL}antes.png`}
             alt="Terreno vacío antes de la construcción"
             className="h-full w-full object-cover"
           />
@@ -503,7 +506,7 @@ function Index() {
             style={{ clipPath: "inset(0 50% 0 0)" }}
           >
             <img
-              src="/despues.png"
+              src={`${import.meta.env.BASE_URL}despues.png`}
               alt="Propiedad terminada"
               className="h-full w-full object-cover"
               style={{ width: "100vw", maxWidth: "100%" }}
@@ -582,10 +585,10 @@ function Index() {
                 loop
                 muted
                 playsInline
-                poster="/antes.png"
+                poster={`${import.meta.env.BASE_URL}antes.png`}
                 className="absolute inset-0 h-full w-full object-cover"
               >
-                <source src="/video-del-panel.mp4" type="video/mp4" />
+                <source src={`${import.meta.env.BASE_URL}video-del-panel.mp4`} type="video/mp4" />
               </video>
 
               {/* HUD Overlays */}

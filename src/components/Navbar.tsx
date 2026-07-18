@@ -59,7 +59,7 @@ export default function Navbar({ variant }: NavbarProps) {
           {navItems.map((item) => (
             <a
               key={item.href}
-              href={isHome ? item.href : `/${item.href}`}
+              href={isHome ? item.href : `${import.meta.env.BASE_URL}${item.href}`}
               className="transition-colors hover:text-accent"
             >
               {item.label}
@@ -126,7 +126,7 @@ export default function Navbar({ variant }: NavbarProps) {
             {navItems.map((item) => (
               <a
                 key={item.href}
-                href={isHome ? item.href : `/${item.href}`}
+                href={isHome ? item.href : `${import.meta.env.BASE_URL}${item.href}`}
                 onClick={() => setMenuOpen(false)}
                 className="font-serif text-3xl italic text-white transition-colors hover:text-accent"
               >

@@ -344,7 +344,7 @@ function PropertyDetail() {
                     Agendar visita
                   </a>
                   <a
-                    href="/#contacto"
+                    href={`${import.meta.env.BASE_URL}#contacto`}
                     className="flex w-full items-center justify-center border border-border px-6 py-4 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
                   >
                     Solicitar información

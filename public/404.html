@@ -1,31 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <title>Redirecting...</title>
     <script>
-      // GitHub Pages SPA redirect — forwards /path to /?/path
-      // so TanStack Router can handle client-side routing.
+      // https://github.com/rafgraph/spa-github-pages
+      // Encodes the current path into a query string and redirects to the
+      // base directory so index.html can decode it back for client-side routing.
+      // pathSegmentsToKeep = 1 because GitHub Pages always serves from /{repo-name}/
       var pathSegmentsToKeep = 0;
       var l = window.location;
       l.replace(
-        l.protocol +
-          "//" +
-          l.hostname +
-          (l.port ? ":" + l.port : "") +
-          l.pathname
-            .split("/")
-            .slice(0, 1 + pathSegmentsToKeep)
-            .join("/") +
-          "/?/" +
-          l.pathname
-            .slice(1)
-            .split("/")
-            .slice(pathSegmentsToKeep)
-            .join("/")
-            .replace(/&/g, "~and~") +
+        l.protocol + "//" + l.hostname + (l.port ? ":" + l.port : "") +
+          l.pathname.split("/").slice(0, 1 + pathSegmentsToKeep).join("/") + "/?/" +
+          l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g, "~and~") +
           (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
-          l.hash,
+          l.hash
       );
     </script>
   </head>

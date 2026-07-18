@@ -16,13 +16,16 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-12 text-[10px] uppercase tracking-widest text-muted-foreground md:grid-cols-3">
             <div className="space-y-3">
               <p className="text-foreground">Explorar</p>
-              <a href="/#proyectos" className="block hover:text-accent">
+              <a href={`${import.meta.env.BASE_URL}#proyectos`} className="block hover:text-accent">
                 Proyectos
               </a>
-              <a href="/#tecnologia" className="block hover:text-accent">
+              <a
+                href={`${import.meta.env.BASE_URL}#tecnologia`}
+                className="block hover:text-accent"
+              >
                 Tecnología
               </a>
-              <a href="/#nosotros" className="block hover:text-accent">
+              <a href={`${import.meta.env.BASE_URL}#nosotros`} className="block hover:text-accent">
                 Nosotros
               </a>
             </div>

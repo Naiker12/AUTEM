@@ -88,7 +88,7 @@ export default function MapView({ properties }: MapViewProps) {
           <div style="font-size:16px;font-weight:500;margin:2px 0;">${p.name}</div>
           <div style="font-size:14px;color:#C5A059;font-weight:500;">${p.price}</div>
           <div style="font-size:12px;color:#888;margin-top:4px;">${p.m2} m² · ${p.bedrooms} hab.</div>
-          <a href="/properties/${p.slug}" style="display:inline-block;margin-top:8px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#1A1A1A;border-bottom:1px solid #C5A059;padding-bottom:2px;">Ver detalles →</a>
+          <a href="${import.meta.env.BASE_URL}properties/${p.slug}" style="display:inline-block;margin-top:8px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#1A1A1A;border-bottom:1px solid #C5A059;padding-bottom:2px;">Ver detalles →</a>
         </div>`,
         { maxWidth: 260 },
       );
