@@ -265,7 +265,7 @@ function Index() {
             poster={heroVilla}
             className="parallax-slow h-full w-full object-cover"
           >
-            <source src="/Video del Hero.mp4" type="video/mp4" />
+            <source src="/video-del-hero.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/40" />
         </div>
@@ -438,7 +438,7 @@ function Index() {
                         "ar-main-image",
                       ) as HTMLVideoElement | null;
                       if (video) {
-                        video.src = `/Set de 4 renders.mp4`;
+                        video.src = `/set-de-4-renders.mp4`;
                         video.play();
                       }
                     }}
@@ -460,7 +460,7 @@ function Index() {
               playsInline
               className="relative z-10 aspect-square w-full rounded-2xl object-cover outline-1 -outline-offset-1 outline-white/10"
             >
-              <source src="/Video de Realidad Aumentada.mp4" type="video/mp4" />
+              <source src="/video-de-realidad-aumentada.mp4" type="video/mp4" />
             </video>
             <div className="absolute -bottom-6 -right-6 z-20 hidden rounded-lg bg-accent p-8 shadow-2xl md:block">
               <p className="max-w-[12ch] text-sm font-bold leading-tight text-accent-foreground">
@@ -585,7 +585,7 @@ function Index() {
                 poster="/antes.png"
                 className="absolute inset-0 h-full w-full object-cover"
               >
-                <source src="/Video del panel.mp4" type="video/mp4" />
+                <source src="/video-del-panel.mp4" type="video/mp4" />
               </video>
 
               {/* HUD Overlays */}
