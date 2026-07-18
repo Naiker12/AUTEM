@@ -80,7 +80,7 @@ export const properties: Property[] = [
     lng: -75.5143,
     description: "Una residencia contemporánea con vistas panorámicas al Mar Caribe.",
     longDescription:
-      "Situada en la exclusiva zona de Bocagrande, Residencia Azure ofrece una experiencia de vida incomparable. Con 320 m² distribuidos en dos plantas, la propiedad cuenta con amplios espacios abiertos, ventanales de suelo a techo que inundan cada habitación de luz natural, y una terraza infinita con piscina privada.",
+      "Situada en la zona de Bocagrande, Residencia Azure ofrece 320 m² distribuidos en dos plantas con amplios espacios abiertos, ventanales de suelo a techo que inundan cada habitación de luz natural, y una terraza infinita con piscina privada.",
     features: [
       "Piscina infinita climatizada",
       "Domótica completa",
@@ -110,7 +110,7 @@ export const properties: Property[] = [
     lng: -75.5071,
     description: "Una villa sostenible integrada en la naturaleza de Castillogrande.",
     longDescription:
-      "Eco-Villa Sierra representa el futuro de la arquitectura sostenible en el Caribe colombiano. Construida con materiales reciclados y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela de 2.000 m² con vistas panorámicas al Cerro de la Popa.",
+      "Eco-Villa Sierra es arquitectura sostenible en el Caribe colombiano. Construida con materiales reciclados y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela de 2.000 m² con vistas panorámicas al Cerro de la Popa.",
     features: [
       "Certificación energética A",
       "Paneles solares",
@@ -138,9 +138,9 @@ export const properties: Property[] = [
     image: propertyHorizon,
     lat: 10.3993,
     lng: -75.5247,
-    description: "El pináculo del lujo en Manga. Suite de 540 m² con spa privado.",
+    description: "6 suites, spa privado y acceso directo al Laguito en Manga.",
     longDescription:
-      "The Horizon Suite redefine el concepto de lujo en la Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito.",
+      "The Horizon Suite es la suite más completa de la Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito.",
     features: [
       "Spa privado (sauna, baño turco, jacuzzi)",
       "Acceso directo al Laguito",
@@ -198,7 +198,7 @@ export const properties: Property[] = [
     image: propertyAzure,
     lat: 10.3898,
     lng: -75.5128,
-    description: "Penthouse de lujo con terraza panorámica en Bocagrande.",
+    description: "Terraza panorámica de 60 m² con vistas 360° al mar y la ciudad.",
     longDescription:
       "Solemar ocupa la planta superior de un edificio boutique en Bocagrande. Con 180 m² y una terraza de 60 m² con vistas 360° al mar y la ciudad, es la definición de vivir en las alturas del Caribe.",
     features: [
@@ -318,7 +318,7 @@ export const properties: Property[] = [
     image: propertyHorizon,
     lat: 10.388,
     lng: -75.5055,
-    description: "Penthouse exclusivo con rooftop pool en la residencia The Summit.",
+    description: "Rooftop privado con piscina y vistas panorámicas en Castillogrande.",
     longDescription:
       "The Summit Penthouse es una obra maestra de la arquitectura residencial. Con 420 m² en la planta más alta de The Summit, ofrece un rooftop privado con piscina, cocina de verano y vistas panorámicas que abarcan desde la bahía de Cartagena hasta el Mar Caribe.",
     features: [

@@ -12,7 +12,6 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useDeviceDetection, type DeviceInfo } from "@/hooks/useDeviceDetection";
-import { getARModelUrl } from "@/data/ar-models";
 
 const ModelViewer = lazy(() =>
   import("@google/model-viewer").then(() => ({
@@ -31,7 +30,11 @@ const FINISHES = [
 ];
 
 const PILOT_PROPERTY = "the-horizon-suite";
-const AR_URL = getARModelUrl(PILOT_PROPERTY);
+
+function getFullARUrl(): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.origin}${import.meta.env.BASE_URL}ar/${PILOT_PROPERTY}`;
+}
 
 function FirstTutorial({ onDismiss }: { onDismiss: () => void }) {
   return (
@@ -243,10 +246,10 @@ export default function ARExperience() {
         {/* Left: Copy + controls */}
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-accent">
-            Tecnología 2026
+            Realidad Aumentada
           </span>
           <h2 className="mt-6 font-serif text-4xl leading-tight md:text-6xl lg:text-7xl">
-            El futuro de la visita inmobiliaria.
+            Coloca el proyecto en tu sala antes de comprarlo.
           </h2>
           <p className="mt-8 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
             No imagines tu próximo hogar, camina en él. Coloca el modelo en tu espacio real con
@@ -396,7 +399,13 @@ export default function ARExperience() {
                 Escanea para verlo en tu sala
               </p>
               <div className="mt-3 rounded-md bg-white p-2">
-                <QRCodeSVG value={AR_URL} size={96} bgColor="#ffffff" fgColor="#1A1A1A" level="M" />
+                <QRCodeSVG
+                  value={getFullARUrl()}
+                  size={96}
+                  bgColor="#ffffff"
+                  fgColor="#1A1A1A"
+                  level="M"
+                />
               </div>
               <p className="mt-2 text-[9px] text-accent-foreground/60">
                 Abre la cámara de tu celular

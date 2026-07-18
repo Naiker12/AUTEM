@@ -10,7 +10,7 @@ export default function Footer() {
               AUTEM
             </Link>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              Arquitectura, tecnología y bienes raíces premium desde 2010.
+              Arquitectura, tecnología 3D y bienes raíces en Cartagena desde 2010.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-12 text-[10px] uppercase tracking-widest text-muted-foreground md:grid-cols-3">

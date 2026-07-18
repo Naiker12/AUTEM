@@ -1,15 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ArrowLeft, Loader2, Smartphone, HelpCircle, X, MessageCircle, Camera } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Smartphone,
+  HelpCircle,
+  X,
+  MessageCircle,
+  Camera,
+  AlertTriangle,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  ChevronDown,
+} from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
-import { getARModel, getARModelUrl } from "@/data/ar-models";
+import { getARModel } from "@/data/ar-models";
 import { properties } from "@/data/properties";
 
 const FINISHES = [
-  { id: "nordic", label: "Nórdico", color: "#E5E4E2", material: "Marmol blanco" },
-  { id: "walnut", label: "Nogal", color: "#4A3728", material: "Madera oscura" },
-  { id: "stone", label: "Piedra", color: "#8D918D", material: "Concreto pulido" },
-  { id: "gold", label: "Dorado", color: "#8A6A3B", material: "Latón cepillado" },
+  { id: "nordic", label: "Nórdico", color: "#E5E4E2", material: "Mármol blanco", hex: "#E5E4E2" },
+  { id: "walnut", label: "Nogal", color: "#4A3728", material: "Madera oscura", hex: "#4A3728" },
+  { id: "stone", label: "Piedra", color: "#8D918D", material: "Concreto pulido", hex: "#8D918D" },
+  { id: "gold", label: "Dorado", color: "#8A6A3B", material: "Latón cepillado", hex: "#8A6A3B" },
 ];
 
 export const Route = createFileRoute("/ar/$propertyId")({
@@ -19,27 +32,75 @@ export const Route = createFileRoute("/ar/$propertyId")({
   }),
 });
 
-function FirstTutorial({ onDismiss }: { onDismiss: () => void }) {
+function OnboardingOverlay({ onDismiss }: { onDismiss: () => void }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    {
+      icon: <Camera size={28} className="text-accent" />,
+      title: "Vive la experiencia",
+      desc: "Visualiza esta propiedad en 3D directo en tu pantalla.",
+    },
+    {
+      icon: <Smartphone size={28} className="text-accent" />,
+      title: "Explora en tu espacio",
+      desc: "En tu celular, presiona \"Ver en tu espacio\" para colocarla en tu hogar con realidad aumentada.",
+    },
+    {
+      icon: <RotateCcw size={28} className="text-accent" />,
+      title: "Interactúa",
+      desc: "Arrastra para rotar, pellizca para zoom, y toca los acabados para personalizar.",
+    },
+  ];
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
-        <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-accent/10">
-          <div className="relative">
-            <Smartphone size={32} className="text-accent" />
-            <div className="absolute -right-1 -top-1 size-3 rounded-full bg-accent animate-ping" />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="mx-4 w-full max-w-sm">
+        <div className="rounded-3xl bg-background p-8 text-center shadow-2xl popup-enter">
+          <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-accent/10">
+            {steps[step].icon}
+          </div>
+          <h3 className="font-serif text-xl">{steps[step].title}</h3>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            {steps[step].desc}
+          </p>
+
+          <div className="mt-6 flex items-center justify-center gap-2">
+            {steps.map((_, i) => (
+              <span
+                key={i}
+                className={`size-2 rounded-full transition-all ${
+                  i === step ? "w-6 bg-accent" : "bg-border"
+                }`}
+              />
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3">
+            {step < steps.length - 1 ? (
+              <>
+                <button
+                  onClick={() => setStep(step + 1)}
+                  className="w-full bg-primary px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  Siguiente
+                </button>
+                <button
+                  onClick={onDismiss}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Saltar
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={onDismiss}
+                className="w-full bg-primary px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                ¡Empezar!
+              </button>
+            )}
           </div>
         </div>
-        <h3 className="font-serif text-xl">Mueve tu celular</h3>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Apunta hacia el suelo para detectar el espacio. El modelo se colocará automáticamente
-          cuando encuentre el piso.
-        </p>
-        <button
-          onClick={onDismiss}
-          className="mt-6 w-full bg-primary px-6 py-3 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-        >
-          Entendido
-        </button>
       </div>
     </div>
   );
@@ -65,7 +126,7 @@ function PostARCTA({ propertyName, onClose }: { propertyName: string; onClose: (
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-[#25D366] px-6 py-3 text-xs font-medium uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+            className="flex items-center justify-center gap-2 bg-[#25D366] px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
           >
             <MessageCircle size={16} />
             Agendar por WhatsApp
@@ -82,30 +143,61 @@ function PostARCTA({ propertyName, onClose }: { propertyName: string; onClose: (
   );
 }
 
-function HelpTooltip({ onClose }: { onClose: () => void }) {
+function ARPermissionExplainer({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
   return (
-    <div className="absolute bottom-full left-1/2 z-30 mb-3 w-64 -translate-x-1/2 rounded-xl border border-border bg-background p-5 shadow-xl">
-      <button
-        onClick={onClose}
-        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-      >
-        <X size={14} />
-      </button>
-      <p className="text-xs font-bold uppercase tracking-widest text-accent">¿Cómo funciona?</p>
-      <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
-        <li className="flex gap-2">
-          <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-accent" />
-          <span>Toca el botón AR para iniciar</span>
-        </li>
-        <li className="flex gap-2">
-          <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-accent" />
-          <span>Apunta al suelo — el modelo se coloca solo</span>
-        </li>
-        <li className="flex gap-2">
-          <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-accent" />
-          <span>Arrastra para mover, dos dedos para rotar</span>
-        </li>
-      </ul>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
+        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-accent/10">
+          <Camera size={24} className="text-accent" />
+        </div>
+        <h3 className="font-serif text-lg">Permiso de cámara</h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Para ver la propiedad en tu espacio necesitamos acceso a tu cámara. 
+          Tu cámara <strong className="text-foreground">no se graba ni almacena</strong> — solo se usa en tiempo real para colocar el modelo.
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            onClick={onAccept}
+            className="w-full bg-primary px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            Permitir cámara
+          </button>
+          <button
+            onClick={onDecline}
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Solo ver en 3D
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ARErrorMessage({ error, onRetry, onFallback }: { error: string; onRetry: () => void; onFallback: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
+        <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-red-500/10">
+          <AlertTriangle size={24} className="text-red-500" />
+        </div>
+        <h3 className="font-serif text-lg">No se pudo iniciar AR</h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{error}</p>
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            onClick={onRetry}
+            className="w-full bg-primary px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            Intentar de nuevo
+          </button>
+          <button
+            onClick={onFallback}
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Seguir en 3D
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -116,12 +208,16 @@ function ModelViewerElement({
   poster,
   onLoaded,
   onProgress,
+  onError,
+  arSupported,
 }: {
   src: string;
   iosSrc?: string;
   poster?: string;
   onLoaded: () => void;
   onProgress: (p: number) => void;
+  onError: (msg: string) => void;
+  arSupported: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLElement | null>(null);
@@ -131,9 +227,11 @@ function ModelViewerElement({
     let cancelled = false;
 
     const init = async () => {
-      await import("@google/model-viewer");
+      const mv = await import("@google/model-viewer");
 
       if (cancelled || !containerRef.current) return;
+
+      void mv;
 
       const el = document.createElement("model-viewer");
       el.setAttribute("src", src);
@@ -149,9 +247,21 @@ function ModelViewerElement({
       el.setAttribute("min-camera-orbit", "auto auto 1m");
       el.setAttribute("max-camera-orbit", "Infinity Infinity 10m");
       el.setAttribute("interaction-prompt", "none");
+      el.setAttribute("touch-action", "pan-y");
+
+      if (arSupported) {
+        el.setAttribute("ar", "");
+        el.setAttribute("ar-modes", "scene-viewer webxr quick-look");
+        el.setAttribute("ar-scale", "fixed");
+        el.style.setProperty("--ar-button-width", "0px");
+        el.style.setProperty("--ar-button-height", "0px");
+        el.style.setProperty("--ar-button-display", "none");
+      }
+
       el.style.width = "100%";
       el.style.height = "100%";
       el.style.borderRadius = "1rem";
+      el.style.backgroundColor = "transparent";
 
       el.addEventListener("load", () => {
         if (!cancelled) {
@@ -164,6 +274,15 @@ function ModelViewerElement({
         const ev = e as { detail?: { totalProgress?: number } };
         if (ev.detail?.totalProgress !== undefined && !cancelled) {
           onProgress(Math.round(ev.detail.totalProgress * 100));
+        }
+      });
+
+      el.addEventListener("ar-status", (e: Event) => {
+        const ev = e as { detail?: { status?: string } };
+        if (!cancelled && ev.detail?.status === "failed") {
+          onError(
+            "La sesión de AR no se pudo iniciar. Asegúrate de tener una superficie plana cerca y que tu cámara esté habilitada.",
+          );
         }
       });
 
@@ -182,7 +301,7 @@ function ModelViewerElement({
         viewerRef.current = null;
       }
     };
-  }, [src, iosSrc, poster, onLoaded, onProgress]);
+  }, [src, iosSrc, poster, onLoaded, onProgress, onError, arSupported]);
 
   return (
     <div
@@ -190,7 +309,7 @@ function ModelViewerElement({
       className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-muted"
     >
       {!ready && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-muted">
           <Loader2 size={24} className="animate-spin text-accent" />
           <span className="text-xs text-muted-foreground">Cargando modelo 3D…</span>
         </div>
@@ -202,32 +321,38 @@ function ModelViewerElement({
 function ARViewerPage() {
   const { propertyId } = Route.useParams();
   const device = useDeviceDetection();
-  const [showTutorial, setShowTutorial] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showPostCTA, setShowPostCTA] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+  const [showPermissionExplainer, setShowPermissionExplainer] = useState(false);
+  const [showARError, setShowARError] = useState(false);
+  const [arErrorMessage, setArErrorMessage] = useState("");
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [modelError, setModelError] = useState(false);
+  const [selectedFinish, setSelectedFinish] = useState("nordic");
 
   const property = properties.find((p) => p.slug === propertyId);
   const arModel = getARModel(propertyId);
-  const arUrl = getARModelUrl(propertyId);
+
+  const isIOS = device.isIOS;
+  const hasUSDZ = Boolean(arModel?.usdz);
+  const canDoAR = device.supportsAR && (isIOS ? hasUSDZ : true);
 
   useEffect(() => {
     document.title = property ? `AR: ${property.name} | AUTEM` : "Experiencia AR | AUTEM";
   }, [property]);
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem("autem_ar_tutorial_seen");
-    if (!hasSeen && device.supportsAR) {
-      const timer = setTimeout(() => setShowTutorial(true), 1500);
+    const hasSeen = localStorage.getItem("autem_ar_onboarding_v2");
+    if (!hasSeen) {
+      const timer = setTimeout(() => setShowOnboarding(true), 800);
       return () => clearTimeout(timer);
     }
-  }, [device.supportsAR]);
+  }, []);
 
-  const dismissTutorial = useCallback(() => {
-    setShowTutorial(false);
-    localStorage.setItem("autem_ar_tutorial_seen", "1");
+  const dismissOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    localStorage.setItem("autem_ar_onboarding_v2", "1");
   }, []);
 
   const handleLoaded = useCallback(() => {
@@ -237,6 +362,50 @@ function ARViewerPage() {
 
   const handleProgress = useCallback((p: number) => {
     setLoadingProgress(p);
+  }, []);
+
+  const handleModelError = useCallback((_msg: string) => {
+    setModelError(true);
+  }, []);
+
+  const handleARError = useCallback((msg: string) => {
+    setArErrorMessage(msg);
+    setShowARError(true);
+  }, []);
+
+  const activateAR = useCallback(() => {
+    if (!canDoAR) {
+      if (isIOS && !hasUSDZ) {
+        handleARError(
+          "Tu iPhone requiere un archivo USDZ para AR. Este modelo aún no está disponible en ese formato. Mientras tanto, puedes explorar el modelo 3D en tu pantalla.",
+        );
+      } else {
+        handleARError(
+          "Tu navegador no soporta realidad aumentada. Prueba con Chrome en Android o Safari en iPhone.",
+        );
+      }
+      return;
+    }
+
+    setShowPermissionExplainer(true);
+  }, [canDoAR, isIOS, hasUSDZ, handleARError]);
+
+  const confirmAR = useCallback(() => {
+    setShowPermissionExplainer(false);
+    const viewer = document.querySelector("model-viewer") as HTMLElement & {
+      activateAR?: () => Promise<void>;
+    };
+    if (viewer?.activateAR) {
+      viewer.activateAR().catch(() => {
+        handleARError(
+          "No se pudo activar la cámara. Verifica los permisos de cámara en la configuración de tu dispositivo.",
+        );
+      });
+    }
+  }, [handleARError]);
+
+  const declineAR = useCallback(() => {
+    setShowPermissionExplainer(false);
   }, []);
 
   if (!property) {
@@ -285,14 +454,28 @@ function ARViewerPage() {
     );
   }
 
+  const selected = FINISHES.find((f) => f.id === selectedFinish) || FINISHES[0];
+
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
-      {showTutorial && <FirstTutorial onDismiss={dismissTutorial} />}
+      {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
       {showPostCTA && (
         <PostARCTA propertyName={property.name} onClose={() => setShowPostCTA(false)} />
       )}
+      {showPermissionExplainer && (
+        <ARPermissionExplainer onAccept={confirmAR} onDecline={declineAR} />
+      )}
+      {showARError && (
+        <ARErrorMessage
+          error={arErrorMessage}
+          onRetry={() => {
+            setShowARError(false);
+            activateAR();
+          }}
+          onFallback={() => setShowARError(false)}
+        />
+      )}
 
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -310,118 +493,154 @@ function ARViewerPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {device.supportsAR && (
+            {canDoAR && (
               <span className="flex items-center gap-1.5 rounded-full border border-[#25D366]/30 bg-[#25D366]/10 px-2.5 py-1 text-[10px] font-medium text-[#25D366]">
                 <span className="size-1.5 rounded-full bg-[#25D366] animate-pulse" />
                 AR disponible
               </span>
             )}
-            <button
-              onClick={() => setShowHelp(!showHelp)}
-              className="flex size-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Cómo funciona"
-            >
-              <HelpCircle size={14} />
-            </button>
+            {isIOS && !hasUSDZ && (
+              <span className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-medium text-amber-500">
+                <span className="size-1.5 rounded-full bg-amber-500" />
+                Solo 3D
+              </span>
+            )}
           </div>
         </div>
-
-        {showHelp && (
-          <div className="border-t border-border px-4 py-4">
-            <HelpTooltip onClose={() => setShowHelp(false)} />
-          </div>
-        )}
       </header>
 
-      {/* Model viewer */}
       <main id="main-content" className="mx-auto max-w-5xl px-4 py-6">
-        <div className="relative">
-          <ModelViewerElement
-            src={arModel.glb}
-            iosSrc={arModel.usdz}
-            onLoaded={handleLoaded}
-            onProgress={handleProgress}
-          />
-
-          {/* Loading progress bar */}
-          {modelLoaded && (
-            <div className="absolute bottom-4 left-4 right-4 z-20">
-              <div className="h-1 overflow-hidden rounded-full bg-black/20 backdrop-blur-sm">
-                <div
-                  className="h-full bg-accent transition-all duration-300"
-                  style={{ width: `${loadingProgress}%` }}
-                />
-              </div>
+        {modelError ? (
+          <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-border bg-muted/50">
+            <div className="text-center">
+              <AlertTriangle size={32} className="mx-auto mb-3 text-amber-500" />
+              <p className="text-sm text-muted-foreground">No se pudo cargar el modelo 3D</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 text-xs font-medium text-accent hover:underline"
+              >
+                Reintentar
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="relative">
+            <ModelViewerElement
+              src={arModel.glb}
+              iosSrc={hasUSDZ ? arModel.usdz : undefined}
+              onLoaded={handleLoaded}
+              onProgress={handleProgress}
+              onError={handleModelError}
+              arSupported={canDoAR}
+            />
 
-        {/* Finish swatches */}
+            {loadingProgress < 100 && (
+              <div className="absolute bottom-4 left-4 right-4 z-20">
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-background/80 px-4 py-3 backdrop-blur-md">
+                  <Loader2 size={14} className="animate-spin text-accent" />
+                  <div className="flex-1">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-border">
+                      <div
+                        className="h-full rounded-full bg-accent transition-all duration-300"
+                        style={{ width: `${loadingProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">{loadingProgress}%</span>
+                </div>
+              </div>
+            )}
+
+            {modelLoaded && (
+              <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 backdrop-blur-md">
+                <Volume2 size={10} className="text-muted-foreground" />
+                <span className="text-[9px] text-muted-foreground">Toca y arrastra para explorar</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-6">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Personaliza acabados
+            Acabados
           </p>
           <div className="flex gap-3">
             {FINISHES.map((swatch) => (
               <button
                 key={swatch.id}
                 aria-label={`Acabado ${swatch.label}`}
-                className="size-10 rounded-full border-2 border-border bg-[#E5E4E2] transition-all hover:scale-110 hover:border-accent"
+                onClick={() => setSelectedFinish(swatch.id)}
+                className={`relative size-10 rounded-full border-2 transition-all hover:scale-110 ${
+                  selectedFinish === swatch.id
+                    ? "border-accent ring-2 ring-accent/30 scale-110"
+                    : "border-border hover:border-accent/50"
+                }`}
                 style={{ backgroundColor: swatch.color }}
-              />
+              >
+                {selectedFinish === swatch.id && (
+                  <span className="absolute -bottom-1 left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-accent" />
+                )}
+              </button>
             ))}
           </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">{FINISHES[0].material}</p>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-[10px] font-medium text-foreground">{selected.label}</span>
+            <span className="text-[10px] text-muted-foreground">· {selected.material}</span>
+          </div>
         </div>
 
-        {/* Property info */}
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Superficie", value: `${property.m2} m²` },
             { label: "Habitaciones", value: `${property.bedrooms}` },
             { label: "Baños", value: `${property.bathrooms}` },
             { label: "Precio", value: property.price },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-border p-4">
+            <div key={item.label} className="rounded-xl border border-border p-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {item.label}
               </p>
-              <p className="mt-1 font-serif text-lg">{item.value}</p>
+              <p className="mt-1 font-serif text-base">{item.value}</p>
             </div>
           ))}
         </div>
 
-        {/* AR action area */}
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-          {device.supportsAR ? (
+        <div className="mt-8 flex flex-col gap-3">
+          {canDoAR ? (
             <button
-              onClick={() => {
-                const viewer = document.querySelector("model-viewer") as HTMLElement & {
-                  activateAR?: () => Promise<void>;
-                };
-                if (viewer?.activateAR) {
-                  viewer.activateAR();
-                }
-              }}
-              className="flex flex-1 items-center justify-center gap-3 bg-primary px-8 py-4 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"
+              onClick={activateAR}
+              className="flex items-center justify-center gap-3 bg-primary px-8 py-4 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"
             >
               <Smartphone size={18} />
               Ver en tu espacio
             </button>
           ) : (
-            <div className="flex-1 rounded-xl border border-border bg-muted/50 p-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Abre esta página desde tu celular para experimentar la realidad aumentada.
-              </p>
-              <p className="mt-1 text-[10px] text-muted-foreground/60">
-                Compatible con iPhone (iOS 12+) y Android con ARCore
-              </p>
+            <div className="rounded-xl border border-border bg-muted/50 px-6 py-4 text-center">
+              {isIOS && !hasUSDZ ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    La experiencia AR para iPhone próximamente.
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground/60">
+                    Explora el modelo 3D deslizando en la pantalla.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Abre esta página desde tu celular para experimentar la realidad aumentada.
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground/60">
+                    Compatible con iPhone (iOS 12+) y Android con ARCore
+                  </p>
+                </>
+              )}
             </div>
           )}
 
           <a
             href={`https://wa.me/573007200894?text=${encodeURIComponent(
-              `Hola AUTEM, me interesa "${property.name}" que vi en la experiencia AR.`,
+              `Hola AUTEM, me interesa "${property.name}" que vi en la experiencia AR. ¿Podría agendar una visita?`,
             )}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -432,10 +651,22 @@ function ARViewerPage() {
           </a>
         </div>
 
-        {/* Compatibility note */}
-        <p className="mt-6 text-center text-[10px] text-muted-foreground/60">
-          No necesitas descargar ninguna app. La experiencia AR funciona directo en tu navegador.
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-[10px] text-muted-foreground/60">
+            No necesitas descargar ninguna app. La experiencia AR funciona directo en tu navegador.
+          </p>
+        </div>
+
+        <div className="mt-8 border-t border-border pt-6">
+          <Link
+            to="/properties/$id"
+            params={{ id: property.slug }}
+            className="flex items-center justify-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft size={12} />
+            Volver a la ficha de {property.name}
+          </Link>
+        </div>
       </main>
     </div>
   );

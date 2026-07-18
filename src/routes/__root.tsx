@@ -69,21 +69,21 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
-        title: "AUTEM — Bienes raíces premium con visualización 3D y AR",
+        title: "AUTEM — Visualización 3D y realidad aumentada en bienes raíces",
       },
       {
         name: "description",
         content:
-          "Propiedades exclusivas que integran renders 3D, tours virtuales y realidad aumentada para una experiencia de inversión inmobiliaria sin precedentes.",
+          "Propiedades con renders 3D, tours virtuales y realidad aumentada para que las recorras, personalices y veas antes de la primera piedra.",
       },
       {
         property: "og:title",
-        content: "AUTEM — Bienes raíces premium",
+        content: "AUTEM — Arquitectura, tecnología y bienes raíces en Cartagena",
       },
       {
         property: "og:description",
         content:
-          "Arquitectura sin fronteras. Propiedades premium con tecnología 3D y realidad aumentada.",
+          "Propiedades que puedes recorrer, personalizar y ver en tu propio espacio antes de que exista la primera piedra.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

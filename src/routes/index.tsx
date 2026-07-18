@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
           "@type": "RealEstateAgent",
           name: "AUTEM Real Estate",
           description:
-            "Bienes raíces premium con visualización 3D, tours virtuales y realidad aumentada.",
+            "Bienes raíces en Cartagena con visualización 3D, tours virtuales y realidad aumentada.",
           areaServed: "Colombia",
         }),
       },
@@ -234,7 +234,7 @@ function Index() {
               AUTEM
             </span>
             <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/40">
-              Bienes raíces premium
+              Bienes raíces en Cartagena
             </p>
             <div className="mx-auto mt-8 h-px w-16 bg-accent/50" />
           </div>
@@ -281,8 +281,8 @@ function Index() {
               <span className="italic">sin fronteras</span>
             </h1>
             <p className="animate-fade-up delay-200 mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg">
-              Propiedades premium que integran renders 3D, tours virtuales y realidad aumentada para
-              una inversión inteligente.
+              Propiedades que puedes recorrer, personalizar y ver en tu propio espacio antes de que
+              exista la primera piedra.
             </p>
 
             {/* Search Bar */}
@@ -326,7 +326,7 @@ function Index() {
           <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                Exclusividad
+                Disponibles ahora
               </span>
               <h2 className="mt-2 font-serif text-4xl md:text-5xl">Proyectos destacados</h2>
             </div>
@@ -571,8 +571,7 @@ function Index() {
           data-animate
           className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
         >
-          <span className="text-xs font-bold uppercase tracking-widest text-accent">Confianza</span>
-          <h2 className="mt-2 max-w-3xl font-serif text-4xl md:text-5xl">
+          <h2 className="max-w-3xl font-serif text-4xl md:text-5xl">
             Clientes que ya invirtieron con nosotros.
           </h2>
           <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2">
@@ -713,7 +712,7 @@ function Index() {
               ¿Te vas tan pronto?
             </span>
             <h3 className="mt-4 font-serif text-3xl leading-tight md:text-4xl">
-              Descarga nuestro brochure exclusivo
+              Descarga nuestro brochure con renders, planos y detalles
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               Déjanos tu correo y te enviaremos nuestro portafolio completo con renders, planos y

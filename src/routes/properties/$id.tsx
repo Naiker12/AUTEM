@@ -49,7 +49,7 @@ function getPropertyData(id: string) {
       description:
         "Una residencia contemporánea con vistas panorámicas al Mar Caribe. Diseñada por arquitectos galardonados, esta propiedad combina líneas limpias con materiales naturales para crear un espacio de vida excepcional.",
       longDescription:
-        "Situada en la exclusiva zona de Bocagrande, Residencia Azure ofrece una experiencia de vida incomparable. Con 320 m² distribuidos en dos plantas, la propiedad cuenta con amplios espacios abiertos, ventanales de suelo a techo que inundan cada habitación de luz natural, y una terraza infinita con piscina privada. Los acabados de primera calidad incluyen mármoles nacionales, carpintería en maderas tropicales y un sistema domótico inteligente que controla cada aspecto del hogar.",
+        "Situada en la zona de Bocagrande, Residencia Azure ofrece 320 m² distribuidos en dos plantas con amplios espacios abiertos, ventanales de suelo a techo que inundan cada habitación de luz natural, y una terraza infinita con piscina privada. Los acabados incluyen mármoles nacionales, carpintería en maderas tropicales y un sistema domótico inteligente que controla cada aspecto del hogar.",
       image: propertyAzure,
       features: [
         "Piscina infinita climatizada",
@@ -72,7 +72,7 @@ function getPropertyData(id: string) {
       description:
         "Una villa sostenible integrada en la naturaleza de Castillogrande. Energía solar, sistemas de recolección de agua y materiales ecológicos se combinan con un diseño arquitectónico espectacular.",
       longDescription:
-        "Eco-Villa Sierra representa el futuro de la arquitectura sostenible en el Caribe colombiano. Construida con materiales reciclados y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela de 2,000 m² con vistas panorámicas al Cerro de la Popa. El diseño bioclimático maximiza la eficiencia energética mientras que los grandes ventanales difuminan la línea entre interior y exterior.",
+        "Eco-Villa Sierra es arquitectura sostenible en el Caribe colombiano. Construida con materiales reciclados y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela de 2,000 m² con vistas panorámicas al Cerro de la Popa. El diseño bioclimático maximiza la eficiencia energética mientras que los grandes ventanales difuminan la línea entre interior y exterior.",
       image: propertySierra,
       features: [
         "Certificación energética A",
@@ -93,9 +93,9 @@ function getPropertyData(id: string) {
       bedrooms: 6,
       bathrooms: 5,
       description:
-        "El pináculo del lujo en la Manga. Una suite de 540 m² con diseño vanguardista, spa privado y acceso directo al Laguito.",
+        "6 suites, spa privado y acceso directo al Laguito en la Manga. Una propiedad de 540 m² con diseño vanguardista.",
       longDescription:
-        "The Horizon Suite redefine el concepto de lujo en la Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito. La propiedad cuenta con acceso directo al Laguito y vistas ininterrumpidas al Mar Caribe.",
+        "The Horizon Suite es la suite más completa de la Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito. La propiedad cuenta con acceso directo al Laguito y vistas ininterrumpidas al Mar Caribe.",
       image: propertyHorizon,
       features: [
         "Spa privado (sauna, baño turco, jacuzzi)",
