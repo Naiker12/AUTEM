@@ -86,7 +86,15 @@ export const Route = createRootRoute({
           "Propiedades que puedes recorrer, personalizar y ver en tu propio espacio antes de que exista la primera piedra.",
       },
       { property: "og:type", content: "website" },
+      {
+        property: "og:image",
+        content: `${import.meta.env.BASE_URL}antes.png`,
+      },
       { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "twitter:image",
+        content: `${import.meta.env.BASE_URL}antes.png`,
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
