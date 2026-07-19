@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useModalA11y } from "@/hooks/useModalA11y";
+import { WHATSAPP_BASE_URL } from "@/data/constants";
 
 interface NavbarProps {
   variant: "home" | "inner";
@@ -14,12 +16,17 @@ const navItems = [
 
 export default function Navbar({ variant }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem("autem-theme");
+    if (stored) return stored === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  const menuRef = useModalA11y(menuOpen, () => setMenuOpen(false));
 
   const isHome = variant === "home";
 
   const whatsappUrl =
-    "https://wa.me/573007200894?text=" +
+    `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
   useEffect(() => {
@@ -28,6 +35,7 @@ export default function Navbar({ variant }: NavbarProps) {
     } else {
       document.documentElement.classList.remove("dark");
     }
+    localStorage.setItem("autem-theme", isDark ? "dark" : "light");
   }, [isDark]);
 
   useEffect(() => {
@@ -121,7 +129,13 @@ export default function Navbar({ variant }: NavbarProps) {
       </div>
 
       {menuOpen && (
-        <div className="menu-enter fixed inset-0 top-[88px] z-40 flex flex-col bg-primary md:hidden">
+        <div
+          ref={menuRef}
+          className="menu-enter fixed inset-0 top-[88px] z-40 flex flex-col bg-primary md:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de navegación"
+        >
           <div className="flex flex-1 flex-col items-center justify-center gap-10">
             {navItems.map((item) => (
               <a

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect, Suspense, lazy } from "react";
 import { MapPin, Grid3X3 } from "lucide-react";
+import { WHATSAPP_BASE_URL } from "@/data/constants";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
@@ -361,7 +362,7 @@ function CatalogoPage() {
             perfecta para tu inversión.
           </p>
           <a
-            href="https://wa.me/573007200894?text=Hola%20AUTEM%2C%20me%20gustar%C3%ADa%20una%20asesor%C3%ADa%20personalizada."
+            href={`${WHATSAPP_BASE_URL}?text=Hola%20AUTEM%2C%20me%20gustar%C3%ADa%20una%20asesor%C3%ADa%20personalizada.`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-8 inline-block bg-primary px-10 py-4 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"

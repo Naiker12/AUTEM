@@ -1,44 +1,26 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import {
-  HelpCircle,
-  Smartphone,
-  Monitor,
-  X,
-  Camera,
-  MessageCircle,
-  Loader2,
-  Eye,
-  RotateCcw,
-} from "lucide-react";
-import { useDeviceDetection, type DeviceInfo } from "@/hooks/useDeviceDetection";
-
-const ModelViewer = lazy(() =>
-  import("@google/model-viewer").then(() => ({
-    default: (props: Record<string, unknown>) => {
-      void props;
-      return null;
-    },
-  })),
-);
-
-const FINISHES = [
-  { id: "nordic", label: "Nórdico", color: "#E5E4E2", material: "Marmol blanco" },
-  { id: "walnut", label: "Nogal", color: "#4A3728", material: "Madera oscura" },
-  { id: "stone", label: "Piedra", color: "#8D918D", material: "Concreto pulido" },
-  { id: "gold", label: "Dorado", color: "#8A6A3B", material: "Latón cepillado" },
-];
+import { HelpCircle, Smartphone, Monitor, X, Loader2, Eye, RotateCcw } from "lucide-react";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import { useModalA11y } from "@/hooks/useModalA11y";
+import { getFullARUrl } from "@/data/ar-models";
+import { FINISHES } from "@/data/constants";
 
 const PILOT_PROPERTY = "the-horizon-suite";
 
-function getFullARUrl(): string {
-  if (typeof window === "undefined") return "";
-  return `${window.location.origin}${import.meta.env.BASE_URL}ar/${PILOT_PROPERTY}`;
-}
+const PILOT_MODEL_GLB = `${import.meta.env.BASE_URL}models/the-horizon-suite.glb`;
 
 function FirstTutorial({ onDismiss }: { onDismiss: () => void }) {
+  const modalRef = useModalA11y(true, onDismiss);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Tutorial de realidad aumentada"
+    >
       <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl">
         <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-accent/10">
           <div className="relative">
@@ -57,43 +39,6 @@ function FirstTutorial({ onDismiss }: { onDismiss: () => void }) {
         >
           Entendido
         </button>
-      </div>
-    </div>
-  );
-}
-
-function PostARCTA({ propertyName, onClose }: { propertyName: string; onClose: () => void }) {
-  const whatsappUrl = `https://wa.me/573007200894?text=${encodeURIComponent(
-    `Hola AUTEM, me interesa la propiedad "${propertyName}" que vi en realidad aumentada. Me gustaría agendar una visita.`,
-  )}`;
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
-        <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent/10">
-          <Camera size={24} className="text-accent" />
-        </div>
-        <h3 className="font-serif text-xl">¿Te gustó lo que viste?</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Agenda una visita presencial para conocer la propiedad en persona.
-        </p>
-        <div className="mt-6 flex flex-col gap-3">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-[#25D366] px-6 py-3 text-xs font-medium uppercase tracking-widest text-white transition-opacity hover:opacity-90"
-          >
-            <MessageCircle size={16} />
-            Agendar por WhatsApp
-          </a>
-          <button
-            onClick={onClose}
-            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Cerrar
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -143,28 +88,72 @@ function Desktop3DViewer({
   onFinishChange: (i: number) => void;
   selectedFinish: number;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!modelSrc || !containerRef.current) return;
+
+    let cancelled = false;
+    const container = containerRef.current;
+
+    const init = async () => {
+      const mv = await import("@google/model-viewer");
+      if (cancelled || !container) return;
+      void mv;
+
+      const el = document.createElement("model-viewer");
+      el.setAttribute("src", modelSrc);
+      el.setAttribute("alt", "Modelo 3D de la propiedad");
+      el.setAttribute("camera-controls", "");
+      el.setAttribute("auto-rotate", "");
+      el.setAttribute("shadow-intensity", "1");
+      el.setAttribute("shadow-softness", "1");
+      el.setAttribute("exposure", "1");
+      el.setAttribute("camera-orbit", "45deg 55deg 4m");
+      el.setAttribute("min-camera-orbit", "auto auto 1m");
+      el.setAttribute("max-camera-orbit", "Infinity Infinity 10m");
+      el.setAttribute("interaction-prompt", "none");
+      el.setAttribute("touch-action", "pan-y");
+
+      el.style.width = "100%";
+      el.style.height = "100%";
+      el.style.borderRadius = "1rem";
+      el.style.backgroundColor = "transparent";
+
+      el.addEventListener("load", () => {
+        if (!cancelled) setReady(true);
+      });
+
+      container.appendChild(el);
+      viewerRef.current = el;
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+      const viewer = viewerRef.current;
+      if (viewer && container) {
+        container.removeChild(viewer);
+        viewerRef.current = null;
+      }
+    };
+  }, [modelSrc]);
+
   return (
     <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted">
       {modelSrc ? (
-        <Suspense
-          fallback={
-            <div className="flex h-full flex-col items-center justify-center gap-3">
+        <>
+          {!ready && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3">
               <Loader2 size={24} className="animate-spin text-accent" />
               <span className="text-xs text-muted-foreground">Cargando modelo 3D…</span>
             </div>
-          }
-        >
-          <ModelViewer
-            src={modelSrc}
-            alt="Modelo 3D de la propiedad"
-            camera-controls
-            auto-rotate
-            shadow-intensity="1"
-            shadow-softness="1"
-            exposure="1"
-            style={{ width: "100%", height: "100%" }}
-          />
-        </Suspense>
+          )}
+          <div ref={containerRef} className="h-full w-full" />
+        </>
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
           <RotateCcw size={32} className="text-muted-foreground/40" />
@@ -201,7 +190,6 @@ export default function ARExperience() {
   const [selectedFinish, setSelectedFinish] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
-  const [showPostCTA, setShowPostCTA] = useState(false);
   const [modelLoading, setModelLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -227,20 +215,13 @@ export default function ARExperience() {
     }
   }, []);
 
-  const handleARExit = useCallback(() => {
-    setShowPostCTA(true);
-  }, []);
-
   return (
     <section
       id="tecnologia"
       data-animate
-      className="section-bridge overflow-hidden bg-primary py-24 text-primary-foreground opacity-0 md:py-32"
+      className="section-bridge overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32"
     >
       {showTutorial && <FirstTutorial onDismiss={dismissTutorial} />}
-      {showPostCTA && (
-        <PostARCTA propertyName="Villa Atlántico" onClose={() => setShowPostCTA(false)} />
-      )}
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:gap-20 md:px-8">
         {/* Left: Copy + controls */}
@@ -317,16 +298,13 @@ export default function ARExperience() {
           <div className="relative mt-10">
             <div className="flex items-center gap-3">
               {device.supportsAR ? (
-                <button
-                  onClick={() => {
-                    setModelLoading(true);
-                    handleARExit();
-                  }}
+                <a
+                  href={`${import.meta.env.BASE_URL}ar/${PILOT_PROPERTY}`}
                   className="flex items-center gap-3 bg-accent px-8 py-4 text-xs font-bold uppercase tracking-widest text-accent-foreground transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-accent/20"
                 >
                   <Eye size={18} />
                   Ver en tu espacio
-                </button>
+                </a>
               ) : device.isDesktop ? (
                 <button
                   onClick={() => setModelLoading(true)}
@@ -371,7 +349,7 @@ export default function ARExperience() {
 
           {device.isDesktop && modelLoading ? (
             <Desktop3DViewer
-              modelSrc=""
+              modelSrc={PILOT_MODEL_GLB}
               onFinishChange={setSelectedFinish}
               selectedFinish={selectedFinish}
             />
@@ -400,7 +378,7 @@ export default function ARExperience() {
               </p>
               <div className="mt-3 rounded-md bg-white p-2">
                 <QRCodeSVG
-                  value={getFullARUrl()}
+                  value={getFullARUrl(PILOT_PROPERTY)}
                   size={96}
                   bgColor="#ffffff"
                   fgColor="#1A1A1A"

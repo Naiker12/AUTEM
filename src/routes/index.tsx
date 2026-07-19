@@ -1,5 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useContactForm } from "@/hooks/useContactForm";
+import { useModalA11y } from "@/hooks/useModalA11y";
+import { WHATSAPP_BASE_URL } from "@/data/constants";
+import {
+  contactSchema,
+  brochureSchema,
+  type ContactFormData,
+  type BrochureFormData,
+} from "@/lib/validation";
 import heroVilla from "@/assets/hero-villa.jpg";
 import propertyAzure from "@/assets/property-azure.jpg";
 import propertySierra from "@/assets/property-sierra.jpg";
@@ -14,7 +25,17 @@ import { properties } from "@/data/properties";
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://autem.es/" }],
+    meta: [
+      {
+        property: "og:image",
+        content: `${import.meta.env.BASE_URL}antes.png`,
+      },
+      {
+        name: "twitter:image",
+        content: `${import.meta.env.BASE_URL}antes.png`,
+      },
+    ],
     scripts: [
       {
         type: "application/ld+json",
@@ -65,25 +86,111 @@ const navItems = [
 ];
 
 function Index() {
-  const [contactStatus, setContactStatus] = useState<"idle" | "sent">("idle");
+  const contactForm = useContactForm();
+  const brochureForm = useContactForm(
+    "Hola AUTEM, me gustaría recibir el brochure con renders, planos y detalles de inversión.",
+  );
+
+  const {
+    register: registerContact,
+    handleSubmit: validateContact,
+    formState: { errors: contactErrors },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
+
+  const {
+    register: registerBrochure,
+    handleSubmit: validateBrochure,
+    formState: { errors: brochureErrors },
+  } = useForm<BrochureFormData>({
+    resolver: zodResolver(brochureSchema),
+  });
   const [showLoader, setShowLoader] = useState(true);
+  const [hideModel, setHideModel] = useState(false);
   const [showExitPopup, setShowExitPopup] = useState(false);
+  const exitPopupRef = useModalA11y(showExitPopup, () => setShowExitPopup(false));
   const [cursorVariant, setCursorVariant] = useState<"default" | "hover">("default");
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const cursorRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
+  const loaderModelRef = useRef<HTMLElement | null>(null);
+  const loaderContainerRef = useRef<HTMLDivElement>(null);
+  const [modelVisible, setModelVisible] = useState(false);
+  const panelVideoRef = useRef<HTMLVideoElement>(null);
 
   const whatsappUrl =
-    "https://wa.me/573007200894?text=" +
+    `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
   // Page loader
   useEffect(() => {
-    const timer = setTimeout(() => setShowLoader(false), 2400);
+    const timer = setTimeout(() => setShowLoader(false), 2800);
     return () => clearTimeout(timer);
   }, []);
+
+  // Loader 3D model — mounts once, never destroyed (stays alive for AR cache)
+  useEffect(() => {
+    if (!loaderContainerRef.current) return;
+
+    let cancelled = false;
+    const container = loaderContainerRef.current;
+
+    const init = async () => {
+      const mv = await import("@google/model-viewer");
+      if (cancelled || !container) return;
+      void mv;
+
+      const el = document.createElement("model-viewer");
+      el.setAttribute("alt", "");
+      el.setAttribute("auto-rotate", "");
+      el.setAttribute("rotation-per-second", "18deg");
+      el.setAttribute("camera-orbit", "0deg 75deg 5m");
+      el.setAttribute("min-camera-orbit", "auto auto 3m");
+      el.setAttribute("max-camera-orbit", "auto auto 8m");
+      el.setAttribute("interaction-prompt", "none");
+      el.setAttribute("touch-action", "none");
+      el.setAttribute("shadow-intensity", "0");
+      el.setAttribute("environment-image", "neutral");
+
+      el.style.width = "100%";
+      el.style.height = "100%";
+      el.style.position = "absolute";
+      el.style.inset = "0";
+      el.style.opacity = "0";
+      el.style.transition = "opacity 1.8s ease-in";
+      el.style.transform = "scale(0.85)";
+      el.style.transformOrigin = "center center";
+
+      el.addEventListener("load", () => {
+        if (!cancelled) {
+          el.style.opacity = "0.55";
+          el.style.transform = "scale(1)";
+          setModelVisible(true);
+        }
+      });
+
+      container.appendChild(el);
+      loaderModelRef.current = el;
+
+      el.setAttribute("src", `${import.meta.env.BASE_URL}models/the-horizon-suite.glb`);
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fade out the loader model after it's been visible for 3s
+  useEffect(() => {
+    if (!modelVisible) return;
+    const timer = setTimeout(() => setHideModel(true), 3000);
+    return () => clearTimeout(timer);
+  }, [modelVisible]);
 
   // Custom cursor
   useEffect(() => {
@@ -167,6 +274,25 @@ function Index() {
     return () => observer.disconnect();
   }, [showLoader]);
 
+  // Lazy-load panel video when section enters viewport
+  useEffect(() => {
+    const video = panelVideoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
   // Comparison slider logic
   useEffect(() => {
     const clip = document.getElementById("comparison-clip");
@@ -225,18 +351,26 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
-      {/* Page Loader / Curtain */}
+      {/* 3D Model — persistent, never destroyed (stays alive for AR cache) */}
+      <div
+        ref={loaderContainerRef}
+        className={`fixed inset-0 z-[9998] overflow-hidden bg-primary transition-opacity duration-[2000ms] ${
+          hideModel ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+      />
+
+      {/* Page Loader / Curtain — transparent so the 3D model shows through */}
       {showLoader && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-primary">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center">
           <div className="curtain-sweep absolute inset-0 bg-accent/10" />
           <div className="relative z-10 text-center">
-            <span className="logo-glow font-serif text-5xl italic tracking-tight text-accent md:text-7xl">
+            <span className="logo-glow font-serif text-5xl italic tracking-tight text-white drop-shadow-2xl md:text-7xl">
               AUTEM
             </span>
-            <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/40">
+            <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/50 drop-shadow-lg">
               Bienes raíces en Cartagena
             </p>
-            <div className="mx-auto mt-8 h-px w-16 bg-accent/50" />
+            <div className="mx-auto mt-8 h-px w-16 bg-white/30" />
           </div>
         </div>
       )}
@@ -483,10 +617,11 @@ function Index() {
             <div className="relative md:col-span-3">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#101015] to-[#050506] outline outline-1 -outline-offset-1 outline-white/10">
                 <video
-                  autoPlay
+                  ref={panelVideoRef}
                   loop
                   muted
                   playsInline
+                  preload="none"
                   poster={`${import.meta.env.BASE_URL}antes.png`}
                   className="absolute inset-0 h-full w-full object-cover"
                 >
@@ -609,27 +744,13 @@ function Index() {
                 const form = e.currentTarget;
                 const formData = new FormData(form);
                 if (formData.get("website")) return;
-                setContactStatus("sent");
-                const data = {
-                  name: formData.get("name") as string,
-                  email: formData.get("email") as string,
-                  message: formData.get("message") as string,
-                };
-                fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    service_id: "service_default",
-                    template_id: "template_contact",
-                    user_id: "user_placeholder",
-                    template_params: {
-                      from_name: data.name,
-                      from_email: data.email,
-                      message: data.message,
-                      to_name: "Equipo AUTEM",
-                    },
-                  }),
-                }).catch(() => {});
+                validateContact((data) => {
+                  contactForm.handleSubmit({
+                    name: data.name,
+                    email: data.email,
+                    message: data.message,
+                  });
+                })(e);
               }}
             >
               <div className="absolute left-[-9999px]" aria-hidden="true">
@@ -641,42 +762,53 @@ function Index() {
                   Nombre
                 </label>
                 <input
-                  required
-                  maxLength={100}
-                  name="name"
+                  {...registerContact("name")}
                   type="text"
                   className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
                 />
+                {contactErrors.name && (
+                  <p className="mt-1 text-xs text-red-500">{contactErrors.name.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                   Correo electrónico
                 </label>
                 <input
-                  required
-                  maxLength={255}
-                  name="email"
+                  {...registerContact("email")}
                   type="email"
                   className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
                 />
+                {contactErrors.email && (
+                  <p className="mt-1 text-xs text-red-500">{contactErrors.email.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                   Mensaje
                 </label>
                 <textarea
-                  maxLength={1000}
-                  name="message"
+                  {...registerContact("message")}
                   rows={3}
                   className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
                 />
+                {contactErrors.message && (
+                  <p className="mt-1 text-xs text-red-500">{contactErrors.message.message}</p>
+                )}
               </div>
               <MagneticButton
                 type="submit"
                 strength={0.15}
+                disabled={contactForm.status === "sending"}
                 className="w-full bg-primary px-12 py-5 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground md:w-auto"
               >
-                {contactStatus === "sent" ? "✓ Mensaje enviado" : "Agendar consultoría"}
+                {contactForm.status === "sent"
+                  ? "✓ Mensaje enviado"
+                  : contactForm.status === "sending"
+                    ? "Abriendo WhatsApp..."
+                    : contactForm.status === "error"
+                      ? "Error — intentar de nuevo"
+                      : "Agendar consultoría"}
               </MagneticButton>
             </form>
           </div>
@@ -706,7 +838,13 @@ function Index() {
 
       {/* Exit Intent Popup */}
       {showExitPopup && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div
+          ref={exitPopupRef}
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Descarga nuestro brochure"
+        >
           <div className="popup-enter mx-4 max-w-lg rounded-2xl bg-background p-10 shadow-2xl md:p-14">
             <span className="text-[10px] font-bold uppercase tracking-widest text-accent">
               ¿Te vas tan pronto?
@@ -722,22 +860,36 @@ function Index() {
               className="mt-8 space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                setShowExitPopup(false);
+                validateBrochure((data) => {
+                  brochureForm.handleSubmit({ email: data.email });
+                })(e);
               }}
             >
-              <input
-                required
-                type="email"
-                placeholder="Tu correo electrónico"
-                className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
-              />
+              <div>
+                <input
+                  {...registerBrochure("email")}
+                  type="email"
+                  placeholder="Tu correo electrónico"
+                  className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none"
+                />
+                {brochureErrors.email && (
+                  <p className="mt-1 text-xs text-red-500">{brochureErrors.email.message}</p>
+                )}
+              </div>
               <div className="flex gap-3">
                 <MagneticButton
                   type="submit"
                   strength={0.15}
+                  disabled={brochureForm.status === "sending"}
                   className="flex-1 bg-primary px-6 py-4 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"
                 >
-                  Recibir brochure
+                  {brochureForm.status === "sent"
+                    ? "✓ Enviado por WhatsApp"
+                    : brochureForm.status === "sending"
+                      ? "Abriendo WhatsApp..."
+                      : brochureForm.status === "error"
+                        ? "Error — intentar de nuevo"
+                        : "Recibir brochure"}
                 </MagneticButton>
                 <button
                   type="button"

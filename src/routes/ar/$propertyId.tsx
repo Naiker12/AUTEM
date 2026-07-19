@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useModalA11y } from "@/hooks/useModalA11y";
 import {
   ArrowLeft,
   Loader2,
@@ -15,15 +16,9 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
-import { getARModel } from "@/data/ar-models";
+import { getARModel, hasUSDZFile } from "@/data/ar-models";
 import { properties } from "@/data/properties";
-
-const FINISHES = [
-  { id: "nordic", label: "Nórdico", color: "#E5E4E2", material: "Mármol blanco", hex: "#E5E4E2" },
-  { id: "walnut", label: "Nogal", color: "#4A3728", material: "Madera oscura", hex: "#4A3728" },
-  { id: "stone", label: "Piedra", color: "#8D918D", material: "Concreto pulido", hex: "#8D918D" },
-  { id: "gold", label: "Dorado", color: "#8A6A3B", material: "Latón cepillado", hex: "#8A6A3B" },
-];
+import { FINISHES, WHATSAPP_BASE_URL } from "@/data/constants";
 
 export const Route = createFileRoute("/ar/$propertyId")({
   component: ARViewerPage,
@@ -34,6 +29,7 @@ export const Route = createFileRoute("/ar/$propertyId")({
 
 function OnboardingOverlay({ onDismiss }: { onDismiss: () => void }) {
   const [step, setStep] = useState(0);
+  const modalRef = useModalA11y(true, onDismiss);
   const steps = [
     {
       icon: <Camera size={28} className="text-accent" />,
@@ -43,7 +39,7 @@ function OnboardingOverlay({ onDismiss }: { onDismiss: () => void }) {
     {
       icon: <Smartphone size={28} className="text-accent" />,
       title: "Explora en tu espacio",
-      desc: "En tu celular, presiona \"Ver en tu espacio\" para colocarla en tu hogar con realidad aumentada.",
+      desc: 'En tu celular, presiona "Ver en tu espacio" para colocarla en tu hogar con realidad aumentada.',
     },
     {
       icon: <RotateCcw size={28} className="text-accent" />,
@@ -53,16 +49,20 @@ function OnboardingOverlay({ onDismiss }: { onDismiss: () => void }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Tutorial de realidad aumentada"
+    >
       <div className="mx-4 w-full max-w-sm">
         <div className="rounded-3xl bg-background p-8 text-center shadow-2xl popup-enter">
           <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-accent/10">
             {steps[step].icon}
           </div>
           <h3 className="font-serif text-xl">{steps[step].title}</h3>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            {steps[step].desc}
-          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{steps[step].desc}</p>
 
           <div className="mt-6 flex items-center justify-center gap-2">
             {steps.map((_, i) => (
@@ -107,12 +107,19 @@ function OnboardingOverlay({ onDismiss }: { onDismiss: () => void }) {
 }
 
 function PostARCTA({ propertyName, onClose }: { propertyName: string; onClose: () => void }) {
-  const whatsappUrl = `https://wa.me/573007200894?text=${encodeURIComponent(
+  const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
     `Hola AUTEM, me interesa "${propertyName}" que vi en realidad aumentada. Me gustaría agendar una visita.`,
   )}`;
+  const modalRef = useModalA11y(true, onClose);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Contacto post AR"
+    >
       <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
         <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent/10">
           <Camera size={24} className="text-accent" />
@@ -143,17 +150,32 @@ function PostARCTA({ propertyName, onClose }: { propertyName: string; onClose: (
   );
 }
 
-function ARPermissionExplainer({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
+function ARPermissionExplainer({
+  onAccept,
+  onDecline,
+}: {
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const modalRef = useModalA11y(true, onDecline);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Permiso de cámara"
+    >
       <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
         <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-accent/10">
           <Camera size={24} className="text-accent" />
         </div>
         <h3 className="font-serif text-lg">Permiso de cámara</h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Para ver la propiedad en tu espacio necesitamos acceso a tu cámara. 
-          Tu cámara <strong className="text-foreground">no se graba ni almacena</strong> — solo se usa en tiempo real para colocar el modelo.
+          Para ver la propiedad en tu espacio necesitamos acceso a tu cámara. Tu cámara{" "}
+          <strong className="text-foreground">no se graba ni almacena</strong> — solo se usa en
+          tiempo real para colocar el modelo.
         </p>
         <div className="mt-6 flex flex-col gap-3">
           <button
@@ -174,9 +196,25 @@ function ARPermissionExplainer({ onAccept, onDecline }: { onAccept: () => void; 
   );
 }
 
-function ARErrorMessage({ error, onRetry, onFallback }: { error: string; onRetry: () => void; onFallback: () => void }) {
+function ARErrorMessage({
+  error,
+  onRetry,
+  onFallback,
+}: {
+  error: string;
+  onRetry: () => void;
+  onFallback: () => void;
+}) {
+  const modalRef = useModalA11y(true, onFallback);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Error de realidad aumentada"
+    >
       <div className="mx-4 max-w-sm rounded-2xl bg-background p-8 text-center shadow-2xl popup-enter">
         <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-red-500/10">
           <AlertTriangle size={24} className="text-red-500" />
@@ -225,11 +263,12 @@ function ModelViewerElement({
 
   useEffect(() => {
     let cancelled = false;
+    const container = containerRef.current;
 
     const init = async () => {
       const mv = await import("@google/model-viewer");
 
-      if (cancelled || !containerRef.current) return;
+      if (cancelled || !container) return;
 
       void mv;
 
@@ -277,6 +316,12 @@ function ModelViewerElement({
         }
       });
 
+      el.addEventListener("error", () => {
+        if (!cancelled) {
+          onError("No se pudo cargar el modelo 3D. Verifica tu conexión e intenta de nuevo.");
+        }
+      });
+
       el.addEventListener("ar-status", (e: Event) => {
         const ev = e as { detail?: { status?: string } };
         if (!cancelled && ev.detail?.status === "failed") {
@@ -286,7 +331,7 @@ function ModelViewerElement({
         }
       });
 
-      containerRef.current.appendChild(el);
+      container.appendChild(el);
       viewerRef.current = el;
     };
 
@@ -294,7 +339,6 @@ function ModelViewerElement({
 
     return () => {
       cancelled = true;
-      const container = containerRef.current;
       const viewer = viewerRef.current;
       if (viewer && container) {
         container.removeChild(viewer);
@@ -335,7 +379,7 @@ function ARViewerPage() {
   const arModel = getARModel(propertyId);
 
   const isIOS = device.isIOS;
-  const hasUSDZ = Boolean(arModel?.usdz);
+  const hasUSDZ = hasUSDZFile(propertyId);
   const canDoAR = device.supportsAR && (isIOS ? hasUSDZ : true);
 
   useEffect(() => {
@@ -546,7 +590,9 @@ function ARViewerPage() {
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] font-medium text-muted-foreground">{loadingProgress}%</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    {loadingProgress}%
+                  </span>
                 </div>
               </div>
             )}
@@ -554,7 +600,9 @@ function ARViewerPage() {
             {modelLoaded && (
               <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 backdrop-blur-md">
                 <Volume2 size={10} className="text-muted-foreground" />
-                <span className="text-[9px] text-muted-foreground">Toca y arrastra para explorar</span>
+                <span className="text-[9px] text-muted-foreground">
+                  Toca y arrastra para explorar
+                </span>
               </div>
             )}
           </div>
@@ -639,7 +687,7 @@ function ARViewerPage() {
           )}
 
           <a
-            href={`https://wa.me/573007200894?text=${encodeURIComponent(
+            href={`${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
               `Hola AUTEM, me interesa "${property.name}" que vi en la experiencia AR. ¿Podría agendar una visita?`,
             )}`}
             target="_blank"
