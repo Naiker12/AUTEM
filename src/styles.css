@@ -36,6 +36,7 @@
 }
 
 :root {
+  color-scheme: light dark;
   --radius: 0.25rem;
   --background: oklch(0.972 0.008 85); /* #F9F7F2 warm ivory */
   --foreground: oklch(0.208 0.005 285); /* #1A1A1A near black */
@@ -510,12 +511,20 @@
 
 /* Page transition overlay */
 @keyframes page-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes page-fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* ── Reduced motion ── */
