@@ -3,7 +3,7 @@ import { Heart } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 import type { Property } from "@/data/properties";
-import { getARModelUrl, getARModel } from "@/data/ar-models";
+import { getFullARUrl, getARModel } from "@/data/ar-models";
 
 interface PropertyCardProps {
   property: Property;
@@ -90,13 +90,13 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              window.open(getARModelUrl(property.slug), "_blank", "noopener,noreferrer");
+              window.open(getFullARUrl(property.slug), "_blank", "noopener,noreferrer");
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 e.stopPropagation();
-                window.open(getARModelUrl(property.slug), "_blank", "noopener,noreferrer");
+                window.open(getFullARUrl(property.slug), "_blank", "noopener,noreferrer");
               }
             }}
             className="absolute bottom-4 right-4 z-20 flex cursor-pointer items-center gap-2 rounded-full bg-black/40 px-2.5 py-1.5 backdrop-blur-sm transition-all hover:bg-black/60"
@@ -104,7 +104,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
           >
             <div className="rounded-sm bg-white p-1">
               <QRCodeSVG
-                value={getARModelUrl(property.slug)}
+                value={getFullARUrl(property.slug)}
                 size={24}
                 bgColor="#ffffff"
                 fgColor="#1A1A1A"
