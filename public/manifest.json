@@ -1,0 +1,16 @@
+{
+  "name": "AUTEM",
+  "short_name": "AUTEM",
+  "description": "Propiedades con renders 3D, tours virtuales y realidad aumentada.",
+  "start_url": "%BASE_URL%",
+  "display": "standalone",
+  "background_color": "#0B0B0C",
+  "theme_color": "#0B0B0C",
+  "icons": [
+    {
+      "src": "%BASE_URL%favicon.ico",
+      "sizes": "64x64 32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}
