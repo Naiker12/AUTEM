@@ -195,7 +195,7 @@ export const properties: Property[] = [
     bedrooms: 3,
     bathrooms: 2,
     type: "penthouse",
-    tags: ["AR Ready"],
+    tags: [],
     image: propertyAzure,
     lat: 10.3898,
     lng: -75.5128,
@@ -285,7 +285,7 @@ export const properties: Property[] = [
     bedrooms: 4,
     bathrooms: 3,
     type: "villa",
-    tags: ["AR Ready", "Nuevo lanzamiento"],
+    tags: ["Nuevo lanzamiento"],
     image: propertyAzure,
     lat: 10.4065,
     lng: -75.5431,
@@ -315,7 +315,7 @@ export const properties: Property[] = [
     bedrooms: 5,
     bathrooms: 4,
     type: "penthouse",
-    tags: ["3D Tour", "AR Ready"],
+    tags: ["3D Tour"],
     image: propertyHorizon,
     lat: 10.388,
     lng: -75.5055,
@@ -349,8 +349,7 @@ export const properties: Property[] = [
     image: propertyHorizon,
     lat: 10.2985,
     lng: -75.5725,
-    description:
-      "Casa estilo farmhouse de un piso con alberca privada y jardín tropical en Barú.",
+    description: "Casa estilo farmhouse de un piso con alberca privada y jardín tropical en Barú.",
     longDescription:
       "Casa Campestre AUTEM es una residencia de estilo campestre americano ubicada en Barú. Con 388 m² de construcción en una sola planta, ofrece un diseño cálido y funcional con techos altos de vigas de madera, amplios espacios abiertos y una integración total con el jardín tropical circundante. La alberca rectangular privada y las zonas de estar exterior la hacen ideal para familias que buscan comodidad y contacto con la naturaleza.",
     features: [

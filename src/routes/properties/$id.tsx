@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useContactForm } from "@/hooks/useContactForm";
 import { Download } from "lucide-react";
-import propertyAzure from "@/assets/property-azure.jpg";
-import propertySierra from "@/assets/property-sierra.jpg";
-import propertyHorizon from "@/assets/property-horizon.jpg";
+import { properties, getPropertyById } from "@/data/properties";
+import { WHATSAPP_BASE_URL } from "@/data/constants";
+import { contactSchema, type ContactFormData } from "@/lib/validation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MagneticButton from "@/components/MagneticButton";
@@ -11,21 +14,36 @@ import MagneticButton from "@/components/MagneticButton";
 export const Route = createFileRoute("/properties/$id")({
   component: PropertyDetail,
   head: ({ params }) => ({
-    links: [{ rel: "canonical", href: `/properties/${params.id}` }],
+    links: [
+      {
+        rel: "canonical",
+        href: `https://autem.es/properties/${params.id}`,
+      },
+    ],
+    meta: [
+      {
+        property: "og:image",
+        content: getPropertyById(params.id)?.image || `${import.meta.env.BASE_URL}antes.png`,
+      },
+      {
+        name: "twitter:image",
+        content: getPropertyById(params.id)?.image || `${import.meta.env.BASE_URL}antes.png`,
+      },
+    ],
     scripts: [
       {
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "RealEstateListing",
-          name: getPropertyData(params.id)?.name || "Propiedad",
-          description: getPropertyData(params.id)?.description || "",
+          name: getPropertyById(params.id)?.name || "Propiedad",
+          description: getPropertyById(params.id)?.description || "",
           url: `https://autem.es/properties/${params.id}`,
-          image: getPropertyData(params.id)?.image || "",
+          image: getPropertyById(params.id)?.image || "",
           offers: {
             "@type": "Offer",
             price:
-              getPropertyData(params.id)
+              getPropertyById(params.id)
                 ?.price.replace("Desde ", "")
                 .replace("$", "")
                 .replace("M USD", "000000")
@@ -38,113 +56,21 @@ export const Route = createFileRoute("/properties/$id")({
   }),
 });
 
-function getPropertyData(id: string) {
-  const properties = {
-    "residencia-azure": {
-      name: "Residencia Azure",
-      location: "Bocagrande, CO",
-      price: "Desde $1.2M USD",
-      m2: "320 m²",
-      bedrooms: 4,
-      bathrooms: 3,
-      description:
-        "Una residencia contemporánea con vistas panorámicas al Mar Caribe. Diseñada por arquitectos galardonados, esta propiedad combina líneas limpias con materiales naturales para crear un espacio de vida excepcional.",
-      longDescription:
-        "Situada en la zona de Bocagrande, Residencia Azure ofrece 320 m² distribuidos en dos plantas con amplios espacios abiertos, ventanales de suelo a techo que inundan cada habitación de luz natural, y una terraza infinita con piscina privada. Los acabados incluyen mármoles nacionales, carpintería en maderas tropicales y un sistema domótico inteligente que controla cada aspecto del hogar.",
-      image: propertyAzure,
-      features: [
-        "Piscina infinita climatizada",
-        "Domótica completa",
-        "Vistas al mar",
-        "Garaje para 3 vehículos",
-        "Bodega privada",
-        "Gimnasio equipado",
-      ],
-      floorPlan: "3 habitaciones + suite principal · 2 plantas · sótano",
-      year: 2024,
-    },
-    "eco-villa-sierra": {
-      name: "Eco-Villa Sierra",
-      location: "Castillogrande, CO",
-      price: "Desde $850K USD",
-      m2: "410 m²",
-      bedrooms: 5,
-      bathrooms: 4,
-      description:
-        "Una villa sostenible integrada en la naturaleza de Castillogrande. Energía solar, sistemas de recolección de agua y materiales ecológicos se combinan con un diseño arquitectónico espectacular.",
-      longDescription:
-        "Eco-Villa Sierra es arquitectura sostenible en el Caribe colombiano. Construida con materiales reciclados y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela de 2,000 m² con vistas panorámicas al Cerro de la Popa. El diseño bioclimático maximiza la eficiencia energética mientras que los grandes ventanales difuminan la línea entre interior y exterior.",
-      image: propertySierra,
-      features: [
-        "Certificación energética A",
-        "Paneles solares",
-        "Recolección de aguas pluviales",
-        "Jardín nativo de bajo consumo",
-        "Cocina exterior equipada",
-        "Cargador para vehículo eléctrico",
-      ],
-      floorPlan: "4 habitaciones + suite · 3 plantas · azotea",
-      year: 2025,
-    },
-    "the-horizon-suite": {
-      name: "The Horizon Suite",
-      location: "Manga, CO",
-      price: "Desde $2.1M USD",
-      m2: "540 m²",
-      bedrooms: 6,
-      bathrooms: 5,
-      description:
-        "6 suites, spa privado y acceso directo al Laguito en la Manga. Una propiedad de 540 m² con diseño vanguardista.",
-      longDescription:
-        "The Horizon Suite es la suite más completa de la Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito. La propiedad cuenta con acceso directo al Laguito y vistas ininterrumpidas al Mar Caribe.",
-      image: propertyHorizon,
-      features: [
-        "Spa privado (sauna, baño turco, jacuzzi)",
-        "Acceso directo al Laguito",
-        "Terraza panorámica 180°",
-        "Cine en casa",
-        "Cava climatizada",
-        "Personal de servicio incluido",
-      ],
-      floorPlan: "6 suites · spa · terraza 120m² · garaje 4 plazas",
-      year: 2024,
-    },
-    "casa-campestre": {
-      name: "Casa Campestre AUTEM",
-      location: "Barú, CO",
-      price: "Desde $680K USD",
-      m2: "388 m²",
-      bedrooms: 3,
-      bathrooms: 3,
-      description:
-        "Casa estilo farmhouse de un piso con alberca privada y jardín tropical en Barú.",
-      longDescription:
-        "Casa Campestre AUTEM es una residencia de estilo campestre americano ubicada en Barú. Con 388 m² de construcción en una sola planta, ofrece un diseño cálido y funcional con techos altos de vigas de madera, amplios espacios abiertos y una integración total con el jardín tropical circundante. La alberca rectangular privada y las zonas de estar exterior la hacen ideal para familias que buscan comodidad y contacto con la naturaleza.",
-      image: propertyHorizon,
-      features: [
-        "Alberca rectangular privada",
-        "Jardín tropical amplio",
-        "Techos altos con vigas de madera",
-        "Integración interior-exterior",
-        "Cocina gourmet abierta",
-        "Terraza cubierta con asador",
-      ],
-      floorPlan: "3 habitaciones · 1 planta · alberca · jardín",
-      year: 2025,
-      floorPlanPdf: `${import.meta.env.BASE_URL}models/export.pdf`,
-    },
-  };
-  return properties[id as keyof typeof properties] || null;
-}
-
 function PropertyDetail() {
   const { id } = Route.useParams();
-  const property = getPropertyData(id);
+  const property = getPropertyById(id);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [contactStatus, setContactStatus] = useState<"idle" | "sent">("idle");
   const [mortgageAmount, setMortgageAmount] = useState(500000);
   const [mortgageYears, setMortgageYears] = useState(25);
   const [mortgageRate, setMortgageRate] = useState(3.5);
+  const propertyContactForm = useContactForm();
+  const {
+    register: registerProp,
+    handleSubmit: validateProp,
+    formState: { errors: propErrors },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
 
   if (!property) {
     return (
@@ -168,7 +94,7 @@ function PropertyDetail() {
     );
   }
 
-  const images = [property.image, property.image, property.image];
+  const images = [property.image];
 
   const monthlyPayment =
     mortgageAmount > 0 && mortgageYears > 0 && mortgageRate > 0
@@ -177,7 +103,7 @@ function PropertyDetail() {
       : 0;
 
   const whatsappUrl =
-    "https://wa.me/573007200894?text=" +
+    `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent(
       `Hola AUTEM, me interesa la propiedad "${property.name}" en ${property.location}.`,
     );
@@ -214,7 +140,7 @@ function PropertyDetail() {
                 </span>
                 <h1 className="mt-2 font-serif text-4xl text-white md:text-6xl">{property.name}</h1>
                 <p className="mt-2 text-lg text-white/80">
-                  {property.location} · {property.m2}
+                  {property.location} · {property.m2} m²
                 </p>
               </div>
             </div>
@@ -284,7 +210,7 @@ function PropertyDetail() {
                 </span>
                 <div className="mt-6 flex flex-wrap gap-8 rounded-lg border border-border bg-background px-8 py-6">
                   <div className="text-center">
-                    <span className="block font-serif text-3xl text-accent">{property.m2}</span>
+                    <span className="block font-serif text-3xl text-accent">{property.m2} m²</span>
                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                       Superficie
                     </span>
@@ -316,7 +242,7 @@ function PropertyDetail() {
               </div>
 
               {/* Floor Plan PDF */}
-              {"floorPlanPdf" in property && property.floorPlanPdf && (
+              {property.floorPlanPdf && (
                 <div className="mb-12">
                   <span className="text-xs font-bold uppercase tracking-widest text-accent">
                     Planos y fachadas
@@ -341,7 +267,7 @@ function PropertyDetail() {
                       Descargar PDF
                     </a>
                     <a
-                      href="https://wa.me/573007200894?text=Hola%20AUTEM%2C%20me%20interesan%20los%20planos%20t%C3%A9cnicos%20(CAD%2FBIM)%20de%20esta%20propiedad."
+                      href={`${WHATSAPP_BASE_URL}?text=Hola%20AUTEM%2C%20me%20interesan%20los%20planos%20t%C3%A9cnicos%20(CAD%2FBIM)%20de%20esta%20propiedad.`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 border border-border px-5 py-2.5 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
@@ -415,7 +341,7 @@ function PropertyDetail() {
                     >
                       Solicitar información
                     </a>
-                    {"floorPlanPdf" in property && property.floorPlanPdf && (
+                    {property.floorPlanPdf && (
                       <a
                         href={property.floorPlanPdf}
                         download
@@ -505,7 +431,14 @@ function PropertyDetail() {
                       const form = e.currentTarget;
                       const formData = new FormData(form);
                       if (formData.get("website")) return;
-                      setContactStatus("sent");
+                      validateProp((data) => {
+                        propertyContactForm.handleSubmit({
+                          name: data.name,
+                          email: data.email,
+                          phone: data.phone,
+                          message: `Me interesa la propiedad "${property.name}" en ${property.location}.`,
+                        });
+                      })(e);
                     }}
                   >
                     <div className="absolute left-[-9999px]" aria-hidden="true">
@@ -518,29 +451,51 @@ function PropertyDetail() {
                         autoComplete="off"
                       />
                     </div>
-                    <input
-                      required
-                      type="text"
-                      placeholder="Nombre"
-                      className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
-                    />
-                    <input
-                      required
-                      type="email"
-                      placeholder="Email"
-                      className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
-                    />
-                    <input
-                      required
-                      type="tel"
-                      placeholder="Teléfono"
-                      className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
-                    />
+                    <div>
+                      <input
+                        {...registerProp("name")}
+                        type="text"
+                        placeholder="Nombre"
+                        className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+                      />
+                      {propErrors.name && (
+                        <p className="mt-1 text-xs text-red-500">{propErrors.name.message}</p>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        {...registerProp("email")}
+                        type="email"
+                        placeholder="Email"
+                        className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+                      />
+                      {propErrors.email && (
+                        <p className="mt-1 text-xs text-red-500">{propErrors.email.message}</p>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        {...registerProp("phone")}
+                        type="tel"
+                        placeholder="Teléfono"
+                        className="w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
+                      />
+                      {propErrors.phone && (
+                        <p className="mt-1 text-xs text-red-500">{propErrors.phone.message}</p>
+                      )}
+                    </div>
                     <button
                       type="submit"
+                      disabled={propertyContactForm.status === "sending"}
                       className="w-full bg-primary px-6 py-4 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground"
                     >
-                      {contactStatus === "sent" ? "✓ Solicitud enviada" : "Solicitar visita"}
+                      {propertyContactForm.status === "sent"
+                        ? "✓ Solicitud enviada"
+                        : propertyContactForm.status === "sending"
+                          ? "Abriendo WhatsApp..."
+                          : propertyContactForm.status === "error"
+                            ? "Error — intentar de nuevo"
+                            : "Solicitar visita"}
                     </button>
                   </form>
                 </div>
