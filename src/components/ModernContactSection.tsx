@@ -29,7 +29,9 @@ export default function ModernContactSection() {
 
   const whatsappDirectUrl =
     `${WHATSAPP_BASE_URL}?text=` +
-    encodeURIComponent("Hola AUTEM, me interesa recibir asesoría privada sobre sus proyectos en Cartagena y Bolívar.");
+    encodeURIComponent(
+      "Hola AUTEM, me interesa recibir asesoría privada sobre sus proyectos en Cartagena y Bolívar.",
+    );
 
   return (
     <section
@@ -37,13 +39,10 @@ export default function ModernContactSection() {
       data-animate
       className="relative border-t border-stone-200/80 dark:border-stone-800/80 bg-stone-100/50 dark:bg-stone-900/30 py-16 md:py-24 opacity-0 overflow-hidden"
     >
-      
       {/* Container: Compact Dark Obsidian Luxury Card without heavy drop shadows */}
       <div className="mx-auto max-w-5xl px-4 md:px-6">
         <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-stone-950 text-white p-6 md:p-10 shadow-xl backdrop-blur-xl">
-
           <div className="relative z-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12 items-center">
-            
             {/* Left Column: VIP Information & Value Proposition (5 Cols) */}
             <div className="lg:col-span-5 flex flex-col justify-between h-full space-y-6">
               <div>
@@ -58,7 +57,8 @@ export default function ModernContactSection() {
                 </h2>
 
                 <p className="mt-3 text-xs leading-relaxed text-stone-300 font-light">
-                  Asesoría privada para la adquisición de propiedades exclusivas en Cartagena, Barú y Turbaco con gestión fiduciaria y licencias turísticas.
+                  Asesoría privada para la adquisición de propiedades exclusivas en Cartagena, Barú
+                  y Turbaco con gestión fiduciaria y licencias turísticas.
                 </p>
               </div>
 
@@ -69,8 +69,12 @@ export default function ModernContactSection() {
                     <Clock size={16} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-stone-200">Respuesta en menos de 24h</h4>
-                    <p className="text-[10px] text-stone-400">Un consultor especializado te contactará personalmente.</p>
+                    <h4 className="text-xs font-semibold text-stone-200">
+                      Respuesta en menos de 24h
+                    </h4>
+                    <p className="text-[10px] text-stone-400">
+                      Un consultor especializado te contactará personalmente.
+                    </p>
                   </div>
                 </div>
 
@@ -79,8 +83,12 @@ export default function ModernContactSection() {
                     <ShieldCheck size={16} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-stone-200">Confidencialidad Garantizada (NDA)</h4>
-                    <p className="text-[10px] text-stone-400">Tratamiento privado de información para inversionistas.</p>
+                    <h4 className="text-xs font-semibold text-stone-200">
+                      Confidencialidad Garantizada (NDA)
+                    </h4>
+                    <p className="text-[10px] text-stone-400">
+                      Tratamiento privado de información para inversionistas.
+                    </p>
                   </div>
                 </div>
 
@@ -93,8 +101,12 @@ export default function ModernContactSection() {
                   <div className="flex items-center gap-2.5">
                     <MessageCircle size={18} className="text-emerald-400 animate-bounce" />
                     <div>
-                      <span className="block text-[11px] font-bold uppercase tracking-wider">Atención VIP por WhatsApp</span>
-                      <span className="text-[9px] text-emerald-300/80">Asesor disponible ahora en línea</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider">
+                        Atención VIP por WhatsApp
+                      </span>
+                      <span className="text-[9px] text-emerald-300/80">
+                        Asesor disponible ahora en línea
+                      </span>
                     </div>
                   </div>
                   <span className="text-xs font-bold">→</span>
@@ -111,7 +123,6 @@ export default function ModernContactSection() {
             {/* Right Column: Modern Glass Form Card (7 Cols) */}
             <div className="lg:col-span-7">
               <div className="rounded-xl border border-white/15 bg-white/5 p-5 md:p-7 backdrop-blur-xl">
-                
                 <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-stone-200">
                   Agendar Consultoría Privada
                 </h3>
@@ -135,7 +146,13 @@ export default function ModernContactSection() {
                   {/* Honeypot anti-spam */}
                   <div className="absolute left-[-9999px]" aria-hidden="true">
                     <label htmlFor="website">No llenes esto</label>
-                    <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                    <input
+                      id="website"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
                   </div>
 
                   {/* Input 1: Nombre */}
@@ -150,7 +167,9 @@ export default function ModernContactSection() {
                       className="w-full rounded-lg border border-white/15 bg-stone-900/80 px-3.5 py-2.5 text-xs md:text-sm text-white placeholder-stone-500 backdrop-blur-md transition-all focus:border-accent focus:bg-stone-950 focus:outline-none focus:ring-1 focus:ring-accent/50"
                     />
                     {errors.name && (
-                      <p className="mt-1 text-[11px] text-rose-400 font-medium">{errors.name.message}</p>
+                      <p className="mt-1 text-[11px] text-rose-400 font-medium">
+                        {errors.name.message}
+                      </p>
                     )}
                   </div>
 
@@ -166,7 +185,9 @@ export default function ModernContactSection() {
                       className="w-full rounded-lg border border-white/15 bg-stone-900/80 px-3.5 py-2.5 text-xs md:text-sm text-white placeholder-stone-500 backdrop-blur-md transition-all focus:border-accent focus:bg-stone-950 focus:outline-none focus:ring-1 focus:ring-accent/50"
                     />
                     {errors.email && (
-                      <p className="mt-1 text-[11px] text-rose-400 font-medium">{errors.email.message}</p>
+                      <p className="mt-1 text-[11px] text-rose-400 font-medium">
+                        {errors.email.message}
+                      </p>
                     )}
                   </div>
 
@@ -182,7 +203,9 @@ export default function ModernContactSection() {
                       className="w-full rounded-lg border border-white/15 bg-stone-900/80 px-3.5 py-2.5 text-xs md:text-sm text-white placeholder-stone-500 backdrop-blur-md transition-all focus:border-accent focus:bg-stone-950 focus:outline-none focus:ring-1 focus:ring-accent/50"
                     />
                     {errors.message && (
-                      <p className="mt-1 text-[11px] text-rose-400 font-medium">{errors.message.message}</p>
+                      <p className="mt-1 text-[11px] text-rose-400 font-medium">
+                        {errors.message.message}
+                      </p>
                     )}
                   </div>
 
@@ -210,14 +233,10 @@ export default function ModernContactSection() {
                   <p className="text-center text-[9px] text-stone-400 font-light">
                     Al enviar este formulario aceptas nuestra política de confidencialidad y datos.
                   </p>
-
                 </form>
-
               </div>
             </div>
-
           </div>
-
         </div>
       </div>
     </section>

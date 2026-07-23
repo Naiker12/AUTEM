@@ -1,4 +1,10 @@
-import { useRef, forwardRef, type ReactNode, type MouseEventHandler, type ComponentPropsWithoutRef } from "react";
+import {
+  useRef,
+  forwardRef,
+  type ReactNode,
+  type MouseEventHandler,
+  type ComponentPropsWithoutRef,
+} from "react";
 
 interface MagneticButtonProps extends ComponentPropsWithoutRef<"div"> {
   children: ReactNode;

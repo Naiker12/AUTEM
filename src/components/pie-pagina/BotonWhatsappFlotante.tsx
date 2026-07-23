@@ -8,7 +8,7 @@ export default function BotonWhatsappFlotante() {
   const whatsappUrl =
     `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent(
-      "Hola AUTEM, me gustaría recibir asesoría personalizada sobre los proyectos inmobiliarios en Cartagena y Bolívar."
+      "Hola AUTEM, me gustaría recibir asesoría personalizada sobre los proyectos inmobiliarios en Cartagena y Bolívar.",
     );
 
   return (
@@ -21,7 +21,8 @@ export default function BotonWhatsappFlotante() {
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           </div>
           <span className="font-medium text-stone-200">
-            ¿Dudas sobre inversión? <span className="text-emerald-400 font-bold">Asesor en línea</span>
+            ¿Dudas sobre inversión?{" "}
+            <span className="text-emerald-400 font-bold">Asesor en línea</span>
           </span>
           <button
             onClick={() => setShowTooltip(false)}

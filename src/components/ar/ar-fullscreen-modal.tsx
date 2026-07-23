@@ -143,12 +143,14 @@ export function ARFullscreenModal({
             interaction-prompt="none"
             touch-action="pan-y"
             onLoad={() => setReady(true)}
-            style={{
-              width: "100%",
-              height: "100%",
-              backgroundColor: "transparent",
-              "--poster-color": "transparent",
-            } as React.CSSProperties}
+            style={
+              {
+                width: "100%",
+                height: "100%",
+                backgroundColor: "transparent",
+                "--poster-color": "transparent",
+              } as React.CSSProperties
+            }
           />
         </div>
 

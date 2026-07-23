@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Star, Quote, ShieldCheck, TrendingUp, Building, Award } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Quote,
+  ShieldCheck,
+  TrendingUp,
+  Building,
+  Award,
+} from "lucide-react";
 
 export interface Testimonial {
   id: string;
@@ -26,7 +35,8 @@ const TESTIMONIALS_DATA: Testimonial[] = [
     projectZone: "Bocagrande, Cartagena",
     rating: 5,
     yieldReturn: "14.8% Renta Corta",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
   },
   {
     id: "2",
@@ -39,7 +49,8 @@ const TESTIMONIALS_DATA: Testimonial[] = [
     projectZone: "Manga, Cartagena",
     rating: 5,
     yieldReturn: "+22% Valorización",
-    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80",
   },
   {
     id: "3",
@@ -52,7 +63,8 @@ const TESTIMONIALS_DATA: Testimonial[] = [
     projectZone: "Turbaco, Bolívar",
     rating: 5,
     yieldReturn: "Casa de Descanso",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
   },
   {
     id: "4",
@@ -65,7 +77,8 @@ const TESTIMONIALS_DATA: Testimonial[] = [
     projectZone: "Castillogrande, Cartagena",
     rating: 5,
     yieldReturn: "15.2% Yield Neto",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
   },
 ];
 
@@ -148,13 +161,11 @@ export default function TestimonialsCarousel() {
 
       {/* Main Testimonial Carousel Box */}
       <div className="relative overflow-hidden rounded-3xl border border-stone-200 bg-stone-900 text-stone-100 p-8 md:p-14 shadow-2xl dark:border-stone-800">
-        
         {/* Background Decorative Glow */}
         <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />
 
         <div className="relative z-10">
-          
           {/* Header Tag & Stars */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -185,7 +196,6 @@ export default function TestimonialsCarousel() {
 
           {/* Footer: Author Info & Controls */}
           <div className="mt-8 flex flex-col gap-6 border-t border-stone-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            
             {/* Author Profile */}
             <div className="flex items-center gap-4">
               <img
@@ -213,7 +223,6 @@ export default function TestimonialsCarousel() {
 
             {/* Controls: Prev / Next & Bullets */}
             <div className="flex items-center gap-4 self-end sm:self-auto">
-              
               {/* Pagination Dots */}
               <div className="flex items-center gap-2 pr-2">
                 {TESTIMONIALS_DATA.map((t, idx) => (
@@ -224,7 +233,9 @@ export default function TestimonialsCarousel() {
                       setCurrentIndex(idx);
                     }}
                     className={`h-2.5 rounded-full transition-all ${
-                      idx === currentIndex ? "w-8 bg-accent" : "w-2.5 bg-stone-700 hover:bg-stone-500"
+                      idx === currentIndex
+                        ? "w-8 bg-accent"
+                        : "w-2.5 bg-stone-700 hover:bg-stone-500"
                     }`}
                     aria-label={`Ir al testimonio ${idx + 1}`}
                   />
@@ -249,9 +260,7 @@ export default function TestimonialsCarousel() {
                 <ChevronRight size={20} />
               </button>
             </div>
-
           </div>
-
         </div>
       </div>
     </div>

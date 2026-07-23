@@ -110,13 +110,15 @@ export function Desktop3DViewer({
               interaction-prompt="none"
               touch-action="pan-y"
               onLoad={() => setReady(true)}
-              style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "1.5rem",
-                backgroundColor: "transparent",
-                "--poster-color": "transparent",
-              } as React.CSSProperties}
+              style={
+                {
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "1.5rem",
+                  backgroundColor: "transparent",
+                  "--poster-color": "transparent",
+                } as React.CSSProperties
+              }
             />
           </div>
 

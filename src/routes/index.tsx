@@ -75,7 +75,7 @@ const featuredSlugs = [
 ];
 const featuredProperties = featuredSlugs
   .map((slug) => properties.find((p) => p.slug === slug))
-  .filter((p): p is typeof properties[0] => p !== undefined);
+  .filter((p): p is (typeof properties)[0] => p !== undefined);
 
 const stats = [
   { value: "120+", label: "Proyectos entregados" },
@@ -440,7 +440,8 @@ function Index() {
               Inversionistas que eligieron la arquitectura del futuro.
             </h2>
             <p className="mt-4 mx-auto max-w-xl text-base text-muted-foreground font-light">
-              Descubre los testimonios verificados de compradores e inversionistas que adquirieron propiedades exclusivas en Cartagena y Bolívar a través de nuestra experiencia 3D y AR.
+              Descubre los testimonios verificados de compradores e inversionistas que adquirieron
+              propiedades exclusivas en Cartagena y Bolívar a través de nuestra experiencia 3D y AR.
             </p>
           </div>
 

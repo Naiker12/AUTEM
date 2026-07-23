@@ -45,10 +45,7 @@ interface ModelViewerAttributes {
   onProgress?: (event: Event) => void;
 }
 
-type ModelViewerProps = React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLElement>,
-  HTMLElement
-> &
+type ModelViewerProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> &
   ModelViewerAttributes;
 
 declare module "react" {

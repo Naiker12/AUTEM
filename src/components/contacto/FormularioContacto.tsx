@@ -112,7 +112,8 @@ export default function FormularioContacto() {
         </button>
 
         <p className="text-center text-[9px] text-stone-400 font-light">
-          Al enviar este formulario aceptas nuestra política de confidencialidad y tratamiento de datos.
+          Al enviar este formulario aceptas nuestra política de confidencialidad y tratamiento de
+          datos.
         </p>
       </form>
     </div>

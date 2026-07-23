@@ -14,10 +14,8 @@ export default function PiePagina() {
       <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-accent/10 blur-[100px]" />
 
       <div className="mx-auto max-w-7xl px-6 md:px-8">
-        
         {/* Fila Principal de Navegación */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 pb-16 border-b border-stone-800/80">
-          
           {/* Columna 1: Marca & Descripción (4 Cols) */}
           <div className="lg:col-span-4 flex flex-col justify-between space-y-6">
             <div>
@@ -29,7 +27,8 @@ export default function PiePagina() {
               </Link>
 
               <p className="mt-4 text-xs font-light leading-relaxed text-stone-400 max-w-sm">
-                Arquitectura sin fronteras. Proyectos de alta gama, visualización 3D y maquetas interactivas en Cartagena de Indias, Barú y Turbaco desde 2010.
+                Arquitectura sin fronteras. Proyectos de alta gama, visualización 3D y maquetas
+                interactivas en Cartagena de Indias, Barú y Turbaco desde 2010.
               </p>
             </div>
 
@@ -57,7 +56,10 @@ export default function PiePagina() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <a href={`${import.meta.env.BASE_URL}#proyectos`} className="hover:text-accent transition-colors">
+                <a
+                  href={`${import.meta.env.BASE_URL}#proyectos`}
+                  className="hover:text-accent transition-colors"
+                >
                   Proyectos Destacados
                 </a>
               </li>
@@ -67,17 +69,26 @@ export default function PiePagina() {
                 </Link>
               </li>
               <li>
-                <a href={`${import.meta.env.BASE_URL}#tecnologia`} className="hover:text-accent transition-colors">
+                <a
+                  href={`${import.meta.env.BASE_URL}#tecnologia`}
+                  className="hover:text-accent transition-colors"
+                >
                   Experiencia AR 3D
                 </a>
               </li>
               <li>
-                <a href={`${import.meta.env.BASE_URL}#nosotros`} className="hover:text-accent transition-colors">
+                <a
+                  href={`${import.meta.env.BASE_URL}#nosotros`}
+                  className="hover:text-accent transition-colors"
+                >
                   Inversionistas
                 </a>
               </li>
               <li>
-                <a href={`${import.meta.env.BASE_URL}#contacto`} className="hover:text-accent transition-colors">
+                <a
+                  href={`${import.meta.env.BASE_URL}#contacto`}
+                  className="hover:text-accent transition-colors"
+                >
                   Contacto Privado
                 </a>
               </li>
@@ -120,14 +131,15 @@ export default function PiePagina() {
                 </a>
               </li>
               <li>
-                <span className="text-stone-300 font-medium">Fiduciarias Aliadas:</span> Bancolombia, Alianza
+                <span className="text-stone-300 font-medium">Fiduciarias Aliadas:</span>{" "}
+                Bancolombia, Alianza
               </li>
               <li>
-                <span className="text-stone-300 font-medium">Licencias:</span> Explotación Turística Airbnb
+                <span className="text-stone-300 font-medium">Licencias:</span> Explotación Turística
+                Airbnb
               </li>
             </ul>
           </div>
-
         </div>
 
         {/* Fila Inferior: Copyright, Redes Sociales & Botón Volver Arriba */}
@@ -177,7 +189,6 @@ export default function PiePagina() {
             <ArrowUp size={12} />
           </button>
         </div>
-
       </div>
     </footer>
   );

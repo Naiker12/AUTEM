@@ -29,8 +29,8 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
     activeTab === "blueprint"
       ? `${planBase}/planta-2d.jpg`
       : activeTab === "iso"
-      ? `${planBase}/planta-3d.jpg`
-      : property.floorPlanImage || `${planBase}/planta.jpg`;
+        ? `${planBase}/planta-3d.jpg`
+        : property.floorPlanImage || `${planBase}/planta.jpg`;
 
   const downloadUrl = property.floorPlanPdf || currentPlanImage;
   const qrUrl = getFloorPlanUrl(property.slug);

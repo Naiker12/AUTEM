@@ -22,6 +22,7 @@ import { getARModel, hasUSDZFile } from "@/data/ar-models";
 import { properties } from "@/data/properties";
 import { FINISHES, WHATSAPP_BASE_URL } from "@/data/constants";
 import { AREnvironmentToggle } from "@/components/ar/ar-environment-toggle";
+import { WebXRARViewer } from "@/components/ar/WebXRARViewer";
 import type { ViewerThemeMode } from "@/components/ar/ar-types";
 
 export const Route = createFileRoute("/ar/$propertyId")({
@@ -294,12 +295,9 @@ function ModelViewerElement({
       el.setAttribute("camera-controls", "");
       el.setAttribute("environment-image", "neutral");
       el.setAttribute("tone-mapping", "neutral");
-      el.setAttribute("shadow-intensity", themeMode === "day" ? "1.5" : "1.2");
+      el.setAttribute("shadow-intensity", "1.2");
       el.setAttribute("shadow-softness", "0.5");
-      el.setAttribute(
-        "exposure",
-        themeMode === "day" ? "1.15" : themeMode === "night" ? "0.75" : "1.05",
-      );
+      el.setAttribute("exposure", "1.05");
       el.setAttribute("camera-orbit", "25deg 75deg 105%");
       el.setAttribute("camera-target", "auto auto auto");
       el.setAttribute("bounds", "tight");
@@ -496,6 +494,8 @@ function ARViewerPage() {
   const [modelLoaded, setModelLoaded] = useState(false);
   const [modelError, setModelError] = useState(false);
   const [themeMode, setThemeMode] = useState<ViewerThemeMode>("day");
+  const [showWebXRAR, setShowWebXRAR] = useState(false);
+  const [webxrSupported, setWebxrSupported] = useState(false);
 
   // Read URL search param ?finish=nordic
   const [selectedFinish, setSelectedFinish] = useState(search.finish || "nordic");
@@ -511,6 +511,18 @@ function ARViewerPage() {
   useEffect(() => {
     document.title = property ? `AR: ${property.name} | AUTEM` : "Experiencia AR | AUTEM";
   }, [property]);
+
+  // Detect WebXR immersive-ar support (Android + ARCore)
+  useEffect(() => {
+    if (device.isAndroid && "xr" in navigator) {
+      const xr = navigator.xr;
+      if (xr) {
+        xr.isSessionSupported("immersive-ar").then((supported) => {
+          setWebxrSupported(supported);
+        });
+      }
+    }
+  }, [device.isAndroid]);
 
   useEffect(() => {
     const hasSeen = localStorage.getItem("autem_ar_onboarding_v2");
@@ -562,17 +574,24 @@ function ARViewerPage() {
 
   const confirmAR = useCallback(() => {
     setShowPermissionExplainer(false);
-    const viewer = document.querySelector("model-viewer") as HTMLElement & {
-      activateAR?: () => Promise<void>;
-    };
-    if (viewer?.activateAR) {
-      viewer.activateAR().catch(() => {
-        handleARError(
-          "No se pudo activar la cámara. Verifica los permisos de cámara en tu dispositivo.",
-        );
-      });
+
+    if (webxrSupported) {
+      // Android: open custom WebXR AR viewer (Three.js + native WebXR)
+      setShowWebXRAR(true);
+    } else {
+      // iOS / fallback: existing model-viewer activateAR (Quick Look / Scene Viewer)
+      const viewer = document.querySelector("model-viewer") as HTMLElement & {
+        activateAR?: () => Promise<void>;
+      };
+      if (viewer?.activateAR) {
+        viewer.activateAR().catch(() => {
+          handleARError(
+            "No se pudo activar la cámara. Verifica los permisos de cámara en tu dispositivo.",
+          );
+        });
+      }
     }
-  }, [handleARError]);
+  }, [webxrSupported, handleARError]);
 
   const declineAR = useCallback(() => {
     setShowPermissionExplainer(false);
@@ -643,6 +662,20 @@ function ARViewerPage() {
             activateAR();
           }}
           onFallback={() => setShowARError(false)}
+        />
+      )}
+      {showWebXRAR && (
+        <WebXRARViewer
+          modelSrc={arModel.glb}
+          propertyName={property.name}
+          onClose={() => {
+            setShowWebXRAR(false);
+            setShowPostCTA(true);
+          }}
+          onError={(msg) => {
+            setShowWebXRAR(false);
+            handleARError(msg);
+          }}
         />
       )}
 

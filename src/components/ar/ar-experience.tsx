@@ -35,9 +35,7 @@ export default function ARExperience({
   }, []);
 
   return (
-    <section
-      className={`relative py-20 md:py-28 overflow-hidden ${className}`}
-    >
+    <section className={`relative py-20 md:py-28 overflow-hidden ${className}`}>
       {/* Ambient background glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-accent/5 blur-[120px]" />
@@ -51,11 +49,11 @@ export default function ARExperience({
             Tecnología inmersiva
           </span>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl lg:text-6xl text-foreground">
-            Experiencia en{" "}
-            <span className="italic text-accent">realidad aumentada</span>
+            Experiencia en <span className="italic text-accent">realidad aumentada</span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-            Recorre cada detalle de tu futura propiedad antes de que exista. Personaliza acabados, iluminación y materiales en tiempo real.
+            Recorre cada detalle de tu futura propiedad antes de que exista. Personaliza acabados,
+            iluminación y materiales en tiempo real.
           </p>
         </div>
 
@@ -108,7 +106,8 @@ export default function ARExperience({
                   {currentProperty.name}
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-                  Visualiza esta propiedad a escala real (1:1) directamente en tu espacio. Cambia acabados, rota la maqueta y recorre cada rincón antes de la construcción.
+                  Visualiza esta propiedad a escala real (1:1) directamente en tu espacio. Cambia
+                  acabados, rota la maqueta y recorre cada rincón antes de la construcción.
                 </p>
               </div>
 

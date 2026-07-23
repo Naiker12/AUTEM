@@ -81,4 +81,3 @@ export interface ARFullscreenModalProps {
   selectedFinish: number;
   onFinishChange: (index: number) => void;
 }
-
