@@ -24,7 +24,7 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
 
   const modalRef = useModalA11y(isQrOpen, () => setIsQrOpen(false));
 
-  const planBase = `/projects/${property.slug}`;
+  const planBase = `${import.meta.env.BASE_URL}projects/${property.slug}`;
   const currentPlanImage =
     activeTab === "blueprint"
       ? `${planBase}/planta-2d.jpg`
