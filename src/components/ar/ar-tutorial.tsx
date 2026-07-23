@@ -22,7 +22,8 @@ export function FirstTutorial({ onDismiss }: ARTutorialProps) {
         </div>
         <h3 className="font-serif text-2xl font-normal">Mueve tu celular</h3>
         <p className="mt-3 text-xs leading-relaxed text-stone-300">
-          Apunta hacia el suelo de tu espacio para detectar la superficie. El modelo arquitectónico en 3D se colocará automáticamente en escala real.
+          Apunta hacia el suelo de tu espacio para detectar la superficie. El modelo arquitectónico
+          en 3D se colocará automáticamente en escala real.
         </p>
         <button
           onClick={onDismiss}

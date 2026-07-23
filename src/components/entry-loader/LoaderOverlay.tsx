@@ -23,8 +23,7 @@ export default function LoaderOverlay({
       <div
         className="absolute bottom-0 left-0 right-0 h-64"
         style={{
-          background:
-            "linear-gradient(to top, rgba(5,5,5,0.7) 0%, transparent 100%)",
+          background: "linear-gradient(to top, rgba(5,5,5,0.7) 0%, transparent 100%)",
         }}
       />
 
@@ -35,12 +34,7 @@ export default function LoaderOverlay({
             modelVisible ? "opacity-0" : "opacity-100"
           }`}
         >
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 48 48"
-            className="-rotate-90"
-          >
+          <svg width="48" height="48" viewBox="0 0 48 48" className="-rotate-90">
             <circle
               cx="24"
               cy="24"

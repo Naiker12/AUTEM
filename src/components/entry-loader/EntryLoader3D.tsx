@@ -19,19 +19,12 @@ import { createEffects, disposeEffects } from "./3d-effects";
 import { loadModel } from "./3d-model-loader";
 import { startAnimation } from "./3d-animation";
 
-export default function EntryLoader3D({
-  modelUrl,
-  onProgress,
-  onLoaded,
-}: EntryLoader3DProps) {
+export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryLoader3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleProgress = useCallback(
-    (percent: number) => onProgress?.(percent),
-    [onProgress],
-  );
+  const handleProgress = useCallback((percent: number) => onProgress?.(percent), [onProgress]);
 
   const handleLoaded = useCallback(() => {
     setIsLoaded(true);
@@ -43,9 +36,7 @@ export default function EntryLoader3D({
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // ── Build the scene ──
     const { scene, camera, renderer, orbit } = createScene(
@@ -147,8 +138,7 @@ export default function EntryLoader3D({
           opacity: isLoaded ? 1 : 0,
           transform: isLoaded ? "scale(1)" : "scale(0.92)",
           transformOrigin: "center center",
-          transition:
-            "opacity 0.6s ease-out, transform 0.8s cubic-bezier(0.19, 1, 0.22, 1)",
+          transition: "opacity 0.6s ease-out, transform 0.8s cubic-bezier(0.19, 1, 0.22, 1)",
         }}
       />
     </div>

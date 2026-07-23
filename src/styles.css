@@ -557,3 +557,79 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* ── Model Viewer custom styling ── */
+model-viewer {
+  --poster-color: transparent;
+  --progress-bar-color: oklch(0.73 0.1 78);
+  --progress-mask: transparent;
+  background-color: transparent !important;
+}
+
+/* ── Drone Scan & Topography Map Animations ── */
+@keyframes grid-pulse {
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.grid-pulse {
+  animation: grid-pulse 4s ease-in-out infinite;
+}
+
+@keyframes draw-stroke {
+  0% {
+    stroke-dashoffset: 1000;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+.draw-stroke {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-stroke 3s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes scan-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.scan-sweep {
+  transform-origin: center;
+  animation: scan-sweep 6s linear infinite;
+}
+
+@keyframes zone-blip {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 1;
+  }
+}
+.zone-blip {
+  animation: zone-blip 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes drone-fly {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+.drone {
+  animation: drone-fly 14s linear infinite;
+}

@@ -11,9 +11,10 @@ export interface FinishSwatch {
   color: string;
 }
 
+export type ViewerThemeMode = "day" | "night" | "studio";
+
 export interface ARExperienceProps {
   initialPropertySlug?: string;
-  showSelector?: boolean;
   className?: string;
 }
 
@@ -22,6 +23,16 @@ export interface Desktop3DViewerProps {
   selectedFinish: number;
   onFinishChange: (index: number) => void;
   className?: string;
+  propertyName?: string;
+}
+
+export interface ARFullscreenModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  modelSrc: string;
+  propertyName: string;
+  selectedFinish: number;
+  onFinishChange: (index: number) => void;
 }
 
 export interface ARQrModalProps {

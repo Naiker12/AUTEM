@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Download, QrCode, Smartphone, X, ExternalLink, Copy, Check, Layers, Sparkles } from "lucide-react";
+import {
+  Download,
+  QrCode,
+  Smartphone,
+  X,
+  ExternalLink,
+  Copy,
+  Check,
+  Layers,
+  Sparkles,
+} from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { getFloorPlanUrl } from "@/data/properties";
 import { getARModel } from "@/data/ar-models";
@@ -19,9 +29,11 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
   const qrUrl = getFloorPlanUrl(property.slug);
   const arModel = getARModel(property.slug);
 
-  const whatsappCadUrl = `${WHATSAPP_BASE_URL}?text=` + encodeURIComponent(
-    `Hola AUTEM, me interesan los planos técnicos (CAD/BIM) de "${property.name}".`
-  );
+  const whatsappCadUrl =
+    `${WHATSAPP_BASE_URL}?text=` +
+    encodeURIComponent(
+      `Hola AUTEM, me interesan los planos técnicos (CAD/BIM) de "${property.name}".`,
+    );
 
   const handleCopy = () => {
     navigator.clipboard.writeText(qrUrl);
@@ -134,7 +146,9 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                   src={planImageUrl}
                   alt={`Plano de ${property.name}`}
                   className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                    activeTab === "blueprint" ? "filter contrast-125 brightness-90 hue-rotate-180" : ""
+                    activeTab === "blueprint"
+                      ? "filter contrast-125 brightness-90 hue-rotate-180"
+                      : ""
                   }`}
                 />
 
@@ -170,19 +184,15 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                   Explorar en smartphone
                 </h4>
                 <p className="mt-2 text-xs text-muted-foreground dark:text-stone-400 leading-relaxed">
-                  Apunta con la cámara de tu teléfono para abrir el plano interactivo y recorrer la propiedad.
+                  Apunta con la cámara de tu teléfono para abrir el plano interactivo y recorrer la
+                  propiedad.
                 </p>
               </div>
 
               {/* Clean QR Code Card with Gold Frame */}
               <div className="my-6 flex flex-col items-center justify-center">
                 <div className="p-6 rounded-2xl bg-white border-2 border-accent/40 shadow-xl transition-transform hover:scale-102">
-                  <QRCodeSVG
-                    value={qrUrl}
-                    size={220}
-                    level="H"
-                    includeMargin={false}
-                  />
+                  <QRCodeSVG value={qrUrl} size={220} level="H" includeMargin={false} />
                 </div>
                 <span className="mt-3 text-[11px] uppercase tracking-widest text-muted-foreground dark:text-stone-500">
                   Código autogenerado para AUTEM Real Estate

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
+import AutemBrandIcon from "@/components/AutemBrandIcon";
 
 interface NavbarProps {
   variant: "home" | "inner";
@@ -60,8 +61,9 @@ export default function Navbar({ variant }: NavbarProps) {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-8">
-        <Link to="/" className="font-serif text-2xl tracking-tight">
-          AUTEM
+        <Link to="/" className="flex items-center gap-3 font-serif text-2xl tracking-tight group">
+          <AutemBrandIcon size={30} className="transition-transform group-hover:scale-105" />
+          <span>AUTEM</span>
         </Link>
         <div className="hidden gap-12 text-xs font-medium uppercase tracking-[0.2em] md:flex">
           {navItems.map((item) => (

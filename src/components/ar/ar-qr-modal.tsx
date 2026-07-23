@@ -46,7 +46,8 @@ export function ARQrModal({ propertySlug, propertyName, isOpen, onClose }: ARQrM
           </span>
           <h3 className="mt-1 font-serif text-2xl font-normal">{propertyName}</h3>
           <p className="mt-2 text-xs text-stone-400 leading-relaxed">
-            Apunta con la cámara de tu smartphone a este código QR para proyectar el modelo 3D en tu espacio físico.
+            Apunta con la cámara de tu smartphone a este código QR para proyectar el modelo 3D en tu
+            espacio físico.
           </p>
         </div>
 

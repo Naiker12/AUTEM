@@ -22,10 +22,7 @@ export interface SceneEffects {
  *
  * When `prefersReducedMotion` is true, nothing is created.
  */
-export function createEffects(
-  scene: THREE.Scene,
-  prefersReducedMotion: boolean,
-): SceneEffects {
+export function createEffects(scene: THREE.Scene, prefersReducedMotion: boolean): SceneEffects {
   if (prefersReducedMotion) {
     return { particles: null, lightRays: null, outerRing: null, innerRing: null };
   }

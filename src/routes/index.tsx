@@ -19,8 +19,15 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import MagneticButton from "@/components/MagneticButton";
+import AutemBrandIcon from "@/components/AutemBrandIcon";
 import ARExperience from "@/components/ARExperience";
-import EntryLoader3D, { LoaderOverlay, SCENE_VISIBLE_DURATION_MS, LOADER_TEXT_DURATION_MS } from "@/components/entry-loader";
+import EntryLoader3D, {
+  LoaderOverlay,
+  SCENE_VISIBLE_DURATION_MS,
+  LOADER_TEXT_DURATION_MS,
+} from "@/components/entry-loader";
+import { BeforeAfterSlider } from "@/components/before-after";
+import DroneScanSection from "@/components/DroneScanSection";
 import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
@@ -119,7 +126,6 @@ function Index() {
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const loaderContainerRef = useRef<HTMLDivElement>(null);
   const [modelVisible, setModelVisible] = useState(false);
-  const panelVideoRef = useRef<HTMLVideoElement>(null);
 
   const whatsappUrl =
     `${WHATSAPP_BASE_URL}?text=` +
@@ -221,81 +227,6 @@ function Index() {
     return () => observer.disconnect();
   }, [showLoader]);
 
-  // Lazy-load panel video when section enters viewport
-  useEffect(() => {
-    const video = panelVideoRef.current;
-    if (!video) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
-
-  // Comparison slider logic
-  useEffect(() => {
-    const clip = document.getElementById("comparison-clip");
-    const handle = document.getElementById("comparison-handle");
-    if (!clip || !handle) return;
-
-    let isDragging = false;
-
-    const updateSlider = (clientX: number) => {
-      const rect = clip.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      clip.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
-      handle.style.left = `${percentage}%`;
-    };
-
-    const onMouseDown = () => {
-      isDragging = true;
-    };
-    const onMouseUp = () => {
-      isDragging = false;
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      updateSlider(e.clientX);
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isDragging) return;
-      updateSlider(e.touches[0].clientX);
-    };
-
-    handle.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mouseup", onMouseUp);
-    window.addEventListener("mousemove", onMouseMove);
-    handle.addEventListener("touchstart", onMouseDown, { passive: true });
-    window.addEventListener("touchend", onMouseUp);
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-
-    // Allow clicking anywhere on the image to move slider
-    const container = clip.parentElement;
-    if (container) {
-      container.addEventListener("click", (e) => {
-        updateSlider(e.clientX);
-      });
-    }
-
-    return () => {
-      handle.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mouseup", onMouseUp);
-      window.removeEventListener("mousemove", onMouseMove);
-      handle.removeEventListener("touchstart", onMouseDown);
-      window.removeEventListener("touchend", onMouseUp);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
       {/* 3D Model — persistent, never destroyed (stays alive for AR cache) */}
@@ -304,7 +235,9 @@ function Index() {
         className={`fixed inset-0 z-[9998] overflow-hidden transition-opacity duration-[1000ms] ${
           hideModel ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
-        style={{ background: "radial-gradient(ellipse at center, #141414 0%, #0a0a0a 60%, #050505 100%)" }}
+        style={{
+          background: "radial-gradient(ellipse at center, #141414 0%, #0a0a0a 60%, #050505 100%)",
+        }}
       >
         <EntryLoader3D
           modelUrl={`${import.meta.env.BASE_URL}models/the-horizon-suite.glb`}
@@ -365,18 +298,25 @@ function Index() {
             </p>
 
             {/* Search Bar */}
-            <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-2xl bg-white/95 text-stone-900 border border-stone-200/80 shadow-2xl backdrop-blur-xl dark:bg-stone-950/90 dark:text-white dark:border-stone-800/80 md:flex-row md:items-center md:rounded-full transition-colors duration-300">
+            <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-2xl bg-white/95 text-stone-900 border border-stone-200/80 p-2 shadow-2xl backdrop-blur-xl dark:bg-stone-950/90 dark:text-white dark:border-stone-800/80 md:flex-row md:items-center md:rounded-full transition-colors duration-300">
+              <div className="hidden pl-3 pr-2 py-1 md:flex items-center">
+                <AutemBrandIcon size={38} className="shadow-lg" />
+              </div>
               <div className="hidden flex-1 border-r border-stone-200/80 dark:border-stone-800/80 px-6 text-left md:block">
                 <span className="block text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
                   Ubicación
                 </span>
-                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">Caribe Colombiano</span>
+                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                  Caribe Colombiano
+                </span>
               </div>
               <div className="hidden flex-1 border-r border-stone-200/80 dark:border-stone-800/80 px-6 text-left md:block">
                 <span className="block text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
                   Inversión
                 </span>
-                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">$500K – $2.5M</span>
+                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                  $500K – $2.5M
+                </span>
               </div>
               <MagneticButton
                 strength={0.2}
@@ -419,11 +359,7 @@ function Index() {
 
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             {featuredProperties.map((p, i) => (
-              <PropertyCard
-                key={p.slug}
-                property={p}
-                className={featuredOffsets[i] || ""}
-              />
+              <PropertyCard key={p.slug} property={p} className={featuredOffsets[i] || ""} />
             ))}
           </div>
         </section>
@@ -432,138 +368,29 @@ function Index() {
         <ARExperience />
 
         {/* Before/After Comparison Slider */}
-        <section className="mx-auto max-w-7xl px-6 py-16 md:px-8 md:py-24">
+        <section data-animate className="mx-auto max-w-7xl px-6 py-16 opacity-0 md:px-8 md:py-24">
           <div className="mb-8">
             <span className="text-xs font-bold uppercase tracking-widest text-accent">
               Transformación
             </span>
             <h2 className="mt-2 font-serif text-3xl md:text-4xl">Antes y después</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Arrastra el slider para ver la transformación
+              Arrastra o haz clic en cualquier punto para ver la transformación del proyecto
             </p>
           </div>
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted-warm">
-            {/* Before image (base) */}
-            <img
-              src={`${import.meta.env.BASE_URL}antes.png`}
-              alt="Terreno vacío antes de la construcción"
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-            {/* After image (clipped) */}
-            <div
-              id="comparison-clip"
-              className="absolute inset-0 overflow-hidden"
-              style={{ clipPath: "inset(0 50% 0 0)" }}
-            >
-              <img
-                src={`${import.meta.env.BASE_URL}despues.png`}
-                alt="Propiedad terminada"
-                loading="lazy"
-                className="h-full w-full object-cover"
-                style={{ width: "100vw", maxWidth: "100%" }}
-              />
-            </div>
-            {/* Slider handle */}
-            <div
-              id="comparison-handle"
-              className="absolute top-0 bottom-0 left-1/2 z-10 w-1 cursor-ew-resize bg-accent"
-              style={{ transform: "translateX(-50%)" }}
-            >
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-accent shadow-2xl">
-                <svg
-                  className="size-6 text-accent-foreground"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 9l4-4 4 4m0 6l-4 4-4-4"
-                  />
-                </svg>
-              </div>
-            </div>
-            {/* Labels */}
-            <div className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-[10px] uppercase tracking-widest text-white backdrop-blur-sm">
-              Antes
-            </div>
-            <div className="absolute right-4 top-4 rounded-full bg-accent px-3 py-1 text-[10px] uppercase tracking-widest text-accent-foreground backdrop-blur-sm">
-              Después
-            </div>
-          </div>
+
+          <BeforeAfterSlider
+            beforeSrc={`${import.meta.env.BASE_URL}antes.png`}
+            afterSrc={`${import.meta.env.BASE_URL}despues.png`}
+            beforeAlt="Terreno en su estado inicial antes de la construcción"
+            afterAlt="Propiedad de lujo AUTEM construida y terminada"
+            beforeLabel="Antes"
+            afterLabel="Después"
+          />
         </section>
 
         {/* Drone Scan / Video */}
-        <section
-          data-animate
-          className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32"
-        >
-          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-5 md:px-8">
-            <div className="md:col-span-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                Escaneo aéreo
-              </span>
-              <h2 className="mt-6 font-serif text-4xl leading-tight md:text-5xl lg:text-6xl">
-                Drones que <span className="italic text-accent">cartografían</span> tu terreno.
-              </h2>
-              <p className="mt-6 max-w-md text-base leading-relaxed text-white/60">
-                Cada proyecto inicia con un vuelo LiDAR de precisión centimétrica. Reconstruimos el
-                sitio en 3D, detectamos zonas de valor y proyectamos el edificio final sobre la
-                topografía real.
-              </p>
-
-              <ul className="mt-10 space-y-4 text-sm">
-                {[
-                  { k: "01", v: "Vuelo autónomo · malla LiDAR" },
-                  { k: "02", v: "Análisis solar y de vistas" },
-                  { k: "03", v: "Render final sobre el terreno" },
-                ].map((item) => (
-                  <li key={item.k} className="flex items-start gap-4 border-t border-white/10 pt-4">
-                    <span className="font-serif italic text-accent">{item.k}</span>
-                    <span className="text-white/80">{item.v}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Video Panel */}
-            <div className="relative md:col-span-3">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#101015] to-[#050506] outline outline-1 -outline-offset-1 outline-white/10">
-                <video
-                  ref={panelVideoRef}
-                  loop
-                  muted
-                  playsInline
-                  preload="none"
-                  poster={`${import.meta.env.BASE_URL}antes.png`}
-                  className="absolute inset-0 h-full w-full object-cover"
-                >
-                  <source src={`${import.meta.env.BASE_URL}video-del-panel.mp4`} type="video/mp4" />
-                </video>
-
-                {/* HUD Overlays */}
-                <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[10px] uppercase tracking-widest backdrop-blur-sm">
-                  <span className="inline-block size-1.5 animate-pulse rounded-full bg-accent" />
-                  Escaneando en vivo
-                </div>
-                <div className="absolute bottom-4 left-4 flex gap-6 text-[10px] uppercase tracking-widest text-white/60">
-                  <span>
-                    Altitud <span className="text-accent">120m</span>
-                  </span>
-                  <span>
-                    Vel <span className="text-accent">6.4m/s</span>
-                  </span>
-                  <span>
-                    Cobertura <span className="text-accent">72%</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <DroneScanSection />
 
         {/* Partners marquee */}
         <section

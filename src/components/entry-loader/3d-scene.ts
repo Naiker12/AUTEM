@@ -18,11 +18,7 @@ export interface SceneKit {
  * The camera is positioned at the start of the fly-in orbit so
  * the first rendered frame already looks correct.
  */
-export function createScene(
-  canvas: HTMLCanvasElement,
-  width: number,
-  height: number,
-): SceneKit {
+export function createScene(canvas: HTMLCanvasElement, width: number, height: number): SceneKit {
   const scene = new THREE.Scene();
 
   // Subtle atmospheric fog

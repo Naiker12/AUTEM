@@ -12,12 +12,7 @@
 import * as THREE from "three";
 import type { CameraOrbit } from "./3d-types";
 import { INTRO_DURATION_MS, BASE_ROTATE_SPEED } from "./3d-types";
-import {
-  easeOutCubic,
-  easeOutQuart,
-  easeInOutSine,
-  easeOutElastic,
-} from "./3d-easing";
+import { easeOutCubic, easeOutQuart, easeInOutSine, easeOutElastic } from "./3d-easing";
 import type { SceneEffects } from "./3d-effects";
 
 export interface AnimationContext {
@@ -41,14 +36,7 @@ export function startAnimation(ctx: AnimationContext): () => void {
   let animationFrameId: number;
   let lastTime = performance.now();
 
-  const {
-    camera,
-    renderer,
-    scene,
-    orbit,
-    orbitLight,
-    effects,
-  } = ctx;
+  const { camera, renderer, scene, orbit, orbitLight, effects } = ctx;
 
   const { particles, lightRays, outerRing, innerRing } = effects;
 

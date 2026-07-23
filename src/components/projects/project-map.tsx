@@ -50,8 +50,7 @@ export default function ProjectMap({ property, className = "", zoom = 14 }: Proj
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
     }).addTo(map);
 
@@ -85,7 +84,9 @@ export default function ProjectMap({ property, className = "", zoom = 14 }: Proj
   }, [property, zoom]);
 
   return (
-    <div className={`relative z-0 isolate overflow-hidden rounded-2xl border border-border shadow-sm ${className}`}>
+    <div
+      className={`relative z-0 isolate overflow-hidden rounded-2xl border border-border shadow-sm ${className}`}
+    >
       <div ref={mapContainerRef} className="h-full w-full min-h-[320px] z-0" />
     </div>
   );
