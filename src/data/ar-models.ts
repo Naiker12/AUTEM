@@ -20,6 +20,7 @@ const AR_MODELS: Record<string, ARModel> = {
   "altos-de-san-pedro": { glb: DEFAULT_GLB_1 },
   "palacio-de-manga": { glb: DEFAULT_GLB_2 },
   "villa-marina-baru": { glb: DEFAULT_GLB_2 },
+  "eco-refugio-turbaco": { glb: `${import.meta.env.BASE_URL}models/eco-refugio-turbaco.glb` },
 };
 
 export function getARModel(propertySlug: string): ARModel {

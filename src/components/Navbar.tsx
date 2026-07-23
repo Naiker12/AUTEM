@@ -9,10 +9,10 @@ interface NavbarProps {
 }
 
 const navItems = [
-  { href: "#proyectos", label: "Proyectos" },
-  { href: "#tecnologia", label: "Experiencia 3D" },
-  { href: "#nosotros", label: "Nosotros" },
-  { href: "#contacto", label: "Contacto" },
+  { href: `${import.meta.env.BASE_URL}#proyectos`, label: "Proyectos" },
+  { href: `${import.meta.env.BASE_URL}#tecnologia`, label: "Experiencia 3D" },
+  { href: `${import.meta.env.BASE_URL}#nosotros`, label: "Nosotros" },
+  { href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
 ];
 
 export default function Navbar({ variant }: NavbarProps) {

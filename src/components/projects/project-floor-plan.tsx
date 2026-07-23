@@ -20,12 +20,19 @@ import type { ProjectFloorPlanProps } from "./project-types";
 export default function ProjectFloorPlan({ property, className = "" }: ProjectFloorPlanProps) {
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"render" | "blueprint">("render");
+  const [activeTab, setActiveTab] = useState<"render" | "blueprint" | "iso">("render");
 
   const modalRef = useModalA11y(isQrOpen, () => setIsQrOpen(false));
 
-  const planImageUrl = property.floorPlanImage || property.image;
-  const downloadUrl = property.floorPlanPdf || planImageUrl;
+  const planBase = `/projects/${property.slug}`;
+  const currentPlanImage =
+    activeTab === "blueprint"
+      ? `${planBase}/planta-2d.jpg`
+      : activeTab === "iso"
+      ? `${planBase}/planta-3d.jpg`
+      : property.floorPlanImage || `${planBase}/planta.jpg`;
+
+  const downloadUrl = property.floorPlanPdf || currentPlanImage;
   const qrUrl = getFloorPlanUrl(property.slug);
   const arModel = getARModel(property.slug);
 
@@ -49,7 +56,7 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
           onClick={() => setIsQrOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-accent/15 border border-accent/40 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-accent transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-md"
         >
-          <QrCode size={18} /> Ver plano & Código QR
+          <QrCode size={18} /> Ver planos (3 Vistas) & Código QR
         </button>
 
         <a
@@ -101,33 +108,43 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
             {/* Left Side: Architectural Floor Plan & Render View */}
             <div className="relative flex flex-col justify-between lg:w-3/5 p-8 md:p-10 bg-muted/30 border-b lg:border-b-0 lg:border-r border-border dark:bg-[#181818] dark:border-stone-800">
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-accent">
                     <Layers size={16} />
                     <span>Plano Arquitectónico</span>
                   </div>
 
-                  {/* Toggle tabs */}
+                  {/* 3 Toggle tabs */}
                   <div className="mr-12 flex rounded-lg border border-border dark:border-stone-800 bg-background dark:bg-[#101010] p-1 text-xs uppercase tracking-wider">
                     <button
                       onClick={() => setActiveTab("render")}
-                      className={`px-4 py-1.5 rounded-md transition-colors ${
+                      className={`px-3 py-1.5 rounded-md transition-colors ${
                         activeTab === "render"
                           ? "bg-accent text-accent-foreground font-semibold"
                           : "text-muted-foreground hover:text-foreground dark:text-stone-400 dark:hover:text-white"
                       }`}
                     >
-                      Vista 3D
+                      General
                     </button>
                     <button
                       onClick={() => setActiveTab("blueprint")}
-                      className={`px-4 py-1.5 rounded-md transition-colors ${
+                      className={`px-3 py-1.5 rounded-md transition-colors ${
                         activeTab === "blueprint"
                           ? "bg-accent text-accent-foreground font-semibold"
                           : "text-muted-foreground hover:text-foreground dark:text-stone-400 dark:hover:text-white"
                       }`}
                     >
-                      Plano 2D
+                      Plano 2D CAD
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("iso")}
+                      className={`px-3 py-1.5 rounded-md transition-colors ${
+                        activeTab === "iso"
+                          ? "bg-accent text-accent-foreground font-semibold"
+                          : "text-muted-foreground hover:text-foreground dark:text-stone-400 dark:hover:text-white"
+                      }`}
+                    >
+                      Corte 3D
                     </button>
                   </div>
                 </div>
@@ -143,13 +160,9 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
               {/* Floor Plan Image Container */}
               <div className="relative my-6 aspect-[16/10] w-full min-h-[300px] overflow-hidden rounded-2xl border border-border dark:border-stone-800 bg-stone-900 group shadow-lg">
                 <img
-                  src={planImageUrl}
+                  src={currentPlanImage}
                   alt={`Plano de ${property.name}`}
-                  className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                    activeTab === "blueprint"
-                      ? "filter contrast-125 brightness-90 hue-rotate-180"
-                      : ""
-                  }`}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />

@@ -1,19 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Navigation, ShieldCheck, Compass, Layers, Cpu } from "lucide-react";
-
-const FLIGHT_LOGS = [
-  "Calculando insolación y sombras del lote…",
-  "Registrando nube de puntos LiDAR (1.2M pts/s)…",
-  "Mapeando topografía y curvas de nivel del terreno…",
-  "Optimizando orientación bioclimática del proyecto…",
-  "Verificando accesos viales y vientos dominantes…",
-];
+import { Compass, Layers, Cpu } from "lucide-react";
 
 export default function DroneScanSection() {
   const [altitude, setAltitude] = useState(120.4);
   const [speed, setSpeed] = useState(6.4);
   const [coverage, setCoverage] = useState(0);
-  const [logIndex, setLogIndex] = useState(0);
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,18 +69,9 @@ export default function DroneScanSection() {
     return () => clearInterval(timer);
   }, [isIntersecting]);
 
-  // Rotate flight log ticker every 2.6s
-  useEffect(() => {
-    if (!isIntersecting) return;
-    const timer = setInterval(() => {
-      setLogIndex((prev) => (prev + 1) % FLIGHT_LOGS.length);
-    }, 2600);
-
-    return () => clearInterval(timer);
-  }, [isIntersecting]);
-
   return (
     <section
+      id="dron"
       ref={containerRef}
       data-animate
       className="relative overflow-hidden bg-[#0B0B0C] py-24 text-white opacity-0 md:py-32"
@@ -101,10 +83,7 @@ export default function DroneScanSection() {
         {/* Left Column: Text & Quantitative Technical Metrics */}
         <div className="md:col-span-2 space-y-6">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
-              <Navigation size={12} /> Escaneo Aéreo LiDAR
-            </span>
-            <h2 className="mt-5 font-serif text-4xl leading-tight md:text-5xl lg:text-6xl text-white">
+            <h2 className="font-serif text-4xl leading-tight md:text-5xl lg:text-6xl text-white">
               Drones que <span className="italic text-accent">cartografían</span> tu terreno.
             </h2>
             <p className="mt-5 text-sm leading-relaxed text-white/70 md:text-base">
@@ -140,35 +119,6 @@ export default function DroneScanSection() {
               <div className="text-[9px] text-white/50">pts/seg</div>
             </div>
           </div>
-
-          {/* Key Process Steps List */}
-          <ul className="space-y-4 pt-2">
-            {[
-              {
-                k: "01",
-                title: "Vuelo autónomo · Malla LiDAR 3D",
-                desc: "Digitalización fotogramétrica de alta resolución",
-              },
-              {
-                k: "02",
-                title: "Análisis solar y de vistas",
-                desc: "Estudio bioclimático de insolación y vientos",
-              },
-              {
-                k: "03",
-                title: "Render final sobre el terreno",
-                desc: "Integración exacta del proyecto en topografía real",
-              },
-            ].map((item) => (
-              <li key={item.k} className="flex items-start gap-4 border-t border-white/10 pt-4">
-                <span className="font-serif text-lg font-bold italic text-accent">{item.k}</span>
-                <div>
-                  <span className="block text-sm font-semibold text-white">{item.title}</span>
-                  <span className="text-xs text-white/50">{item.desc}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Right Column: Live Video Panel + Interactive HUD & Animated Flight Map */}
@@ -293,21 +243,10 @@ export default function DroneScanSection() {
               </g>
             </svg>
 
-            {/* ── HUD OVERLAYS ── */}
-            {/* Top Right Live Badge */}
-            <div className="absolute right-4 top-4 z-20 flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-md shadow-lg">
-              <span className="inline-block size-2 animate-ping rounded-full bg-accent" />
-              <span>Escaneando en vivo</span>
-            </div>
 
-            {/* Top Left Status Badge */}
-            <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/70 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400 backdrop-blur-md">
-              <ShieldCheck size={12} />
-              <span>LiDAR Activo</span>
-            </div>
 
             {/* Bottom Live Telemetry Bar */}
-            <div className="absolute bottom-12 inset-x-4 z-20 flex items-center justify-between rounded-xl border border-white/10 bg-black/70 px-4 py-2.5 backdrop-blur-md text-[10px] uppercase tracking-widest text-white/70">
+            <div className="absolute bottom-4 inset-x-4 z-20 flex items-center justify-between rounded-xl border border-white/10 bg-black/70 px-4 py-2.5 backdrop-blur-md text-[10px] uppercase tracking-widest text-white/70">
               <div className="flex gap-6 font-mono">
                 <span>
                   Altitud <strong className="text-accent font-bold">{altitude.toFixed(1)}m</strong>
@@ -319,17 +258,6 @@ export default function DroneScanSection() {
                   Cobertura <strong className="text-accent font-bold">{coverage}%</strong>
                 </span>
               </div>
-            </div>
-
-            {/* Rotational Flight Log Ticker (Bottom Bar) */}
-            <div className="absolute bottom-3 inset-x-4 z-20 flex items-center justify-between text-[9.5px] font-mono text-stone-300 backdrop-blur-sm px-2">
-              <span className="truncate flex items-center gap-1.5 text-amber-300/90 font-medium">
-                <span className="inline-block size-1.5 rounded-full bg-amber-400 animate-pulse" />
-                {FLIGHT_LOGS[logIndex]}
-              </span>
-              <span className="hidden sm:inline text-white/40 uppercase tracking-widest">
-                AUTEM Flight OS v4.2
-              </span>
             </div>
           </div>
         </div>

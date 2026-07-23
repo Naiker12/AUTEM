@@ -16,7 +16,7 @@ import propertyAzure from "@/assets/property-azure.jpg";
 import propertySierra from "@/assets/property-sierra.jpg";
 import propertyHorizon from "@/assets/property-horizon.jpg";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import PiePagina, { BotonWhatsappFlotante } from "@/components/pie-pagina";
 import PropertyCard from "@/components/PropertyCard";
 import MagneticButton from "@/components/MagneticButton";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
@@ -28,6 +28,11 @@ import EntryLoader3D, {
 } from "@/components/entry-loader";
 import { BeforeAfterSlider } from "@/components/before-after";
 import DroneScanSection from "@/components/DroneScanSection";
+import AnimatedSectionDivider from "@/components/AnimatedSectionDivider";
+import HeroCarousel from "@/components/HeroCarousel";
+import HeroSearchBar from "@/components/HeroSearchBar";
+import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import SeccionContacto from "@/components/contacto";
 import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
@@ -60,30 +65,23 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const featuredSlugs = ["residencia-azure", "eco-villa-sierra", "the-horizon-suite"];
-const featuredProperties = properties.filter((p) => featuredSlugs.includes(p.slug));
-
-const featuredOffsets = ["", "md:translate-y-12", ""];
+const featuredSlugs = [
+  "residencia-azure",
+  "eco-villa-sierra",
+  "the-horizon-suite",
+  "eco-refugio-turbaco",
+  "casa-campestre",
+  "villa-del-carmen",
+];
+const featuredProperties = featuredSlugs
+  .map((slug) => properties.find((p) => p.slug === slug))
+  .filter((p): p is typeof properties[0] => p !== undefined);
 
 const stats = [
   { value: "120+", label: "Proyectos entregados" },
   { value: "85k", label: "m² construidos" },
   { value: "98%", label: "Clientes satisfechos" },
   { value: "15", label: "Años de experiencia" },
-];
-
-const testimonials = [
-  {
-    quote:
-      "El tour virtual y la experiencia AR fueron decisivos. Compramos sin haber pisado la propiedad — y superó cada expectativa.",
-    author: "María Elena Vargas",
-    role: "Inversionista, Bogotá",
-  },
-  {
-    quote: "Un nivel de asesoría privado y sofisticado. AUTEM entiende la arquitectura como pocos.",
-    author: "James Whitmore",
-    role: "Coleccionista de arte, Medellín",
-  },
 ];
 
 const navItems = [
@@ -126,10 +124,6 @@ function Index() {
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const loaderContainerRef = useRef<HTMLDivElement>(null);
   const [modelVisible, setModelVisible] = useState(false);
-
-  const whatsappUrl =
-    `${WHATSAPP_BASE_URL}?text=` +
-    encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
   const [loadProgress, setLoadProgress] = useState(0);
 
@@ -270,19 +264,7 @@ function Index() {
           id="top"
           className="relative flex h-screen min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 text-center"
         >
-          <div className="absolute inset-0 z-0">
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              poster={heroVilla}
-              className="parallax-slow h-full w-full object-cover"
-            >
-              <source src={`${import.meta.env.BASE_URL}video-del-hero.mp4`} type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
+          <HeroCarousel />
 
           <div className="parallax-fast relative z-10 max-w-4xl">
             <span className="animate-fade-up mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent">
@@ -298,43 +280,24 @@ function Index() {
             </p>
 
             {/* Search Bar */}
-            <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-2xl bg-white/95 text-stone-900 border border-stone-200/80 p-2 shadow-2xl backdrop-blur-xl dark:bg-stone-950/90 dark:text-white dark:border-stone-800/80 md:flex-row md:items-center md:rounded-full transition-colors duration-300">
-              <div className="hidden pl-3 pr-2 py-1 md:flex items-center">
-                <AutemBrandIcon size={38} className="shadow-lg" />
-              </div>
-              <div className="hidden flex-1 border-r border-stone-200/80 dark:border-stone-800/80 px-6 text-left md:block">
-                <span className="block text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
-                  Ubicación
-                </span>
-                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
-                  Caribe Colombiano
-                </span>
-              </div>
-              <div className="hidden flex-1 border-r border-stone-200/80 dark:border-stone-800/80 px-6 text-left md:block">
-                <span className="block text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
-                  Inversión
-                </span>
-                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
-                  $500K – $2.5M
-                </span>
-              </div>
-              <MagneticButton
-                strength={0.2}
-                className="w-full rounded-full bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground px-8 py-4 text-xs font-semibold uppercase tracking-widest shadow-lg transition-all hover:opacity-90 md:w-auto"
-              >
-                <a href="#proyectos">Explorar proyectos</a>
-              </MagneticButton>
-            </div>
+            <HeroSearchBar />
           </div>
 
-          {/* Scroll indicator */}
-          <div className="parallax-fast absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+          {/* Scroll indicator with descending animated gold laser thread */}
+          <div className="parallax-fast absolute -bottom-10 left-1/2 z-20 -translate-x-1/2">
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[8px] uppercase tracking-[0.3em] text-white/40">Scroll</span>
-              <div className="h-8 w-px bg-gradient-to-b from-accent to-transparent" />
+              <span className="text-[8px] font-bold uppercase tracking-[0.35em] text-accent/80 animate-pulse">
+                Scroll
+              </span>
+              <div className="relative h-24 w-[1.5px] bg-gradient-to-b from-accent via-amber-400 to-transparent overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white to-transparent opacity-90 blur-[0.5px] animate-pulse" />
+              </div>
             </div>
           </div>
         </section>
+
+        {/* Animated Gold Laser Divider line connecting Hero to Proyectos */}
+        <AnimatedSectionDivider className="mt-8" />
 
         {/* Featured Properties */}
         <section
@@ -357,15 +320,21 @@ function Index() {
             </a>
           </div>
 
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-            {featuredProperties.map((p, i) => (
-              <PropertyCard key={p.slug} property={p} className={featuredOffsets[i] || ""} />
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 md:gap-10">
+            {featuredProperties.map((p) => (
+              <PropertyCard key={p.slug} property={p} />
             ))}
           </div>
         </section>
 
+        {/* Animated Gold Laser Divider Line */}
+        <AnimatedSectionDivider />
+
         {/* Immersive Tech / AR */}
         <ARExperience />
+
+        {/* Animated Gold Divider Line */}
+        <AnimatedSectionDivider />
 
         {/* Before/After Comparison Slider */}
         <section data-animate className="mx-auto max-w-7xl px-6 py-16 opacity-0 md:px-8 md:py-24">
@@ -389,23 +358,26 @@ function Index() {
           />
         </section>
 
+        {/* Animated Gold Divider Line */}
+        <AnimatedSectionDivider />
+
         {/* Drone Scan / Video */}
         <DroneScanSection />
 
         {/* Partners marquee */}
         <section
           data-animate
-          className="border-y border-border bg-background py-10 opacity-0 overflow-hidden"
+          className="border-y border-stone-200/80 dark:border-stone-800/80 bg-stone-100/40 dark:bg-stone-900/30 py-5 opacity-0 overflow-hidden"
         >
-          <div className="mx-auto mb-6 max-w-7xl px-6 md:px-8">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
+          <div className="mx-auto mb-3 max-w-7xl px-6 md:px-8">
+            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent">
               Colaboradores · Estudios · Prensa
             </span>
           </div>
           <div className="relative">
-            <div className="marquee-track flex w-max gap-16 whitespace-nowrap px-6 font-serif text-3xl tracking-tight text-muted-foreground md:text-4xl">
+            <div className="marquee-track flex w-max gap-12 whitespace-nowrap px-6 text-sm font-serif font-light tracking-[0.15em] text-stone-500 dark:text-stone-400 md:text-base">
               {[...Array(2)].map((_, dup) => (
-                <div key={dup} className="flex gap-16 pr-16">
+                <div key={dup} className="flex gap-12 pr-12">
                   {[
                     "Foster + Partners",
                     "BIG",
@@ -414,11 +386,11 @@ function Index() {
                     "Wallpaper*",
                     "Architectural Digest",
                     "Dezeen",
-                    "Sotheby's",
+                    "Sotheby's Realty",
                   ].map((n) => (
                     <span
                       key={n}
-                      className="italic opacity-70 hover:opacity-100 transition-opacity"
+                      className="italic opacity-70 hover:opacity-100 hover:text-accent transition-all cursor-default"
                     >
                       {n}
                     </span>
@@ -430,12 +402,23 @@ function Index() {
         </section>
 
         {/* Stats */}
-        <section data-animate className="border-b border-border opacity-0">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-12 px-6 py-20 md:grid-cols-4 md:px-8 md:py-24">
+        <section data-animate className="border-b border-border opacity-0 py-10 md:py-12">
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-6 md:grid-cols-4 md:gap-6 md:px-8">
             {stats.map((s) => (
-              <div key={s.label} className="flex flex-col">
-                <span className="mb-2 font-serif text-4xl text-accent md:text-5xl">{s.value}</span>
-                <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              <div
+                key={s.label}
+                className="group relative flex flex-col justify-between rounded-xl border border-stone-200/80 dark:border-stone-800/80 bg-stone-50/60 dark:bg-stone-900/60 p-4 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-accent/60 hover:bg-stone-900 hover:text-white hover:shadow-[0_12px_30px_rgba(197,160,89,0.18)]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-serif text-3xl font-bold text-accent transition-transform duration-300 group-hover:scale-105 md:text-4xl">
+                    {s.value}
+                  </span>
+                  <div className="relative flex h-3 w-3 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-accent/40 opacity-0 group-hover:animate-ping group-hover:opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-accent/60 group-hover:bg-accent" />
+                  </div>
+                </div>
+                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.2em] text-stone-500 transition-colors group-hover:text-stone-300">
                   {s.label}
                 </span>
               </div>
@@ -443,141 +426,36 @@ function Index() {
           </div>
         </section>
 
-        {/* Testimonials */}
+        {/* Testimonials & Real Estate Investment Highlights */}
         <section
           id="nosotros"
           data-animate
           className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
         >
-          <h2 className="max-w-3xl font-serif text-4xl md:text-5xl">
-            Clientes que ya invirtieron con nosotros.
-          </h2>
-          <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2">
-            {testimonials.map((t) => (
-              <blockquote key={t.author} className="border-t border-border pt-8">
-                <p className="font-serif text-2xl italic leading-snug md:text-3xl">"{t.quote}"</p>
-                <footer className="mt-6 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{t.author}</span> — {t.role}
-                </footer>
-              </blockquote>
-            ))}
+          <div className="mb-14 text-center">
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-accent">
+              Confianza & Valorización en Cartagena
+            </span>
+            <h2 className="mt-3 mx-auto max-w-3xl font-serif text-4xl leading-tight md:text-5xl lg:text-6xl">
+              Inversionistas que eligieron la arquitectura del futuro.
+            </h2>
+            <p className="mt-4 mx-auto max-w-xl text-base text-muted-foreground font-light">
+              Descubre los testimonios verificados de compradores e inversionistas que adquirieron propiedades exclusivas en Cartagena y Bolívar a través de nuestra experiencia 3D y AR.
+            </p>
           </div>
+
+          <TestimonialsCarousel />
         </section>
 
-        {/* Contact / CTA */}
-        <section id="contacto" data-animate className="bg-muted-warm/30 py-24 opacity-0 md:py-32">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 px-6 md:grid-cols-2 md:px-8">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                Contacto privado
-              </span>
-              <h2 className="mt-2 font-serif text-4xl leading-tight md:text-6xl">
-                Hablemos de tu próxima inversión.
-              </h2>
-              <p className="mt-6 max-w-md text-muted-foreground">
-                Asesoría personalizada. Un especialista se pondrá en contacto contigo en menos de 24
-                horas.
-              </p>
-            </div>
-
-            <form
-              className="space-y-6"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const formData = new FormData(form);
-                if (formData.get("website")) return;
-                validateContact((data) => {
-                  contactForm.handleSubmit({
-                    name: data.name,
-                    email: data.email,
-                    message: data.message,
-                  });
-                })(e);
-              }}
-            >
-              <div className="absolute left-[-9999px]" aria-hidden="true">
-                <label htmlFor="website">No llenes esto</label>
-                <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                  Nombre
-                </label>
-                <input
-                  {...registerContact("name")}
-                  type="text"
-                  className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
-                />
-                {contactErrors.name && (
-                  <p className="mt-1 text-xs text-red-500">{contactErrors.name.message}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                  Correo electrónico
-                </label>
-                <input
-                  {...registerContact("email")}
-                  type="email"
-                  className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
-                />
-                {contactErrors.email && (
-                  <p className="mt-1 text-xs text-red-500">{contactErrors.email.message}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                  Mensaje
-                </label>
-                <textarea
-                  {...registerContact("message")}
-                  rows={3}
-                  className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40"
-                />
-                {contactErrors.message && (
-                  <p className="mt-1 text-xs text-red-500">{contactErrors.message.message}</p>
-                )}
-              </div>
-              <MagneticButton
-                type="submit"
-                strength={0.15}
-                disabled={contactForm.status === "sending"}
-                className="w-full bg-primary px-12 py-5 text-xs font-medium uppercase tracking-widest text-primary-foreground transition-all hover:bg-accent hover:text-accent-foreground md:w-auto"
-              >
-                {contactForm.status === "sent"
-                  ? "✓ Mensaje enviado"
-                  : contactForm.status === "sending"
-                    ? "Abriendo WhatsApp..."
-                    : contactForm.status === "error"
-                      ? "Error — intentar de nuevo"
-                      : "Agendar consultoría"}
-              </MagneticButton>
-            </form>
-          </div>
-        </section>
+        {/* Sección de Contacto Privado & Consultoría */}
+        <SeccionContacto />
       </main>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer / Pie de Página */}
+      <PiePagina />
 
-      {/* WhatsApp Floating Button */}
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Contactar por WhatsApp"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full bg-whatsapp px-5 py-4 text-white shadow-2xl transition-transform hover:scale-105"
-      >
-        <span className="pulse-ring relative flex size-6 items-center justify-center">
-          <svg viewBox="0 0 24 24" className="size-6" fill="currentColor" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-          </svg>
-        </span>
-        <span className="hidden text-xs font-medium uppercase tracking-widest sm:inline">
-          Asesor en línea
-        </span>
-      </a>
+      {/* Botón Flotante de WhatsApp VIP */}
+      <BotonWhatsappFlotante />
 
       {/* Exit Intent Popup */}
       {showExitPopup && (

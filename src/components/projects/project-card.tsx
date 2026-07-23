@@ -17,7 +17,7 @@ export default function ProjectCard({ property, className = "" }: ProjectCardPro
       params={{ id: property.slug }}
       className={`group block cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:shadow-xl ${className}`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted-warm">
+      <div className="relative aspect-[4/4.2] overflow-hidden bg-muted-warm">
         <img
           src={property.image}
           alt={property.name}

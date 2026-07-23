@@ -89,6 +89,7 @@ export default function ARExperience({
 
   return (
     <section
+      id="tecnologia"
       className={`relative overflow-hidden bg-background text-foreground py-20 md:py-28 ${className}`}
     >
       {/* ── Ambient background glow ── */}
@@ -100,11 +101,7 @@ export default function ARExperience({
       <div className="relative z-10 mx-auto max-w-7xl px-6 md:px-8">
         {/* ── Section Header ── */}
         <div className="mb-12 max-w-xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
-            <Cuboid size={14} />
-            Tecnología Inmersiva
-          </span>
-          <h2 className="mt-5 font-serif text-3xl leading-tight text-foreground md:text-5xl">
+          <h2 className="font-serif text-3xl leading-tight text-foreground md:text-5xl">
             Explora en{" "}
             <span className="bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
               Realidad Aumentada
