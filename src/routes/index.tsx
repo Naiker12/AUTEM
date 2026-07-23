@@ -20,6 +20,7 @@ import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import MagneticButton from "@/components/MagneticButton";
 import ARExperience from "@/components/ARExperience";
+import EntryLoader3D, { LoaderOverlay, SCENE_VISIBLE_DURATION_MS, LOADER_TEXT_DURATION_MS } from "@/components/entry-loader";
 import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
@@ -116,7 +117,6 @@ function Index() {
   const dotRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
-  const loaderModelRef = useRef<HTMLElement | null>(null);
   const loaderContainerRef = useRef<HTMLDivElement>(null);
   const [modelVisible, setModelVisible] = useState(false);
   const panelVideoRef = useRef<HTMLVideoElement>(null);
@@ -125,70 +125,17 @@ function Index() {
     `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
-  // Page loader
-  useEffect(() => {
-    const timer = setTimeout(() => setShowLoader(false), 2800);
-    return () => clearTimeout(timer);
-  }, []);
+  const [loadProgress, setLoadProgress] = useState(0);
 
-  // Loader 3D model — mounts once, never destroyed (stays alive for AR cache)
-  useEffect(() => {
-    if (!loaderContainerRef.current) return;
+  const handleModelLoaded = () => {
+    setModelVisible(true);
+    setTimeout(() => setShowLoader(false), LOADER_TEXT_DURATION_MS);
+  };
 
-    let cancelled = false;
-    const container = loaderContainerRef.current;
-
-    const init = async () => {
-      const mv = await import("@google/model-viewer");
-      if (cancelled || !container) return;
-      void mv;
-
-      const el = document.createElement("model-viewer");
-      el.setAttribute("alt", "");
-      el.setAttribute("auto-rotate", "");
-      el.setAttribute("rotation-per-second", "18deg");
-      el.setAttribute("camera-orbit", "0deg 75deg 5m");
-      el.setAttribute("min-camera-orbit", "auto auto 3m");
-      el.setAttribute("max-camera-orbit", "auto auto 8m");
-      el.setAttribute("interaction-prompt", "none");
-      el.setAttribute("touch-action", "none");
-      el.setAttribute("shadow-intensity", "0");
-      el.setAttribute("environment-image", "neutral");
-
-      el.style.width = "100%";
-      el.style.height = "100%";
-      el.style.position = "absolute";
-      el.style.inset = "0";
-      el.style.opacity = "0";
-      el.style.transition = "opacity 1.8s ease-in";
-      el.style.transform = "scale(0.85)";
-      el.style.transformOrigin = "center center";
-
-      el.addEventListener("load", () => {
-        if (!cancelled) {
-          el.style.opacity = "0.55";
-          el.style.transform = "scale(1)";
-          setModelVisible(true);
-        }
-      });
-
-      container.appendChild(el);
-      loaderModelRef.current = el;
-
-      el.setAttribute("src", `${import.meta.env.BASE_URL}models/the-horizon-suite.glb`);
-    };
-
-    init();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Fade out the loader model after it's been visible for 3s
+  // Fade out the loader model after the cinematic animation completes
   useEffect(() => {
     if (!modelVisible) return;
-    const timer = setTimeout(() => setHideModel(true), 3000);
+    const timer = setTimeout(() => setHideModel(true), SCENE_VISIBLE_DURATION_MS);
     return () => clearTimeout(timer);
   }, [modelVisible]);
 
@@ -354,26 +301,24 @@ function Index() {
       {/* 3D Model — persistent, never destroyed (stays alive for AR cache) */}
       <div
         ref={loaderContainerRef}
-        className={`fixed inset-0 z-[9998] overflow-hidden bg-primary transition-opacity duration-[2000ms] ${
+        className={`fixed inset-0 z-[9998] overflow-hidden transition-opacity duration-[1000ms] ${
           hideModel ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
-      />
+        style={{ background: "radial-gradient(ellipse at center, #141414 0%, #0a0a0a 60%, #050505 100%)" }}
+      >
+        <EntryLoader3D
+          modelUrl={`${import.meta.env.BASE_URL}models/the-horizon-suite.glb`}
+          onProgress={setLoadProgress}
+          onLoaded={handleModelLoaded}
+        />
+      </div>
 
-      {/* Page Loader / Curtain — transparent so the 3D model shows through */}
-      {showLoader && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center">
-          <div className="curtain-sweep absolute inset-0 bg-accent/10" />
-          <div className="relative z-10 text-center">
-            <span className="logo-glow font-serif text-5xl italic tracking-tight text-white drop-shadow-2xl md:text-7xl">
-              AUTEM
-            </span>
-            <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/50 drop-shadow-lg">
-              Bienes raíces en Cartagena
-            </p>
-            <div className="mx-auto mt-8 h-px w-16 bg-white/30" />
-          </div>
-        </div>
-      )}
+      {/* Page Loader / Overlay */}
+      <LoaderOverlay
+        showLoader={showLoader}
+        modelVisible={modelVisible}
+        loadProgress={loadProgress}
+      />
 
       {/* Custom Cursor (only on desktop) */}
       <div
@@ -420,22 +365,22 @@ function Index() {
             </p>
 
             {/* Search Bar */}
-            <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-full bg-white p-2 shadow-2xl md:flex-row md:items-center">
-              <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
-                <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
+            <div className="animate-fade-up delay-300 mx-auto flex max-w-3xl flex-col items-stretch gap-2 rounded-2xl bg-white/95 text-stone-900 border border-stone-200/80 shadow-2xl backdrop-blur-xl dark:bg-stone-950/90 dark:text-white dark:border-stone-800/80 md:flex-row md:items-center md:rounded-full transition-colors duration-300">
+              <div className="hidden flex-1 border-r border-stone-200/80 dark:border-stone-800/80 px-6 text-left md:block">
+                <span className="block text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
                   Ubicación
                 </span>
-                <span className="text-sm font-medium text-foreground">Caribe Colombiano</span>
+                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">Caribe Colombiano</span>
               </div>
-              <div className="hidden flex-1 border-r border-stone-100 px-6 text-left md:block">
-                <span className="block text-[10px] uppercase tracking-tighter text-stone-400">
+              <div className="hidden flex-1 border-r border-stone-200/80 dark:border-stone-800/80 px-6 text-left md:block">
+                <span className="block text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
                   Inversión
                 </span>
-                <span className="text-sm font-medium text-foreground">$500K – $2.5M</span>
+                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">$500K – $2.5M</span>
               </div>
               <MagneticButton
                 strength={0.2}
-                className="w-full rounded-full bg-primary px-10 py-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-auto"
+                className="w-full rounded-full bg-primary text-primary-foreground dark:bg-accent dark:text-accent-foreground px-8 py-4 text-xs font-semibold uppercase tracking-widest shadow-lg transition-all hover:opacity-90 md:w-auto"
               >
                 <a href="#proyectos">Explorar proyectos</a>
               </MagneticButton>
@@ -474,40 +419,11 @@ function Index() {
 
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             {featuredProperties.map((p, i) => (
-              <a
+              <PropertyCard
                 key={p.slug}
-                href={`/properties/${p.slug}`}
-                className={`group block cursor-pointer ${featuredOffsets[i] || ""}`}
-              >
-                <div className="relative mb-6 aspect-[3/4] overflow-hidden bg-muted-warm">
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    width={800}
-                    height={1066}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    style={{ animation: "ken-burns 20s ease-in-out infinite alternate" }}
-                  />
-                  {p.tags.length > 0 && (
-                    <div className="absolute left-4 top-4 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-foreground backdrop-blur-sm">
-                      {p.tags[0]}
-                    </div>
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-500 group-hover:bg-black/30">
-                    <span className="translate-y-4 text-sm font-medium uppercase tracking-widest text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-                      Ver propiedad →
-                    </span>
-                  </div>
-                </div>
-                <h3 className="font-serif text-2xl">{p.name}</h3>
-                <div className="mt-2 flex items-center justify-between text-sm font-light text-muted-foreground">
-                  <span>
-                    {p.location} · {p.m2} m²
-                  </span>
-                  <span className="font-medium text-foreground">{p.price}</span>
-                </div>
-              </a>
+                property={p}
+                className={featuredOffsets[i] || ""}
+              />
             ))}
           </div>
         </section>

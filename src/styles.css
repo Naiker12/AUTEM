@@ -36,7 +36,7 @@
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --radius: 0.25rem;
   --background: oklch(0.972 0.008 85); /* #F9F7F2 warm ivory */
   --foreground: oklch(0.208 0.005 285); /* #1A1A1A near black */
@@ -62,6 +62,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.145 0.005 285); /* #1F1F1F dark charcoal */
   --foreground: oklch(0.972 0.008 85); /* #F9F7F2 */
   --surface: oklch(0.18 0.005 285);

@@ -28,6 +28,8 @@ export interface Property {
   floorPlan: string;
   year: number;
   floorPlanPdf?: string;
+  floorPlanImage?: string;
+  images?: string[];
 }
 
 export const ZONAS = [
@@ -372,4 +374,22 @@ export function getPropertyBySlug(slug: string): Property | undefined {
 
 export function getPropertyById(id: string): Property | undefined {
   return properties.find((p) => p.id === id);
+}
+
+export function getFloorPlanUrl(slug: string): string {
+  if (typeof window === "undefined") return "";
+  const property = properties.find((p) => p.slug === slug);
+  if (property?.floorPlanImage) {
+    const path = property.floorPlanImage.startsWith("http")
+      ? property.floorPlanImage
+      : `${window.location.origin}${property.floorPlanImage.startsWith("/") ? "" : "/"}${property.floorPlanImage}`;
+    return path;
+  }
+  if (property?.floorPlanPdf) {
+    const path = property.floorPlanPdf.startsWith("http")
+      ? property.floorPlanPdf
+      : `${window.location.origin}${property.floorPlanPdf.startsWith("/") ? "" : "/"}${property.floorPlanPdf}`;
+    return path;
+  }
+  return `${window.location.origin}${import.meta.env.BASE_URL}properties/${slug}`;
 }

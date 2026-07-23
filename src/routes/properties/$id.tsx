@@ -3,13 +3,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useContactForm } from "@/hooks/useContactForm";
-import { Download } from "lucide-react";
+import { Download, Smartphone } from "lucide-react";
 import { properties, getPropertyById } from "@/data/properties";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { contactSchema, type ContactFormData } from "@/lib/validation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MagneticButton from "@/components/MagneticButton";
+import { ProjectGallery, ProjectFloorPlan, ProjectMap } from "@/components/projects";
+import { getARModel } from "@/data/ar-models";
 
 export const Route = createFileRoute("/properties/$id")({
   component: PropertyDetail,
@@ -59,7 +61,6 @@ export const Route = createFileRoute("/properties/$id")({
 function PropertyDetail() {
   const { id } = Route.useParams();
   const property = getPropertyById(id);
-  const [selectedImage, setSelectedImage] = useState(0);
   const [mortgageAmount, setMortgageAmount] = useState(500000);
   const [mortgageYears, setMortgageYears] = useState(25);
   const [mortgageRate, setMortgageRate] = useState(3.5);
@@ -123,48 +124,7 @@ function PropertyDetail() {
             >
               ← Volver a proyectos
             </Link>
-          </div>
-          <div className="relative mx-auto max-w-7xl px-6 md:px-8">
-            <div className="relative aspect-[21/9] overflow-hidden rounded-2xl">
-              <img
-                src={images[selectedImage]}
-                alt={property.name}
-                width={1920}
-                height={822}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              <div className="absolute bottom-8 left-8">
-                <span className="mb-2 inline-block rounded-full bg-accent px-4 py-1 text-[10px] font-bold uppercase tracking-widest text-accent-foreground">
-                  {property.year === 2025 ? "Próximo lanzamiento" : "Disponible"}
-                </span>
-                <h1 className="mt-2 font-serif text-4xl text-white md:text-6xl">{property.name}</h1>
-                <p className="mt-2 text-lg text-white/80">
-                  {property.location} · {property.m2} m²
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-3">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedImage(i)}
-                  className={`aspect-[3/2] w-32 overflow-hidden rounded-lg border-2 transition-all ${
-                    selectedImage === i
-                      ? "border-accent"
-                      : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
-                >
-                  <img
-                    src={img}
-                    alt={`${property.name} - Vista ${i + 1}`}
-                    width={200}
-                    height={133}
-                    className="h-full w-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            <ProjectGallery property={property} />
           </div>
         </section>
 
@@ -239,6 +199,9 @@ function PropertyDetail() {
                   </div>
                 </div>
                 <p className="mt-4 text-sm text-muted-foreground">{property.floorPlan}</p>
+                <div className="mt-6">
+                  <ProjectFloorPlan property={property} />
+                </div>
               </div>
 
               {/* Floor Plan PDF */}
@@ -281,38 +244,13 @@ function PropertyDetail() {
               {/* Location */}
               <div className="mb-12">
                 <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                  Ubicación
+                  Ubicación & Entorno
                 </span>
-                <div className="mt-6 aspect-[16/7] w-full overflow-hidden rounded-xl bg-muted-warm/50">
-                  <div className="flex h-full w-full items-center justify-center">
-                    <div className="text-center">
-                      <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-accent/10">
-                        <svg
-                          className="size-8 text-accent"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </div>
-                      <p className="font-serif text-xl">{property.location}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Cartagena, Bolívar, Colombia
-                      </p>
-                    </div>
-                  </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {property.location} · Cartagena, Bolívar, Colombia
+                </p>
+                <div className="mt-6">
+                  <ProjectMap property={property} className="h-[360px] w-full" />
                 </div>
               </div>
             </div>
@@ -341,6 +279,14 @@ function PropertyDetail() {
                     >
                       Solicitar información
                     </a>
+                    {getARModel(property.slug) && (
+                      <Link
+                        to={`/ar/${property.slug}`}
+                        className="flex w-full items-center justify-center gap-2 border border-border px-6 py-4 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
+                      >
+                        <Smartphone size={14} /> Ver en Realidad Aumentada
+                      </Link>
+                    )}
                     {property.floorPlanPdf && (
                       <a
                         href={property.floorPlanPdf}

@@ -99,5 +99,9 @@ export default function MapView({ properties }: MapViewProps) {
     }
   }, [properties]);
 
-  return <div ref={mapRef} className="h-full w-full" />;
+  return (
+    <div className="relative z-0 isolate h-full w-full">
+      <div ref={mapRef} className="h-full w-full z-0" />
+    </div>
+  );
 }
