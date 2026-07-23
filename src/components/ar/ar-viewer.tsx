@@ -4,6 +4,7 @@ import { FINISHES } from "@/data/constants";
 import { LIGHTING_PRESETS } from "./ar-types";
 import type { Desktop3DViewerProps, LightingMode } from "./ar-types";
 import { AREnvironmentToggle } from "./ar-environment-toggle";
+import "@google/model-viewer";
 
 export function Desktop3DViewer({
   modelSrc,
@@ -13,105 +14,64 @@ export function Desktop3DViewer({
   onLightingChange,
   className = "",
 }: Desktop3DViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
 
+  // Synchronize material finish color
   useEffect(() => {
-    if (!modelSrc || !containerRef.current) return;
+    if (!ready || !viewerRef.current) return;
+    const finish = FINISHES[selectedFinish];
+    if (!finish) return;
 
-    let cancelled = false;
-    const container = containerRef.current;
+    try {
+      const mv = viewerRef.current as unknown as {
+        model?: {
+          materials?: Array<{
+            pbrMetallicRoughness?: {
+              setBaseColorFactor?: (color: string | number[]) => void;
+            };
+          }>;
+        };
+      };
 
-    const init = async () => {
-      const mv = await import("@google/model-viewer");
-      if (cancelled || !container) return;
-      void mv;
-
-      const el = document.createElement("model-viewer");
-      el.setAttribute("src", modelSrc);
-      el.setAttribute("alt", "Modelo 3D interactivo de la propiedad");
-      el.setAttribute("camera-controls", "");
-      el.setAttribute("environment-image", "neutral");
-      el.setAttribute("tone-mapping", "neutral");
-      el.setAttribute("shadow-intensity", "1.2");
-      el.setAttribute("shadow-softness", "0.8");
-      el.setAttribute("exposure", "1.1");
-      el.setAttribute("camera-orbit", "25deg 70deg 40%");
-      el.setAttribute("camera-target", "auto auto auto");
-      el.setAttribute("bounds", "tight");
-      el.setAttribute("field-of-view", "20deg");
-      el.setAttribute("min-field-of-view", "8deg");
-      el.setAttribute("max-field-of-view", "45deg");
-      el.setAttribute("min-camera-orbit", "auto 10deg 10%");
-      el.setAttribute("max-camera-orbit", "auto 88deg 200%");
-      el.setAttribute("interaction-prompt", "none");
-      el.setAttribute("touch-action", "pan-y");
-
-      el.style.width = "100%";
-      el.style.height = "100%";
-      el.style.borderRadius = "1.5rem";
-      el.style.backgroundColor = "transparent";
-      el.style.setProperty("--poster-color", "transparent");
-
-      el.addEventListener("load", () => {
-        if (!cancelled) setReady(true);
-      });
-
-      container.appendChild(el);
-      viewerRef.current = el;
-    };
-
-    init();
-
-    return () => {
-      cancelled = true;
-      const viewer = viewerRef.current;
-      if (viewer && container) {
-        container.removeChild(viewer);
-        viewerRef.current = null;
+      if (mv.model?.materials?.[0]?.pbrMetallicRoughness?.setBaseColorFactor) {
+        mv.model.materials[0].pbrMetallicRoughness.setBaseColorFactor(finish.color);
       }
-    };
-  }, [modelSrc]);
-
-  // Aplica el preset de iluminación (Día / Noche / Estudio) sin recrear el <model-viewer>
-  useEffect(() => {
-    const el = viewerRef.current;
-    if (!el || !ready) return;
-    const preset = LIGHTING_PRESETS[lightingMode];
-
-    if (preset.skybox) {
-      el.setAttribute("skybox-image", preset.skybox);
-      el.removeAttribute("environment-image");
-    } else {
-      el.removeAttribute("skybox-image");
-      el.setAttribute("environment-image", preset.environment ?? "neutral");
+    } catch {
+      // Ignored
     }
-    el.setAttribute("exposure", preset.exposure);
-    el.setAttribute("shadow-intensity", preset.shadowIntensity);
-  }, [lightingMode, ready]);
+  }, [ready, selectedFinish]);
 
   const handleResetCamera = () => {
     const el = viewerRef.current as unknown as { cameraTarget?: string; cameraOrbit?: string };
     if (el) {
-      el.cameraOrbit = "25deg 70deg 40%";
+      el.cameraOrbit = "25deg 75deg 105%";
       el.cameraTarget = "auto auto auto";
     }
   };
 
+  const preset = LIGHTING_PRESETS[lightingMode];
+
+  const bgStyles: Record<LightingMode, string> = {
+    day: "border-stone-800 bg-gradient-to-b from-amber-950/30 via-stone-950 to-stone-950",
+    night: "border-indigo-950 bg-gradient-to-b from-indigo-950/60 via-slate-950 to-slate-950",
+    studio: "border-stone-800 bg-stone-950",
+  };
+
   return (
     <div
-      className={`relative aspect-[4/3] sm:aspect-[16/11] min-h-[460px] md:min-h-[540px] w-full overflow-hidden rounded-3xl border border-stone-800 bg-stone-950 text-white shadow-2xl ${className}`}
+      className={`relative aspect-[4/3] sm:aspect-[16/11] min-h-[380px] sm:min-h-[460px] md:min-h-[540px] w-full overflow-hidden rounded-3xl border text-white shadow-2xl transition-all duration-700 ${bgStyles[lightingMode]} ${className}`}
     >
       {/* Fondo de Resplandor Reflejado para terreno */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div
-          className={`size-[380px] rounded-full blur-[90px] transition-all duration-700 ${lightingMode === "day"
-              ? "bg-amber-500/10 opacity-80"
+          className={`size-[320px] sm:size-[450px] rounded-full blur-[90px] sm:blur-[100px] transition-all duration-700 ${
+            lightingMode === "day"
+              ? "bg-amber-500/20 opacity-80"
               : lightingMode === "night"
-                ? "bg-indigo-500/10 opacity-80"
+                ? "bg-indigo-500/25 opacity-80"
                 : "bg-accent/5 opacity-50"
-            }`}
+          }`}
         />
       </div>
 
@@ -126,11 +86,43 @@ export function Desktop3DViewer({
             </div>
           )}
 
-          <div ref={containerRef} className="relative z-[1] h-full w-full" />
+          {/* Model Viewer Component directly in JSX */}
+          <div className="relative z-[1] h-full w-full">
+            <model-viewer
+              ref={viewerRef}
+              src={modelSrc}
+              alt="Modelo 3D interactivo de la propiedad"
+              camera-controls=""
+              environment-image={preset.environment ?? "neutral"}
+              tone-mapping="neutral"
+              shadow-intensity={preset.shadowIntensity}
+              shadow-softness={preset.shadowSoftness}
+              exposure={preset.exposure}
+              camera-orbit="25deg 75deg 105%"
+              camera-target="auto auto auto"
+              bounds="tight"
+              field-of-view="18deg"
+              min-field-of-view="14deg"
+              max-field-of-view="25deg"
+              min-camera-orbit="auto 45deg 70%"
+              max-camera-orbit="auto 85deg 140%"
+              interpolation-decay="200"
+              interaction-prompt="none"
+              touch-action="pan-y"
+              onLoad={() => setReady(true)}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "1.5rem",
+                backgroundColor: "transparent",
+                "--poster-color": "transparent",
+              } as React.CSSProperties}
+            />
+          </div>
 
           {/* Lighting Mode Toggle (Día / Noche / Estudio) */}
           {ready && (
-            <div className="absolute left-6 top-6 z-20">
+            <div className="absolute left-3 sm:left-6 top-3 sm:top-6 z-20">
               <AREnvironmentToggle currentTheme={lightingMode} onThemeChange={onLightingChange} />
             </div>
           )}
@@ -139,31 +131,31 @@ export function Desktop3DViewer({
           {ready && (
             <button
               onClick={handleResetCamera}
-              className="absolute right-6 top-6 z-20 flex size-10 items-center justify-center rounded-full border border-stone-700/80 bg-stone-950/80 text-white backdrop-blur-md transition-all hover:bg-accent hover:text-accent-foreground shadow-lg"
+              className="absolute right-3 sm:right-6 top-3 sm:top-6 z-20 flex size-9 sm:size-10 items-center justify-center rounded-full border border-stone-700/80 bg-stone-950/80 text-white backdrop-blur-md transition-all hover:bg-accent hover:text-accent-foreground shadow-lg"
               aria-label="Restablecer vista 3D"
               title="Restablecer cámara"
             >
-              <RotateCcw size={16} />
+              <RotateCcw size={15} />
             </button>
           )}
 
-          {/* Active Lighting Status Label - Centered */}
+          {/* Active Lighting Status Label - Centered (Responsive on mobile) */}
           {ready && (
-            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full border border-stone-800/80 bg-stone-950/90 px-4 py-1.5 text-[10px] text-stone-300 backdrop-blur-md shadow-lg whitespace-nowrap">
-              {lightingMode === "day" && "☀️ Día · Iluminación natural y sombras de terreno"}
-              {lightingMode === "night" && "🌙 Noche · Ambiente nocturno e iluminación interior"}
-              {lightingMode === "studio" && "◻ Estudio 3D · Maqueta arquitectónica interactiva"}
+            <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 z-20 hidden xs:flex items-center gap-1.5 rounded-full border border-stone-800/80 bg-stone-950/90 px-3 sm:px-4 py-1 sm:py-1.5 text-[9px] sm:text-[10px] text-stone-300 backdrop-blur-md shadow-lg max-w-[90%] truncate">
+              {lightingMode === "day" && "☀️ Día · Iluminación solar natural"}
+              {lightingMode === "night" && "🌙 Noche · Iluminación nocturna"}
+              {lightingMode === "studio" && "◻ Estudio 3D · Maqueta interactiva"}
             </div>
           )}
 
           {/* Material Finishes Customizer Bar - Centered Floating Island */}
           {ready && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 rounded-full border border-stone-800/90 bg-stone-950/95 px-6 py-2.5 backdrop-blur-xl shadow-2xl text-white">
-              <span className="hidden sm:flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-accent font-semibold whitespace-nowrap">
-                <Eye size={12} /> Acabados en tiempo real
+            <div className="absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 sm:gap-4 rounded-full border border-stone-800/90 bg-stone-950/95 px-4 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xl shadow-2xl text-white max-w-[95%]">
+              <span className="hidden md:flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-accent font-semibold whitespace-nowrap">
+                <Eye size={12} /> Acabados
               </span>
-              <div className="hidden sm:block h-4 w-px bg-stone-800" />
-              <div className="flex items-center gap-3">
+              <div className="hidden md:block h-4 w-px bg-stone-800" />
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 {FINISHES.map((finish, i) => (
                   <button
                     key={finish.id}
@@ -174,7 +166,7 @@ export function Desktop3DViewer({
                     title={finish.label}
                   >
                     <span
-                      className={`block size-7 rounded-full border-2 shadow-md transition-all ${
+                      className={`block size-6 sm:size-7 rounded-full border-2 shadow-md transition-all ${
                         selectedFinish === i
                           ? "border-accent ring-2 ring-accent/40"
                           : "border-stone-700 hover:border-stone-400"

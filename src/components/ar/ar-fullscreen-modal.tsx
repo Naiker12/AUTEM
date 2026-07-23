@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { X, RotateCcw, Eye, Maximize2 } from "lucide-react";
 import { FINISHES } from "@/data/constants";
 import { AREnvironmentToggle } from "./ar-environment-toggle";
+import { LIGHTING_PRESETS } from "./ar-types";
 import type { ARFullscreenModalProps, ViewerThemeMode } from "./ar-types";
+import "@google/model-viewer";
 
 export function ARFullscreenModal({
   isOpen,
@@ -12,7 +14,6 @@ export function ARFullscreenModal({
   selectedFinish,
   onFinishChange,
 }: ARFullscreenModalProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLElement | null>(null);
   const [themeMode, setThemeMode] = useState<ViewerThemeMode>("day");
   const [ready, setReady] = useState(false);
@@ -27,71 +28,6 @@ export function ARFullscreenModal({
     }
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Init model viewer inside modal
-  useEffect(() => {
-    if (!isOpen || !modelSrc || !containerRef.current) return;
-
-    let cancelled = false;
-    setReady(false);
-    const container = containerRef.current;
-    container.innerHTML = "";
-
-    const init = async () => {
-      try {
-        await import("@google/model-viewer");
-      } catch (err) {
-        console.warn("Could not import model-viewer:", err);
-      }
-
-      if (cancelled || !container) return;
-
-      const el = document.createElement("model-viewer");
-      el.setAttribute("src", modelSrc);
-      el.setAttribute("alt", `Modelo 3D ampliado de ${propertyName}`);
-      el.setAttribute("camera-controls", "");
-      el.setAttribute("environment-image", "neutral");
-      el.setAttribute("tone-mapping", "neutral");
-      el.setAttribute("shadow-intensity", themeMode === "day" ? "1.5" : "1.2");
-      el.setAttribute("shadow-softness", "0.5");
-      el.setAttribute(
-        "exposure",
-        themeMode === "day" ? "1.15" : themeMode === "night" ? "0.75" : "1.05",
-      );
-      el.setAttribute("camera-orbit", "25deg 70deg 40%");
-      el.setAttribute("camera-target", "auto auto auto");
-      el.setAttribute("bounds", "tight");
-      el.setAttribute("field-of-view", "20deg");
-      el.setAttribute("min-field-of-view", "8deg");
-      el.setAttribute("max-field-of-view", "45deg");
-      el.setAttribute("min-camera-orbit", "auto 10deg 10%");
-      el.setAttribute("max-camera-orbit", "auto 88deg 200%");
-      el.setAttribute("interaction-prompt", "none");
-      el.setAttribute("touch-action", "pan-y");
-
-      el.style.width = "100%";
-      el.style.height = "100%";
-      el.style.backgroundColor = "transparent";
-      el.style.setProperty("--poster-color", "transparent");
-
-      el.addEventListener("load", () => {
-        if (!cancelled) setReady(true);
-      });
-
-      container.appendChild(el);
-      viewerRef.current = el;
-    };
-
-    init();
-
-    return () => {
-      cancelled = true;
-      if (viewerRef.current && container.contains(viewerRef.current)) {
-        container.removeChild(viewerRef.current);
-      }
-      viewerRef.current = null;
-    };
-  }, [isOpen, modelSrc, propertyName, themeMode]);
 
   // Apply finish
   useEffect(() => {
@@ -116,24 +52,23 @@ export function ARFullscreenModal({
     } catch {
       // Ignored
     }
-  }, [ready, selectedFinish]);
+  }, [ready, selectedFinish, isOpen]);
 
   const handleResetCamera = () => {
-    const el = viewerRef.current as unknown as {
-      cameraTarget?: string;
-      cameraOrbit?: string;
-    };
+    const el = viewerRef.current as unknown as { cameraTarget?: string; cameraOrbit?: string };
     if (el) {
-      el.cameraOrbit = "25deg 70deg 40%";
+      el.cameraOrbit = "25deg 75deg 105%";
       el.cameraTarget = "auto auto auto";
     }
   };
 
   if (!isOpen) return null;
 
+  const preset = LIGHTING_PRESETS[themeMode];
+
   return (
     <div
-      className="fixed inset-0 z-[99999] flex flex-col bg-stone-950/95 backdrop-blur-2xl popup-enter text-white"
+      className="fixed inset-0 z-[9999] flex flex-col bg-stone-950/95 backdrop-blur-2xl text-white animate-in fade-in duration-300"
       role="dialog"
       aria-modal="true"
       aria-label={`Vista ampliada 3D de ${propertyName}`}
@@ -185,7 +120,37 @@ export function ARFullscreenModal({
           />
         </div>
 
-        <div ref={containerRef} className="h-full w-full" />
+        <div className="h-full w-full">
+          <model-viewer
+            ref={viewerRef}
+            src={modelSrc}
+            alt={`Modelo 3D ampliado de ${propertyName}`}
+            camera-controls=""
+            environment-image={preset.environment ?? "neutral"}
+            tone-mapping="neutral"
+            shadow-intensity={preset.shadowIntensity}
+            shadow-softness={preset.shadowSoftness}
+            exposure={preset.exposure}
+            camera-orbit="25deg 75deg 105%"
+            camera-target="auto auto auto"
+            bounds="tight"
+            field-of-view="18deg"
+            min-field-of-view="14deg"
+            max-field-of-view="25deg"
+            min-camera-orbit="auto 45deg 70%"
+            max-camera-orbit="auto 85deg 140%"
+            interpolation-decay="200"
+            interaction-prompt="none"
+            touch-action="pan-y"
+            onLoad={() => setReady(true)}
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "transparent",
+              "--poster-color": "transparent",
+            } as React.CSSProperties}
+          />
+        </div>
 
         {/* Reset Camera button */}
         <button
@@ -197,27 +162,28 @@ export function ARFullscreenModal({
         </button>
 
         {/* Bottom finish toolbar */}
-        <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 flex items-center gap-4 rounded-full border border-stone-800 bg-stone-900/95 px-6 py-3 backdrop-blur-xl shadow-2xl">
-          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent">
-            <Eye size={14} /> Acabados
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 rounded-full border border-stone-800/90 bg-stone-950/90 px-8 py-3 backdrop-blur-xl shadow-2xl">
+          <span className="flex items-center gap-2 text-xs uppercase tracking-widest text-accent font-semibold">
+            <Eye size={14} /> Acabado:
           </span>
-          <div className="h-4 w-px bg-stone-800" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {FINISHES.map((finish, i) => (
               <button
                 key={finish.id}
                 onClick={() => onFinishChange(i)}
-                className={`group relative flex items-center gap-2 rounded-full px-3 py-1.5 transition-all ${
-                  selectedFinish === i
-                    ? "bg-stone-800 text-white font-bold ring-1 ring-accent"
-                    : "text-stone-400 hover:text-white"
+                className={`group relative flex items-center justify-center transition-all ${
+                  selectedFinish === i ? "scale-110" : "opacity-60 hover:opacity-100"
                 }`}
+                title={finish.label}
               >
                 <span
-                  className="size-5 rounded-full border border-stone-600 shadow"
+                  className={`block size-8 rounded-full border-2 shadow-md transition-all ${
+                    selectedFinish === i
+                      ? "border-accent ring-2 ring-accent/40"
+                      : "border-stone-700 hover:border-stone-400"
+                  }`}
                   style={{ backgroundColor: finish.color }}
                 />
-                <span className="text-xs">{finish.label}</span>
               </button>
             ))}
           </div>

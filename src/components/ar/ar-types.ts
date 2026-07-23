@@ -31,24 +31,33 @@ export type ViewerThemeMode = LightingMode;
 
 export const LIGHTING_PRESETS: Record<
   LightingMode,
-  { skybox?: string; environment?: string; exposure: string; shadowIntensity: string; label: string }
+  {
+    environment?: string;
+    exposure: string;
+    shadowIntensity: string;
+    shadowSoftness: string;
+    label: string;
+  }
 > = {
   day: {
     environment: "neutral",
-    exposure: "1.25",
-    shadowIntensity: "1.3",
+    exposure: "1.4",
+    shadowIntensity: "1.6",
+    shadowSoftness: "0.2",
     label: "Día (Sol)",
   },
   night: {
     environment: "neutral",
-    exposure: "0.6",
-    shadowIntensity: "0.6",
+    exposure: "0.35",
+    shadowIntensity: "0.5",
+    shadowSoftness: "0.8",
     label: "Noche (Luces)",
   },
   studio: {
     environment: "neutral",
-    exposure: "1.0",
+    exposure: "1.05",
     shadowIntensity: "1.1",
+    shadowSoftness: "0.5",
     label: "Estudio 3D",
   },
 };

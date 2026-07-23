@@ -300,14 +300,15 @@ function ModelViewerElement({
         "exposure",
         themeMode === "day" ? "1.15" : themeMode === "night" ? "0.75" : "1.05",
       );
-      el.setAttribute("camera-orbit", "25deg 70deg 40%");
+      el.setAttribute("camera-orbit", "25deg 75deg 105%");
       el.setAttribute("camera-target", "auto auto auto");
       el.setAttribute("bounds", "tight");
-      el.setAttribute("field-of-view", "20deg");
-      el.setAttribute("min-field-of-view", "8deg");
-      el.setAttribute("max-field-of-view", "45deg");
-      el.setAttribute("min-camera-orbit", "auto 10deg 10%");
-      el.setAttribute("max-camera-orbit", "auto 88deg 200%");
+      el.setAttribute("field-of-view", "18deg");
+      el.setAttribute("min-field-of-view", "14deg");
+      el.setAttribute("max-field-of-view", "25deg");
+      el.setAttribute("min-camera-orbit", "auto 45deg 70%");
+      el.setAttribute("max-camera-orbit", "auto 85deg 140%");
+      el.setAttribute("interpolation-decay", "200");
       el.setAttribute("interaction-prompt", "none");
       el.setAttribute("touch-action", "pan-y");
 
@@ -369,7 +370,30 @@ function ModelViewerElement({
       }
       viewerRef.current = null;
     };
-  }, [src, iosSrc, poster, themeMode, arSupported, onLoaded, onProgress, onError]);
+  }, [src, iosSrc, poster, arSupported, onLoaded, onProgress, onError]);
+
+  // Synchronize clean studio lighting presets
+  useEffect(() => {
+    const el = viewerRef.current;
+    if (!el || !ready) return;
+
+    el.removeAttribute("skybox-image");
+    el.setAttribute("environment-image", "neutral");
+
+    if (themeMode === "day") {
+      el.setAttribute("exposure", "1.4");
+      el.setAttribute("shadow-intensity", "1.6");
+      el.setAttribute("shadow-softness", "0.2");
+    } else if (themeMode === "night") {
+      el.setAttribute("exposure", "0.35");
+      el.setAttribute("shadow-intensity", "0.5");
+      el.setAttribute("shadow-softness", "0.8");
+    } else {
+      el.setAttribute("exposure", "1.05");
+      el.setAttribute("shadow-intensity", "1.1");
+      el.setAttribute("shadow-softness", "0.5");
+    }
+  }, [themeMode, ready]);
 
   // Synchronize material finish color
   useEffect(() => {
@@ -401,7 +425,7 @@ function ModelViewerElement({
       cameraOrbit?: string;
     };
     if (el) {
-      el.cameraOrbit = "25deg 70deg 40%";
+      el.cameraOrbit = "25deg 75deg 105%";
       el.cameraTarget = "auto auto auto";
     }
   };
