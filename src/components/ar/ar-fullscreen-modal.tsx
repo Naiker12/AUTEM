@@ -58,12 +58,14 @@ export function ARFullscreenModal({
         "exposure",
         themeMode === "day" ? "1.15" : themeMode === "night" ? "0.75" : "1.05",
       );
-      el.setAttribute("camera-orbit", "30deg 75deg auto");
+      el.setAttribute("camera-orbit", "25deg 70deg 40%");
       el.setAttribute("camera-target", "auto auto auto");
       el.setAttribute("bounds", "tight");
-      el.setAttribute("field-of-view", "30deg");
-      el.setAttribute("min-camera-orbit", "auto 10deg 5%");
-      el.setAttribute("max-camera-orbit", "auto 88deg 500%");
+      el.setAttribute("field-of-view", "20deg");
+      el.setAttribute("min-field-of-view", "8deg");
+      el.setAttribute("max-field-of-view", "45deg");
+      el.setAttribute("min-camera-orbit", "auto 10deg 10%");
+      el.setAttribute("max-camera-orbit", "auto 88deg 200%");
       el.setAttribute("interaction-prompt", "none");
       el.setAttribute("touch-action", "pan-y");
 
@@ -122,7 +124,7 @@ export function ARFullscreenModal({
       cameraOrbit?: string;
     };
     if (el) {
-      el.cameraOrbit = "30deg 75deg auto";
+      el.cameraOrbit = "25deg 70deg 40%";
       el.cameraTarget = "auto auto auto";
     }
   };

@@ -300,12 +300,14 @@ function ModelViewerElement({
         "exposure",
         themeMode === "day" ? "1.15" : themeMode === "night" ? "0.75" : "1.05",
       );
-      el.setAttribute("camera-orbit", "30deg 75deg auto");
+      el.setAttribute("camera-orbit", "25deg 70deg 40%");
       el.setAttribute("camera-target", "auto auto auto");
       el.setAttribute("bounds", "tight");
-      el.setAttribute("field-of-view", "30deg");
-      el.setAttribute("min-camera-orbit", "auto 10deg 5%");
-      el.setAttribute("max-camera-orbit", "auto 88deg 500%");
+      el.setAttribute("field-of-view", "20deg");
+      el.setAttribute("min-field-of-view", "8deg");
+      el.setAttribute("max-field-of-view", "45deg");
+      el.setAttribute("min-camera-orbit", "auto 10deg 10%");
+      el.setAttribute("max-camera-orbit", "auto 88deg 200%");
       el.setAttribute("interaction-prompt", "none");
       el.setAttribute("touch-action", "pan-y");
 
@@ -399,7 +401,7 @@ function ModelViewerElement({
       cameraOrbit?: string;
     };
     if (el) {
-      el.cameraOrbit = "30deg 75deg auto";
+      el.cameraOrbit = "25deg 70deg 40%";
       el.cameraTarget = "auto auto auto";
     }
   };
@@ -412,7 +414,7 @@ function ModelViewerElement({
 
   return (
     <div
-      className={`relative aspect-[4/3] w-full overflow-hidden rounded-3xl border shadow-2xl transition-all duration-700 ${bgStyles[themeMode]}`}
+      className={`relative aspect-[4/3] sm:aspect-[16/11] min-h-[460px] md:min-h-[540px] w-full overflow-hidden rounded-3xl border shadow-2xl transition-all duration-700 ${bgStyles[themeMode]}`}
     >
       {/* Ambient background glow inside the 3D card */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -446,7 +448,7 @@ function ModelViewerElement({
       {ready && (
         <button
           onClick={handleResetCamera}
-          className="absolute right-4 top-4 z-20 flex size-9 items-center justify-center rounded-full border border-stone-700/80 bg-stone-900/90 text-stone-200 backdrop-blur-md transition-all hover:border-accent hover:text-accent shadow-lg"
+          className="absolute right-6 top-6 z-20 flex size-9 items-center justify-center rounded-full border border-stone-700/80 bg-stone-900/90 text-stone-200 backdrop-blur-md transition-all hover:border-accent hover:text-accent shadow-lg"
           title="Restablecer vista 3D"
         >
           <RotateCcw size={14} />

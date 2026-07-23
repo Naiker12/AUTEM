@@ -1,9 +1,9 @@
 import { Sun, Moon, Building2 } from "lucide-react";
-import type { ViewerThemeMode } from "./ar-types";
+import type { LightingMode } from "./ar-types";
 
 interface AREnvironmentToggleProps {
-  currentTheme: ViewerThemeMode;
-  onThemeChange: (theme: ViewerThemeMode) => void;
+  currentTheme: LightingMode;
+  onThemeChange: (theme: LightingMode) => void;
   className?: string;
 }
 
@@ -12,7 +12,7 @@ export function AREnvironmentToggle({
   onThemeChange,
   className = "",
 }: AREnvironmentToggleProps) {
-  const options: { id: ViewerThemeMode; label: string; icon: typeof Sun }[] = [
+  const options: { id: LightingMode; label: string; icon: typeof Sun }[] = [
     { id: "day", label: "Día (Sol)", icon: Sun },
     { id: "night", label: "Noche (Luces)", icon: Moon },
     { id: "studio", label: "Estudio 3D", icon: Building2 },

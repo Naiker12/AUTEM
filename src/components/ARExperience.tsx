@@ -1,2 +1,3 @@
-export { default } from "./ar";
-export * from "./ar";
+import ARExperience from "./ar";
+
+export default ARExperience;

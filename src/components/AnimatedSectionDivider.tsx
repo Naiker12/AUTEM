@@ -10,10 +10,13 @@ export default function AnimatedSectionDivider({
   verticalHeight = "h-16",
 }: AnimatedSectionDividerProps) {
   return (
-    <div className={`relative flex flex-col items-center justify-center my-6 opacity-90 ${className}`}>
-      
+    <div
+      className={`relative flex flex-col items-center justify-center my-6 opacity-90 ${className}`}
+    >
       {/* Top Vertical Animated Laser Line */}
-      <div className={`relative w-[1.5px] ${verticalHeight} bg-gradient-to-b from-transparent via-accent to-amber-400 overflow-hidden`}>
+      <div
+        className={`relative w-[1.5px] ${verticalHeight} bg-gradient-to-b from-transparent via-accent to-amber-400 overflow-hidden`}
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white to-transparent opacity-90 blur-[0.5px] animate-pulse" />
       </div>
 
@@ -31,7 +34,6 @@ export default function AnimatedSectionDivider({
           </div>
         )}
       </div>
-
     </div>
   );
 }

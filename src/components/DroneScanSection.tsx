@@ -243,8 +243,6 @@ export default function DroneScanSection() {
               </g>
             </svg>
 
-
-
             {/* Bottom Live Telemetry Bar */}
             <div className="absolute bottom-4 inset-x-4 z-20 flex items-center justify-between rounded-xl border border-white/10 bg-black/70 px-4 py-2.5 backdrop-blur-md text-[10px] uppercase tracking-widest text-white/70">
               <div className="flex gap-6 font-mono">

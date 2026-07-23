@@ -1,12 +1,12 @@
-import { useRef, forwardRef, type ReactNode, type MouseEventHandler } from "react";
+import { useRef, forwardRef, type ReactNode, type MouseEventHandler, type ComponentPropsWithoutRef } from "react";
 
-interface MagneticButtonProps {
+interface MagneticButtonProps extends ComponentPropsWithoutRef<"div"> {
   children: ReactNode;
   className?: string;
   strength?: number;
   onClick?: MouseEventHandler<HTMLDivElement>;
   type?: "button" | "submit" | "reset";
-  [key: string]: unknown;
+  disabled?: boolean;
 }
 
 const MagneticButton = forwardRef<HTMLDivElement, MagneticButtonProps>(

@@ -30,7 +30,6 @@ export default function HeroSearchBar() {
       {/* Container: Luxury Dark Obsidian Glassmorphic Capsule */}
       <div className="relative rounded-2xl border border-accent/35 bg-black/85 p-2 md:pl-6 md:pr-2.5 shadow-[0_25px_60px_rgba(0,0,0,0.95)] backdrop-blur-2xl transition-all duration-300 hover:border-accent/60 md:rounded-full">
         <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center md:justify-between">
-
           {/* Field 1: UBICACIÓN */}
           <div className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-1.5 text-left transition-all hover:bg-white/10 md:border-0 md:rounded-none md:bg-transparent md:hover:bg-transparent">
             <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.25em] text-accent">
@@ -44,11 +43,18 @@ export default function HeroSearchBar() {
                 <SelectValue placeholder="Todas las zonas" />
               </SelectTrigger>
               <SelectContent className="border border-stone-800 bg-stone-950/95 text-stone-100 backdrop-blur-2xl shadow-2xl z-[99999]">
-                <SelectItem value="all" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="all"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Todas las zonas (Caribe)
                 </SelectItem>
                 {ZONAS.map((z) => (
-                  <SelectItem key={z} value={z} className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                  <SelectItem
+                    key={z}
+                    value={z}
+                    className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                  >
                     {z}, Bolívar
                   </SelectItem>
                 ))}
@@ -71,11 +77,18 @@ export default function HeroSearchBar() {
                 <SelectValue placeholder="Cualquier inmueble" />
               </SelectTrigger>
               <SelectContent className="border border-stone-800 bg-stone-950/95 text-stone-100 backdrop-blur-2xl shadow-2xl z-[99999]">
-                <SelectItem value="all" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="all"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Cualquier inmueble
                 </SelectItem>
                 {PROPERTY_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value} className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                  <SelectItem
+                    key={t.value}
+                    value={t.value}
+                    className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                  >
                     {t.label}
                   </SelectItem>
                 ))}
@@ -98,19 +111,34 @@ export default function HeroSearchBar() {
                 <SelectValue placeholder="$180K – $3.2M+ USD" />
               </SelectTrigger>
               <SelectContent className="border border-stone-800 bg-stone-950/95 text-stone-100 backdrop-blur-2xl shadow-2xl z-[99999]">
-                <SelectItem value="all" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="all"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Cualquier presupuesto ($180K – $3.2M+)
                 </SelectItem>
-                <SelectItem value="500000" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="500000"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Hasta $500K USD
                 </SelectItem>
-                <SelectItem value="1000000" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="1000000"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Hasta $1.0M USD
                 </SelectItem>
-                <SelectItem value="2000000" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="2000000"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Hasta $2.0M USD
                 </SelectItem>
-                <SelectItem value="3500000" className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm">
+                <SelectItem
+                  value="3500000"
+                  className="cursor-pointer hover:bg-accent/20 hover:text-accent text-xs md:text-sm"
+                >
                   Proyectos Premium ($2M+)
                 </SelectItem>
               </SelectContent>
@@ -127,7 +155,6 @@ export default function HeroSearchBar() {
               <Search size={18} strokeWidth={2.5} />
             </button>
           </div>
-
         </div>
       </div>
     </div>

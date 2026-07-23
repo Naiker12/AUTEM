@@ -67,10 +67,10 @@ export default function MapView({ properties }: MapViewProps) {
     });
 
     const icon = createIcon();
-    const bounds: L.LatLngExpression[] = [];
+    const bounds: L.LatLngTuple[] = [];
 
     properties.forEach((p) => {
-      const pos: L.LatLngExpression = [p.lat, p.lng];
+      const pos: L.LatLngTuple = [p.lat, p.lng];
       bounds.push(pos);
 
       const marker = L.marker(pos, { icon }).addTo(map);
@@ -95,7 +95,7 @@ export default function MapView({ properties }: MapViewProps) {
     });
 
     if (bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+      map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50], maxZoom: 13 });
     }
   }, [properties]);
 
