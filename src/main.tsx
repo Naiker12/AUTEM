@@ -4,7 +4,7 @@ import { getRouter } from "./router";
 
 const router = getRouter();
 
-function App() {
+export function App() {
   return <RouterProvider router={router} />;
 }
 
