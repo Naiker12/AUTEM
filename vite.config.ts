@@ -6,5 +6,5 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [TanStackRouterVite({ quoteStyle: "double" }), react(), tailwindcss(), tsconfigPaths()],
-  base: process.env.BASE_PATH || "/",
+  base: "/",
 });
