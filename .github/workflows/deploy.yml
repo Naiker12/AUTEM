@@ -5,6 +5,9 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+env:
+  ACTIONS_NODE20_DEPRECATION_WARNING: false
+
 permissions:
   contents: read
   pages: write
