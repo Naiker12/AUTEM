@@ -9,14 +9,15 @@ interface NavbarProps {
 }
 
 const navItems = [
-  { href: `${import.meta.env.BASE_URL}#proyectos`, label: "Proyectos" },
-  { href: `${import.meta.env.BASE_URL}#tecnologia`, label: "Experiencia 3D" },
-  { href: `${import.meta.env.BASE_URL}#nosotros`, label: "Nosotros" },
-  { href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
+  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "Proyectos" },
+  { id: "tecnologia", href: `${import.meta.env.BASE_URL}#tecnologia`, label: "Experiencia 3D" },
+  { id: "nosotros", href: `${import.meta.env.BASE_URL}#nosotros`, label: "Nosotros" },
+  { id: "contacto", href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
 ];
 
 export default function Navbar({ variant }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem("autem-theme");
     if (stored) return stored === "dark";
@@ -29,6 +30,38 @@ export default function Navbar({ variant }: NavbarProps) {
   const whatsappUrl =
     `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
+
+  // Track active section on scroll
+  useEffect(() => {
+    if (!isHome) {
+      setActiveSection("");
+      return;
+    }
+
+    const sectionIds = ["proyectos", "tecnologia", "nosotros", "contacto"];
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 220;
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const id = sectionIds[i];
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPosition >= top) {
+            setActiveSection(id);
+            return;
+          }
+        }
+      }
+      setActiveSection("");
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHome]);
 
   useEffect(() => {
     if (isDark) {
@@ -50,6 +83,29 @@ export default function Navbar({ variant }: NavbarProps) {
     };
   }, [menuOpen]);
 
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    const targetUrl = `${import.meta.env.BASE_URL}#${id}`;
+    if (isHome) {
+      e.preventDefault();
+      const el = document.getElementById(id);
+      if (el) {
+        const navOffset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = el.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - navOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+        setActiveSection(id);
+      }
+    } else {
+      window.location.href = targetUrl;
+    }
+  };
+
   return (
     <nav
       className={`fixed top-0 z-50 w-full transition-all duration-500 ${
@@ -65,16 +121,27 @@ export default function Navbar({ variant }: NavbarProps) {
           <AutemBrandIcon size={30} className="transition-transform group-hover:scale-105" />
           <span>AUTEM</span>
         </Link>
-        <div className="hidden gap-12 text-xs font-medium uppercase tracking-[0.2em] md:flex">
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={isHome ? item.href : `${import.meta.env.BASE_URL}${item.href}`}
-              className="transition-colors hover:text-accent"
-            >
-              {item.label}
-            </a>
-          ))}
+        <div className="hidden gap-10 text-xs font-medium uppercase tracking-[0.2em] md:flex">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <a
+                key={item.id}
+                href={item.href}
+                onClick={(e) => handleNavClick(e, item.id)}
+                className={`relative py-1 transition-all duration-300 ${
+                  isActive
+                    ? "text-accent font-bold tracking-[0.25em]"
+                    : "hover:text-accent opacity-85 hover:opacity-100"
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-accent animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.8)]" />
+                )}
+              </a>
+            );
+          })}
         </div>
         <div className="flex items-center gap-4">
           <button
@@ -89,6 +156,7 @@ export default function Navbar({ variant }: NavbarProps) {
           {isHome ? (
             <a
               href="#contacto"
+              onClick={(e) => handleNavClick(e, "contacto")}
               className="hidden border border-white/20 px-6 py-2 text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-primary md:inline-block"
             >
               Invertir
@@ -139,20 +207,31 @@ export default function Navbar({ variant }: NavbarProps) {
           aria-label="Menú de navegación"
         >
           <div className="flex flex-1 flex-col items-center justify-center gap-10">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={isHome ? item.href : `${import.meta.env.BASE_URL}${item.href}`}
-                onClick={() => setMenuOpen(false)}
-                className="font-serif text-3xl italic text-white transition-colors hover:text-accent"
-              >
-                {item.label}
-              </a>
-            ))}
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <a
+                  key={item.id}
+                  href={item.href}
+                  onClick={(e) => {
+                    setMenuOpen(false);
+                    handleNavClick(e, item.id);
+                  }}
+                  className={`font-serif text-3xl italic transition-colors ${
+                    isActive ? "text-accent font-bold not-italic underline" : "text-white hover:text-accent"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
             {isHome ? (
               <a
                 href="#contacto"
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => {
+                  setMenuOpen(false);
+                  handleNavClick(e, "contacto");
+                }}
                 className="mt-6 border border-accent px-10 py-4 text-xs uppercase tracking-widest text-accent transition-all hover:bg-accent hover:text-primary"
               >
                 Invertir

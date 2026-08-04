@@ -48,25 +48,24 @@ export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryL
     const { orbitLight } = createLighting(scene);
     const effects = createEffects(scene, prefersReducedMotion);
 
-    // ── Mutable state for the animation loop ──
-    let model: THREE.Group | null = null;
-    let loadedTime = 0;
-    let isLoadFinished = false;
+    // ── Instant WebGL setup (no heavy GLTF download needed) ──
+    const loadedTime = performance.now();
+    const isLoadFinished = true;
 
-    // ── Load the 3D model ──
-    loadModel(modelUrl, scene, prefersReducedMotion, {
-      onProgress: handleProgress,
-      onLoaded: (loadedModel) => {
-        model = loadedModel;
-        loadedTime = performance.now();
-        isLoadFinished = true;
-        handleLoaded();
-
-        if (prefersReducedMotion) {
-          renderer.render(scene, camera);
-        }
-      },
-    });
+    if (modelUrl) {
+      loadModel(modelUrl, scene, prefersReducedMotion, {
+        onProgress: handleProgress,
+        onLoaded: () => {
+          handleLoaded();
+        },
+      });
+    } else {
+      handleProgress(100);
+      handleLoaded();
+      if (prefersReducedMotion) {
+        renderer.render(scene, camera);
+      }
+    }
 
     // ── Resize handler ──
     const handleResize = () => {
@@ -89,7 +88,7 @@ export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryL
         orbitLight,
         effects,
         getLoadedTime: () => loadedTime,
-        getModel: () => model,
+        getModel: () => null,
         isFinished: () => isLoadFinished,
       });
     }

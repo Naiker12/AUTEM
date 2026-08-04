@@ -25,8 +25,8 @@ import EntryLoader3D, {
   LoaderOverlay,
   SCENE_VISIBLE_DURATION_MS,
   LOADER_TEXT_DURATION_MS,
+  MIN_LOADER_DISPLAY_MS,
 } from "@/components/entry-loader";
-import { BeforeAfterSlider } from "@/components/before-after";
 import DroneScanSection from "@/components/DroneScanSection";
 import AnimatedSectionDivider from "@/components/AnimatedSectionDivider";
 import HeroCarousel from "@/components/HeroCarousel";
@@ -65,14 +65,7 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const featuredSlugs = [
-  "residencia-azure",
-  "eco-villa-sierra",
-  "the-horizon-suite",
-  "eco-refugio-turbaco",
-  "casa-campestre",
-  "villa-del-carmen",
-];
+const featuredSlugs = ["residencia-azure", "eco-villa-sierra", "the-horizon-suite"];
 const featuredProperties = featuredSlugs
   .map((slug) => properties.find((p) => p.slug === slug))
   .filter((p): p is (typeof properties)[0] => p !== undefined);
@@ -123,14 +116,34 @@ function Index() {
   const heroRef = useRef<HTMLElement>(null);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const loaderContainerRef = useRef<HTMLDivElement>(null);
+  const mountTimeRef = useRef(performance.now());
   const [modelVisible, setModelVisible] = useState(false);
 
   const [loadProgress, setLoadProgress] = useState(0);
 
   const handleModelLoaded = () => {
-    setModelVisible(true);
-    setTimeout(() => setShowLoader(false), LOADER_TEXT_DURATION_MS);
+    const elapsed = performance.now() - mountTimeRef.current;
+    const remainingDelay = Math.max(0, MIN_LOADER_DISPLAY_MS - elapsed);
+
+    setTimeout(() => {
+      setLoadProgress(100);
+      setModelVisible(true);
+      setTimeout(() => setShowLoader(false), LOADER_TEXT_DURATION_MS);
+    }, remainingDelay);
   };
+
+  // Prevent scrolling during loader animation and scroll to top on reload
+  useEffect(() => {
+    if (!hideModel) {
+      document.body.style.overflow = "hidden";
+      window.scrollTo(0, 0);
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [hideModel]);
 
   // Fade out the loader model after the cinematic animation completes
   useEffect(() => {
@@ -144,9 +157,11 @@ function Index() {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
       if (cursorRef.current) {
+        cursorRef.current.style.opacity = "1";
         cursorRef.current.style.transform = `translate(${e.clientX - 12}px, ${e.clientY - 12}px)`;
       }
       if (dotRef.current) {
+        dotRef.current.style.opacity = "1";
         dotRef.current.style.transform = `translate(${e.clientX - 2}px, ${e.clientY - 2}px)`;
       }
     };
@@ -233,11 +248,7 @@ function Index() {
           background: "radial-gradient(ellipse at center, #141414 0%, #0a0a0a 60%, #050505 100%)",
         }}
       >
-        <EntryLoader3D
-          modelUrl={`${import.meta.env.BASE_URL}models/the-horizon-suite.glb`}
-          onProgress={setLoadProgress}
-          onLoaded={handleModelLoaded}
-        />
+        <EntryLoader3D onProgress={setLoadProgress} onLoaded={handleModelLoaded} />
       </div>
 
       {/* Page Loader / Overlay */}
@@ -332,31 +343,6 @@ function Index() {
 
         {/* Immersive Tech / AR */}
         <ARExperience />
-
-        {/* Animated Gold Divider Line */}
-        <AnimatedSectionDivider />
-
-        {/* Before/After Comparison Slider */}
-        <section data-animate className="mx-auto max-w-7xl px-6 py-16 opacity-0 md:px-8 md:py-24">
-          <div className="mb-8">
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
-              Transformación
-            </span>
-            <h2 className="mt-2 font-serif text-3xl md:text-4xl">Antes y después</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Arrastra o haz clic en cualquier punto para ver la transformación del proyecto
-            </p>
-          </div>
-
-          <BeforeAfterSlider
-            beforeSrc={`${import.meta.env.BASE_URL}antes.png`}
-            afterSrc={`${import.meta.env.BASE_URL}despues.png`}
-            beforeAlt="Terreno en su estado inicial antes de la construcción"
-            afterAlt="Propiedad de lujo AUTEM construida y terminada"
-            beforeLabel="Antes"
-            afterLabel="Después"
-          />
-        </section>
 
         {/* Animated Gold Divider Line */}
         <AnimatedSectionDivider />

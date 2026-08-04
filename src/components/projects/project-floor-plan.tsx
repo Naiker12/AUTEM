@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { getFloorPlanUrl } from "@/data/properties";
-import { getARModel } from "@/data/ar-models";
+import { getARModel, getFullARUrl } from "@/data/ar-models";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import type { ProjectFloorPlanProps } from "./project-types";
@@ -33,7 +33,7 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
         : property.floorPlanImage || `${planBase}/planta.jpg`;
 
   const downloadUrl = property.floorPlanPdf || currentPlanImage;
-  const qrUrl = getFloorPlanUrl(property.slug);
+  const qrUrl = getFullARUrl(property.slug);
   const arModel = getARModel(property.slug);
 
   const whatsappCadUrl =
@@ -58,14 +58,6 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
         >
           <QrCode size={18} /> Ver planos (3 Vistas) & Código QR
         </button>
-
-        <a
-          href={downloadUrl}
-          download={`${property.slug}-plano`}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-5 py-3.5 text-xs font-medium uppercase tracking-widest text-foreground transition-all hover:border-accent hover:text-accent hover:shadow-sm"
-        >
-          <Download size={15} /> Descargar plano
-        </a>
 
         {arModel && (
           <a
@@ -106,7 +98,7 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
             </button>
 
             {/* Left Side: Architectural Floor Plan & Render View */}
-            <div className="relative flex flex-col justify-between lg:w-3/5 p-8 md:p-10 bg-muted/30 border-b lg:border-b-0 lg:border-r border-border dark:bg-[#181818] dark:border-stone-800">
+            <div className="relative flex flex-col gap-6 lg:w-3/5 p-8 md:p-10 bg-muted/30 border-b lg:border-b-0 lg:border-r border-border dark:bg-[#181818] dark:border-stone-800">
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-accent">
@@ -158,7 +150,7 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
               </div>
 
               {/* Floor Plan Image Container */}
-              <div className="relative my-6 aspect-[16/10] w-full min-h-[300px] overflow-hidden rounded-2xl border border-border dark:border-stone-800 bg-stone-900 group shadow-lg">
+              <div className="relative flex-1 w-full min-h-[350px] md:min-h-[400px] overflow-hidden rounded-2xl border border-border dark:border-stone-800 bg-stone-900 group shadow-lg">
                 <img
                   src={currentPlanImage}
                   alt={`Plano de ${property.name}`}
@@ -176,15 +168,6 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                   </span>
                 </div>
               </div>
-
-              {/* Download button in left pane */}
-              <a
-                href={downloadUrl}
-                download={`${property.slug}-plano`}
-                className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-border bg-background dark:border-stone-700 dark:bg-stone-900 py-3.5 text-xs font-medium uppercase tracking-widest text-foreground dark:text-stone-200 transition-colors hover:border-accent hover:text-accent"
-              >
-                <Download size={16} /> Descargar plano técnico
-              </a>
             </div>
 
             {/* Right Side: QR Code Mobile Scanner */}
@@ -197,8 +180,8 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                   Explorar en smartphone
                 </h4>
                 <p className="mt-2 text-xs text-muted-foreground dark:text-stone-400 leading-relaxed">
-                  Apunta con la cámara de tu teléfono para abrir el plano interactivo y recorrer la
-                  propiedad.
+                  Apunta con la cámara de tu smartphone para abrir la experiencia interactiva en Realidad
+                  Aumentada 3D y recorrer la propiedad.
                 </p>
               </div>
 
@@ -238,15 +221,6 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                     </>
                   )}
                 </button>
-
-                {arModel && (
-                  <a
-                    href={`${import.meta.env.BASE_URL}ar/${property.slug}`}
-                    className="flex items-center justify-center gap-2 w-full rounded-xl border border-accent/30 bg-accent/10 py-3 text-xs font-semibold uppercase tracking-wider text-accent hover:bg-accent/20"
-                  >
-                    <Sparkles size={14} /> Ver Realidad Aumentada 3D
-                  </a>
-                )}
               </div>
             </div>
           </div>

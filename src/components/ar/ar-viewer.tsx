@@ -17,6 +17,32 @@ export function Desktop3DViewer({
   const viewerRef = useRef<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
 
+  // Synchronize model-viewer load event and safety fallback
+  useEffect(() => {
+    setReady(false);
+    const el = viewerRef.current;
+    if (!el) return;
+
+    const handleLoad = () => setReady(true);
+    const handleError = () => setReady(true);
+
+    if ((el as unknown as { loaded?: boolean }).loaded) {
+      setReady(true);
+    } else {
+      el.addEventListener("load", handleLoad);
+      el.addEventListener("error", handleError);
+    }
+
+    // Safety timer to prevent perpetual loading screen
+    const timer = setTimeout(() => setReady(true), 2500);
+
+    return () => {
+      el.removeEventListener("load", handleLoad);
+      el.removeEventListener("error", handleError);
+      clearTimeout(timer);
+    };
+  }, [modelSrc]);
+
   // Synchronize material finish color
   useEffect(() => {
     if (!ready || !viewerRef.current) return;
@@ -42,6 +68,21 @@ export function Desktop3DViewer({
     }
   }, [ready, selectedFinish]);
 
+  // Synchronize lighting mode preset onto model-viewer imperatively to avoid Lit re-update warnings
+  useEffect(() => {
+    const el = viewerRef.current;
+    if (!el) return;
+    const preset = LIGHTING_PRESETS[lightingMode];
+    if (preset.environment) {
+      el.setAttribute("environment-image", preset.environment);
+    } else {
+      el.setAttribute("environment-image", "neutral");
+    }
+    el.setAttribute("shadow-intensity", String(preset.shadowIntensity));
+    el.setAttribute("shadow-softness", String(preset.shadowSoftness));
+    el.setAttribute("exposure", String(preset.exposure));
+  }, [lightingMode]);
+
   const handleResetCamera = () => {
     const el = viewerRef.current as unknown as { cameraTarget?: string; cameraOrbit?: string };
     if (el) {
@@ -49,8 +90,6 @@ export function Desktop3DViewer({
       el.cameraTarget = "auto auto auto";
     }
   };
-
-  const preset = LIGHTING_PRESETS[lightingMode];
 
   const bgStyles: Record<LightingMode, string> = {
     day: "border-stone-800 bg-gradient-to-b from-amber-950/30 via-stone-950 to-stone-950",
@@ -92,12 +131,11 @@ export function Desktop3DViewer({
               ref={viewerRef}
               src={modelSrc}
               alt="Modelo 3D interactivo de la propiedad"
-              camera-controls=""
-              environment-image={preset.environment ?? "neutral"}
+              camera-controls
               tone-mapping="neutral"
-              shadow-intensity={preset.shadowIntensity}
-              shadow-softness={preset.shadowSoftness}
-              exposure={preset.exposure}
+              shadow-intensity="1.2"
+              shadow-softness="0.5"
+              exposure="1.05"
               camera-orbit="25deg 75deg 105%"
               camera-target="auto auto auto"
               bounds="tight"
@@ -109,7 +147,6 @@ export function Desktop3DViewer({
               interpolation-decay="200"
               interaction-prompt="none"
               touch-action="pan-y"
-              onLoad={() => setReady(true)}
               style={
                 {
                   width: "100%",

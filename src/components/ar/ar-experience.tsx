@@ -35,7 +35,7 @@ export default function ARExperience({
   }, []);
 
   return (
-    <section className={`relative py-20 md:py-28 overflow-hidden ${className}`}>
+    <section id="tecnologia" className={`relative py-20 md:py-28 overflow-hidden ${className}`}>
       {/* Ambient background glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-accent/5 blur-[120px]" />

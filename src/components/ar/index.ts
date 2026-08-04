@@ -14,7 +14,6 @@
 export { default } from "./ar-experience";
 export { default as ARExperience } from "./ar-experience";
 export { Desktop3DViewer } from "./ar-viewer";
-export { ARFullscreenModal } from "./ar-fullscreen-modal";
 export { AREnvironmentToggle } from "./ar-environment-toggle";
 export { ARQrModal } from "./ar-qr-modal";
 export { FirstTutorial, HelpTooltip } from "./ar-tutorial";

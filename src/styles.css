@@ -335,7 +335,9 @@
   position: fixed;
   pointer-events: none;
   z-index: 9999;
+  opacity: 0;
   transition:
+    opacity 0.3s ease,
     transform 0.15s ease,
     width 0.3s ease,
     height 0.3s ease,
@@ -357,8 +359,9 @@
   position: fixed;
   pointer-events: none;
   z-index: 9999;
+  opacity: 0;
   transform: translate(-50%, -50%);
-  transition: opacity 0.15s ease;
+  transition: opacity 0.3s ease;
 }
 
 /* Mobile menu overlay */

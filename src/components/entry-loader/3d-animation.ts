@@ -72,9 +72,9 @@ export function startAnimation(ctx: AnimationContext): () => void {
     if (outerRing) outerRing.rotation.z = globalTime * 0.15;
     if (innerRing) innerRing.rotation.z = -globalTime * 0.25;
 
-    // ── Model intro animation ──
-    const model = ctx.getModel();
-    if (model && ctx.isFinished()) {
+    // ── Central Emblem & Model intro animation ──
+    const targetObj = effects.centerEmblem || ctx.getModel();
+    if (ctx.isFinished()) {
       const elapsed = time - ctx.getLoadedTime();
       const t = Math.min(elapsed / INTRO_DURATION_MS, 1);
 
@@ -82,8 +82,10 @@ export function startAnimation(ctx: AnimationContext): () => void {
       const scaleEased = easeOutElastic(Math.min(t * 1.2, 1));
       const ringsEased = easeInOutSine(Math.min(t * 1.5, 1));
 
-      // Elastic scale-in
-      model.scale.setScalar(scaleEased);
+      // Elastic scale-in for central emblem
+      if (targetObj) {
+        targetObj.scale.setScalar(scaleEased);
+      }
 
       // Light rays reveal
       if (lightRays) {
@@ -109,14 +111,17 @@ export function startAnimation(ctx: AnimationContext): () => void {
 
       // Rotation: fast initial spin → gentle orbit
       const boost = (1 - cameraEased) * ((30 * Math.PI) / 180);
-      model.rotation.y += (BASE_ROTATE_SPEED + boost) * delta;
+      if (targetObj) {
+        targetObj.rotation.y += (BASE_ROTATE_SPEED + boost) * delta;
+        targetObj.rotation.x += (BASE_ROTATE_SPEED * 0.5) * delta;
+      }
 
       // Breathing after intro
       if (t >= 1) {
         camera.position.y += Math.sin(globalTime * 0.4) * 0.015;
       }
-    } else if (model) {
-      model.rotation.y += BASE_ROTATE_SPEED * delta;
+    } else if (targetObj) {
+      targetObj.rotation.y += BASE_ROTATE_SPEED * delta;
     }
 
     renderer.render(scene, camera);

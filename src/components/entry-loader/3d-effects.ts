@@ -14,6 +14,7 @@ export interface SceneEffects {
   lightRays: THREE.Mesh | null;
   outerRing: THREE.Mesh | null;
   innerRing: THREE.Mesh | null;
+  centerEmblem: THREE.Group | null;
 }
 
 /**
@@ -24,7 +25,7 @@ export interface SceneEffects {
  */
 export function createEffects(scene: THREE.Scene, prefersReducedMotion: boolean): SceneEffects {
   if (prefersReducedMotion) {
-    return { particles: null, lightRays: null, outerRing: null, innerRing: null };
+    return { particles: null, lightRays: null, outerRing: null, innerRing: null, centerEmblem: null };
   }
 
   // ── Ground Reflection Plane ──
@@ -40,6 +41,34 @@ export function createEffects(scene: THREE.Scene, prefersReducedMotion: boolean)
   groundMirror.rotation.x = -Math.PI / 2;
   groundMirror.position.y = -0.72;
   scene.add(groundMirror);
+
+  // ── Central Gold Geometric Emblem (AUTEM Monogram Diamond) ──
+  const centerEmblem = new THREE.Group();
+
+  const coreGeo = new THREE.OctahedronGeometry(0.65, 1);
+  const coreMat = new THREE.MeshStandardMaterial({
+    color: GOLD,
+    metalness: 0.95,
+    roughness: 0.1,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+  centerEmblem.add(coreMesh);
+
+  const wireGeo = new THREE.OctahedronGeometry(0.8, 1);
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: GOLD,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.35,
+  });
+  const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+  centerEmblem.add(wireMesh);
+
+  centerEmblem.position.y = 0.5;
+  centerEmblem.scale.set(0, 0, 0);
+  scene.add(centerEmblem);
 
   // ── Volumetric Light Rays (cone from below) ──
   const coneGeometry = new THREE.ConeGeometry(2.5, 6, 32, 1, true);
@@ -109,25 +138,30 @@ export function createEffects(scene: THREE.Scene, prefersReducedMotion: boolean)
   const particles = new THREE.Points(particleGeometry, particleMaterial);
   scene.add(particles);
 
-  return { particles, lightRays, outerRing, innerRing };
+  return { particles, lightRays, outerRing, innerRing, centerEmblem };
 }
 
 /**
  * Disposes all GPU resources created by `createEffects`.
  */
 export function disposeEffects(fx: SceneEffects): void {
-  const disposeMesh = (obj: THREE.Mesh | THREE.Points | null) => {
+  const disposeMesh = (obj: THREE.Object3D | null) => {
     if (!obj) return;
-    if (obj.geometry) obj.geometry.dispose();
-    if (Array.isArray(obj.material)) {
-      obj.material.forEach((m) => m.dispose());
-    } else if (obj.material) {
-      (obj.material as THREE.Material).dispose();
-    }
+    obj.traverse((child) => {
+      if (child instanceof THREE.Mesh || child instanceof THREE.Points) {
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else if (child.material) {
+          (child.material as THREE.Material).dispose();
+        }
+      }
+    });
   };
 
   disposeMesh(fx.particles);
   disposeMesh(fx.lightRays);
   disposeMesh(fx.outerRing);
   disposeMesh(fx.innerRing);
+  disposeMesh(fx.centerEmblem);
 }
