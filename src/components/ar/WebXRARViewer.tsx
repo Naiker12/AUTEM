@@ -150,6 +150,7 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x000000, 0); // Transparent -> camera passthrough visible
       renderer.xr.enabled = true;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -209,6 +210,21 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
         loadedModel = gltf.scene;
         loadedModel.visible = true; // Always visible in camera space
 
+        // Safety net: if a future GLB lacks normals or materials, make it renderable
+        loadedModel.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            const geom = child.geometry;
+            if (!geom.attributes.normal) geom.computeVertexNormals();
+            if (!child.material) {
+              child.material = new THREE.MeshStandardMaterial({
+                color: 0xe5e4e2,
+                roughness: 0.9,
+                metalness: 0,
+              });
+            }
+          }
+        });
+
         // Center the model on its bounding box
         const box = new THREE.Box3().setFromObject(loadedModel);
         const center = box.getCenter(new THREE.Vector3());
@@ -231,7 +247,6 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
         pivot.visible = true; // Instantly visible in AR camera!
         scene.add(pivot);
         modelRef.current = pivot;
-        setPhase("placed");
       } catch (err) {
         if (!cancelled) {
           onError("No se pudo cargar el modelo 3D. Verifica tu conexión e intenta de nuevo.");
@@ -245,8 +260,7 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       let session: XRSession;
       try {
         session = await xr.requestSession("immersive-ar", {
-          requiredFeatures: ["hit-test"],
-          optionalFeatures: ["dom-overlay"],
+          optionalFeatures: ["hit-test", "dom-overlay"],
           domOverlay: container.querySelector(".ar-overlay")
             ? { root: container.querySelector(".ar-overlay")! }
             : undefined,
@@ -273,11 +287,16 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       const localSpace = await session.requestReferenceSpace("local");
       localSpaceRef.current = localSpace;
 
-      const hitTestSource = await session.requestHitTestSource!({ space: viewerSpace });
-      hitTestSourceRef.current = hitTestSource!;
+      try {
+        const hitTestSource = await session.requestHitTestSource!({ space: viewerSpace });
+        hitTestSourceRef.current = hitTestSource;
+      } catch {
+        // Hit-testing no disponible: el modelo queda anclado frente a la cámara.
+        hitTestSourceRef.current = null;
+      }
 
       if (cancelled) return;
-      setPhase("scanning");
+      setPhase("placed");
 
       // ─── 8. Tap-to-place via XR select event ──────────────────────
       session.addEventListener("select", () => {
@@ -306,22 +325,21 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
 
       // ─── 9. Animation loop ─────────────────────────────────────────
       renderer.setAnimationLoop((_timestamp, frame) => {
-        if (!frame || !hitTestSourceRef.current || !localSpaceRef.current) return;
+        // Hit-testing is optional: never block rendering on it, otherwise the
+        // screen stays black when a device fails to provide hit-test results.
+        if (frame && hitTestSourceRef.current && localSpaceRef.current) {
+          const hitTestResults = frame.getHitTestResults(hitTestSourceRef.current);
 
-        const hitTestResults = frame.getHitTestResults(hitTestSourceRef.current);
-
-        if (hitTestResults.length > 0 && reticleRef.current) {
-          const hit = hitTestResults[0];
-          const pose = hit.getPose(localSpaceRef.current);
-          if (pose) {
-            reticleRef.current.visible = true;
-            reticleRef.current.matrix.fromArray(pose.transform.matrix);
-
-            // Update phase to "placing" once we see a surface
-            setPhase((prev) => (prev === "scanning" ? "placing" : prev));
+          if (hitTestResults.length > 0 && reticleRef.current) {
+            const hit = hitTestResults[0];
+            const pose = hit.getPose(localSpaceRef.current);
+            if (pose) {
+              reticleRef.current.visible = true;
+              reticleRef.current.matrix.fromArray(pose.transform.matrix);
+            }
+          } else if (reticleRef.current) {
+            reticleRef.current.visible = false;
           }
-        } else if (reticleRef.current) {
-          reticleRef.current.visible = false;
         }
 
         renderer.render(scene, camera);

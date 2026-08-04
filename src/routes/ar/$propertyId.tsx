@@ -18,7 +18,7 @@ import {
   Check,
 } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
-import { getARModel, hasUSDZFile } from "@/data/ar-models";
+import { getARModel } from "@/data/ar-models";
 import { properties } from "@/data/properties";
 import { FINISHES, WHATSAPP_BASE_URL } from "@/data/constants";
 import { AREnvironmentToggle } from "@/components/ar/ar-environment-toggle";
@@ -300,7 +300,6 @@ function ModelViewerElement({
       el.setAttribute("exposure", "1.05");
       el.setAttribute("camera-orbit", "25deg 75deg 105%");
       el.setAttribute("camera-target", "auto auto auto");
-      el.setAttribute("bounds", "tight");
       el.setAttribute("field-of-view", "18deg");
       el.setAttribute("min-field-of-view", "14deg");
       el.setAttribute("max-field-of-view", "25deg");
@@ -511,9 +510,7 @@ function ARViewerPage() {
   const property = properties.find((p) => p.slug === propertyId);
   const arModel = getARModel(propertyId);
 
-  const isIOS = device.isIOS;
-  const hasUSDZ = hasUSDZFile(propertyId);
-  const canDoAR = device.supportsAR && (isIOS ? hasUSDZ : true);
+  const canDoAR = device.supportsAR;
 
   // Sync title
   useEffect(() => {
@@ -565,20 +562,14 @@ function ARViewerPage() {
 
   const activateAR = useCallback(() => {
     if (!canDoAR) {
-      if (isIOS && !hasUSDZ) {
-        handleARError(
-          "Tu iPhone requiere un archivo USDZ para AR. Este modelo está disponible en 3D en pantalla.",
-        );
-      } else {
-        handleARError(
-          "Tu navegador no soporta realidad aumentada. Prueba con Chrome en Android o Safari en iPhone.",
-        );
-      }
+      handleARError(
+        "Tu navegador no soporta realidad aumentada. Prueba con Chrome en Android o Safari en iPhone.",
+      );
       return;
     }
 
     setShowPermissionExplainer(true);
-  }, [canDoAR, isIOS, hasUSDZ, handleARError]);
+  }, [canDoAR, handleARError]);
 
   const confirmAR = useCallback(() => {
     setShowPermissionExplainer(false);
@@ -603,7 +594,7 @@ function ARViewerPage() {
           const absoluteGlb = glbPath.startsWith("http")
             ? glbPath
             : `${window.location.origin}${glbPath}`;
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_only&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_only&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end;`;
           window.location.href = intentUrl;
         });
       } else {
@@ -783,7 +774,7 @@ function ARViewerPage() {
           <div className="relative">
             <ModelViewerElement
               src={arModel.glb}
-              iosSrc={hasUSDZ ? arModel.usdz : undefined}
+              iosSrc={arModel.usdz}
               selectedFinishId={selectedFinish}
               themeMode={themeMode}
               onLoaded={handleLoaded}

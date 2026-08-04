@@ -8,20 +8,19 @@ export interface ARModel {
 
 const DEFAULT_GLB_1 = `${import.meta.env.BASE_URL}models/the-horizon-suite.glb`;
 const DEFAULT_GLB_2 = `${import.meta.env.BASE_URL}models/export.glb`;
-const DEFAULT_USDZ_1 = `${import.meta.env.BASE_URL}models/the-horizon-suite.usdz`;
-const DEFAULT_USDZ_2 = `${import.meta.env.BASE_URL}models/export.usdz`;
 
+// Nota: no se sirve ningún archivo .usdz (iOS). En iOS, model-viewer genera el
+// USDZ sobre la marcha al activar AR, así que omitir `ios-src` es intencional.
 const AR_MODELS: Record<string, ARModel> = {
-  "residencia-azure": { glb: DEFAULT_GLB_1, usdz: DEFAULT_USDZ_1 },
-  "eco-villa-sierra": { glb: DEFAULT_GLB_2, usdz: DEFAULT_USDZ_2 },
-  "the-horizon-suite": { glb: DEFAULT_GLB_1, usdz: DEFAULT_USDZ_1 },
+  "residencia-azure": { glb: DEFAULT_GLB_1 },
+  "eco-villa-sierra": { glb: DEFAULT_GLB_2 },
+  "the-horizon-suite": { glb: DEFAULT_GLB_1 },
 };
 
 export function getARModel(propertySlug: string): ARModel {
   return (
     AR_MODELS[propertySlug] || {
       glb: DEFAULT_GLB_1,
-      usdz: DEFAULT_USDZ_1,
     }
   );
 }
