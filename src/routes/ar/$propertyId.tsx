@@ -302,9 +302,10 @@ function ModelViewerElement({
       el.setAttribute("camera-controls", "");
       el.setAttribute("environment-image", "neutral");
       el.setAttribute("tone-mapping", "neutral");
-      el.setAttribute("shadow-intensity", "1.2");
-      el.setAttribute("shadow-softness", "0.5");
-      el.setAttribute("orientation", "0deg -90deg 0deg");
+      el.setAttribute("shadow-intensity", "1.5");
+      el.setAttribute("shadow-softness", "0.3");
+      el.setAttribute("exposure", "1.1");
+      el.setAttribute("orientation", "90deg 0deg 0deg");
       el.setAttribute("camera-orbit", "45deg 70deg 105%");
       el.setAttribute("camera-target", "auto auto auto");
       el.setAttribute("field-of-view", "32deg");
@@ -313,13 +314,13 @@ function ModelViewerElement({
       el.setAttribute("min-camera-orbit", "-180deg 0deg 30%");
       el.setAttribute("max-camera-orbit", "180deg 90deg 300%");
       el.setAttribute("interpolation-decay", "200");
-      el.setAttribute("interaction-prompt", "none");
+      el.setAttribute("interaction-prompt", "auto");
       el.setAttribute("touch-action", "pan-y");
 
       if (arSupported) {
         el.setAttribute("ar", "");
         el.setAttribute("ar-modes", "scene-viewer webxr quick-look");
-        el.setAttribute("ar-scale", "auto");
+        el.setAttribute("ar-scale", "fixed");
         el.setAttribute("ar-placement", "floor");
 
         const arBtn = document.createElement("button");

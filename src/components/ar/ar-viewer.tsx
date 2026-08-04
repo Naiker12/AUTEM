@@ -139,10 +139,10 @@ export function Desktop3DViewer({
               alt="Modelo 3D interactivo de la propiedad"
               camera-controls=""
               tone-mapping="neutral"
-              shadow-intensity="1.2"
-              shadow-softness="0.5"
-              exposure="1.05"
-              orientation="0deg -90deg 0deg"
+              shadow-intensity="1.5"
+              shadow-softness="0.3"
+              exposure="1.1"
+              orientation="90deg 0deg 0deg"
               camera-orbit="45deg 70deg 105%"
               camera-target="auto auto auto"
               field-of-view="32deg"
@@ -151,7 +151,7 @@ export function Desktop3DViewer({
               min-camera-orbit="-180deg 0deg 30%"
               max-camera-orbit="180deg 90deg 300%"
               interpolation-decay="200"
-              interaction-prompt="none"
+              interaction-prompt="auto"
               touch-action="pan-y"
               style={
                 {
