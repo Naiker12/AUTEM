@@ -287,9 +287,7 @@ function ModelViewerElement({
 
       if (cancelled || !container) return;
 
-      const absoluteGlb = src.startsWith("http")
-        ? src
-        : `${window.location.origin}${src}`;
+      const absoluteGlb = src.startsWith("http") ? src : `${window.location.origin}${src}`;
       const absoluteUsdz = iosSrc
         ? iosSrc.startsWith("http")
           ? iosSrc
