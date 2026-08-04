@@ -20,6 +20,7 @@ interface ModelViewerAttributes {
   "interaction-prompt"?: string;
   "touch-action"?: string;
   bounds?: string;
+  orientation?: string;
   "auto-rotate"?: string;
   "auto-rotate-delay"?: string;
   "rotation-per-second"?: string;

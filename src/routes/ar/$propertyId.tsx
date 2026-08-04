@@ -297,14 +297,14 @@ function ModelViewerElement({
       el.setAttribute("tone-mapping", "neutral");
       el.setAttribute("shadow-intensity", "1.2");
       el.setAttribute("shadow-softness", "0.5");
-      el.setAttribute("exposure", "1.05");
-      el.setAttribute("camera-orbit", "25deg 75deg 105%");
+      el.setAttribute("orientation", "0deg -90deg 0deg");
+      el.setAttribute("camera-orbit", "45deg 70deg 105%");
       el.setAttribute("camera-target", "auto auto auto");
-      el.setAttribute("field-of-view", "18deg");
-      el.setAttribute("min-field-of-view", "14deg");
-      el.setAttribute("max-field-of-view", "25deg");
-      el.setAttribute("min-camera-orbit", "auto 45deg 70%");
-      el.setAttribute("max-camera-orbit", "auto 85deg 140%");
+      el.setAttribute("field-of-view", "32deg");
+      el.setAttribute("min-field-of-view", "15deg");
+      el.setAttribute("max-field-of-view", "60deg");
+      el.setAttribute("min-camera-orbit", "-180deg 0deg 30%");
+      el.setAttribute("max-camera-orbit", "180deg 90deg 300%");
       el.setAttribute("interpolation-decay", "200");
       el.setAttribute("interaction-prompt", "none");
       el.setAttribute("touch-action", "pan-y");
@@ -376,6 +376,16 @@ function ModelViewerElement({
       viewerRef.current = null;
     };
   }, [src, iosSrc, poster, arSupported, onLoaded, onProgress, onError]);
+
+  // Safety: if model-viewer never fires "load" (stalled download or a silent
+  // parser failure), surface an error instead of hanging on "Cargando modelo 3D..."
+  useEffect(() => {
+    if (ready) return;
+    const t = setTimeout(() => {
+      onError("El modelo 3D tarda demasiado en cargar. Verifica tu conexión e intenta de nuevo.");
+    }, 30000);
+    return () => clearTimeout(t);
+  }, [ready, onError]);
 
   // Synchronize clean studio lighting presets
   useEffect(() => {

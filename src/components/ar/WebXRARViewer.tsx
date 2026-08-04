@@ -39,6 +39,24 @@ function createReticle(): THREE.Mesh {
   return mesh;
 }
 
+// ── Timeout helper (prevents infinite "Preparando AR" loading) ───────────────
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebXRARViewerProps) {
@@ -133,7 +151,11 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       }
 
       const xr = navigator.xr!;
-      const supported = await xr.isSessionSupported("immersive-ar");
+      const supported = await withTimeout(
+        xr.isSessionSupported("immersive-ar"),
+        10000,
+        "El sistema de AR no respondió a tiempo.",
+      );
       if (!supported) {
         onError(
           "Tu dispositivo no soporta Realidad Aumentada inmersiva. Asegúrate de tener ARCore instalado.",
@@ -189,21 +211,25 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       let loadedModel: THREE.Group | null = null;
 
       try {
-        const gltf = await new Promise<{ scene: THREE.Group }>((resolve, reject) => {
-          loader.load(
-            modelSrc,
-            (result) => resolve(result as unknown as { scene: THREE.Group }),
-            (progress) => {
-              if (!cancelled) {
-                const total = Math.max(progress.total || 0, progress.loaded || 1);
-                const rawPct = Math.round((progress.loaded / total) * 100);
-                const pct = Math.min(Math.max(rawPct, 5), 99);
-                setLoadProgress(pct);
-              }
-            },
-            (err) => reject(err),
-          );
-        });
+        const gltf = await withTimeout(
+          new Promise<{ scene: THREE.Group }>((resolve, reject) => {
+            loader.load(
+              modelSrc,
+              (result) => resolve(result as unknown as { scene: THREE.Group }),
+              (progress) => {
+                if (!cancelled) {
+                  const total = Math.max(progress.total || 0, progress.loaded || 1);
+                  const rawPct = Math.round((progress.loaded / total) * 100);
+                  const pct = Math.min(Math.max(rawPct, 5), 99);
+                  setLoadProgress(pct);
+                }
+              },
+              (err) => reject(err),
+            );
+          }),
+          25000,
+          "La carga del modelo se detuvo. Verifica tu conexión.",
+        );
 
         if (cancelled) return;
 
@@ -259,12 +285,16 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       // ─── 6. Start XR Session ───────────────────────────────────────
       let session: XRSession;
       try {
-        session = await xr.requestSession("immersive-ar", {
-          optionalFeatures: ["hit-test", "dom-overlay"],
-          domOverlay: container.querySelector(".ar-overlay")
-            ? { root: container.querySelector(".ar-overlay")! }
-            : undefined,
-        });
+        session = await withTimeout(
+          xr.requestSession("immersive-ar", {
+            optionalFeatures: ["hit-test", "dom-overlay"],
+            domOverlay: container.querySelector(".ar-overlay")
+              ? { root: container.querySelector(".ar-overlay")! }
+              : undefined,
+          }),
+          15000,
+          "La cámara tardó en iniciarse. Acepta el permiso de cámara e intenta de nuevo.",
+        );
       } catch (err) {
         if (!cancelled) {
           onError(
@@ -283,12 +313,24 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       await renderer.xr.setSession(session);
 
       // ─── 7. Reference spaces + hit-test source ─────────────────────
-      const viewerSpace = await session.requestReferenceSpace("viewer");
-      const localSpace = await session.requestReferenceSpace("local");
+      const viewerSpace = await withTimeout(
+        session.requestReferenceSpace("viewer"),
+        10000,
+        "El espacio de realidad no respondió a tiempo.",
+      );
+      const localSpace = await withTimeout(
+        session.requestReferenceSpace("local"),
+        10000,
+        "El espacio de realidad no respondió a tiempo.",
+      );
       localSpaceRef.current = localSpace;
 
       try {
-        const hitTestSource = await session.requestHitTestSource!({ space: viewerSpace });
+        const hitTestSource = await withTimeout(
+          session.requestHitTestSource!({ space: viewerSpace }),
+          10000,
+          "La detección de superficies no respondió.",
+        );
         hitTestSourceRef.current = hitTestSource;
       } catch {
         // Hit-testing no disponible: el modelo queda anclado frente a la cámara.
@@ -346,7 +388,12 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       });
     };
 
-    init();
+    init().catch((err) => {
+      if (!cancelled) {
+        console.error("WebXR AR init failed:", err);
+        onError("No se pudo iniciar la experiencia AR. Cierra y vuelve a intentar.");
+      }
+    });
 
     return () => {
       cancelled = true;
