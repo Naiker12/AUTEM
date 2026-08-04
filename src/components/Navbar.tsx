@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
+import { X } from "lucide-react";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 
 interface NavbarProps {
@@ -17,14 +18,13 @@ const navItems = [
 
 export default function Navbar({ variant }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useModalA11y(menuOpen, () => setMenuOpen(false));
   const [activeSection, setActiveSection] = useState<string>("");
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem("autem-theme");
     if (stored) return stored === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  const menuRef = useModalA11y(menuOpen, () => setMenuOpen(false));
-
   const isHome = variant === "home";
 
   const whatsappUrl =
@@ -180,18 +180,18 @@ export default function Navbar({ variant }: NavbarProps) {
             }`}
           >
             <span
-              className={`hamburger-line block h-px w-6 ${
-                isHome || menuOpen ? "bg-white" : "bg-foreground"
+              className={`hamburger-line block h-0.5 w-6 transition-all ${
+                menuOpen ? "bg-foreground" : isHome ? "bg-white" : "bg-foreground"
               }`}
             />
             <span
-              className={`hamburger-line block h-px w-6 ${
-                isHome || menuOpen ? "bg-white" : "bg-foreground"
+              className={`hamburger-line block h-0.5 w-6 transition-all ${
+                menuOpen ? "bg-foreground" : isHome ? "bg-white" : "bg-foreground"
               }`}
             />
             <span
-              className={`hamburger-line block h-px w-6 ${
-                isHome || menuOpen ? "bg-white" : "bg-foreground"
+              className={`hamburger-line block h-0.5 w-6 transition-all ${
+                menuOpen ? "bg-foreground" : isHome ? "bg-white" : "bg-foreground"
               }`}
             />
           </button>
@@ -201,12 +201,28 @@ export default function Navbar({ variant }: NavbarProps) {
       {menuOpen && (
         <div
           ref={menuRef}
-          className="menu-enter fixed inset-0 top-[88px] z-40 flex flex-col bg-primary md:hidden"
+          className="menu-enter fixed inset-0 z-50 flex h-screen w-screen flex-col bg-background p-6 md:hidden overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="Menú de navegación"
         >
-          <div className="flex flex-1 flex-col items-center justify-center gap-10">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
+              <AutemBrandIcon className="size-8" />
+              <span className="font-serif text-lg font-bold tracking-wider text-foreground">
+                AUTEM
+              </span>
+            </Link>
+            <button
+              onClick={() => setMenuOpen(false)}
+              className="flex size-10 items-center justify-center rounded-full border border-border text-foreground hover:bg-muted"
+              aria-label="Cerrar menú"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 flex-col items-center justify-center gap-8 py-12">
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
               return (
@@ -217,10 +233,10 @@ export default function Navbar({ variant }: NavbarProps) {
                     setMenuOpen(false);
                     handleNavClick(e, item.id);
                   }}
-                  className={`font-serif text-3xl italic transition-colors ${
+                  className={`font-serif text-3xl transition-colors ${
                     isActive
-                      ? "text-accent font-bold not-italic underline"
-                      : "text-white hover:text-accent"
+                      ? "text-accent font-bold not-italic underline decoration-accent underline-offset-8"
+                      : "text-foreground hover:text-accent font-normal italic"
                   }`}
                 >
                   {item.label}
@@ -234,7 +250,7 @@ export default function Navbar({ variant }: NavbarProps) {
                   setMenuOpen(false);
                   handleNavClick(e, "contacto");
                 }}
-                className="mt-6 border border-accent px-10 py-4 text-xs uppercase tracking-widest text-accent transition-all hover:bg-accent hover:text-primary"
+                className="mt-4 border-2 border-accent px-10 py-4 text-xs font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-all rounded-full shadow-lg shadow-accent/10"
               >
                 Invertir
               </a>
@@ -244,16 +260,16 @@ export default function Navbar({ variant }: NavbarProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMenuOpen(false)}
-                className="mt-6 border border-accent px-10 py-4 text-xs uppercase tracking-widest text-accent transition-all hover:bg-accent hover:text-primary"
+                className="mt-4 border-2 border-accent px-10 py-4 text-xs font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-all rounded-full shadow-lg shadow-accent/10"
               >
                 Agendar visita
               </a>
             )}
             <button
               onClick={() => setIsDark(!isDark)}
-              className="mt-4 text-xs uppercase tracking-widest text-white/60"
+              className="mt-2 flex items-center gap-2 rounded-full border border-border bg-muted/50 px-5 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >
-              {isDark ? "\u2600\uFE0F Modo claro" : "\uD83C\uDF19 Modo oscuro"}
+              {isDark ? "☀️ Modo claro" : "🌙 Modo oscuro"}
             </button>
           </div>
         </div>

@@ -577,17 +577,6 @@ function ARViewerPage() {
     setShowARError(true);
   }, []);
 
-  const activateAR = useCallback(() => {
-    if (!canDoAR) {
-      handleARError(
-        "Tu navegador no soporta realidad aumentada. Prueba con Chrome en Android o Safari en iPhone.",
-      );
-      return;
-    }
-
-    setShowPermissionExplainer(true);
-  }, [canDoAR, handleARError]);
-
   const confirmAR = useCallback(() => {
     setShowPermissionExplainer(false);
 
@@ -612,6 +601,18 @@ function ARViewerPage() {
       window.location.href = intentUrl;
     }
   }, [arModel?.glb, property?.name, handleARError]);
+
+  const activateAR = useCallback(() => {
+    if (!canDoAR) {
+      handleARError(
+        "Tu navegador no soporta realidad aumentada. Prueba con Chrome en Android o Safari en iPhone.",
+      );
+      return;
+    }
+
+    // Trigger AR immediately inside the exact user gesture context
+    confirmAR();
+  }, [canDoAR, handleARError, confirmAR]);
 
   const declineAR = useCallback(() => {
     setShowPermissionExplainer(false);
