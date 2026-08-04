@@ -314,9 +314,17 @@ function ModelViewerElement({
         el.setAttribute("ar", "");
         el.setAttribute("ar-modes", "scene-viewer webxr quick-look");
         el.setAttribute("ar-scale", "fixed");
-        el.style.setProperty("--ar-button-width", "0px");
-        el.style.setProperty("--ar-button-height", "0px");
-        el.style.setProperty("--ar-button-display", "none");
+        el.setAttribute("ar-placement", "floor");
+
+        const arBtn = document.createElement("button");
+        arBtn.setAttribute("slot", "ar-button");
+        arBtn.className =
+          "absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 rounded-2xl bg-accent px-6 py-4 text-xs font-bold uppercase tracking-widest text-accent-foreground shadow-2xl shadow-accent/40 ring-4 ring-accent/20 transition-all hover:scale-105 active:scale-95";
+        arBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <span>Ver en tu espacio (AR)</span>
+        `;
+        el.appendChild(arBtn);
       }
 
       el.style.width = "100%";
@@ -575,23 +583,63 @@ function ARViewerPage() {
   const confirmAR = useCallback(() => {
     setShowPermissionExplainer(false);
 
+    const glbPath = arModel?.glb || "";
+    const propName = property?.name || "";
+
+    // 1. Android WebXR (native camera AR with surface reticle)
     if (webxrSupported) {
-      // Android: open custom WebXR AR viewer (Three.js + native WebXR)
       setShowWebXRAR(true);
-    } else {
-      // iOS / fallback: existing model-viewer activateAR (Quick Look / Scene Viewer)
+      return;
+    }
+
+    // 2. Google Scene Viewer Intent for Android ARCore
+    if (device.isAndroid) {
       const viewer = document.querySelector("model-viewer") as HTMLElement & {
         activateAR?: () => Promise<void>;
       };
       if (viewer?.activateAR) {
         viewer.activateAR().catch(() => {
-          handleARError(
-            "No se pudo activar la cámara. Verifica los permisos de cámara en tu dispositivo.",
-          );
+          // Fallback to Google Scene Viewer Intent URL
+          const absoluteGlb = glbPath.startsWith("http")
+            ? glbPath
+            : `${window.location.origin}${glbPath}`;
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_only&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+          window.location.href = intentUrl;
         });
+      } else {
+        const absoluteGlb = glbPath.startsWith("http")
+          ? glbPath
+          : `${window.location.origin}${glbPath}`;
+        const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_only&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+        window.location.href = intentUrl;
       }
+      return;
     }
-  }, [webxrSupported, handleARError]);
+
+    // 3. iOS Quick Look (Apple ARKit camera)
+    const viewer = document.querySelector("model-viewer") as HTMLElement & {
+      activateAR?: () => Promise<void>;
+    };
+    if (viewer?.activateAR) {
+      viewer.activateAR().catch(() => {
+        handleARError(
+          "No se pudo activar la cámara. Verifica los permisos de cámara en tu dispositivo.",
+        );
+      });
+    }
+  }, [webxrSupported, device.isAndroid, arModel?.glb, property?.name, handleARError]);
+
+  // Auto-launch AR camera when scanned/opened on a mobile device
+  const hasAutoTriggered = useRef(false);
+  useEffect(() => {
+    if (device.isMobile && canDoAR && modelLoaded && !hasAutoTriggered.current) {
+      hasAutoTriggered.current = true;
+      const timer = setTimeout(() => {
+        confirmAR();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [device.isMobile, canDoAR, modelLoaded, confirmAR]);
 
   const declineAR = useCallback(() => {
     setShowPermissionExplainer(false);
@@ -864,7 +912,7 @@ function ARViewerPage() {
         </div>
 
         {/* Footer Link */}
-        <div className="border-t border-border pt-6 text-center">
+        <div className="border-t border-border pt-6 text-center pb-20 md:pb-6">
           <Link
             to="/properties/$id"
             params={{ id: property.slug }}
@@ -875,6 +923,19 @@ function ARViewerPage() {
           </Link>
         </div>
       </main>
+
+      {/* Sticky Mobile Floating AR Camera Trigger */}
+      {device.isMobile && canDoAR && (
+        <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
+          <button
+            onClick={confirmAR}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-accent px-6 py-4 text-xs font-bold uppercase tracking-widest text-accent-foreground shadow-2xl shadow-accent/40 ring-4 ring-accent/20 transition-all active:scale-[0.97]"
+          >
+            <Camera size={18} className="animate-bounce text-accent-foreground" />
+            <span>ABRIR CÁMARA AR (ARCORE / ARKIT)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

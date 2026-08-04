@@ -131,7 +131,7 @@ export function Desktop3DViewer({
               ref={viewerRef}
               src={modelSrc}
               alt="Modelo 3D interactivo de la propiedad"
-              camera-controls
+              camera-controls=""
               tone-mapping="neutral"
               shadow-intensity="1.2"
               shadow-softness="0.5"
