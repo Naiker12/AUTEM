@@ -193,8 +193,11 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
             modelSrc,
             (result) => resolve(result as unknown as { scene: THREE.Group }),
             (progress) => {
-              if (progress.lengthComputable && !cancelled) {
-                setLoadProgress(Math.round((progress.loaded / progress.total) * 100));
+              if (!cancelled) {
+                const total = Math.max(progress.total || 0, progress.loaded || 1);
+                const rawPct = Math.round((progress.loaded / total) * 100);
+                const pct = Math.min(Math.max(rawPct, 5), 99);
+                setLoadProgress(pct);
               }
             },
             (err) => reject(err),
@@ -204,29 +207,31 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
         if (cancelled) return;
 
         loadedModel = gltf.scene;
-        loadedModel.visible = false; // Hidden until user taps to place
+        loadedModel.visible = true; // Always visible in camera space
 
         // Center the model on its bounding box
         const box = new THREE.Box3().setFromObject(loadedModel);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
         loadedModel.position.sub(center);
-        loadedModel.position.y += size.y / 2; // Sit on the ground plane
+        loadedModel.position.y += size.y / 2; // Sit on ground plane
 
-        // Normalize to ~1m tall for AR (adjust scale based on actual model size)
+        // Normalize to ~1.2m tall/wide for mobile AR
         const maxDim = Math.max(size.x, size.y, size.z);
         if (maxDim > 0) {
-          const targetSize = 1.0; // 1 meter
+          const targetSize = 1.2;
           const s = targetSize / maxDim;
           loadedModel.scale.setScalar(s);
         }
 
-        // Wrap in a pivot group for placement positioning
+        // Wrap in a pivot group positioned 1.5m in front of camera
         const pivot = new THREE.Group();
         pivot.add(loadedModel);
-        pivot.visible = false;
+        pivot.position.set(0, -0.4, -1.5);
+        pivot.visible = true; // Instantly visible in AR camera!
         scene.add(pivot);
         modelRef.current = pivot;
+        setPhase("placed");
       } catch (err) {
         if (!cancelled) {
           onError("No se pudo cargar el modelo 3D. Verifica tu conexión e intenta de nuevo.");

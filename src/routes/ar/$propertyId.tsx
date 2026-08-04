@@ -313,7 +313,7 @@ function ModelViewerElement({
       if (arSupported) {
         el.setAttribute("ar", "");
         el.setAttribute("ar-modes", "scene-viewer webxr quick-look");
-        el.setAttribute("ar-scale", "fixed");
+        el.setAttribute("ar-scale", "auto");
         el.setAttribute("ar-placement", "floor");
 
         const arBtn = document.createElement("button");
@@ -912,7 +912,7 @@ function ARViewerPage() {
         </div>
 
         {/* Footer Link */}
-        <div className="border-t border-border pt-6 text-center pb-20 md:pb-6">
+        <div className="border-t border-border pt-6 text-center">
           <Link
             to="/properties/$id"
             params={{ id: property.slug }}
@@ -923,19 +923,6 @@ function ARViewerPage() {
           </Link>
         </div>
       </main>
-
-      {/* Sticky Mobile Floating AR Camera Trigger */}
-      {device.isMobile && canDoAR && (
-        <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
-          <button
-            onClick={confirmAR}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-accent px-6 py-4 text-xs font-bold uppercase tracking-widest text-accent-foreground shadow-2xl shadow-accent/40 ring-4 ring-accent/20 transition-all active:scale-[0.97]"
-          >
-            <Camera size={18} className="animate-bounce text-accent-foreground" />
-            <span>ABRIR CÁMARA AR (ARCORE / ARKIT)</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 }
