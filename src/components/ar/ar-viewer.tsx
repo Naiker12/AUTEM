@@ -129,7 +129,13 @@ export function Desktop3DViewer({
           <div className="relative z-[1] h-full w-full">
             <model-viewer
               ref={viewerRef}
-              src={modelSrc}
+              src={
+                modelSrc.startsWith("http")
+                  ? modelSrc
+                  : typeof window !== "undefined"
+                    ? `${window.location.origin}${modelSrc}`
+                    : modelSrc
+              }
               alt="Modelo 3D interactivo de la propiedad"
               camera-controls=""
               tone-mapping="neutral"

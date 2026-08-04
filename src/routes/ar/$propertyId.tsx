@@ -287,9 +287,18 @@ function ModelViewerElement({
 
       if (cancelled || !container) return;
 
+      const absoluteGlb = src.startsWith("http")
+        ? src
+        : `${window.location.origin}${src}`;
+      const absoluteUsdz = iosSrc
+        ? iosSrc.startsWith("http")
+          ? iosSrc
+          : `${window.location.origin}${iosSrc}`
+        : undefined;
+
       const el = document.createElement("model-viewer");
-      el.setAttribute("src", src);
-      if (iosSrc) el.setAttribute("ios-src", iosSrc);
+      el.setAttribute("src", absoluteGlb);
+      if (absoluteUsdz) el.setAttribute("ios-src", absoluteUsdz);
       if (poster) el.setAttribute("poster", poster);
       el.setAttribute("alt", "Modelo 3D interactivo de la propiedad");
       el.setAttribute("camera-controls", "");
@@ -587,48 +596,24 @@ function ARViewerPage() {
     const glbPath = arModel?.glb || "";
     const propName = property?.name || "";
 
-    // 1. Android WebXR (native camera AR with surface reticle)
-    if (webxrSupported) {
-      setShowWebXRAR(true);
-      return;
-    }
-
-    // 2. Google Scene Viewer Intent for Android ARCore
-    if (device.isAndroid) {
-      const viewer = document.querySelector("model-viewer") as HTMLElement & {
-        activateAR?: () => Promise<void>;
-      };
-      if (viewer?.activateAR) {
-        viewer.activateAR().catch(() => {
-          // Fallback to Google Scene Viewer Intent URL
-          const absoluteGlb = glbPath.startsWith("http")
-            ? glbPath
-            : `${window.location.origin}${glbPath}`;
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_preferred&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end;`;
-          window.location.href = intentUrl;
-        });
-      } else {
-        const absoluteGlb = glbPath.startsWith("http")
-          ? glbPath
-          : `${window.location.origin}${glbPath}`;
-        const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_preferred&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
-        window.location.href = intentUrl;
-      }
-      return;
-    }
-
-    // 3. iOS Quick Look (Apple ARKit camera)
     const viewer = document.querySelector("model-viewer") as HTMLElement & {
       activateAR?: () => Promise<void>;
     };
     if (viewer?.activateAR) {
-      viewer.activateAR().catch(() => {
+      viewer.activateAR().catch((err) => {
+        console.warn("AR activation error:", err);
         handleARError(
-          "No se pudo activar la cámara. Verifica los permisos de cámara en tu dispositivo.",
+          "No se pudo activar la cámara de Realidad Aumentada. Asegúrate de otorgar permisos de cámara.",
         );
       });
+    } else {
+      const absoluteGlb = glbPath.startsWith("http")
+        ? glbPath
+        : `${window.location.origin}${glbPath}`;
+      const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_preferred&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+      window.location.href = intentUrl;
     }
-  }, [webxrSupported, device.isAndroid, arModel?.glb, property?.name, handleARError]);
+  }, [arModel?.glb, property?.name, handleARError]);
 
   const declineAR = useCallback(() => {
     setShowPermissionExplainer(false);
