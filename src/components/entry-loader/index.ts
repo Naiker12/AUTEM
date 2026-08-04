@@ -9,4 +9,8 @@
 export { default } from "./EntryLoader3D";
 export { default as LoaderOverlay } from "./LoaderOverlay";
 export type { EntryLoader3DProps, LoaderOverlayProps } from "./3d-types";
-export { SCENE_VISIBLE_DURATION_MS, LOADER_TEXT_DURATION_MS, MIN_LOADER_DISPLAY_MS } from "./3d-types";
+export {
+  SCENE_VISIBLE_DURATION_MS,
+  LOADER_TEXT_DURATION_MS,
+  MIN_LOADER_DISPLAY_MS,
+} from "./3d-types";

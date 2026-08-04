@@ -218,7 +218,9 @@ export default function Navbar({ variant }: NavbarProps) {
                     handleNavClick(e, item.id);
                   }}
                   className={`font-serif text-3xl italic transition-colors ${
-                    isActive ? "text-accent font-bold not-italic underline" : "text-white hover:text-accent"
+                    isActive
+                      ? "text-accent font-bold not-italic underline"
+                      : "text-white hover:text-accent"
                   }`}
                 >
                   {item.label}

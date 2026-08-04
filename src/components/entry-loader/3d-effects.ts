@@ -25,7 +25,13 @@ export interface SceneEffects {
  */
 export function createEffects(scene: THREE.Scene, prefersReducedMotion: boolean): SceneEffects {
   if (prefersReducedMotion) {
-    return { particles: null, lightRays: null, outerRing: null, innerRing: null, centerEmblem: null };
+    return {
+      particles: null,
+      lightRays: null,
+      outerRing: null,
+      innerRing: null,
+      centerEmblem: null,
+    };
   }
 
   // ── Ground Reflection Plane ──

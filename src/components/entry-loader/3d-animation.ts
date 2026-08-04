@@ -113,7 +113,7 @@ export function startAnimation(ctx: AnimationContext): () => void {
       const boost = (1 - cameraEased) * ((30 * Math.PI) / 180);
       if (targetObj) {
         targetObj.rotation.y += (BASE_ROTATE_SPEED + boost) * delta;
-        targetObj.rotation.x += (BASE_ROTATE_SPEED * 0.5) * delta;
+        targetObj.rotation.x += BASE_ROTATE_SPEED * 0.5 * delta;
       }
 
       // Breathing after intro

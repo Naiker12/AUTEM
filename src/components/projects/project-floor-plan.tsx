@@ -180,8 +180,8 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                   Explorar en smartphone
                 </h4>
                 <p className="mt-2 text-xs text-muted-foreground dark:text-stone-400 leading-relaxed">
-                  Apunta con la cámara de tu smartphone para abrir la experiencia interactiva en Realidad
-                  Aumentada 3D y recorrer la propiedad.
+                  Apunta con la cámara de tu smartphone para abrir la experiencia interactiva en
+                  Realidad Aumentada 3D y recorrer la propiedad.
                 </p>
               </div>
 
