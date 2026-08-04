@@ -604,14 +604,14 @@ function ARViewerPage() {
           const absoluteGlb = glbPath.startsWith("http")
             ? glbPath
             : `${window.location.origin}${glbPath}`;
-          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_only&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end;`;
+          const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_preferred&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end;`;
           window.location.href = intentUrl;
         });
       } else {
         const absoluteGlb = glbPath.startsWith("http")
           ? glbPath
           : `${window.location.origin}${glbPath}`;
-        const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_only&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+        const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_preferred&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
         window.location.href = intentUrl;
       }
       return;
@@ -629,18 +629,6 @@ function ARViewerPage() {
       });
     }
   }, [webxrSupported, device.isAndroid, arModel?.glb, property?.name, handleARError]);
-
-  // Auto-launch AR camera when scanned/opened on a mobile device
-  const hasAutoTriggered = useRef(false);
-  useEffect(() => {
-    if (device.isMobile && canDoAR && modelLoaded && !hasAutoTriggered.current) {
-      hasAutoTriggered.current = true;
-      const timer = setTimeout(() => {
-        confirmAR();
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [device.isMobile, canDoAR, modelLoaded, confirmAR]);
 
   const declineAR = useCallback(() => {
     setShowPermissionExplainer(false);
