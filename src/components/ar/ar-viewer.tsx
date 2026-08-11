@@ -8,6 +8,7 @@ import "@google/model-viewer";
 
 export function Desktop3DViewer({
   modelSrc,
+  poster,
   selectedFinish,
   onFinishChange,
   lightingMode,
@@ -16,15 +17,17 @@ export function Desktop3DViewer({
 }: Desktop3DViewerProps) {
   const viewerRef = useRef<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Synchronize model-viewer load event and safety fallback
   useEffect(() => {
     setReady(false);
+    setHasError(false);
     const el = viewerRef.current;
     if (!el) return;
 
     const handleLoad = () => setReady(true);
-    const handleError = () => setReady(true);
+    const handleError = () => setHasError(true);
 
     if ((el as unknown as { loaded?: boolean }).loaded) {
       setReady(true);
@@ -33,8 +36,7 @@ export function Desktop3DViewer({
       el.addEventListener("error", handleError);
     }
 
-    // Safety timer to prevent perpetual loading screen
-    const timer = setTimeout(() => setReady(true), 2500);
+    const timer = setTimeout(() => setHasError(true), 20000);
 
     return () => {
       el.removeEventListener("load", handleLoad);
@@ -46,6 +48,7 @@ export function Desktop3DViewer({
   // Synchronize material finish color
   useEffect(() => {
     if (!ready || !viewerRef.current) return;
+    if (selectedFinish === null) return;
     const finish = FINISHES[selectedFinish];
     if (!finish) return;
 
@@ -137,6 +140,9 @@ export function Desktop3DViewer({
                     : modelSrc
               }
               alt="Modelo 3D interactivo de la propiedad"
+              poster={poster}
+              loading="eager"
+              reveal="auto"
               camera-controls=""
               tone-mapping="neutral"
               shadow-intensity="1.5"
@@ -197,10 +203,21 @@ export function Desktop3DViewer({
           {ready && (
             <div className="absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 sm:gap-4 rounded-full border border-stone-800/90 bg-stone-950/95 px-4 sm:px-6 py-2 sm:py-2.5 backdrop-blur-xl shadow-2xl text-white max-w-[95%]">
               <span className="hidden md:flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-accent font-semibold whitespace-nowrap">
-                <Eye size={12} /> Acabados
+                <Eye size={12} /> Paleta
               </span>
               <div className="hidden md:block h-4 w-px bg-stone-800" />
               <div className="flex items-center gap-2.5 sm:gap-3">
+                <button
+                  onClick={() => onFinishChange(null)}
+                  className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-all ${
+                    selectedFinish === null
+                      ? "bg-accent text-accent-foreground"
+                      : "text-stone-400 hover:text-white"
+                  }`}
+                  title="Mostrar materiales originales"
+                >
+                  Original
+                </button>
                 {FINISHES.map((finish, i) => (
                   <button
                     key={finish.id}
@@ -221,6 +238,11 @@ export function Desktop3DViewer({
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+          {hasError && (
+            <div className="absolute inset-x-6 bottom-6 z-30 rounded-2xl border border-amber-400/20 bg-stone-950/95 p-4 text-center text-xs text-stone-300 shadow-2xl backdrop-blur-md">
+              No pudimos cargar la maqueta interactiva. Puedes reintentar al recargar la página.
             </div>
           )}
         </>

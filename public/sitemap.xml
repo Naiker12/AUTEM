@@ -26,41 +26,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://autem.es/properties/villa-del-carmen</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://autem.es/properties/penthouse-solemar</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://autem.es/properties/terreno-vista-alta</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://autem.es/properties/residencia-olive</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://autem.es/properties/villa-atlantico</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://autem.es/properties/the-summit-penthouse</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://autem.es/properties/casa-campestre</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://autem.es/politica-privacidad</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

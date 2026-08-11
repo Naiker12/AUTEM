@@ -20,10 +20,10 @@ function PoliticaPrivacidad() {
           <section>
             <h2 className="font-serif text-xl text-foreground">1. Información que recopilamos</h2>
             <p className="mt-2">
-              AUTEM recopila información que usted nos proporciona directamente al completar
-              formularios de contacto, incluyendo nombre, correo electrónico, número de teléfono y
-              mensaje. También recopilamos datos de navegación de forma automática (IP, tipo de
-              navegador, páginas visitadas) mediante herramientas de analítica.
+              AUTEM recopila la información que usted proporciona al completar formularios de
+              contacto, incluyendo nombre, correo electrónico, número de teléfono y mensaje. Al
+              enviar un formulario, el sitio abre WhatsApp con el mensaje preparado para que usted
+              decida si desea enviarlo.
             </p>
           </section>
 
@@ -42,11 +42,10 @@ function PoliticaPrivacidad() {
               3. Cookies y tecnologías de rastreo
             </h2>
             <p className="mt-2">
-              Utilizamos cookies y tecnologías similares para mejorar su experiencia de navegación,
-              analizar el tráfico del sitio y personalizar el contenido. Puede configurar su
-              navegador para rechazar cookies, aunque esto podría afectar la funcionalidad del
-              sitio. Al continuar navegando, usted acepta el uso de cookies conforme se describe en
-              esta política.
+              El sitio usa almacenamiento local del navegador para recordar preferencias de
+              interfaz, como el tema visual y los tutoriales de realidad aumentada. Si se incorporan
+              cookies de analítica o marketing, se solicitará el consentimiento correspondiente
+              antes de activarlas.
             </p>
           </section>
 

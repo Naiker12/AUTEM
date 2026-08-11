@@ -90,6 +90,21 @@ export default function FormularioContacto() {
           )}
         </div>
 
+        <label className="flex cursor-pointer items-start gap-2 text-[10px] leading-relaxed text-stone-300">
+          <input type="checkbox" required className="mt-0.5 accent-accent" />
+          <span>
+            Autorizo el tratamiento de mis datos para atender esta solicitud y entiendo que se
+            abrirá WhatsApp para enviar el mensaje. Consulta la{" "}
+            <a
+              href={`${import.meta.env.BASE_URL}politica-privacidad`}
+              className="text-accent underline"
+            >
+              Política de Privacidad
+            </a>
+            .
+          </span>
+        </label>
+
         {/* Botón de Envío */}
         <button
           type="submit"
@@ -110,11 +125,6 @@ export default function FormularioContacto() {
             </>
           )}
         </button>
-
-        <p className="text-center text-[9px] text-stone-400 font-light">
-          Al enviar este formulario aceptas nuestra política de confidencialidad y tratamiento de
-          datos.
-        </p>
       </form>
     </div>
   );

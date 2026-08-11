@@ -112,7 +112,7 @@ export default function Navbar({ variant }: NavbarProps) {
         isHome
           ? menuOpen
             ? "bg-primary"
-            : "mix-blend-difference text-white"
+            : "bg-gradient-to-b from-black/55 via-black/20 to-transparent text-white"
           : "bg-background/80 backdrop-blur-md"
       }`}
     >

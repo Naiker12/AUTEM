@@ -136,6 +136,51 @@
 .animate-fade-up {
   animation: fade-up 1s cubic-bezier(0.19, 1, 0.22, 1) both;
 }
+
+/* Home entrance: starts only once the cinematic preloader has cleared. */
+@keyframes home-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes home-backdrop-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.035);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.home-entrance {
+  animation: home-enter 0.9s cubic-bezier(0.19, 1, 0.22, 1) both;
+  will-change: transform, opacity;
+}
+.home-entrance--eyebrow {
+  animation-delay: 0.08s;
+}
+.home-entrance--title {
+  animation-delay: 0.18s;
+}
+.home-entrance--body {
+  animation-delay: 0.31s;
+}
+.home-entrance--action {
+  animation-delay: 0.45s;
+}
+.home-entrance--scroll {
+  animation-delay: 0.58s;
+}
+.hero-backdrop-entrance {
+  animation: home-backdrop-enter 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
 .delay-100 {
   animation-delay: 0.1s;
 }
@@ -553,6 +598,12 @@
   .ken-burns {
     animation: none !important;
   }
+  .home-entrance,
+  .hero-backdrop-entrance {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ── Focus ring base (keyboard-only visible) ── */
@@ -649,4 +700,3 @@ model-viewer {
 .animate-hero-progress {
   animation: heroProgress linear forwards;
 }
-

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Compass, Layers, Cpu } from "lucide-react";
+import TopographyViewer from "./TopographyViewer";
 
 export default function DroneScanSection() {
   const [altitude, setAltitude] = useState(120.4);
@@ -8,9 +9,8 @@ export default function DroneScanSection() {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Intersection Observer for scroll activation & video autoplay
+  // Activate telemetry and the Three.js terrain only while this section is visible.
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new IntersectionObserver(
@@ -18,13 +18,8 @@ export default function DroneScanSection() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsIntersecting(true);
-            if (videoRef.current) {
-              videoRef.current.play().catch(() => {});
-            }
           } else {
-            if (videoRef.current) {
-              videoRef.current.pause();
-            }
+            setIsIntersecting(false);
           }
         });
       },
@@ -124,18 +119,7 @@ export default function DroneScanSection() {
         {/* Right Column: Live Video Panel + Interactive HUD & Animated Flight Map */}
         <div className="relative md:col-span-3">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#101015] to-[#050506] border border-white/15 shadow-2xl shadow-black/80">
-            {/* Background Video */}
-            <video
-              ref={videoRef}
-              loop
-              muted
-              playsInline
-              preload="none"
-              poster={`${import.meta.env.BASE_URL}antes.png`}
-              className="absolute inset-0 h-full w-full object-cover opacity-80"
-            >
-              <source src={`${import.meta.env.BASE_URL}video-del-panel.mp4`} type="video/mp4" />
-            </video>
+            <TopographyViewer active={isIntersecting} />
 
             {/* Dark gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />

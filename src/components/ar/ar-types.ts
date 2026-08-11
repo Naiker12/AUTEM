@@ -19,8 +19,9 @@ export interface ARExperienceProps {
 
 export interface Desktop3DViewerProps {
   modelSrc: string;
-  selectedFinish: number;
-  onFinishChange: (index: number) => void;
+  poster?: string;
+  selectedFinish: number | null;
+  onFinishChange: (index: number | null) => void;
   lightingMode: LightingMode;
   onLightingChange: (mode: LightingMode) => void;
   className?: string;

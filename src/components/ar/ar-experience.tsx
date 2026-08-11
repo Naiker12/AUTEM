@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { HelpCircle, Smartphone, Monitor, Sparkles, Eye, Cpu } from "lucide-react";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { getARModel, AR_READY_PROPERTIES } from "@/data/ar-models";
-import { FirstTutorial, HelpTooltip } from "./ar-tutorial";
-import { Desktop3DViewer } from "./ar-viewer";
+import { HelpTooltip } from "./ar-tutorial";
+import { ThreePropertyViewer } from "./ThreePropertyViewer";
 import { ARQrModal } from "./ar-qr-modal";
+import { ArchitecturalAtmosphere } from "./ArchitecturalAtmosphere";
 import type { ARExperienceProps, LightingMode } from "./ar-types";
 
 export default function ARExperience({
@@ -13,9 +15,8 @@ export default function ARExperience({
   className = "",
 }: ARExperienceProps) {
   const [selectedSlug, setSelectedSlug] = useState(initialPropertySlug);
-  const [selectedFinish, setSelectedFinish] = useState(0);
+  const [selectedFinish, setSelectedFinish] = useState<number | null>(null);
   const [lightingMode, setLightingMode] = useState<LightingMode>("studio");
-  const [showTutorial, setShowTutorial] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
 
@@ -26,34 +27,35 @@ export default function ARExperience({
 
   const arModel = getARModel(currentProperty.slug);
 
-  const handleLaunchAR = useCallback(() => {
-    const hasSeenTutorial = localStorage.getItem("autem-ar-tutorial-seen");
-    if (!hasSeenTutorial) {
-      setShowTutorial(true);
-      localStorage.setItem("autem-ar-tutorial-seen", "true");
-    }
-  }, []);
+  if (!currentProperty || !arModel) return null;
 
   return (
-    <section id="tecnologia" className={`relative py-20 md:py-28 overflow-hidden ${className}`}>
+    <section
+      id="tecnologia"
+      className={`relative scroll-mt-28 overflow-hidden py-24 md:py-32 ${className}`}
+    >
       {/* Ambient background glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-accent/5 blur-[120px]" />
       </div>
+      <div className="pointer-events-none absolute -right-24 top-20 hidden h-[540px] w-[540px] opacity-70 lg:block">
+        <ArchitecturalAtmosphere />
+      </div>
 
       <div className="relative mx-auto max-w-[90rem] px-6 md:px-10 lg:px-16">
         {/* Section Header */}
-        <div className="mb-12 max-w-2xl md:mb-16">
-          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-accent">
-            <Cpu size={14} />
-            Tecnología inmersiva
-          </span>
-          <h2 className="mt-3 font-serif text-4xl md:text-5xl lg:text-6xl text-foreground">
-            Experiencia en <span className="italic text-accent">realidad aumentada</span>
-          </h2>
-          <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-            Recorre cada detalle de tu futura propiedad antes de que exista. Personaliza acabados,
-            iluminación y materiales en tiempo real.
+        <div className="mb-12 grid gap-6 border-b border-border/70 pb-10 md:mb-16 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.55fr)] md:items-end">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-accent">
+              <Cpu size={14} /> Tecnología inmersiva
+            </span>
+            <h2 className="mt-4 font-serif text-4xl leading-[0.95] text-foreground md:text-6xl lg:text-7xl">
+              Arquitectura que puedes <span className="italic text-accent">explorar</span>
+            </h2>
+          </div>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
+            Examina la maqueta 3D, cambia la atmósfera de la escena y abre la experiencia en tu
+            teléfono para verla en tu propio espacio.
           </p>
         </div>
 
@@ -83,7 +85,7 @@ export default function ARExperience({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-stretch lg:gap-10 xl:gap-14">
           {/* Left Column: 3D Viewer / Interactive Model */}
           <div className="lg:col-span-1">
-            <Desktop3DViewer
+            <ThreePropertyViewer
               modelSrc={arModel.glb}
               selectedFinish={selectedFinish}
               onFinishChange={setSelectedFinish}
@@ -106,20 +108,22 @@ export default function ARExperience({
                   {currentProperty.name}
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
-                  Visualiza esta propiedad a escala real (1:1) directamente en tu espacio. Cambia
-                  acabados, rota la maqueta y recorre cada rincón antes de la construcción.
+                  Gira, acerca y explora la maqueta con sus materiales originales. Prueba una paleta
+                  de acabados como referencia visual y continúa en tu teléfono para verla en tu
+                  espacio.
                 </p>
               </div>
 
               {/* Device Actions */}
               <div className="mt-8 space-y-5 border-t border-border pt-8">
                 {isMobile ? (
-                  <button
-                    onClick={handleLaunchAR}
+                  <Link
+                    to="/ar/$propertyId"
+                    params={{ propertyId: currentProperty.slug }}
                     className="flex w-full items-center justify-center gap-3 rounded-2xl bg-accent px-6 py-4.5 text-xs font-bold uppercase tracking-widest text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:bg-accent/90 active:scale-[0.98]"
                   >
-                    <Smartphone size={18} /> Iniciar Realidad Aumentada
-                  </button>
+                    <Smartphone size={18} /> Abrir experiencia AR
+                  </Link>
                 ) : (
                   <div className="space-y-4">
                     <button
@@ -151,9 +155,6 @@ export default function ARExperience({
           </div>
         </div>
       </div>
-
-      {/* Tutorial Popup */}
-      {showTutorial && <FirstTutorial onDismiss={() => setShowTutorial(false)} />}
 
       {/* QR Code Modal for Desktop */}
       <ARQrModal

@@ -27,7 +27,9 @@ export function useDeviceDetection(): DeviceInfo {
     const isAndroid = /Android/.test(ua);
     const isMobile = isIOS || isAndroid || /Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
 
-    const supportsAR = isIOS || (isAndroid && "xr" in navigator);
+    // Native AR is delegated to Quick Look on iOS and Scene Viewer on Android.
+    // WebXR is optional and must not be used as the only compatibility signal.
+    const supportsAR = isIOS || isAndroid;
 
     let browserName = "unknown";
     if (/CriOS/.test(ua)) browserName = "Chrome iOS";

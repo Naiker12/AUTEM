@@ -126,9 +126,7 @@ export default function PiePagina() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-accent transition-colors">
-                  Términos y Condiciones
-                </a>
+                <span className="text-stone-500">Términos y condiciones: próximamente</span>
               </li>
               <li>
                 <span className="text-stone-300 font-medium">Fiduciarias Aliadas:</span>{" "}
@@ -146,38 +144,20 @@ export default function PiePagina() {
         <div className="mt-8 flex flex-col items-center justify-between gap-6 text-[10px] uppercase tracking-widest text-stone-500 md:flex-row">
           <p>© {new Date().getFullYear()} AUTEM Real Estate. Todos los derechos reservados.</p>
 
-          {/* Redes Sociales */}
-          <div className="flex items-center gap-6">
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-accent transition-colors"
-              aria-label="Instagram"
-            >
+          {/* Los perfiles se habilitan cuando se configuren las URLs oficiales. */}
+          <div className="flex items-center gap-6" aria-label="Canales sociales próximamente">
+            <span className="flex items-center gap-1.5" aria-label="Instagram próximamente">
               <Instagram size={14} />
               <span>Instagram</span>
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-accent transition-colors"
-              aria-label="LinkedIn"
-            >
+            </span>
+            <span className="flex items-center gap-1.5" aria-label="LinkedIn próximamente">
               <Linkedin size={14} />
               <span>LinkedIn</span>
-            </a>
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-accent transition-colors"
-              aria-label="YouTube"
-            >
+            </span>
+            <span className="flex items-center gap-1.5" aria-label="YouTube próximamente">
               <Youtube size={14} />
               <span>YouTube</span>
-            </a>
+            </span>
           </div>
 
           {/* Botón Volver Arriba */}

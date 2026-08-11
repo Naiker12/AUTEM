@@ -57,7 +57,7 @@ export function HelpTooltip({ onClose }: { onClose: () => void }) {
         </li>
         <li className="flex items-start gap-2.5">
           <span className="mt-1 size-1.5 shrink-0 rounded-full bg-accent" />
-          <span>Un dedo para mover, dos dedos para girar y escalar.</span>
+          <span>Rota y acerca la maqueta con los gestos habituales de tu teléfono.</span>
         </li>
         <li className="flex items-start gap-2.5">
           <span className="mt-1 size-1.5 shrink-0 rounded-full bg-accent" />
@@ -65,7 +65,7 @@ export function HelpTooltip({ onClose }: { onClose: () => void }) {
         </li>
       </ul>
       <p className="mt-4 text-[11px] text-stone-500 border-t border-stone-800/80 pt-3">
-        Funciona directamente en Safari/Chrome sin instalar aplicaciones adicionales.
+        En iPhone se abre Quick Look y en Android Scene Viewer cuando el dispositivo es compatible.
       </p>
     </div>
   );

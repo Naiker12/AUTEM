@@ -326,8 +326,16 @@ export function WebXRARViewer({ modelSrc, propertyName, onClose, onError }: WebX
       localSpaceRef.current = localSpace;
 
       try {
+        const requestHitTestSource = session.requestHitTestSource;
+        if (!requestHitTestSource) {
+          throw new Error("Hit-testing no disponible");
+        }
+        const hitTestSourceRequest = requestHitTestSource.call(session, { space: viewerSpace });
+        if (!hitTestSourceRequest) {
+          throw new Error("Hit-testing no disponible");
+        }
         const hitTestSource = await withTimeout(
-          session.requestHitTestSource!({ space: viewerSpace }),
+          hitTestSourceRequest,
           10000,
           "La detección de superficies no respondió.",
         );

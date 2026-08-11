@@ -120,6 +120,7 @@ function Index() {
   const [modelVisible, setModelVisible] = useState(false);
 
   const [loadProgress, setLoadProgress] = useState(0);
+  const entranceClass = hideModel ? "home-entrance" : "opacity-0";
 
   const handleModelLoaded = () => {
     const elapsed = performance.now() - mountTimeRef.current;
@@ -275,27 +276,41 @@ function Index() {
           id="top"
           className="relative flex h-screen min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 text-center"
         >
-          <HeroCarousel />
+          <div
+            className={`absolute inset-0 z-0 ${hideModel ? "hero-backdrop-entrance" : "opacity-0"}`}
+          >
+            <HeroCarousel />
+          </div>
 
           <div className="parallax-fast relative z-10 max-w-4xl">
-            <span className="animate-fade-up mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent">
+            <span
+              className={`${entranceClass} home-entrance--eyebrow mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent`}
+            >
               AUTEM · Real Estate
             </span>
-            <h1 className="animate-fade-up delay-100 mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl">
+            <h1
+              className={`${entranceClass} home-entrance--title mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl`}
+            >
               Arquitectura <br />
               <span className="italic">sin fronteras</span>
             </h1>
-            <p className="animate-fade-up delay-200 mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg">
+            <p
+              className={`${entranceClass} home-entrance--body mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg`}
+            >
               Propiedades que puedes recorrer, personalizar y ver en tu propio espacio antes de que
               exista la primera piedra.
             </p>
 
             {/* Search Bar */}
-            <HeroSearchBar />
+            <div className={`${entranceClass} home-entrance--action`}>
+              <HeroSearchBar />
+            </div>
           </div>
 
           {/* Scroll indicator with descending animated gold laser thread */}
-          <div className="parallax-fast absolute -bottom-10 left-1/2 z-20 -translate-x-1/2">
+          <div
+            className={`${entranceClass} home-entrance--scroll parallax-fast absolute -bottom-10 left-1/2 z-20 -translate-x-1/2`}
+          >
             <div className="flex flex-col items-center gap-2">
               <span className="text-[8px] font-bold uppercase tracking-[0.35em] text-accent/80 animate-pulse">
                 Scroll

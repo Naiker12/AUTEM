@@ -22,7 +22,7 @@ import { getARModel } from "@/data/ar-models";
 import { properties } from "@/data/properties";
 import { FINISHES, WHATSAPP_BASE_URL } from "@/data/constants";
 import { AREnvironmentToggle } from "@/components/ar/ar-environment-toggle";
-import { WebXRARViewer } from "@/components/ar/WebXRARViewer";
+import { ThreePropertyViewer } from "@/components/ar/ThreePropertyViewer";
 import type { ViewerThemeMode } from "@/components/ar/ar-types";
 
 export const Route = createFileRoute("/ar/$propertyId")({
@@ -39,12 +39,12 @@ function OnboardingOverlay({ onDismiss }: { onDismiss: () => void }) {
     {
       icon: <Camera size={28} className="text-accent" />,
       title: "Vive la experiencia 3D",
-      desc: "Visualiza la propiedad a escala real directamente en tu pantalla.",
+      desc: "Explora la maqueta 3D de la propiedad directamente en tu pantalla.",
     },
     {
       icon: <Smartphone size={28} className="text-accent" />,
       title: "Explora en tu espacio",
-      desc: 'En tu celular, presiona "Ver en tu espacio" para colocarla en tu lote con realidad aumentada.',
+      desc: 'En tu celular, presiona "Ver en tu espacio" para colocarla con realidad aumentada.',
     },
     {
       icon: <RotateCcw size={28} className="text-accent" />,
@@ -178,7 +178,7 @@ function ARPermissionExplainer({
         </div>
         <h3 className="font-serif text-xl font-bold">Permiso de cámara</h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Para ver la propiedad en tu lote con AR necesitamos acceso a tu cámara. Tu cámara{" "}
+          Para ver la propiedad en tu espacio con AR necesitamos acceso a tu cámara. Tu cámara{" "}
           <strong className="text-foreground">no se graba ni almacena</strong> — solo proyecta la
           maqueta en tiempo real.
         </p>
@@ -299,6 +299,8 @@ function ModelViewerElement({
       if (absoluteUsdz) el.setAttribute("ios-src", absoluteUsdz);
       if (poster) el.setAttribute("poster", poster);
       el.setAttribute("alt", "Modelo 3D interactivo de la propiedad");
+      el.setAttribute("loading", "eager");
+      el.setAttribute("reveal", "auto");
       el.setAttribute("camera-controls", "");
       el.setAttribute("environment-image", "neutral");
       el.setAttribute("tone-mapping", "neutral");
@@ -421,6 +423,7 @@ function ModelViewerElement({
   // Synchronize material finish color
   useEffect(() => {
     if (!ready || !viewerRef.current) return;
+    if (selectedFinishId === "original") return;
     const finish = FINISHES.find((f) => f.id === selectedFinishId) || FINISHES[0];
 
     try {
@@ -516,14 +519,11 @@ function ARViewerPage() {
   const [showARError, setShowARError] = useState(false);
   const [arErrorMessage, setArErrorMessage] = useState("");
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [modelLoaded, setModelLoaded] = useState(false);
   const [modelError, setModelError] = useState(false);
   const [themeMode, setThemeMode] = useState<ViewerThemeMode>("day");
-  const [showWebXRAR, setShowWebXRAR] = useState(false);
-  const [webxrSupported, setWebxrSupported] = useState(false);
 
   // Read URL search param ?finish=nordic
-  const [selectedFinish, setSelectedFinish] = useState(search.finish || "nordic");
+  const [selectedFinish, setSelectedFinish] = useState(search.finish || "original");
 
   const property = properties.find((p) => p.slug === propertyId);
   const arModel = getARModel(propertyId);
@@ -534,18 +534,6 @@ function ARViewerPage() {
   useEffect(() => {
     document.title = property ? `AR: ${property.name} | AUTEM` : "Experiencia AR | AUTEM";
   }, [property]);
-
-  // Detect WebXR immersive-ar support (Android + ARCore)
-  useEffect(() => {
-    if (device.isAndroid && "xr" in navigator) {
-      const xr = navigator.xr;
-      if (xr) {
-        xr.isSessionSupported("immersive-ar").then((supported) => {
-          setWebxrSupported(supported);
-        });
-      }
-    }
-  }, [device.isAndroid]);
 
   useEffect(() => {
     const hasSeen = localStorage.getItem("autem_ar_onboarding_v2");
@@ -561,7 +549,6 @@ function ARViewerPage() {
   }, []);
 
   const handleLoaded = useCallback(() => {
-    setModelLoaded(true);
     setLoadingProgress(100);
   }, []);
 
@@ -581,9 +568,6 @@ function ARViewerPage() {
   const confirmAR = useCallback(() => {
     setShowPermissionExplainer(false);
 
-    const glbPath = arModel?.glb || "";
-    const propName = property?.name || "";
-
     const viewer = document.querySelector("model-viewer") as HTMLElement & {
       activateAR?: () => Promise<void>;
     };
@@ -595,13 +579,11 @@ function ARViewerPage() {
         );
       });
     } else {
-      const absoluteGlb = glbPath.startsWith("http")
-        ? glbPath
-        : `${window.location.origin}${glbPath}`;
-      const intentUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(absoluteGlb)}&mode=ar_preferred&title=${encodeURIComponent(propName)}#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
-      window.location.href = intentUrl;
+      handleARError(
+        "El visor todavía se está preparando. Espera unos segundos e inténtalo de nuevo.",
+      );
     }
-  }, [arModel?.glb, property?.name, handleARError]);
+  }, [handleARError]);
 
   const activateAR = useCallback(() => {
     if (!canDoAR) {
@@ -611,9 +593,8 @@ function ARViewerPage() {
       return;
     }
 
-    // Trigger AR immediately inside the exact user gesture context
-    confirmAR();
-  }, [canDoAR, handleARError, confirmAR]);
+    setShowPermissionExplainer(true);
+  }, [canDoAR, handleARError]);
 
   const declineAR = useCallback(() => {
     setShowPermissionExplainer(false);
@@ -665,7 +646,7 @@ function ARViewerPage() {
     );
   }
 
-  const selected = FINISHES.find((f) => f.id === selectedFinish) || FINISHES[0];
+  const selected = FINISHES.find((f) => f.id === selectedFinish);
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
@@ -686,21 +667,6 @@ function ARViewerPage() {
           onFallback={() => setShowARError(false)}
         />
       )}
-      {showWebXRAR && (
-        <WebXRARViewer
-          modelSrc={arModel.glb}
-          propertyName={property.name}
-          onClose={() => {
-            setShowWebXRAR(false);
-            setShowPostCTA(true);
-          }}
-          onError={(msg) => {
-            setShowWebXRAR(false);
-            handleARError(msg);
-          }}
-        />
-      )}
-
       {/* Header bar */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
@@ -755,18 +721,31 @@ function ARViewerPage() {
           </div>
         ) : (
           <div className="relative">
-            <ModelViewerElement
-              src={arModel.glb}
-              iosSrc={arModel.usdz}
-              selectedFinishId={selectedFinish}
-              themeMode={themeMode}
-              onLoaded={handleLoaded}
-              onProgress={handleProgress}
-              onError={handleModelError}
-              arSupported={canDoAR}
-            />
+            {device.isDesktop ? (
+              <ThreePropertyViewer
+                modelSrc={arModel.glb}
+                selectedFinish={selected ? FINISHES.indexOf(selected) : null}
+                onFinishChange={(index) =>
+                  setSelectedFinish(index === null ? "original" : FINISHES[index].id)
+                }
+                lightingMode={themeMode}
+                onLightingChange={setThemeMode}
+              />
+            ) : (
+              <ModelViewerElement
+                src={arModel.glb}
+                iosSrc={arModel.usdz}
+                poster={arModel.poster}
+                selectedFinishId={selectedFinish}
+                themeMode={themeMode}
+                onLoaded={handleLoaded}
+                onProgress={handleProgress}
+                onError={handleModelError}
+                arSupported={canDoAR}
+              />
+            )}
 
-            {loadingProgress < 100 && (
+            {!device.isDesktop && loadingProgress < 100 && (
               <div className="absolute bottom-6 left-6 right-6 z-20">
                 <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/95 px-4 py-3 backdrop-blur-xl shadow-2xl text-card-foreground">
                   <Loader2 size={16} className="animate-spin text-accent" />
@@ -792,8 +771,14 @@ function ARViewerPage() {
               <Eye size={14} /> Personalizar Acabado
             </span>
             <span className="text-xs text-muted-foreground font-medium">
-              {selected.label}{" "}
-              <span className="text-muted-foreground/70">· {selected.material}</span>
+              {selected ? (
+                <>
+                  {selected.label}{" "}
+                  <span className="text-muted-foreground/70">· {selected.material}</span>
+                </>
+              ) : (
+                "Material original"
+              )}
             </span>
           </div>
 
@@ -867,14 +852,15 @@ function ARViewerPage() {
                 real.
               </p>
               <p className="mt-1 text-[10px] text-muted-foreground">
-                Compatible con iPhone (iOS 12+) y Android con ARCore
+                Compatible con iPhone/iPad y Android. Si tu equipo no admite AR, podrás explorar el
+                modelo 3D aquí.
               </p>
             </div>
           )}
 
           <a
             href={`${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
-              `Hola AUTEM, me interesa "${property.name}" (Acabado: ${selected.label}) que vi en la experiencia AR. ¿Podría agendar una visita?`,
+              `Hola AUTEM, me interesa "${property.name}" (Acabado: ${selected?.label || "original"}) que vi en la experiencia AR. ¿Podría agendar una visita?`,
             )}`}
             target="_blank"
             rel="noopener noreferrer"
