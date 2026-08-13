@@ -188,11 +188,9 @@ function ProjectView() {
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-6 md:px-8 md:pb-8">
             <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 lg:flex-row lg:items-end">
               <div className="max-w-2xl drop-shadow-2xl">
-                {mode !== "lot" && (
-                  <span className="inline-flex rounded-full border border-accent/55 bg-[#16170f]/75 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-accent shadow-lg backdrop-blur-xl">
-                    {modeLabel}
-                  </span>
-                )}
+                <span className="inline-flex rounded-full border border-accent/55 bg-[#16170f]/75 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-accent shadow-lg backdrop-blur-xl">
+                  {modeLabel}
+                </span>
                 <h1 className="mt-3 font-serif text-4xl leading-[0.92] tracking-tight text-white md:text-6xl">
                   {property.name}
                 </h1>
@@ -226,20 +224,20 @@ function ProjectView() {
                     </button>
                   ))}
                 </div>
-              ) : mode !== "lot" ? (
+              ) : (
                 <div className="max-w-md rounded-2xl border border-white/15 bg-[#11140e]/75 p-5 text-sm leading-relaxed text-white/85 shadow-2xl backdrop-blur-xl">
                   <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
                     Lotes 360°
                   </span>
-                  {mode === "overview"
-                    ? property.description
-                    : mode === "lot"
+                  {mode === "tour"
+                    ? "Recorre visualmente los puntos clave del terreno y su entorno."
+                    : mode === "panorama"
                       ? "Revisa la distribución, límites y zonas principales del lote."
-                      : mode === "tour"
+                      : mode === "gallery"
                         ? "Recorre visualmente los puntos clave del terreno y su entorno."
                         : "Explora la distribución del proyecto. Los hotspots se añadirán cuando estén definidas las coordenadas reales de cada zona."}
                 </div>
-              ) : null}
+              )}
             </div>
           </section>
         )}
