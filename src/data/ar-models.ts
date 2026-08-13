@@ -6,17 +6,9 @@ export interface ARModel {
   poster?: string;
 }
 
-const HORIZON_GLB = `${import.meta.env.BASE_URL}models/the-horizon-suite.glb`;
-const PROJECT_ASSETS = `${import.meta.env.BASE_URL}projects`;
-
 // Nota: no se sirve ningún archivo .usdz (iOS). En iOS, model-viewer genera el
 // USDZ sobre la marcha al activar AR, así que omitir `ios-src` es intencional.
-const AR_MODELS: Record<string, ARModel> = {
-  "the-horizon-suite": {
-    glb: HORIZON_GLB,
-    poster: `${PROJECT_ASSETS}/the-horizon-suite/fachada.jpg`,
-  },
-};
+const AR_MODELS: Record<string, ARModel> = {};
 
 export function getARModel(propertySlug: string): ARModel | undefined {
   return AR_MODELS[propertySlug];

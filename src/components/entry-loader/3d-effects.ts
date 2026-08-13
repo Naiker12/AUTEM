@@ -51,28 +51,37 @@ export function createEffects(scene: THREE.Scene, prefersReducedMotion: boolean)
   // ── Central Gold Geometric Emblem (AUTEM Monogram Diamond) ──
   const centerEmblem = new THREE.Group();
 
-  const coreGeo = new THREE.OctahedronGeometry(0.65, 1);
-  const coreMat = new THREE.MeshStandardMaterial({
-    color: GOLD,
-    metalness: 0.95,
-    roughness: 0.1,
-    transparent: true,
-    opacity: 0.85,
-  });
-  const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-  centerEmblem.add(coreMesh);
+  const terrainBase = new THREE.Mesh(
+    new THREE.BoxGeometry(2.9, 0.32, 2.1),
+    new THREE.MeshStandardMaterial({ color: 0x7b5138, roughness: 0.72, metalness: 0.05 }),
+  );
+  terrainBase.position.y = 0.15;
+  centerEmblem.add(terrainBase);
 
-  const wireGeo = new THREE.OctahedronGeometry(0.8, 1);
-  const wireMat = new THREE.MeshBasicMaterial({
-    color: GOLD,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.35,
+  const parcelMaterial = new THREE.MeshStandardMaterial({
+    color: 0xc98660,
+    roughness: 0.64,
+    metalness: 0.03,
   });
-  const wireMesh = new THREE.Mesh(wireGeo, wireMat);
-  centerEmblem.add(wireMesh);
+  [
+    { x: -0.78, z: -0.38, width: 1.12, depth: 0.72, height: 0.28 },
+    { x: 0.36, z: -0.38, width: 1.05, depth: 0.72, height: 0.4 },
+    { x: -0.22, z: 0.39, width: 1.55, depth: 0.68, height: 0.34 },
+    { x: 1.02, z: 0.37, width: 0.55, depth: 0.72, height: 0.5 },
+  ].forEach(({ x, z, width, depth, height }) => {
+    const parcel = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), parcelMaterial);
+    parcel.position.set(x, 0.32 + height / 2, z);
+    centerEmblem.add(parcel);
+  });
 
-  centerEmblem.position.y = 0.5;
+  const boundary = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(2.9, 0.32, 2.1)),
+    new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.7 }),
+  );
+  boundary.position.y = 0.15;
+  centerEmblem.add(boundary);
+
+  centerEmblem.position.y = -0.1;
   centerEmblem.scale.set(0, 0, 0);
   scene.add(centerEmblem);
 

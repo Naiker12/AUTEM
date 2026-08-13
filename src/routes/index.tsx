@@ -71,14 +71,14 @@ const featuredProperties = featuredSlugs
   .filter((p): p is (typeof properties)[0] => p !== undefined);
 
 const stats = [
-  { value: "120+", label: "Proyectos entregados" },
-  { value: "85k", label: "m² construidos" },
-  { value: "98%", label: "Clientes satisfechos" },
-  { value: "15", label: "Años de experiencia" },
+  { value: "5", label: "Ubicaciones para elegir" },
+  { value: "1.080+", label: "m² por lote" },
+  { value: "360°", label: "Experiencia de exploración" },
+  { value: "24/7", label: "Acceso digital al proyecto" },
 ];
 
 const navItems = [
-  { href: "#proyectos", label: "Proyectos" },
+  { href: "#proyectos", label: "El proyecto" },
   { href: "#tecnologia", label: "Experiencia 3D" },
   { href: "#nosotros", label: "Nosotros" },
   { href: "#contacto", label: "Contacto" },
@@ -242,7 +242,7 @@ function Index() {
       {/* 3D Model — persistent, never destroyed (stays alive for AR cache) */}
       <div
         ref={loaderContainerRef}
-        className={`fixed inset-0 z-[9998] overflow-hidden transition-opacity duration-[1000ms] ${
+        className={`fixed inset-0 z-[9998] overflow-hidden transition-opacity duration-500 ${
           hideModel ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
         style={{
@@ -291,14 +291,14 @@ function Index() {
             <h1
               className={`${entranceClass} home-entrance--title mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl`}
             >
-              Arquitectura <br />
-              <span className="italic">sin fronteras</span>
+              Elige tu lugar <br />
+              <span className="italic">en la naturaleza</span>
             </h1>
             <p
               className={`${entranceClass} home-entrance--body mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg`}
             >
-              Propiedades que puedes recorrer, personalizar y ver en tu propio espacio antes de que
-              exista la primera piedra.
+              Una parcelación campestre en Cartagena. Explora cada lote por ubicación, paisaje y
+              conexión con el entorno.
             </p>
 
             {/* Search Bar */}
@@ -336,7 +336,7 @@ function Index() {
               <span className="text-xs font-bold uppercase tracking-widest text-accent">
                 Disponibles ahora
               </span>
-              <h2 className="mt-2 font-serif text-4xl md:text-5xl">Proyectos destacados</h2>
+              <h2 className="mt-2 font-serif text-4xl md:text-5xl">El proyecto</h2>
             </div>
             <a
               href={`${import.meta.env.BASE_URL}catalogo`}
@@ -346,11 +346,30 @@ function Index() {
             </a>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 md:gap-10">
-            {featuredProperties.map((p) => (
-              <PropertyCard key={p.slug} property={p} />
-            ))}
-          </div>
+          <a
+            href={`${import.meta.env.BASE_URL}proyecto/residencia-azure`}
+            className="group relative block min-h-[420px] overflow-hidden rounded-3xl border border-border bg-stone-900"
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`}
+              alt="Parcelación campestre AUTEM Lotes 360°"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-accent">
+                Proyecto único · Cartagena
+              </span>
+              <h3 className="mt-3 font-serif text-4xl text-white md:text-5xl">Lotes 360°</h3>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75">
+                Parcelación campestre con lotes amplios, entorno natural, acceso vial y vista
+                panorámica.
+              </p>
+              <span className="mt-6 inline-flex rounded-full border border-white/30 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white transition group-hover:border-accent group-hover:bg-accent group-hover:text-accent-foreground">
+                Explorar lotes
+              </span>
+            </div>
+          </a>
         </section>
 
         {/* Animated Gold Laser Divider Line */}

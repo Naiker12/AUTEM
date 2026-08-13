@@ -57,10 +57,10 @@ export default function LoaderOverlay({
   const currentPercent = Math.round(displayProgress);
 
   const getStatusText = () => {
-    if (modelVisible || currentPercent >= 100) return "Preparando experiencia 3D...";
-    if (currentPercent > 70) return "Sincronizando entorno...";
-    if (currentPercent > 35) return "Cargando arquitectura 3D...";
-    return "Iniciando experiencia AUTEM...";
+    if (modelVisible || currentPercent >= 100) return "Preparando tu lote...";
+    if (currentPercent > 70) return "Trazando zonas y entorno...";
+    if (currentPercent > 35) return "Cartografiando el terreno...";
+    return "Iniciando Lotes 360°...";
   };
 
   return (
@@ -123,7 +123,7 @@ export default function LoaderOverlay({
         <div className="relative">
           <div className="absolute -inset-4 rounded-full bg-amber-500/10 blur-xl animate-pulse" />
           <span className="relative logo-glow font-serif text-4xl italic tracking-tight text-white/95 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] md:text-5xl">
-            AUTEM
+            LOTES 360°
           </span>
         </div>
 

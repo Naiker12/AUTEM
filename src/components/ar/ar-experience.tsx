@@ -25,9 +25,11 @@ export default function ARExperience({
   const currentProperty =
     AR_READY_PROPERTIES.find((p) => p.slug === selectedSlug) || AR_READY_PROPERTIES[0];
 
+  if (!currentProperty) return null;
+
   const arModel = getARModel(currentProperty.slug);
 
-  if (!currentProperty || !arModel) return null;
+  if (!arModel) return null;
 
   return (
     <section

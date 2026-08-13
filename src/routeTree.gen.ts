@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from "./routes/__root"
 import { Route as PoliticaPrivacidadRouteImport } from "./routes/politica-privacidad"
 import { Route as CatalogoRouteImport } from "./routes/catalogo"
 import { Route as IndexRouteImport } from "./routes/index"
+import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
 import { Route as PropertiesIdRouteImport } from "./routes/properties/$id"
 import { Route as ArPropertyIdRouteImport } from "./routes/ar/$propertyId"
 
@@ -28,6 +29,11 @@ const CatalogoRoute = CatalogoRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProyectoSlugRoute = ProyectoSlugRouteImport.update({
+  id: "/proyecto/$slug",
+  path: "/proyecto/$slug",
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertiesIdRoute = PropertiesIdRouteImport.update({
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
+  "/proyecto/$slug": typeof ProyectoSlugRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
+  "/proyecto/$slug": typeof ProyectoSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
+  "/proyecto/$slug": typeof ProyectoSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | "/politica-privacidad"
     | "/ar/$propertyId"
     | "/properties/$id"
+    | "/proyecto/$slug"
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | "/politica-privacidad"
     | "/ar/$propertyId"
     | "/properties/$id"
+    | "/proyecto/$slug"
   id:
     | "__root__"
     | "/"
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | "/politica-privacidad"
     | "/ar/$propertyId"
     | "/properties/$id"
+    | "/proyecto/$slug"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,6 +105,7 @@ export interface RootRouteChildren {
   PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
   ArPropertyIdRoute: typeof ArPropertyIdRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
+  ProyectoSlugRoute: typeof ProyectoSlugRoute
 }
 
 declare module "@tanstack/react-router" {
@@ -118,6 +131,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/proyecto/$slug": {
+      id: "/proyecto/$slug"
+      path: "/proyecto/$slug"
+      fullPath: "/proyecto/$slug"
+      preLoaderRoute: typeof ProyectoSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/properties/$id": {
       id: "/properties/$id"
       path: "/properties/$id"
@@ -141,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
   ArPropertyIdRoute: ArPropertyIdRoute,
   PropertiesIdRoute: PropertiesIdRoute,
+  ProyectoSlugRoute: ProyectoSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

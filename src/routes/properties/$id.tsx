@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useContactForm } from "@/hooks/useContactForm";
-import { Download, Smartphone } from "lucide-react";
+import { Download, Map, Smartphone } from "lucide-react";
 import { properties, getPropertyById } from "@/data/properties";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { contactSchema, type ContactFormData } from "@/lib/validation";
@@ -123,6 +123,13 @@ function PropertyDetail() {
               className="mb-8 inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-accent"
             >
               ← Volver a proyectos
+            </Link>
+            <Link
+              to="/proyecto/$slug"
+              params={{ slug: property.slug }}
+              className="mb-8 ml-4 inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <Map size={14} /> Abrir vista inmersiva
             </Link>
             <ProjectGallery property={property} />
           </div>

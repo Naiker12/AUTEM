@@ -22,6 +22,9 @@ import { startAnimation } from "./3d-animation";
 export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryLoader3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const modelRef = useRef<THREE.Group | null>(null);
+  const loadedTimeRef = useRef(0);
+  const isLoadFinishedRef = useRef(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const handleProgress = useCallback((percent: number) => onProgress?.(percent), [onProgress]);
@@ -49,13 +52,17 @@ export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryL
     const effects = createEffects(scene, prefersReducedMotion);
 
     // ── Instant WebGL setup (no heavy GLTF download needed) ──
-    const loadedTime = performance.now();
-    const isLoadFinished = true;
+    loadedTimeRef.current = performance.now();
+    isLoadFinishedRef.current = !modelUrl;
+    modelRef.current = null;
 
     if (modelUrl) {
       loadModel(modelUrl, scene, prefersReducedMotion, {
         onProgress: handleProgress,
-        onLoaded: () => {
+        onLoaded: (model) => {
+          modelRef.current = model;
+          loadedTimeRef.current = performance.now();
+          isLoadFinishedRef.current = true;
           handleLoaded();
         },
       });
@@ -87,9 +94,9 @@ export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryL
         orbit,
         orbitLight,
         effects,
-        getLoadedTime: () => loadedTime,
-        getModel: () => null,
-        isFinished: () => isLoadFinished,
+        getLoadedTime: () => loadedTimeRef.current,
+        getModel: () => modelRef.current,
+        isFinished: () => isLoadFinishedRef.current,
       });
     }
 
@@ -115,6 +122,7 @@ export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryL
 
       disposeEffects(effects);
       renderer.dispose();
+      modelRef.current = null;
     };
   }, [modelUrl, handleProgress, handleLoaded]);
 

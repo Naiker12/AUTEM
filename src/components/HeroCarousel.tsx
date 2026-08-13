@@ -51,16 +51,26 @@ const HERO_SLIDES: HeroSlide[] = [
 
 const SLIDE_INTERVAL_MS = 6000;
 
+const LOT_SLIDES: HeroSlide[] = [
+  {
+    image: `${BASE}projects/lotes-360/panoramica-render.png`,
+    title: "Lotes 360°",
+    location: "Cartagena, Colombia",
+    tagline: "Parcelación campestre con entorno natural y vista panorámica",
+    slug: "lotes-360",
+  },
+];
+
 export default function HeroCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % HERO_SLIDES.length);
+    setCurrentIndex((prev) => (prev + 1) % LOT_SLIDES.length);
   }, []);
 
   const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+    setCurrentIndex((prev) => (prev - 1 + LOT_SLIDES.length) % LOT_SLIDES.length);
   }, []);
 
   useEffect(() => {
@@ -78,7 +88,7 @@ export default function HeroCarousel() {
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Background Slides with Crossfade and Ken Burns Effect */}
-      {HERO_SLIDES.map((slide, idx) => {
+      {LOT_SLIDES.map((slide, idx) => {
         const isActive = idx === currentIndex;
         return (
           <div
@@ -127,14 +137,14 @@ export default function HeroCarousel() {
         >
           <MapPin size={13} className="text-accent" />
           <span>
-            {HERO_SLIDES[currentIndex].title} · {HERO_SLIDES[currentIndex].location}
+            {LOT_SLIDES[currentIndex].title} · {LOT_SLIDES[currentIndex].location}
           </span>
         </a>
       </div>
 
       {/* Bottom Slider Indicators with Animated Golden Progress */}
       <div className="absolute bottom-6 left-8 z-30 flex items-center gap-3">
-        {HERO_SLIDES.map((slide, idx) => {
+        {LOT_SLIDES.map((slide, idx) => {
           const isActive = idx === currentIndex;
           return (
             <button

@@ -93,6 +93,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-weight: 300;
+    text-rendering: optimizeLegibility;
   }
   h1,
   h2,
@@ -100,7 +101,18 @@
   h4 {
     font-family: var(--font-serif);
     font-weight: 400;
+    letter-spacing: -0.025em;
   }
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 45%, transparent);
+  color: var(--foreground);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
 @keyframes pulse-ring {
@@ -159,26 +171,26 @@
   }
 }
 .home-entrance {
-  animation: home-enter 0.9s cubic-bezier(0.19, 1, 0.22, 1) both;
+  animation: home-enter 0.65s cubic-bezier(0.19, 1, 0.22, 1) both;
   will-change: transform, opacity;
 }
 .home-entrance--eyebrow {
-  animation-delay: 0.08s;
+  animation-delay: 0.05s;
 }
 .home-entrance--title {
-  animation-delay: 0.18s;
+  animation-delay: 0.12s;
 }
 .home-entrance--body {
-  animation-delay: 0.31s;
+  animation-delay: 0.2s;
 }
 .home-entrance--action {
-  animation-delay: 0.45s;
+  animation-delay: 0.28s;
 }
 .home-entrance--scroll {
-  animation-delay: 0.58s;
+  animation-delay: 0.36s;
 }
 .hero-backdrop-entrance {
-  animation: home-backdrop-enter 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: home-backdrop-enter 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: transform, opacity;
 }
 .delay-100 {

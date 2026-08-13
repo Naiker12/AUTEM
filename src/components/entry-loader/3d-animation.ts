@@ -73,7 +73,7 @@ export function startAnimation(ctx: AnimationContext): () => void {
     if (innerRing) innerRing.rotation.z = -globalTime * 0.25;
 
     // ── Central Emblem & Model intro animation ──
-    const targetObj = effects.centerEmblem || ctx.getModel();
+    const targetObj = ctx.getModel() || effects.centerEmblem;
     if (ctx.isFinished()) {
       const elapsed = time - ctx.getLoadedTime();
       const t = Math.min(elapsed / INTRO_DURATION_MS, 1);

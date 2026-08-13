@@ -60,16 +60,16 @@ export const CAMERA_ORBIT: CameraOrbit = {
 };
 
 /** Minimum loader display time to guarantee a smooth experience even on fast reloads (ms). */
-export const MIN_LOADER_DISPLAY_MS = 1000;
+export const MIN_LOADER_DISPLAY_MS = 250;
 
 /** Intro animation duration in ms (smooth camera fly-in). */
-export const INTRO_DURATION_MS = 1600;
+export const INTRO_DURATION_MS = 700;
 
 /** Base model rotation speed (radians/s). */
 export const BASE_ROTATE_SPEED = (12 * Math.PI) / 180;
 
 /** How long the loader branding text stays visible after model loads (ms). */
-export const LOADER_TEXT_DURATION_MS = 600;
+export const LOADER_TEXT_DURATION_MS = 100;
 
 /** How long the 3D scene stays visible after model loads before fading out (ms). */
-export const SCENE_VISIBLE_DURATION_MS = 2100;
+export const SCENE_VISIBLE_DURATION_MS = 450;

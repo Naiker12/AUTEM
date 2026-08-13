@@ -10,7 +10,7 @@ interface NavbarProps {
 }
 
 const navItems = [
-  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "Proyectos" },
+  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "El proyecto" },
   { id: "tecnologia", href: `${import.meta.env.BASE_URL}#tecnologia`, label: "Experiencia 3D" },
   { id: "nosotros", href: `${import.meta.env.BASE_URL}#nosotros`, label: "Nosotros" },
   { id: "contacto", href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
