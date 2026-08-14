@@ -1,16 +1,5 @@
-/**
- * Branding overlay shown on top of the 3D scene during loading.
- *
- * - Smooth progress interpolation (smooth 0 -> 100% even on cached reload)
- * - Circular SVG progress ring with glowing gold trail
- * - Percentage indicator + dynamic status subtitle
- * - AUTEM gold aura logo + luxury tagline
- * - Staggered fade-out on completion
- */
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LoaderOverlayProps } from "./3d-types";
-
-const CIRCUMFERENCE = 2 * Math.PI * 22;
 
 export default function LoaderOverlay({
   showLoader,
@@ -18,127 +7,96 @@ export default function LoaderOverlay({
   loadProgress,
 }: LoaderOverlayProps) {
   const [displayProgress, setDisplayProgress] = useState(0);
-  const animFrameRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
-  // Smoothly interpolate displayProgress towards target loadProgress
   useEffect(() => {
     let lastTime = performance.now();
 
     const updateProgress = (now: number) => {
       const delta = (now - lastTime) / 1000;
       lastTime = now;
-
-      setDisplayProgress((prev) => {
-        const target = Math.max(loadProgress, 10); // Start at least at 10% for immediate visual feedback
-        if (prev >= target && target >= 100) {
-          return 100;
-        }
-
-        // Speed up if target is higher, but ensure smooth minimum rate (~80% per sec max)
-        const diff = target - prev;
-        const speed = Math.max(40, diff * 4); // smooth lerp speed
-        const next = Math.min(target, prev + speed * delta);
-        return next;
+      setDisplayProgress((previous) => {
+        const target = Math.max(loadProgress, 10);
+        if (previous >= target) return target;
+        const speed = Math.max(34, (target - previous) * 3.2);
+        return Math.min(target, previous + speed * delta);
       });
-
-      animFrameRef.current = requestAnimationFrame(updateProgress);
+      animationFrameRef.current = requestAnimationFrame(updateProgress);
     };
 
-    animFrameRef.current = requestAnimationFrame(updateProgress);
+    animationFrameRef.current = requestAnimationFrame(updateProgress);
     return () => {
-      if (animFrameRef.current !== null) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
+      if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [loadProgress]);
 
   if (!showLoader) return null;
 
   const currentPercent = Math.round(displayProgress);
-
-  const getStatusText = () => {
-    if (modelVisible || currentPercent >= 100) return "Preparando tu lote...";
-    if (currentPercent > 70) return "Trazando zonas y entorno...";
-    if (currentPercent > 35) return "Cartografiando el terreno...";
-    return "Iniciando Lotes 360°...";
-  };
+  const status =
+    modelVisible || currentPercent >= 94
+      ? "Completando la estructura"
+      : currentPercent > 64
+        ? "Elevando los niveles"
+        : currentPercent > 30
+          ? "Trazando el territorio"
+          : "Preparando el modelo";
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] pointer-events-none flex flex-col items-center justify-end transition-all duration-700 ease-out ${
-        modelVisible ? "opacity-0 scale-105" : "opacity-100 scale-100"
+      role="status"
+      aria-live="polite"
+      className={`pointer-events-none fixed inset-0 z-[9999] transition-all duration-700 ease-out ${
+        modelVisible ? "-translate-y-2 opacity-0" : "translate-y-0 opacity-100"
       }`}
     >
-      {/* Subtle bottom gradient for text readability */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-80"
-        style={{
-          background:
-            "linear-gradient(to top, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 60%, transparent 100%)",
-        }}
-      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_12%,rgba(4,4,4,.1)_52%,rgba(2,2,2,.58)_100%)]" />
 
-      <div className="relative z-10 mb-16 flex flex-col items-center text-center md:mb-20">
-        {/* Progress ring + percentage container */}
-        <div
-          className={`relative mb-6 flex items-center justify-center transition-all duration-500 ${
-            modelVisible ? "opacity-0 scale-90" : "opacity-100 scale-100"
-          }`}
-        >
-          {/* Subtle pulse glow around ring */}
-          <div className="absolute inset-0 rounded-full bg-accent/20 blur-md animate-pulse" />
-
-          <svg width="56" height="56" viewBox="0 0 52 52" className="-rotate-90">
-            {/* Background track */}
-            <circle
-              cx="26"
-              cy="26"
-              r="22"
-              fill="none"
-              stroke="rgba(197,160,89,0.12)"
-              strokeWidth="1.5"
-            />
-            {/* Animated progress ring */}
-            <circle
-              cx="26"
-              cy="26"
-              r="22"
-              fill="none"
-              stroke="#c5a059"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeDasharray={`${CIRCUMFERENCE}`}
-              strokeDashoffset={`${CIRCUMFERENCE * (1 - displayProgress / 100)}`}
-              style={{ transition: "stroke-dashoffset 0.15s ease-out" }}
-            />
+      <div className="relative flex h-full flex-col items-center justify-between px-6 py-8 text-center sm:py-10">
+        <div className="flex items-center gap-4 text-[#d2ad64]">
+          <svg
+            viewBox="0 0 48 48"
+            className="size-8"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M8 39 24 8l16 31M14 28h20M24 8v31" strokeWidth="1.25" />
+            <path d="M5 42h38" strokeWidth="0.7" opacity="0.45" />
           </svg>
-
-          {/* Percentage display in ring center */}
-          <span className="absolute text-[10px] font-medium tracking-tight text-accent/90">
-            {currentPercent}%
-          </span>
+          <div className="text-left">
+            <p className="text-[15px] font-semibold tracking-[0.36em] text-white/92">AUTEM</p>
+            <p className="mt-1 text-[7px] uppercase tracking-[0.3em] text-white/38">
+              Arquitectura · territorio
+            </p>
+          </div>
         </div>
 
-        {/* Logo with gold aura glow */}
-        <div className="relative">
-          <div className="absolute -inset-4 rounded-full bg-amber-500/10 blur-xl animate-pulse" />
-          <span className="relative logo-glow font-serif text-4xl italic tracking-tight text-white/95 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] md:text-5xl">
-            LOTES 360°
-          </span>
+        <div className="w-full max-w-sm pb-2 sm:max-w-md">
+          <div className="mb-3 flex items-end justify-between gap-6 font-mono uppercase">
+            <div className="text-left">
+              <p className="text-[8px] tracking-[0.28em] text-[#d2ad64]">Lotes 360° / Cartagena</p>
+              <p className="mt-1.5 text-[9px] tracking-[0.16em] text-white/48">{status}</p>
+            </div>
+            <span className="text-sm tabular-nums tracking-[0.08em] text-white/78">
+              {currentPercent.toString().padStart(2, "0")}
+            </span>
+          </div>
+
+          <div className="relative h-px overflow-hidden bg-white/14">
+            <span
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#8f6b30] via-[#d2ad64] to-[#f0d69a] shadow-[0_0_16px_rgba(210,173,100,.55)] transition-[width] duration-150"
+              style={{ width: `${currentPercent}%` }}
+            />
+          </div>
+
+          <div className="mt-3 flex justify-between text-[7px] uppercase tracking-[0.26em] text-white/26">
+            <span>Modelo arquitectónico</span>
+            <span>Visualización 3D</span>
+          </div>
         </div>
-
-        {/* Tagline */}
-        <p className="mt-3 text-[9px] uppercase tracking-[0.4em] text-white/50 font-medium">
-          Bienes raíces en Cartagena
-        </p>
-
-        {/* Dynamic status text */}
-        <p className="mt-2 text-[10px] tracking-widest text-accent/70 font-mono transition-all duration-300">
-          {getStatusText()}
-        </p>
-
-        {/* Decorative gold laser line */}
-        <div className="relative mx-auto mt-5 h-px w-16 bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
       </div>
     </div>
   );

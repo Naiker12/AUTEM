@@ -60,6 +60,7 @@ export default function EntryLoader3D({ modelUrl, onProgress, onLoaded }: EntryL
       loadModel(modelUrl, scene, prefersReducedMotion, {
         onProgress: handleProgress,
         onLoaded: (model) => {
+          effects.centerEmblem.visible = false;
           modelRef.current = model;
           loadedTimeRef.current = performance.now();
           isLoadFinishedRef.current = true;

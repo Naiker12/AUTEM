@@ -6,13 +6,20 @@ import { X } from "lucide-react";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 
 interface NavbarProps {
-  variant: "home" | "inner";
+  variant: "home" | "inner" | "about";
 }
 
-const navItems = [
+interface NavItem {
+  id: string;
+  href: string;
+  label: string;
+  page?: boolean;
+}
+
+const navItems: NavItem[] = [
   { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "El proyecto" },
   { id: "tecnologia", href: `${import.meta.env.BASE_URL}#tecnologia`, label: "Experiencia 3D" },
-  { id: "nosotros", href: `${import.meta.env.BASE_URL}#nosotros`, label: "Nosotros" },
+  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "Nosotros", page: true },
   { id: "contacto", href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
 ];
 
@@ -20,12 +27,21 @@ export default function Navbar({ variant }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useModalA11y(menuOpen, () => setMenuOpen(false));
   const [activeSection, setActiveSection] = useState<string>("");
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem("autem-theme");
     if (stored) return stored === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const isHome = variant === "home";
+  const isAbout = variant === "about";
+
+  useEffect(() => {
+    const handleHeaderScroll = () => setIsScrolled(window.scrollY > 48);
+    handleHeaderScroll();
+    window.addEventListener("scroll", handleHeaderScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleHeaderScroll);
+  }, []);
 
   const whatsappUrl =
     `${WHATSAPP_BASE_URL}?text=` +
@@ -38,7 +54,7 @@ export default function Navbar({ variant }: NavbarProps) {
       return;
     }
 
-    const sectionIds = ["proyectos", "tecnologia", "nosotros", "contacto"];
+    const sectionIds = ["proyectos", "tecnologia", "contacto"];
 
     const handleScroll = () => {
       const scrollPosition = window.scrollY + 220;
@@ -83,7 +99,8 @@ export default function Navbar({ variant }: NavbarProps) {
     };
   }, [menuOpen]);
 
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string, isPage = false) => {
+    if (isPage) return;
     const targetUrl = `${import.meta.env.BASE_URL}#${id}`;
     if (isHome) {
       e.preventDefault();
@@ -108,16 +125,35 @@ export default function Navbar({ variant }: NavbarProps) {
 
   return (
     <nav
-      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
+      className={`fixed z-50 w-full transition-all duration-500 ${
+        isHome && isScrolled && !menuOpen ? "top-3 px-4 md:px-8" : "top-0"
+      } ${
         isHome
           ? menuOpen
-            ? "bg-primary"
-            : "bg-gradient-to-b from-black/55 via-black/20 to-transparent text-white"
-          : "bg-background/80 backdrop-blur-md"
+            ? "bg-background text-foreground"
+            : isScrolled
+              ? "text-foreground"
+              : isDark
+                ? "bg-gradient-to-b from-black/70 via-black/25 to-transparent text-white"
+                : "border-b border-border/60 bg-background/78 text-foreground backdrop-blur-xl"
+          : isAbout
+            ? menuOpen
+              ? "bg-primary"
+              : "border-b border-white/10 bg-[#090a0a]/80 text-white backdrop-blur-md"
+            : "bg-background/80 backdrop-blur-md"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-8">
-        <Link to="/" className="flex items-center gap-3 font-serif text-2xl tracking-tight group">
+      <div
+        className={`mx-auto flex max-w-[1800px] items-center justify-between transition-all duration-500 ${
+          isHome && isScrolled && !menuOpen
+            ? "rounded-[2rem] border border-border/75 bg-background/88 px-5 py-3 shadow-[0_16px_50px_rgba(30,25,18,0.14)] backdrop-blur-2xl md:px-8 lg:px-10"
+            : "px-6 py-5 md:px-10 lg:px-14 xl:px-20"
+        }`}
+      >
+        <Link
+          to="/"
+          className="group flex items-center gap-3 font-sans text-xl font-semibold tracking-[0.18em]"
+        >
           <AutemBrandIcon size={30} className="transition-transform group-hover:scale-105" />
           <span>AUTEM</span>
         </Link>
@@ -128,7 +164,7 @@ export default function Navbar({ variant }: NavbarProps) {
               <a
                 key={item.id}
                 href={item.href}
-                onClick={(e) => handleNavClick(e, item.id)}
+                onClick={(e) => handleNavClick(e, item.id, item.page)}
                 className={`relative py-1 transition-all duration-300 ${
                   isActive
                     ? "text-accent font-bold tracking-[0.25em]"
@@ -148,7 +184,9 @@ export default function Navbar({ variant }: NavbarProps) {
             onClick={() => setIsDark(!isDark)}
             aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
             className={`hidden size-8 items-center justify-center rounded-full border text-xs transition-all md:flex ${
-              isHome ? "border-white/20 hover:bg-white/10" : "border-border hover:bg-muted"
+              (isHome && isDark) || isAbout
+                ? "border-white/20 hover:bg-white/10"
+                : "border-border hover:bg-muted"
             } ${isDark ? "theme-toggle-spin" : ""}`}
           >
             {isDark ? "\u2600\uFE0F" : "\uD83C\uDF19"}
@@ -157,7 +195,7 @@ export default function Navbar({ variant }: NavbarProps) {
             <a
               href="#contacto"
               onClick={(e) => handleNavClick(e, "contacto")}
-              className="hidden border border-white/20 px-6 py-2 text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-primary md:inline-block"
+              className={`hidden rounded-full border px-6 py-2 text-[10px] uppercase tracking-widest transition-all md:inline-block ${isDark ? "border-white/20 hover:bg-white hover:text-primary" : "border-accent/60 hover:bg-accent hover:text-accent-foreground"}`}
             >
               Invertir
             </a>
@@ -166,7 +204,11 @@ export default function Navbar({ variant }: NavbarProps) {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden border border-primary/20 px-6 py-2 text-[10px] uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground md:inline-block"
+              className={`hidden border px-6 py-2 text-[10px] uppercase tracking-widest transition-all md:inline-block ${
+                isAbout
+                  ? "border-white/20 hover:bg-white hover:text-primary"
+                  : "border-primary/20 hover:bg-primary hover:text-primary-foreground"
+              }`}
             >
               Agendar visita
             </a>
@@ -181,17 +223,29 @@ export default function Navbar({ variant }: NavbarProps) {
           >
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen ? "bg-foreground" : isHome ? "bg-white" : "bg-foreground"
+                menuOpen
+                  ? "bg-foreground"
+                  : (isHome && isDark) || isAbout
+                    ? "bg-white"
+                    : "bg-foreground"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen ? "bg-foreground" : isHome ? "bg-white" : "bg-foreground"
+                menuOpen
+                  ? "bg-foreground"
+                  : (isHome && isDark) || isAbout
+                    ? "bg-white"
+                    : "bg-foreground"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen ? "bg-foreground" : isHome ? "bg-white" : "bg-foreground"
+                menuOpen
+                  ? "bg-foreground"
+                  : (isHome && isDark) || isAbout
+                    ? "bg-white"
+                    : "bg-foreground"
               }`}
             />
           </button>
@@ -231,7 +285,7 @@ export default function Navbar({ variant }: NavbarProps) {
                   href={item.href}
                   onClick={(e) => {
                     setMenuOpen(false);
-                    handleNavClick(e, item.id);
+                    handleNavClick(e, item.id, item.page);
                   }}
                   className={`font-serif text-3xl transition-colors ${
                     isActive

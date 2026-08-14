@@ -154,16 +154,16 @@ export default function TopographyViewer({ active }: { active: boolean }) {
         {options.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
+            type="button"
+            aria-pressed={mode === id}
+            aria-label={`Visualizar ${label.toLowerCase()}`}
             onClick={() => setMode(id)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[9px] font-bold uppercase tracking-wider ${mode === id ? "bg-accent text-accent-foreground" : "text-white/60 hover:text-white"}`}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-2 text-[8px] font-bold uppercase tracking-wider transition-colors sm:px-3 sm:text-[9px] ${mode === id ? "bg-accent text-accent-foreground" : "text-white/60 hover:text-white"}`}
           >
             <Icon size={12} />
             {label}
           </button>
         ))}
-      </div>
-      <div className="pointer-events-none absolute bottom-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-2 text-[9px] font-bold uppercase tracking-[0.18em] text-white/70 backdrop-blur-md">
-        Simulación conceptual · navega el terreno
       </div>
     </div>
   );

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as PoliticaPrivacidadRouteImport } from "./routes/politica-privacidad"
+import { Route as NosotrosRouteImport } from "./routes/nosotros"
 import { Route as CatalogoRouteImport } from "./routes/catalogo"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
@@ -19,6 +20,11 @@ import { Route as ArPropertyIdRouteImport } from "./routes/ar/$propertyId"
 const PoliticaPrivacidadRoute = PoliticaPrivacidadRouteImport.update({
   id: "/politica-privacidad",
   path: "/politica-privacidad",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NosotrosRoute = NosotrosRouteImport.update({
+  id: "/nosotros",
+  path: "/nosotros",
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogoRoute = CatalogoRouteImport.update({
@@ -50,6 +56,7 @@ const ArPropertyIdRoute = ArPropertyIdRouteImport.update({
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | "/"
     | "/catalogo"
+    | "/nosotros"
     | "/politica-privacidad"
     | "/ar/$propertyId"
     | "/properties/$id"
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | "/"
     | "/catalogo"
+    | "/nosotros"
     | "/politica-privacidad"
     | "/ar/$propertyId"
     | "/properties/$id"
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | "__root__"
     | "/"
     | "/catalogo"
+    | "/nosotros"
     | "/politica-privacidad"
     | "/ar/$propertyId"
     | "/properties/$id"
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CatalogoRoute: typeof CatalogoRoute
+  NosotrosRoute: typeof NosotrosRoute
   PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
   ArPropertyIdRoute: typeof ArPropertyIdRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
@@ -115,6 +128,13 @@ declare module "@tanstack/react-router" {
       path: "/politica-privacidad"
       fullPath: "/politica-privacidad"
       preLoaderRoute: typeof PoliticaPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/nosotros": {
+      id: "/nosotros"
+      path: "/nosotros"
+      fullPath: "/nosotros"
+      preLoaderRoute: typeof NosotrosRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/catalogo": {
@@ -158,6 +178,7 @@ declare module "@tanstack/react-router" {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CatalogoRoute: CatalogoRoute,
+  NosotrosRoute: NosotrosRoute,
   PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
   ArPropertyIdRoute: ArPropertyIdRoute,
   PropertiesIdRoute: PropertiesIdRoute,

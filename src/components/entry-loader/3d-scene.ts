@@ -22,12 +22,18 @@ export function createScene(canvas: HTMLCanvasElement, width: number, height: nu
   const scene = new THREE.Scene();
 
   // Subtle atmospheric fog
-  scene.fog = new THREE.FogExp2(0x0a0a0a, 0.06);
+  scene.fog = new THREE.FogExp2(0x080808, 0.038);
 
   // Camera
-  const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+  const aspect = width / height;
+  const camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 100);
 
-  const orbit = CAMERA_ORBIT;
+  const portraitDistance = Math.min(1.6, Math.max(1, 0.92 / aspect));
+  const orbit: CameraOrbit = {
+    ...CAMERA_ORBIT,
+    radiusStart: CAMERA_ORBIT.radiusStart * portraitDistance,
+    radiusEnd: CAMERA_ORBIT.radiusEnd * portraitDistance,
+  };
 
   // Set initial position (start of fly-in)
   camera.position.x =
@@ -35,7 +41,7 @@ export function createScene(canvas: HTMLCanvasElement, width: number, height: nu
   camera.position.y = orbit.radiusStart * Math.cos(orbit.polarStart);
   camera.position.z =
     orbit.radiusStart * Math.sin(orbit.polarStart) * Math.cos(orbit.azimuthalStart);
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(0, 0.35, 0);
 
   // Renderer — high quality
   const renderer = new THREE.WebGLRenderer({
@@ -47,7 +53,8 @@ export function createScene(canvas: HTMLCanvasElement, width: number, height: nu
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.05;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   return { scene, camera, renderer, orbit };
 }

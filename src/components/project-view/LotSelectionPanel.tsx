@@ -1,183 +1,173 @@
 import { useState } from "react";
-import { Heart, MapPin, PanelLeftClose, Ruler, SlidersHorizontal } from "lucide-react";
-
-const LOTS = [
-  {
-    id: "L-01",
-    area: "1.240 m²",
-    status: "Disponible",
-    detail: "Acceso principal",
-    image: "/projects/lotes-360/acceso-render.png",
-  },
-  {
-    id: "L-07",
-    area: "1.080 m²",
-    status: "Disponible",
-    detail: "Entorno verde",
-    image: "/projects/lotes-360/lot-l07-entorno-verde.png",
-  },
-  {
-    id: "L-12",
-    area: "1.360 m²",
-    status: "Últimos lotes",
-    detail: "Frente a quebrada",
-    image: "/projects/lotes-360/lot-l12-quebrada.png",
-  },
-  {
-    id: "L-18",
-    area: "1.150 m²",
-    status: "Disponible",
-    detail: "Cerca a zona social",
-    image: "/projects/lotes-360/lot-l18-zona-social.png",
-  },
-  {
-    id: "L-24",
-    area: "1.420 m²",
-    status: "Vista al valle",
-    detail: "Punto panorámico",
-    image: "/projects/lotes-360/panoramica-render.png",
-  },
-];
+import {
+  Heart,
+  MessageCircle,
+  PanelLeftClose,
+  Ruler,
+  SlidersHorizontal,
+  Trees,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import { WHATSAPP_BASE_URL } from "@/data/constants";
 
 interface LotSelectionPanelProps {
+  lots: Lot[];
+  selectedId: string;
+  onSelect: (lot: Lot) => void;
   onHide: () => void;
+  mobileOpen?: boolean;
 }
 
-export default function LotSelectionPanel({ onHide }: LotSelectionPanelProps) {
-  const [selectedId, setSelectedId] = useState("L-12");
+export default function LotSelectionPanel({
+  lots,
+  selectedId,
+  onSelect,
+  onHide,
+  mobileOpen = false,
+}: LotSelectionPanelProps) {
   const [status, setStatus] = useState("Disponibles");
   const [saved, setSaved] = useState<string[]>([]);
-  const filteredLots = status === "Todos" ? LOTS : LOTS.filter((lot) => lot.status !== "Reservado");
+  const filteredLots =
+    status === "Todos"
+      ? lots
+      : status === "Reservados"
+        ? lots.filter((lot) => lot.status === "Reservado")
+        : lots.filter((lot) => lot.status !== "Reservado");
   const toggleSaved = (id: string) =>
     setSaved((items) =>
       items.includes(id) ? items.filter((item) => item !== id) : [...items, id],
     );
+  const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, quiero recibir asesoría sobre los lotes disponibles.")}`;
 
   return (
-    <aside className="absolute left-0 top-0 z-20 hidden h-full w-[29rem] overflow-visible bg-[#faf8f4] text-[#1b1a18] shadow-[20px_0_55px_rgba(0,0,0,0.18)] xl:flex xl:flex-col">
-      <header className="border-b border-black/10 px-8 pb-5 pt-7">
-        <div className="flex items-center gap-3">
-          <span className="text-xl text-accent">☰</span>
-          <span className="font-serif text-2xl tracking-tight">AUTEM</span>
-          <span className="ml-auto text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
-            Proyecto único
+    <aside
+      aria-label="Catálogo de lotes"
+      className={`${mobileOpen ? "fixed inset-y-0 left-0 flex pt-[72px]" : "hidden"} z-50 w-[min(92vw,370px)] flex-col p-3 xl:absolute xl:bottom-0 xl:top-[72px] xl:z-30 xl:flex xl:w-[370px]`}
+    >
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] backdrop-blur-2xl">
+        <header className="border-b border-border p-5">
+          <div className="flex items-center gap-3">
+            <Trees className="size-6 text-accent" />
+            <div>
+              <h2 className="text-base font-semibold">Lotes disponibles</h2>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                Selecciona el lugar para tu proyecto
+              </p>
+            </div>
+            <Badge className="ml-auto rounded-full bg-accent/15 text-[9px] text-accent hover:bg-accent/20">
+              {lots.filter((lot) => lot.status !== "Reservado").length} disponibles
+            </Badge>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">
+            Compara ubicación, área y precio sin salir del masterplan.
+          </p>
+          <Tabs value={status} onValueChange={setStatus} className="mt-4">
+            <TabsList className="grid h-9 w-full grid-cols-3 bg-muted p-1 text-muted-foreground">
+              {["Disponibles", "Reservados", "Todos"].map((item) => (
+                <TabsTrigger
+                  key={item}
+                  value={item}
+                  className="px-2 text-[9px] text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                >
+                  {item}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-3 w-full justify-start rounded-xl px-2 text-[9px] uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <SlidersHorizontal /> Filtros avanzados
+          </Button>
+        </header>
+
+        <div className="flex items-center justify-between px-5 pb-3 pt-4">
+          <strong className="text-sm">{filteredLots.length} lotes</strong>
+          <span className="text-[8px] uppercase tracking-[0.18em] text-muted-foreground">
+            Área ↓
           </span>
         </div>
-        <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-5 text-[11px]">
-          <label>
-            Área <strong className="float-right">1.080–1.420 m²</strong>
-            <input
-              type="range"
-              min="1080"
-              max="1420"
-              value="1420"
-              readOnly
-              className="mt-2 block w-full accent-accent"
-            />
-          </label>
-          <label>
-            Precio <strong className="float-right">$210–$360M</strong>
-            <input
-              type="range"
-              min="210"
-              max="360"
-              value="360"
-              readOnly
-              className="mt-2 block w-full accent-accent"
-            />
-          </label>
-        </div>
-        <div className="mt-5 flex overflow-hidden rounded-lg border border-black/15 text-[11px] font-semibold">
-          {["Disponibles", "Reservados", "Todos"].map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setStatus(item)}
-              className={`flex-1 py-3 transition ${status === item ? "bg-accent text-accent-foreground" : "bg-white hover:bg-black/5"}`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="mt-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-black/55 hover:text-accent"
-        >
-          <SlidersHorizontal size={13} /> Filtros avanzados
-        </button>
-      </header>
-
-      <div className="flex items-center justify-between px-8 pb-3 pt-6">
-        <strong className="font-serif text-xl">{filteredLots.length} lotes</strong>
-        <button
-          type="button"
-          className="text-[10px] font-bold uppercase tracking-wider text-black/55"
-        >
-          Área ↓
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-7 pb-7">
-        {filteredLots.map((lot) => {
-          const selected = lot.id === selectedId;
-          const isSaved = saved.includes(lot.id);
-          return (
-            <article
-              key={lot.id}
-              className={`relative flex min-h-36 w-full overflow-hidden rounded-xl border text-left transition ${selected ? "border-accent shadow-md" : "border-black/10 bg-white hover:border-accent/60"}`}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedId(lot.id)}
-                className="flex w-full text-left"
-              >
-                <div className="w-[54%] p-4">
-                  <span
-                    className={`rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${lot.status === "Disponible" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}
+        <ScrollArea className="min-h-0 flex-1 px-3">
+          <div className="space-y-2 pb-3">
+            {filteredLots.map((lot) => {
+              const selected = lot.id === selectedId;
+              const isSaved = saved.includes(lot.id);
+              return (
+                <article
+                  key={lot.id}
+                  className={`relative overflow-hidden rounded-[14px] border transition ${selected ? "border-accent bg-accent/10 shadow-[0_0_0_1px_rgba(197,160,89,.28)]" : "border-border bg-card/75 hover:border-accent/55"}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelect(lot)}
+                    className="grid w-full grid-cols-[106px_1fr] text-left"
                   >
-                    {lot.status}
-                  </span>
-                  <strong className="mt-4 block font-serif text-2xl">{lot.id}</strong>
-                  <p className="mt-1 text-[10px] text-black/55">{lot.detail}</p>
-                  <div className="mt-4 flex justify-between border-t border-black/10 pt-2 text-[10px]">
-                    <span>
-                      Desde <strong>$210M</strong>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Ruler size={12} /> {lot.area}
-                    </span>
-                  </div>
-                </div>
-                <div className="w-[46%] bg-[#e8e5de]">
-                  <img
-                    src={lot.image}
-                    alt={`Render de ${lot.detail} para el lote ${lot.id}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleSaved(lot.id)}
-                className={`absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-white shadow ${isSaved ? "text-accent" : "text-black/45"}`}
-                aria-label="Guardar lote"
-              >
-                <Heart size={16} fill={isSaved ? "currentColor" : "none"} />
-              </button>
-            </article>
-          );
-        })}
+                    <img
+                      src={lot.previewImage}
+                      alt={`Vista de ${lot.id}`}
+                      loading="lazy"
+                      className="h-[94px] w-full object-cover"
+                    />
+                    <div className="p-3 pr-9">
+                      <div className="flex items-center gap-2">
+                        <strong className="text-lg leading-none">{lot.id}</strong>
+                        <Badge
+                          className={`rounded-full px-2 py-0.5 text-[7px] ${lot.status === "Disponible" ? "bg-accent/15 text-accent" : "bg-[#a5682b]/15 text-[#98581f] dark:text-[#e3a25f]"}`}
+                        >
+                          {lot.status}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-[10px] text-muted-foreground">{lot.detail}</p>
+                      <div className="mt-2 flex items-center gap-3 text-[10px] text-foreground/70">
+                        <span className="flex items-center gap-1">
+                          <Ruler size={10} />
+                          {formatLotArea(lot.area)}
+                        </span>
+                        <strong>{formatLotPrice(lot.price)}</strong>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleSaved(lot.id)}
+                    className={`absolute right-2 top-2 flex size-7 items-center justify-center rounded-full border border-border bg-background/85 ${isSaved ? "text-accent" : "text-muted-foreground"}`}
+                    aria-label={`Guardar ${lot.id}`}
+                  >
+                    <Heart size={13} fill={isSaved ? "currentColor" : "none"} />
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        <div className="border-t border-border p-4">
+          <Button
+            asChild
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#d2a14f] to-[#f2cf7b] font-bold text-[#171007] hover:opacity-90"
+          >
+            <a href={contactUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle /> Solicitar asesoría
+            </a>
+          </Button>
+        </div>
       </div>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={onHide}
-        className="absolute -right-5 bottom-8 flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-xl transition hover:scale-105"
-        aria-label="Ocultar catálogo de lotes"
+        className="absolute right-5 top-[84px] rounded-full border border-border bg-background/90 text-foreground hover:bg-muted hover:text-accent xl:-right-2 xl:top-1/2"
+        aria-label="Ocultar catálogo"
       >
-        <PanelLeftClose size={17} />
-      </button>
-      <div className="absolute bottom-5 left-8 flex items-center gap-2 text-[10px] text-black/45">
-        <MapPin size={13} className="text-accent" /> Cartagena · Parcelación campestre
-      </div>
+        <PanelLeftClose />
+      </Button>
     </aside>
   );
 }

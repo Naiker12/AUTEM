@@ -1,18 +1,8 @@
-/**
- * Animation loop for the 3D entry scene.
- *
- * Handles:
- * - Particle drift & spiral motion
- * - Orbiting point-light
- * - Ring rotation
- * - Camera fly-in (intro) + breathing (idle)
- * - Model scale-in + rotation
- * - Light-ray & ring reveal
- */
+/** Animation loop for the architectural entry scene. */
 import * as THREE from "three";
 import type { CameraOrbit } from "./3d-types";
-import { INTRO_DURATION_MS, BASE_ROTATE_SPEED } from "./3d-types";
-import { easeOutCubic, easeOutQuart, easeInOutSine, easeOutElastic } from "./3d-easing";
+import { BASE_ROTATE_SPEED, INTRO_DURATION_MS } from "./3d-types";
+import { easeInOutSine, easeOutCubic, easeOutQuart } from "./3d-easing";
 import type { SceneEffects } from "./3d-effects";
 
 export interface AnimationContext {
@@ -22,106 +12,85 @@ export interface AnimationContext {
   orbit: CameraOrbit;
   orbitLight: THREE.PointLight;
   effects: SceneEffects;
-  /** Set to `performance.now()` when the model finishes loading. */
   getLoadedTime: () => number;
   getModel: () => THREE.Group | null;
   isFinished: () => boolean;
 }
 
-/**
- * Starts the animation loop and returns a cleanup function
- * that cancels the `requestAnimationFrame`.
- */
-export function startAnimation(ctx: AnimationContext): () => void {
-  let animationFrameId: number;
+export function startAnimation(context: AnimationContext): () => void {
+  let animationFrameId = 0;
   let lastTime = performance.now();
 
-  const { camera, renderer, scene, orbit, orbitLight, effects } = ctx;
-
-  const { particles, lightRays, outerRing, innerRing } = effects;
+  const { camera, renderer, scene, orbit, orbitLight, effects } = context;
+  const { particles, lightRays, outerRing, innerRing, buildingLevels } = effects;
 
   const animate = (time: number) => {
-    const delta = (time - lastTime) / 1000;
+    const delta = Math.min((time - lastTime) / 1000, 0.05);
     lastTime = time;
-
     const globalTime = time * 0.001;
 
-    // ── Particles: drift upwards with gentle swirl ──
+    // Rotate the particle field instead of mutating every vertex each frame.
     if (particles) {
-      const positions = particles.geometry.attributes.position.array as Float32Array;
-      const count = positions.length / 3;
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 1] += (0.08 + (i % 5) * 0.02) * delta;
-        const angle = globalTime * 0.2 + i * 0.1;
-        positions[i * 3] += Math.sin(angle) * 0.003;
-        positions[i * 3 + 2] += Math.cos(angle) * 0.003;
-        if (positions[i * 3 + 1] > 3.5) {
-          positions[i * 3 + 1] = -0.7;
-        }
-      }
-      particles.geometry.attributes.position.needsUpdate = true;
+      particles.rotation.y = globalTime * 0.035;
+      particles.position.y = Math.sin(globalTime * 0.32) * 0.06;
     }
 
-    // ── Orbiting point light ──
-    orbitLight.position.x = Math.sin(globalTime * 0.5) * 3.5;
-    orbitLight.position.z = Math.cos(globalTime * 0.5) * 3.5;
-    orbitLight.position.y = 1.5 + Math.sin(globalTime * 0.3) * 0.5;
-    orbitLight.intensity = 1.5 + Math.sin(globalTime * 2) * 0.3;
+    orbitLight.position.x = Math.sin(globalTime * 0.38) * 3.4;
+    orbitLight.position.z = Math.cos(globalTime * 0.38) * 3.4;
+    orbitLight.position.y = 1.35 + Math.sin(globalTime * 0.26) * 0.3;
+    orbitLight.intensity = 0.72 + Math.sin(globalTime * 1.4) * 0.1;
 
-    // ── Orbit rings ──
-    if (outerRing) outerRing.rotation.z = globalTime * 0.15;
-    if (innerRing) innerRing.rotation.z = -globalTime * 0.25;
+    const targetObject = context.getModel() || effects.centerEmblem;
+    if (context.isFinished()) {
+      const elapsed = time - context.getLoadedTime();
+      const progress = Math.min(elapsed / INTRO_DURATION_MS, 1);
+      const cameraProgress = easeOutQuart(progress);
+      const objectProgress = easeOutCubic(Math.min(progress * 1.08, 1));
+      const ringProgress = easeInOutSine(Math.min(progress * 1.35, 1));
 
-    // ── Central Emblem & Model intro animation ──
-    const targetObj = ctx.getModel() || effects.centerEmblem;
-    if (ctx.isFinished()) {
-      const elapsed = time - ctx.getLoadedTime();
-      const t = Math.min(elapsed / INTRO_DURATION_MS, 1);
+      if (targetObject === effects.centerEmblem) {
+        targetObject.scale.setScalar(0.9 + objectProgress * 0.1);
 
-      const cameraEased = easeOutQuart(t);
-      const scaleEased = easeOutElastic(Math.min(t * 1.2, 1));
-      const ringsEased = easeInOutSine(Math.min(t * 1.5, 1));
-
-      // Elastic scale-in for central emblem
-      if (targetObj) {
-        targetObj.scale.setScalar(scaleEased);
+        buildingLevels.forEach((level, index) => {
+          const levelProgress = Math.min(1, Math.max(0, (progress - 0.1 - index * 0.075) / 0.34));
+          const easedLevel = easeOutQuart(levelProgress);
+          const finalY = level.userData.finalY as number;
+          level.visible = levelProgress > 0;
+          level.position.y = finalY - (1 - easedLevel) * 0.24;
+          const horizontalScale = 0.94 + easedLevel * 0.06;
+          level.scale.set(horizontalScale, 0.72 + easedLevel * 0.28, horizontalScale);
+        });
+      } else if (targetObject) {
+        targetObject.scale.setScalar(objectProgress);
       }
 
-      // Light rays reveal
       if (lightRays) {
-        const rayT = easeOutCubic(Math.min(t * 1.3, 1));
-        lightRays.scale.setScalar(rayT);
-        (lightRays.material as THREE.MeshBasicMaterial).opacity = 0.04 * rayT;
+        const rayProgress = easeOutCubic(Math.min(progress * 1.2, 1));
+        lightRays.scale.setScalar(0.72 + rayProgress * 0.28);
+        (lightRays.material as THREE.MeshBasicMaterial).opacity = 0.022 * rayProgress;
       }
 
-      // Rings expand
-      if (outerRing) outerRing.scale.setScalar(ringsEased);
-      if (innerRing) innerRing.scale.setScalar(ringsEased);
+      outerRing?.scale.setScalar(0.7 + ringProgress * 0.3);
+      innerRing?.scale.setScalar(0.7 + ringProgress * 0.3);
 
-      // Camera fly-in
       const { radiusStart, radiusEnd, polarStart, polarEnd, azimuthalStart, azimuthalEnd } = orbit;
-      const r = radiusStart + (radiusEnd - radiusStart) * cameraEased;
-      const polar = polarStart + (polarEnd - polarStart) * cameraEased;
-      const azimuth = azimuthalStart + (azimuthalEnd - azimuthalStart) * cameraEased;
+      const radius = radiusStart + (radiusEnd - radiusStart) * cameraProgress;
+      const polar = polarStart + (polarEnd - polarStart) * cameraProgress;
+      const azimuth = azimuthalStart + (azimuthalEnd - azimuthalStart) * cameraProgress;
 
-      camera.position.x = r * Math.sin(polar) * Math.sin(azimuth);
-      camera.position.y = r * Math.cos(polar);
-      camera.position.z = r * Math.sin(polar) * Math.cos(azimuth);
-      camera.lookAt(0, -0.1 * cameraEased, 0);
+      camera.position.x = radius * Math.sin(polar) * Math.sin(azimuth);
+      camera.position.y = radius * Math.cos(polar);
+      camera.position.z = radius * Math.sin(polar) * Math.cos(azimuth);
+      camera.lookAt(0, 0.35, 0);
 
-      // Rotation: fast initial spin → gentle orbit
-      const boost = (1 - cameraEased) * ((30 * Math.PI) / 180);
-      if (targetObj) {
-        targetObj.rotation.y += (BASE_ROTATE_SPEED + boost) * delta;
-        targetObj.rotation.x += BASE_ROTATE_SPEED * 0.5 * delta;
+      const initialTurn = (1 - cameraProgress) * ((5 * Math.PI) / 180);
+      targetObject.rotation.y += (BASE_ROTATE_SPEED + initialTurn) * delta;
+
+      if (progress >= 1) {
+        camera.position.y += Math.sin(globalTime * 0.4) * 0.01;
       }
-
-      // Breathing after intro
-      if (t >= 1) {
-        camera.position.y += Math.sin(globalTime * 0.4) * 0.015;
-      }
-    } else if (targetObj) {
-      targetObj.rotation.y += BASE_ROTATE_SPEED * delta;
+    } else {
+      targetObject.rotation.y += BASE_ROTATE_SPEED * delta;
     }
 
     renderer.render(scene, camera);
@@ -129,8 +98,5 @@ export function startAnimation(ctx: AnimationContext): () => void {
   };
 
   animate(performance.now());
-
-  return () => {
-    cancelAnimationFrame(animationFrameId);
-  };
+  return () => cancelAnimationFrame(animationFrameId);
 }

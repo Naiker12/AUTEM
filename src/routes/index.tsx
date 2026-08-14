@@ -11,16 +11,9 @@ import {
   type ContactFormData,
   type BrochureFormData,
 } from "@/lib/validation";
-import heroVilla from "@/assets/hero-villa.jpg";
-import propertyAzure from "@/assets/property-azure.jpg";
-import propertySierra from "@/assets/property-sierra.jpg";
-import propertyHorizon from "@/assets/property-horizon.jpg";
 import Navbar from "@/components/Navbar";
 import PiePagina, { BotonWhatsappFlotante } from "@/components/pie-pagina";
-import PropertyCard from "@/components/PropertyCard";
 import MagneticButton from "@/components/MagneticButton";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
-import ARExperience from "@/components/ARExperience";
 import EntryLoader3D, {
   LoaderOverlay,
   SCENE_VISIBLE_DURATION_MS,
@@ -29,11 +22,10 @@ import EntryLoader3D, {
 } from "@/components/entry-loader";
 import DroneScanSection from "@/components/DroneScanSection";
 import AnimatedSectionDivider from "@/components/AnimatedSectionDivider";
-import HeroCarousel from "@/components/HeroCarousel";
-import HeroSearchBar from "@/components/HeroSearchBar";
-import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import HomeHeroSection from "@/components/home/HomeHeroSection";
+import ProjectShowcaseSection from "@/components/home/ProjectShowcaseSection";
+import InvestmentTrustSection from "@/components/home/InvestmentTrustSection";
 import SeccionContacto from "@/components/contacto";
-import { properties } from "@/data/properties";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -65,25 +57,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const featuredSlugs = ["residencia-azure", "eco-villa-sierra", "the-horizon-suite"];
-const featuredProperties = featuredSlugs
-  .map((slug) => properties.find((p) => p.slug === slug))
-  .filter((p): p is (typeof properties)[0] => p !== undefined);
-
-const stats = [
-  { value: "5", label: "Ubicaciones para elegir" },
-  { value: "1.080+", label: "m² por lote" },
-  { value: "360°", label: "Experiencia de exploración" },
-  { value: "24/7", label: "Acceso digital al proyecto" },
-];
-
-const navItems = [
-  { href: "#proyectos", label: "El proyecto" },
-  { href: "#tecnologia", label: "Experiencia 3D" },
-  { href: "#nosotros", label: "Nosotros" },
-  { href: "#contacto", label: "Contacto" },
-];
-
 function Index() {
   const contactForm = useContactForm();
   const brochureForm = useContactForm(
@@ -110,17 +83,13 @@ function Index() {
   const [showExitPopup, setShowExitPopup] = useState(false);
   const exitPopupRef = useModalA11y(showExitPopup, () => setShowExitPopup(false));
   const [cursorVariant, setCursorVariant] = useState<"default" | "hover">("default");
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const cursorRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const loaderContainerRef = useRef<HTMLDivElement>(null);
   const mountTimeRef = useRef(performance.now());
   const [modelVisible, setModelVisible] = useState(false);
 
   const [loadProgress, setLoadProgress] = useState(0);
-  const entranceClass = hideModel ? "home-entrance" : "opacity-0";
 
   const handleModelLoaded = () => {
     const elapsed = performance.now() - mountTimeRef.current;
@@ -155,8 +124,10 @@ function Index() {
 
   // Custom cursor
   useEffect(() => {
+    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
+    if (!hasFinePointer) return;
+
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
       if (cursorRef.current) {
         cursorRef.current.style.opacity = "1";
         cursorRef.current.style.transform = `translate(${e.clientX - 12}px, ${e.clientY - 12}px)`;
@@ -180,31 +151,6 @@ function Index() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseover", handleMouseOver);
     };
-  }, []);
-
-  // Parallax hero
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY;
-      if (heroRef.current) {
-        const bg = heroRef.current.querySelector(".parallax-slow") as HTMLElement;
-        const fg = heroRef.current.querySelector(".parallax-fast") as HTMLElement;
-        if (bg) bg.style.transform = `translateY(${scrolled * 0.3}px)`;
-        if (fg) fg.style.transform = `translateY(${scrolled * 0.15}px)`;
-      }
-
-      // Intersection-based color transitions between sections
-      sectionsRef.current.forEach((section) => {
-        if (!section) return;
-        const rect = section.getBoundingClientRect();
-        const isVisible = rect.top < window.innerHeight * 0.75 && rect.bottom > 0;
-        if (isVisible && section.dataset.section) {
-          // Could trigger section-specific animations here
-        }
-      });
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Exit intent popup
@@ -270,203 +216,18 @@ function Index() {
       <Navbar variant="home" />
 
       <main id="main-content">
-        {/* Hero */}
-        <section
-          ref={heroRef}
-          id="top"
-          className="relative flex h-screen min-h-[720px] flex-col items-center justify-center overflow-hidden px-6 text-center"
-        >
-          <div
-            className={`absolute inset-0 z-0 ${hideModel ? "hero-backdrop-entrance" : "opacity-0"}`}
-          >
-            <HeroCarousel />
-          </div>
+        <HomeHeroSection visible={hideModel} />
+        <ProjectShowcaseSection />
 
-          <div className="parallax-fast relative z-10 max-w-4xl">
-            <span
-              className={`${entranceClass} home-entrance--eyebrow mb-6 inline-block text-[10px] font-medium uppercase tracking-[0.3em] text-accent`}
-            >
-              AUTEM · Real Estate
-            </span>
-            <h1
-              className={`${entranceClass} home-entrance--title mb-8 font-serif text-5xl leading-[0.95] text-white md:text-7xl lg:text-8xl`}
-            >
-              Elige tu lugar <br />
-              <span className="italic">en la naturaleza</span>
-            </h1>
-            <p
-              className={`${entranceClass} home-entrance--body mx-auto mb-12 max-w-md text-base font-light leading-relaxed text-white/80 md:text-lg`}
-            >
-              Una parcelación campestre en Cartagena. Explora cada lote por ubicación, paisaje y
-              conexión con el entorno.
-            </p>
-
-            {/* Search Bar */}
-            <div className={`${entranceClass} home-entrance--action`}>
-              <HeroSearchBar />
-            </div>
-          </div>
-
-          {/* Scroll indicator with descending animated gold laser thread */}
-          <div
-            className={`${entranceClass} home-entrance--scroll parallax-fast absolute -bottom-10 left-1/2 z-20 -translate-x-1/2`}
-          >
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[8px] font-bold uppercase tracking-[0.35em] text-accent/80 animate-pulse">
-                Scroll
-              </span>
-              <div className="relative h-24 w-[1.5px] bg-gradient-to-b from-accent via-amber-400 to-transparent overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white to-transparent opacity-90 blur-[0.5px] animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Animated Gold Laser Divider line connecting Hero to Proyectos */}
-        <AnimatedSectionDivider className="mt-8" />
-
-        {/* Featured Properties */}
-        <section
-          id="proyectos"
-          data-animate
-          className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
-        >
-          <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                Disponibles ahora
-              </span>
-              <h2 className="mt-2 font-serif text-4xl md:text-5xl">El proyecto</h2>
-            </div>
-            <a
-              href={`${import.meta.env.BASE_URL}catalogo`}
-              className="self-start border-b border-primary pb-1 text-sm uppercase tracking-widest md:self-end"
-            >
-              Ver catálogo completo →
-            </a>
-          </div>
-
-          <a
-            href={`${import.meta.env.BASE_URL}proyecto/residencia-azure`}
-            className="group relative block min-h-[420px] overflow-hidden rounded-3xl border border-border bg-stone-900"
-          >
-            <img
-              src={`${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`}
-              alt="Parcelación campestre AUTEM Lotes 360°"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
-              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-accent">
-                Proyecto único · Cartagena
-              </span>
-              <h3 className="mt-3 font-serif text-4xl text-white md:text-5xl">Lotes 360°</h3>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75">
-                Parcelación campestre con lotes amplios, entorno natural, acceso vial y vista
-                panorámica.
-              </p>
-              <span className="mt-6 inline-flex rounded-full border border-white/30 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white transition group-hover:border-accent group-hover:bg-accent group-hover:text-accent-foreground">
-                Explorar lotes
-              </span>
-            </div>
-          </a>
-        </section>
-
-        {/* Animated Gold Laser Divider Line */}
-        <AnimatedSectionDivider />
-
-        {/* Immersive Tech / AR */}
-        <ARExperience />
-
-        {/* Animated Gold Divider Line */}
+        {/* Compact transition into the technology section. The AR module stays
+            out of the page until real models are registered. */}
         <AnimatedSectionDivider />
 
         {/* Drone Scan / Video */}
         <DroneScanSection />
 
-        {/* Partners marquee */}
-        <section
-          data-animate
-          className="border-y border-stone-200/80 dark:border-stone-800/80 bg-stone-100/40 dark:bg-stone-900/30 py-5 opacity-0 overflow-hidden"
-        >
-          <div className="mx-auto mb-3 max-w-7xl px-6 md:px-8">
-            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent">
-              Colaboradores · Estudios · Prensa
-            </span>
-          </div>
-          <div className="relative">
-            <div className="marquee-track flex w-max gap-12 whitespace-nowrap px-6 text-sm font-serif font-light tracking-[0.15em] text-stone-500 dark:text-stone-400 md:text-base">
-              {[...Array(2)].map((_, dup) => (
-                <div key={dup} className="flex gap-12 pr-12">
-                  {[
-                    "Foster + Partners",
-                    "BIG",
-                    "Zaha Hadid",
-                    "Herzog & de Meuron",
-                    "Wallpaper*",
-                    "Architectural Digest",
-                    "Dezeen",
-                    "Sotheby's Realty",
-                  ].map((n) => (
-                    <span
-                      key={n}
-                      className="italic opacity-70 hover:opacity-100 hover:text-accent transition-all cursor-default"
-                    >
-                      {n}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Stats */}
-        <section data-animate className="border-b border-border opacity-0 py-10 md:py-12">
-          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-6 md:grid-cols-4 md:gap-6 md:px-8">
-            {stats.map((s) => (
-              <div
-                key={s.label}
-                className="group relative flex flex-col justify-between rounded-xl border border-stone-200/80 dark:border-stone-800/80 bg-stone-50/60 dark:bg-stone-900/60 p-4 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-accent/60 hover:bg-stone-900 hover:text-white hover:shadow-[0_12px_30px_rgba(197,160,89,0.18)]"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-serif text-3xl font-bold text-accent transition-transform duration-300 group-hover:scale-105 md:text-4xl">
-                    {s.value}
-                  </span>
-                  <div className="relative flex h-3 w-3 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-accent/40 opacity-0 group-hover:animate-ping group-hover:opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-accent/60 group-hover:bg-accent" />
-                  </div>
-                </div>
-                <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.2em] text-stone-500 transition-colors group-hover:text-stone-300">
-                  {s.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Testimonials & Real Estate Investment Highlights */}
-        <section
-          id="nosotros"
-          data-animate
-          className="mx-auto max-w-7xl px-6 py-24 opacity-0 md:px-8 md:py-32"
-        >
-          <div className="mb-14 text-center">
-            <span className="text-xs font-bold uppercase tracking-[0.3em] text-accent">
-              Confianza & Valorización en Cartagena
-            </span>
-            <h2 className="mt-3 mx-auto max-w-3xl font-serif text-4xl leading-tight md:text-5xl lg:text-6xl">
-              Inversionistas que eligieron la arquitectura del futuro.
-            </h2>
-            <p className="mt-4 mx-auto max-w-xl text-base text-muted-foreground font-light">
-              Descubre los testimonios verificados de compradores e inversionistas que adquirieron
-              propiedades exclusivas en Cartagena y Bolívar a través de nuestra experiencia 3D y AR.
-            </p>
-          </div>
-
-          <TestimonialsCarousel />
-        </section>
+        {/* Compact trust and investment section */}
+        <InvestmentTrustSection />
 
         {/* Sección de Contacto Privado & Consultoría */}
         <SeccionContacto />

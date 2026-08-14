@@ -1,32 +1,35 @@
 import TarjetaBeneficios from "./TarjetaBeneficios";
 import FormularioContacto from "./FormularioContacto";
+import { Card, CardContent } from "@/components/ui/card";
+import SectionMeasureLine from "@/components/SectionMeasureLine";
 
 export default function SeccionContacto() {
   return (
     <section
       id="contacto"
-      className="relative border-t border-stone-800 bg-stone-950 text-white py-24 md:py-32 overflow-hidden"
+      className="contact-section relative overflow-hidden border-t border-border bg-background py-16 text-foreground md:py-20"
     >
-      {/* Contenedor del mismo ancho exacto (max-w-7xl px-6 md:px-8) que la cartelera de testimonios */}
-      <div className="mx-auto max-w-7xl px-6 md:px-8">
-        {/* Tarjeta de Cristal de Obsidiana con idéntico radio (rounded-3xl) y acolchado (p-8 md:p-14) */}
-        <div className="relative overflow-hidden rounded-3xl border border-stone-800 bg-stone-900 text-stone-100 p-8 md:p-14 shadow-2xl backdrop-blur-2xl">
-          {/* Destellos ambientales de fondo idénticos a la cartelera */}
-          <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />
-
-          <div className="relative z-10 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16 items-center">
-            {/* Columna Izquierda: Información VIP */}
-            <div className="lg:col-span-5">
+      <SectionMeasureLine index={4} total={4} label="Contacto" />
+      <div className="contact-section__glow pointer-events-none absolute -right-32 top-0 size-[480px] rounded-full bg-accent/[0.08] blur-[140px]" />
+      <div className="section-scroll-content relative mx-auto max-w-[1500px] px-5 sm:px-8 lg:px-12">
+        <Card className="overflow-hidden rounded-[2rem] border-border/70 bg-card/78 shadow-[0_28px_90px_rgba(35,28,18,.12)] backdrop-blur-xl dark:bg-card/62">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-6 py-4 sm:px-8 lg:px-10">
+            <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-accent">
+              Asesoría privada AUTEM
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+              Cartagena · Colombia
+            </p>
+          </div>
+          <CardContent className="grid p-0 lg:grid-cols-12">
+            <div className="border-b border-border/70 p-6 sm:p-8 lg:col-span-5 lg:border-b-0 lg:border-r lg:p-10 xl:p-12">
               <TarjetaBeneficios />
             </div>
-
-            {/* Columna Derecha: Formulario */}
-            <div className="lg:col-span-7">
+            <div className="p-6 sm:p-8 lg:col-span-7 lg:p-10 xl:p-12">
               <FormularioContacto />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </section>
   );

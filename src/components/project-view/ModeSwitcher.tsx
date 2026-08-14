@@ -1,3 +1,4 @@
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
 
 interface ModeSwitcherProps {
@@ -10,29 +11,26 @@ export default function ModeSwitcher({ activeMode, onChange, shifted = false }: 
   return (
     <nav
       aria-label="Modos de vista"
-      className={`absolute top-1/2 z-20 -translate-y-1/2 ${shifted ? "left-[30.25rem]" : "left-5 md:left-8"}`}
+      className={`absolute bottom-4 top-auto z-30 max-w-[calc(100vw-2rem)] transition-[left] duration-500 md:bottom-auto md:top-[86px] ${shifted ? "left-1/2 xl:left-[calc(50%+180px)] 2xl:left-[calc(50%+335px)]" : "left-1/2"} -translate-x-1/2`}
     >
-      <div className="flex flex-col gap-1 rounded-[1.15rem] border border-white/15 bg-[#17200f]/92 p-2 shadow-[0_20px_55px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
+      <ToggleGroup
+        type="single"
+        value={activeMode}
+        onValueChange={(value) => value && onChange(value as ViewMode)}
+        className="flex max-w-full gap-1 overflow-x-auto rounded-[20px] border border-border bg-background/90 p-1.5 text-foreground shadow-[0_20px_55px_rgba(0,0,0,.3)] backdrop-blur-2xl"
+      >
         {PROJECT_VIEW_MODES.map(({ id, label, icon: Icon }) => (
-          <button
+          <ToggleGroupItem
             key={id}
-            type="button"
-            onClick={() => onChange(id)}
-            className={`group flex size-11 items-center justify-center gap-2 rounded-xl transition duration-300 md:h-[3.35rem] md:w-[9.6rem] md:justify-start md:px-3 ${
-              activeMode === id
-                ? "bg-accent text-accent-foreground shadow-lg shadow-accent/25"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
+            value={id}
             aria-label={label}
-            aria-pressed={activeMode === id}
+            className="group h-[58px] min-w-[66px] shrink-0 flex-col gap-1.5 rounded-[14px] px-3 text-muted-foreground transition hover:bg-muted hover:text-foreground data-[state=on]:bg-accent/15 data-[state=on]:text-accent md:min-w-[86px]"
           >
-            <Icon size={19} strokeWidth={1.8} className="shrink-0" />
-            <span className="hidden text-left text-[9px] font-bold uppercase leading-tight tracking-wide md:block">
-              {label}
-            </span>
-          </button>
+            <Icon size={19} strokeWidth={1.8} />
+            <span className="text-[8px] font-bold leading-none tracking-wide">{label}</span>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
     </nav>
   );
 }
