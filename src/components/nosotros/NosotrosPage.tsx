@@ -129,32 +129,55 @@ function SectionLabel({ children, dark = false }: { children: React.ReactNode; d
 
 export default function NosotrosPage() {
   useEffect(() => {
-    const targets = document.querySelectorAll("[data-about-reveal]");
+    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-about-reveal]"));
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
-      targets.forEach((target) => target.classList.add("fade-in-up"));
+      targets.forEach((target) => target.classList.add("fade-in-up", "about-scene-active"));
       return;
     }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          entry.target.classList.add("fade-in-up");
+          entry.target.classList.add("fade-in-up", "about-scene-active");
           observer.unobserve(entry.target);
         });
       },
       { threshold: 0.1 },
     );
     targets.forEach((target) => observer.observe(target));
-    return () => observer.disconnect();
+
+    let frame = 0;
+    const updateScroll = () => {
+      frame = 0;
+      targets.forEach((target) => {
+        const rect = target.getBoundingClientRect();
+        const progress = Math.min(1, Math.max(0, (window.innerHeight * 0.92 - rect.top) / (window.innerHeight * 0.76)));
+        target.style.setProperty("--about-scroll", progress.toFixed(3));
+      });
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(updateScroll);
+    };
+    updateScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, me gustaría conversar sobre un proyecto.")}`;
   const founderImage = `${import.meta.env.BASE_URL}images/jaime-buelvas-founder-presenting-cutout-v6.png`;
 
   return (
-    <>
-      <section className="relative min-h-[900px] overflow-hidden bg-[#090a0a] px-5 pb-6 pt-24 text-white sm:px-8 lg:min-h-screen lg:pt-24">
+    <div className="about-page overflow-hidden">
+      <section className="about-hero relative min-h-[900px] overflow-hidden bg-[#090a0a] px-5 pb-6 pt-24 text-white sm:px-8 lg:min-h-screen lg:pt-24">
         <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(216,177,95,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(216,177,95,.07)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
         <div className="pointer-events-none absolute right-[-15%] top-[8%] h-[70%] w-[70%] rounded-full bg-[#b78b3b]/10 blur-[150px]" />
         <div className="relative mx-auto grid min-h-[calc(100svh-7.5rem)] max-w-[1500px] lg:grid-cols-12">
@@ -211,10 +234,10 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section id="perfil" className="bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-32">
+      <section id="perfil" className="about-profile bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-32">
         <div
           data-about-reveal
-          className="mx-auto grid max-w-[1360px] gap-12 opacity-0 lg:grid-cols-12 lg:gap-16"
+          className="about-profile-content mx-auto grid max-w-[1360px] gap-12 opacity-0 lg:grid-cols-12 lg:gap-16"
         >
           <div className="lg:col-span-4">
             <SectionLabel>Perfil corporativo</SectionLabel>
@@ -242,7 +265,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-y border-border bg-background px-5 py-20 text-foreground sm:px-8 md:py-24">
+      <section className="about-direction relative overflow-hidden border-y border-border bg-background px-5 py-20 text-foreground sm:px-8 md:py-24">
         <div className="pointer-events-none absolute -right-32 top-10 size-[420px] rounded-full bg-accent/[0.07] blur-[130px]" />
         <div className="relative mx-auto max-w-[1500px]">
           <div
@@ -300,7 +323,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="bg-[#0b0c0c] px-6 py-24 text-white md:px-8 md:py-32">
+      <section className="about-promise bg-[#0b0c0c] px-6 py-24 text-white md:px-8 md:py-32">
         <div className="mx-auto max-w-[1360px]">
           <div data-about-reveal className="grid gap-14 opacity-0 lg:grid-cols-12 lg:gap-20">
             <div className="lg:col-span-6">
@@ -335,7 +358,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-32">
+      <section className="about-objectives bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-32">
         <div className="mx-auto grid max-w-[1360px] gap-14 lg:grid-cols-12">
           <div
             data-about-reveal
@@ -354,7 +377,7 @@ export default function NosotrosPage() {
                 style={{ animationDelay: `${(index % 2) * 80}ms` }}
                 variant="editorial"
                 size="lg"
-                className="group relative min-h-[210px] overflow-hidden border-black/[0.09] bg-white opacity-0 transition duration-500 hover:-translate-y-1 hover:border-accent/45 hover:shadow-[0_22px_55px_rgba(197,160,89,.14)] dark:bg-white"
+                className="group relative min-h-[210px] overflow-hidden border-black/[0.09] bg-white opacity-0 transition duration-500 hover:-translate-y-1 hover:border-accent/45 hover:shadow-[0_22px_55px_rgba(197,160,89,.14)] dark:border-white/10 dark:bg-white/[0.055]"
               >
                 <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full border border-accent/15 transition-transform duration-700 group-hover:scale-125" />
                 <CardContent className="relative flex h-full min-h-[210px] flex-col justify-between pt-[var(--card-padding)]">
@@ -365,10 +388,10 @@ export default function NosotrosPage() {
                     <span className="h-px w-12 bg-accent/45 transition-all duration-500 group-hover:w-20" />
                   </div>
                   <div className="mt-10">
-                    <h3 className="font-serif text-[clamp(1.55rem,2vw,2rem)] font-normal leading-tight tracking-[-0.035em] text-[#171717]">
+                    <h3 className="font-serif text-[clamp(1.55rem,2vw,2rem)] font-normal leading-tight tracking-[-0.035em] text-[#171717] dark:text-white">
                       {title}
                     </h3>
-                    <p className="mt-3 max-w-sm text-[13px] leading-6 text-black/55">{text}</p>
+                    <p className="mt-3 max-w-sm text-[13px] leading-6 text-black/55 dark:text-white/55">{text}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -377,7 +400,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="border-y border-black/10 bg-white px-6 py-24 text-[#151515] md:px-8 md:py-32">
+      <section className="about-capabilities border-y border-black/10 bg-white px-6 py-24 text-[#151515] md:px-8 md:py-32">
         <div className="mx-auto grid max-w-[1360px] gap-14 lg:grid-cols-12 lg:gap-20">
           <div data-about-reveal className="opacity-0 lg:col-span-4">
             <SectionLabel>Capacidades</SectionLabel>
@@ -420,7 +443,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-[#0b0c0c] px-6 py-24 text-white md:px-8 md:py-28">
+      <section className="about-method relative overflow-hidden bg-[#0b0c0c] px-6 py-24 text-white md:px-8 md:py-28">
         <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(225,187,107,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(225,187,107,.055)_1px,transparent_1px)] [background-size:88px_88px] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_82%,transparent)]" />
         <div className="pointer-events-none absolute -right-40 top-1/3 size-[480px] rounded-full bg-[#e1bb6b]/[0.06] blur-[140px]" />
         <div className="mx-auto max-w-[1360px]">
@@ -464,7 +487,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-28">
+      <section className="about-culture bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-28">
         <div className="mx-auto max-w-[1360px]">
           <div data-about-reveal className="grid gap-8 opacity-0 lg:grid-cols-2 lg:items-end">
             <div>
@@ -502,7 +525,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-t border-black/10 bg-white px-6 py-24 text-[#151515] md:px-8 md:py-28">
+      <section className="about-difference relative overflow-hidden border-t border-black/10 bg-white px-6 py-24 text-[#151515] md:px-8 md:py-28">
         <div className="pointer-events-none absolute -left-40 top-1/4 size-[430px] rounded-full bg-accent/[0.06] blur-[130px]" />
         <div
           data-about-reveal
@@ -542,7 +565,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-[#0b0c0c] px-6 py-24 text-white md:px-8 md:py-28">
+      <section className="about-founder relative overflow-hidden bg-[#0b0c0c] px-6 py-24 text-white md:px-8 md:py-28">
         <div className="pointer-events-none absolute right-[-10%] top-[-70%] size-[760px] rounded-full border border-[#e1bb6b]/15" />
         <div
           data-about-reveal
@@ -575,7 +598,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section className="relative isolate overflow-hidden bg-[#d7ac58] px-6 py-20 text-[#111] md:px-8 md:py-24">
+      <section className="about-cta relative isolate overflow-hidden bg-[#d7ac58] px-6 py-20 text-[#111] md:px-8 md:py-24">
         <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(17,17,17,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,.08)_1px,transparent_1px)] [background-size:84px_84px] [mask-image:linear-gradient(90deg,black,transparent_72%)]" />
         <div className="pointer-events-none absolute -right-36 -top-56 size-[520px] rounded-full border border-black/15" />
         <div className="relative mx-auto flex max-w-[1360px] flex-col justify-between gap-10 lg:flex-row lg:items-end">
@@ -602,6 +625,6 @@ export default function NosotrosPage() {
           </a>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -20,12 +20,8 @@ import EntryLoader3D, {
   LOADER_TEXT_DURATION_MS,
   MIN_LOADER_DISPLAY_MS,
 } from "@/components/entry-loader";
-import DroneScanSection from "@/components/DroneScanSection";
-import AnimatedSectionDivider from "@/components/AnimatedSectionDivider";
 import HomeHeroSection from "@/components/home/HomeHeroSection";
-import ProjectShowcaseSection from "@/components/home/ProjectShowcaseSection";
-import InvestmentTrustSection from "@/components/home/InvestmentTrustSection";
-import SeccionContacto from "@/components/contacto";
+import EditorialHomeSections from "@/components/home/EditorialHomeSections";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -217,20 +213,7 @@ function Index() {
 
       <main id="main-content">
         <HomeHeroSection visible={hideModel} />
-        <ProjectShowcaseSection />
-
-        {/* Compact transition into the technology section. The AR module stays
-            out of the page until real models are registered. */}
-        <AnimatedSectionDivider />
-
-        {/* Drone Scan / Video */}
-        <DroneScanSection />
-
-        {/* Compact trust and investment section */}
-        <InvestmentTrustSection />
-
-        {/* Sección de Contacto Privado & Consultoría */}
-        <SeccionContacto />
+        <EditorialHomeSections />
       </main>
 
       {/* Footer / Pie de Página */}

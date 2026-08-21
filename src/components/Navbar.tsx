@@ -152,12 +152,17 @@ export default function Navbar({ variant }: NavbarProps) {
       >
         <Link
           to="/"
-          className="group flex items-center gap-3 font-sans text-xl font-semibold tracking-[0.18em]"
+          className="group flex items-center gap-3.5 text-foreground"
+          aria-label="AUTEM — Territorio y arquitectura"
         >
-          <AutemBrandIcon size={30} className="transition-transform group-hover:scale-105" />
-          <span>AUTEM</span>
+          <span className="flex size-12 items-center justify-center rounded-full border border-accent/30 bg-accent/[0.06] transition duration-500 group-hover:border-accent/65 group-hover:bg-accent/[0.12]">
+            <AutemBrandIcon size={33} className="transition-transform duration-500 group-hover:scale-105" />
+          </span>
+          <span className="font-sans text-[1.35rem] font-semibold leading-none tracking-[0.2em] sm:text-[1.45rem]">
+            AUTEM
+          </span>
         </Link>
-        <div className="hidden gap-10 text-xs font-medium uppercase tracking-[0.2em] md:flex">
+        <div className="hidden gap-5 text-[10px] font-medium uppercase tracking-[0.18em] md:flex lg:gap-8 lg:text-xs lg:tracking-[0.2em]">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
@@ -165,7 +170,7 @@ export default function Navbar({ variant }: NavbarProps) {
                 key={item.id}
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item.id, item.page)}
-                className={`relative py-1 transition-all duration-300 ${
+                className={`relative whitespace-nowrap py-1 transition-all duration-300 ${
                   isActive
                     ? "text-accent font-bold tracking-[0.25em]"
                     : "hover:text-accent opacity-85 hover:opacity-100"
@@ -195,7 +200,7 @@ export default function Navbar({ variant }: NavbarProps) {
             <a
               href="#contacto"
               onClick={(e) => handleNavClick(e, "contacto")}
-              className={`hidden rounded-full border px-6 py-2 text-[10px] uppercase tracking-widest transition-all md:inline-block ${isDark ? "border-white/20 hover:bg-white hover:text-primary" : "border-accent/60 hover:bg-accent hover:text-accent-foreground"}`}
+              className={`hidden rounded-full border px-4 py-2 text-[9px] uppercase tracking-widest transition-all lg:px-6 lg:text-[10px] md:inline-block ${isDark ? "border-white/20 hover:bg-white hover:text-primary" : "border-accent/60 hover:bg-accent hover:text-accent-foreground"}`}
             >
               Invertir
             </a>
@@ -204,7 +209,7 @@ export default function Navbar({ variant }: NavbarProps) {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`hidden border px-6 py-2 text-[10px] uppercase tracking-widest transition-all md:inline-block ${
+              className={`hidden border px-4 py-2 text-[9px] uppercase tracking-widest transition-all lg:px-6 lg:text-[10px] md:inline-block ${
                 isAbout
                   ? "border-white/20 hover:bg-white hover:text-primary"
                   : "border-primary/20 hover:bg-primary hover:text-primary-foreground"

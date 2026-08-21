@@ -69,14 +69,20 @@ export default function PiePagina() {
                 <MapPin size={14} className="text-accent shrink-0" />
                 <span>Bocagrande, Av. San Martín 10-45 · Cartagena</span>
               </div>
-              <div className="flex items-center gap-2">
+              <a
+                href="tel:+573007200894"
+                className="flex w-fit items-center gap-2 transition-colors hover:text-accent"
+              >
                 <Phone size={14} className="text-accent shrink-0" />
                 <span>+57 (300) 720-0894</span>
-              </div>
-              <div className="flex items-center gap-2">
+              </a>
+              <a
+                href="mailto:hola@autem.es"
+                className="flex w-fit items-center gap-2 transition-colors hover:text-accent"
+              >
                 <Mail size={14} className="text-accent shrink-0" />
                 <span>hola@autem.es</span>
-              </div>
+              </a>
             </div>
           </div>
 
@@ -145,7 +151,7 @@ export default function PiePagina() {
           {/* Columna 4: Legal & Fiduciarias (3 Cols) */}
           <div className="footer-reveal footer-reveal--4 space-y-4 lg:col-span-3">
             <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent md:text-[10px] md:tracking-[0.25em]">
-              Garantía & Legal
+              Información legal
             </h3>
             <ul className="space-y-2 text-[13px] leading-5 text-white/52">
               <li>
@@ -153,17 +159,8 @@ export default function PiePagina() {
                   Política de Privacidad
                 </Link>
               </li>
-              <li>
-                <span className="text-stone-400">Términos y condiciones: próximamente</span>
-              </li>
-              <li>
-                <span className="text-stone-300 font-medium">Fiduciarias Aliadas:</span>{" "}
-                Bancolombia, Alianza
-              </li>
-              <li>
-                <span className="text-stone-300 font-medium">Licencias:</span> Explotación Turística
-                Airbnb
-              </li>
+              <li>Información comercial y documentación disponible a solicitud.</li>
+              <li>Asesoría para conocer el proceso de compra y el proyecto.</li>
             </ul>
           </div>
         </div>
