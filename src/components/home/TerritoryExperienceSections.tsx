@@ -11,9 +11,21 @@ const metrics = [
 ];
 
 const principles = [
-  { icon: Compass, title: "Orientación", description: "Entiende la relación entre el lote, el acceso y las visuales." },
-  { icon: SunMedium, title: "Luz natural", description: "Compara recorridos solares antes de tomar una decisión." },
-  { icon: Eye, title: "Perspectiva", description: "Visualiza la escala del proyecto desde cada punto importante." },
+  {
+    icon: Compass,
+    title: "Orientación",
+    description: "Entiende la relación entre el lote, el acceso y las visuales.",
+  },
+  {
+    icon: SunMedium,
+    title: "Luz natural",
+    description: "Compara recorridos solares antes de tomar una decisión.",
+  },
+  {
+    icon: Eye,
+    title: "Perspectiva",
+    description: "Visualiza la escala del proyecto desde cada punto importante.",
+  },
 ];
 
 export default function TerritoryExperienceSections() {
@@ -30,7 +42,9 @@ export default function TerritoryExperienceSections() {
       },
       { threshold: 0.16 },
     );
-    root.querySelectorAll<HTMLElement>("[data-reveal]").forEach((element) => observer.observe(element));
+    root
+      .querySelectorAll<HTMLElement>("[data-reveal]")
+      .forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, []);
 
@@ -40,14 +54,17 @@ export default function TerritoryExperienceSections() {
         <div className="mx-auto max-w-[1700px]">
           <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-end lg:gap-20">
             <div data-reveal className="reveal-up max-w-2xl pb-2">
-              <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#8c692e]">Antes de decidir</p>
+              <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#8c692e]">
+                Antes de decidir
+              </p>
               <h2 className="mt-5 text-[clamp(2.9rem,5.2vw,6.2rem)] leading-[.88] tracking-[-.07em]">
                 Una inversión que se
                 <br />
                 <i className="font-serif">puede recorrer.</i>
               </h2>
               <p className="mt-8 max-w-md text-base leading-7 text-[#332e29]/65 md:text-lg">
-                Accede al masterplan, compara cada entorno y entiende cómo se relaciona tu lote con el paisaje antes de visitarlo.
+                Accede al masterplan, compara cada entorno y entiende cómo se relaciona tu lote con
+                el paisaje antes de visitarlo.
               </p>
               <div className="mt-9 flex items-center gap-4 text-[10px] font-bold uppercase tracking-[.16em] text-[#5b6258]">
                 <span className="size-2 rounded-full bg-[#b5863c] shadow-[0_0_0_6px_rgba(181,134,60,.14)]" />
@@ -55,7 +72,10 @@ export default function TerritoryExperienceSections() {
               </div>
             </div>
 
-            <div data-reveal className="territory-map reveal-up reveal-up--late relative min-h-[320px] overflow-hidden rounded-2xl bg-[#21342c] md:min-h-[400px]">
+            <div
+              data-reveal
+              className="territory-map reveal-up reveal-up--late relative min-h-[320px] overflow-hidden rounded-2xl bg-[#21342c] md:min-h-[400px]"
+            >
               <img
                 src={`${base}projects/lotes-360/masterplan-interactive-aerial.png`}
                 alt="Vista aérea del masterplan Lotes 360"
@@ -68,7 +88,9 @@ export default function TerritoryExperienceSections() {
               </div>
               <div className="absolute bottom-7 left-7 max-w-[12rem] text-[#fff8e9]">
                 <p className="font-serif text-4xl leading-none">360°</p>
-                <p className="mt-2 text-[9px] font-bold uppercase tracking-[.16em] text-white/65">Perspectiva del paisaje</p>
+                <p className="mt-2 text-[9px] font-bold uppercase tracking-[.16em] text-white/65">
+                  Perspectiva del paisaje
+                </p>
               </div>
               <span className="absolute bottom-7 right-7 flex size-11 items-center justify-center rounded-full border border-white/30 bg-white/10 text-[#f1d28e] backdrop-blur-md">
                 <MoveUpRight size={18} strokeWidth={1.5} />
@@ -90,7 +112,9 @@ export default function TerritoryExperienceSections() {
                   </span>
                   <span className="font-mono text-[9px] text-[#8a978c]">0{index + 1}</span>
                 </div>
-                <p className="mt-7 font-serif text-[clamp(2rem,3vw,3rem)] leading-none tracking-[-.05em]">{value}</p>
+                <p className="mt-7 font-serif text-[clamp(2rem,3vw,3rem)] leading-none tracking-[-.05em]">
+                  {value}
+                </p>
                 <p className="mt-3 max-w-[11rem] text-[10px] font-semibold uppercase leading-4 tracking-[.14em] text-[#4d574e]">
                   {label}
                 </p>
@@ -103,14 +127,17 @@ export default function TerritoryExperienceSections() {
       <section className="territory-story px-6 py-24 md:px-12 md:py-32 xl:px-20">
         <div className="mx-auto grid max-w-[1700px] gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:gap-20">
           <div data-reveal className="reveal-up order-2 max-w-xl lg:order-1">
-            <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#a47c3a]">Diseñado con el territorio</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#a47c3a]">
+              Diseñado con el territorio
+            </p>
             <h2 className="mt-5 text-[clamp(2.7rem,4.8vw,5.6rem)] leading-[.9] tracking-[-.06em]">
               El proyecto empieza
               <br />
               <i className="font-serif">antes del plano.</i>
             </h2>
             <p className="mt-8 max-w-md text-base leading-7 text-black/60 md:text-lg md:leading-8">
-              Cada lote se lee a partir de su luz, vegetación, acceso y relación con el paisaje. La tecnología hace visible esa información.
+              Cada lote se lee a partir de su luz, vegetación, acceso y relación con el paisaje. La
+              tecnología hace visible esa información.
             </p>
             <div className="mt-10 divide-y divide-black/15 border-y border-black/15">
               {principles.map(({ icon: Icon, title, description }, index) => (
@@ -122,13 +149,18 @@ export default function TerritoryExperienceSections() {
                     <h3 className="text-lg">{title}</h3>
                     <p className="mt-1 text-sm leading-6 text-black/55">{description}</p>
                   </div>
-                  <span className="ml-auto pt-1 font-mono text-[10px] text-[#a47c3a]">0{index + 1}</span>
+                  <span className="ml-auto pt-1 font-mono text-[10px] text-[#a47c3a]">
+                    0{index + 1}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div data-reveal className="reveal-up reveal-up--late relative order-1 min-h-[460px] lg:order-2 lg:min-h-[640px]">
+          <div
+            data-reveal
+            className="reveal-up reveal-up--late relative order-1 min-h-[460px] lg:order-2 lg:min-h-[640px]"
+          >
             <img
               src={`${base}projects/lotes-360/acceso-render.png`}
               alt="Acceso al proyecto Lotes 360"

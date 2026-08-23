@@ -153,7 +153,10 @@ export default function NosotrosPage() {
       frame = 0;
       targets.forEach((target) => {
         const rect = target.getBoundingClientRect();
-        const progress = Math.min(1, Math.max(0, (window.innerHeight * 0.92 - rect.top) / (window.innerHeight * 0.76)));
+        const progress = Math.min(
+          1,
+          Math.max(0, (window.innerHeight * 0.92 - rect.top) / (window.innerHeight * 0.76)),
+        );
         target.style.setProperty("--about-scroll", progress.toFixed(3));
       });
     };
@@ -234,7 +237,10 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <section id="perfil" className="about-profile bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-32">
+      <section
+        id="perfil"
+        className="about-profile bg-[#f6f5f1] px-6 py-24 text-[#151515] md:px-8 md:py-32"
+      >
         <div
           data-about-reveal
           className="about-profile-content mx-auto grid max-w-[1360px] gap-12 opacity-0 lg:grid-cols-12 lg:gap-16"
@@ -391,7 +397,9 @@ export default function NosotrosPage() {
                     <h3 className="font-serif text-[clamp(1.55rem,2vw,2rem)] font-normal leading-tight tracking-[-0.035em] text-[#171717] dark:text-white">
                       {title}
                     </h3>
-                    <p className="mt-3 max-w-sm text-[13px] leading-6 text-black/55 dark:text-white/55">{text}</p>
+                    <p className="mt-3 max-w-sm text-[13px] leading-6 text-black/55 dark:text-white/55">
+                      {text}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

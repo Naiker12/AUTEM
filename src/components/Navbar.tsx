@@ -156,7 +156,10 @@ export default function Navbar({ variant }: NavbarProps) {
           aria-label="AUTEM — Territorio y arquitectura"
         >
           <span className="flex size-12 items-center justify-center rounded-full border border-accent/30 bg-accent/[0.06] transition duration-500 group-hover:border-accent/65 group-hover:bg-accent/[0.12]">
-            <AutemBrandIcon size={33} className="transition-transform duration-500 group-hover:scale-105" />
+            <AutemBrandIcon
+              size={33}
+              className="transition-transform duration-500 group-hover:scale-105"
+            />
           </span>
           <span className="font-sans text-[1.35rem] font-semibold leading-none tracking-[0.2em] sm:text-[1.45rem]">
             AUTEM

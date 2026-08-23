@@ -1048,7 +1048,9 @@ a {
 }
 
 .selected-project__meta {
-  transition: border-color 0.35s ease, color 0.35s ease;
+  transition:
+    border-color 0.35s ease,
+    color 0.35s ease;
 }
 
 .selected-project a:hover .selected-project__meta {
@@ -1564,13 +1566,12 @@ a {
 .about-culture [data-about-reveal] h2,
 .about-difference [data-about-reveal] h2 {
   transform: translateY(calc((1 - var(--about-scroll)) * 18px));
-  transition: transform 650ms cubic-bezier(.19, 1, .22, 1);
+  transition: transform 650ms cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .about-profile {
   background:
-    radial-gradient(circle at 84% 24%, rgb(215 172 88 / 0.13), transparent 28rem),
-    #f6f5f1;
+    radial-gradient(circle at 84% 24%, rgb(215 172 88 / 0.13), transparent 28rem), #f6f5f1;
 }
 
 .about-profile-content {
@@ -1587,7 +1588,7 @@ a {
   font-family: var(--font-serif);
   font-size: clamp(8rem, 18vw, 17rem);
   font-style: italic;
-  line-height: .75;
+  line-height: 0.75;
   pointer-events: none;
 }
 
@@ -1597,9 +1598,7 @@ a {
 }
 
 .about-direction {
-  background:
-    linear-gradient(115deg, rgb(255 255 255 / .72), transparent 52%),
-    var(--background);
+  background: linear-gradient(115deg, rgb(255 255 255 / 0.72), transparent 52%), var(--background);
 }
 
 .about-promise,
@@ -1610,14 +1609,14 @@ a {
 
 .about-cta {
   background:
-    radial-gradient(circle at 84% -14%, rgb(255 250 236 / .22), transparent 30rem),
-    #c17b5d;
+    radial-gradient(circle at 84% -14%, rgb(255 250 236 / 0.22), transparent 30rem), #c17b5d;
 }
 
 .dark .about-profile,
 .dark .about-objectives,
 .dark .about-culture {
-  background: radial-gradient(circle at 84% 24%, rgb(215 172 88 / .13), transparent 28rem), #17221d;
+  background:
+    radial-gradient(circle at 84% 24%, rgb(215 172 88 / 0.13), transparent 28rem), #17221d;
   color: #f3eee4;
 }
 
@@ -1625,7 +1624,7 @@ a {
 .dark .about-capabilities,
 .dark .about-difference {
   background: #101712;
-  border-color: rgb(255 255 255 / .11);
+  border-color: rgb(255 255 255 / 0.11);
   color: #f3eee4;
 }
 
@@ -1636,27 +1635,27 @@ a {
 .dark .about-capabilities .text-black\/50,
 .dark .about-culture .text-black\/50,
 .dark .about-difference .text-black\/58 {
-  color: rgb(243 238 228 / .62);
+  color: rgb(243 238 228 / 0.62);
 }
 
 .dark .about-capabilities .border-black\/15,
 .dark .about-difference .border-black\/10,
 .dark .about-objectives .border-black\/10,
 .dark .about-culture .border-black\/10 {
-  border-color: rgb(255 255 255 / .12);
+  border-color: rgb(255 255 255 / 0.12);
 }
 
 .dark .about-culture article {
-  background: rgb(255 255 255 / .055);
+  background: rgb(255 255 255 / 0.055);
 }
 
 .dark .about-culture article:hover {
-  background: rgb(215 172 88 / .13);
+  background: rgb(215 172 88 / 0.13);
 }
 
 @media (max-width: 767px) {
   .about-profile-content::after {
-    right: -.5rem;
+    right: -0.5rem;
     top: -1.6rem;
     font-size: 7.5rem;
   }

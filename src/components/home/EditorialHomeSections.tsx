@@ -112,7 +112,11 @@ function ProjectGrid() {
 function ProcessSection() {
   const stages = ["Lectura del terreno", "Selección del lote", "Construcción", "Entrega"];
   return (
-    <section data-scroll-scene id="tecnologia" className="home-process bg-[#e5ddd0] px-6 py-28 text-[#332e29] md:px-12 xl:px-20">
+    <section
+      data-scroll-scene
+      id="tecnologia"
+      className="home-process bg-[#e5ddd0] px-6 py-28 text-[#332e29] md:px-12 xl:px-20"
+    >
       <div className="mx-auto max-w-[1700px]">
         <header className="scroll-scene-copy mx-auto max-w-xl text-center">
           <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#a47c3a]">
@@ -151,7 +155,10 @@ function ServicesSection() {
     ["Acompañamiento", "Información clara durante cada etapa del proceso."],
   ];
   return (
-    <section data-scroll-scene className="home-services bg-[#26362f] px-6 py-28 text-[#f6f1e8] md:px-12 xl:px-20">
+    <section
+      data-scroll-scene
+      className="home-services bg-[#26362f] px-6 py-28 text-[#f6f1e8] md:px-12 xl:px-20"
+    >
       <div className="mx-auto max-w-[1700px]">
         <p className="scroll-scene-copy text-[10px] font-bold uppercase tracking-[.24em] text-[#ddb66d]">
           La experiencia AUTEM
@@ -170,7 +177,10 @@ function ServicesSection() {
                 </h2>
                 <p className="mt-3 text-sm text-white/60">{description}</p>
               </div>
-              <ArrowUpRight size={22} className="transition duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#ddb66d]" />
+              <ArrowUpRight
+                size={22}
+                className="transition duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#ddb66d]"
+              />
             </article>
           ))}
         </div>
@@ -181,7 +191,11 @@ function ServicesSection() {
 
 function EditorialContact() {
   return (
-    <section data-scroll-scene id="contacto" className="home-contact bg-[#bd7659] px-6 py-24 text-[#fff9ef] md:px-12 xl:px-20">
+    <section
+      data-scroll-scene
+      id="contacto"
+      className="home-contact bg-[#bd7659] px-6 py-24 text-[#fff9ef] md:px-12 xl:px-20"
+    >
       <div className="mx-auto grid max-w-[1700px] gap-12 md:grid-cols-2">
         <h2 className="scroll-scene-copy max-w-2xl text-[clamp(3rem,6vw,7rem)] leading-[.87] tracking-[-.07em]">
           Hablemos de
@@ -223,9 +237,15 @@ export default function EditorialHomeSections() {
       frame = 0;
       scenes.forEach((scene) => {
         const bounds = scene.getBoundingClientRect();
-        const progress = Math.min(1, Math.max(0, (innerHeight * 0.9 - bounds.top) / (innerHeight * 0.72)));
+        const progress = Math.min(
+          1,
+          Math.max(0, (innerHeight * 0.9 - bounds.top) / (innerHeight * 0.72)),
+        );
         scene.style.setProperty("--section-scroll", progress.toFixed(4));
-        scene.classList.toggle("is-scroll-active", bounds.top < innerHeight * 0.9 && bounds.bottom > 0);
+        scene.classList.toggle(
+          "is-scroll-active",
+          bounds.top < innerHeight * 0.9 && bounds.bottom > 0,
+        );
       });
     };
     const onScroll = () => {

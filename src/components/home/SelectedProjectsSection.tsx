@@ -40,7 +40,10 @@ export default function SelectedProjectsSection() {
     const updateScrollProgress = () => {
       frame = 0;
       const bounds = section.getBoundingClientRect();
-      const progress = Math.min(1, Math.max(0, (innerHeight * 0.92 - bounds.top) / (innerHeight * 0.78)));
+      const progress = Math.min(
+        1,
+        Math.max(0, (innerHeight * 0.92 - bounds.top) / (innerHeight * 0.78)),
+      );
       section.style.setProperty("--projects-scroll", progress.toFixed(4));
     };
     const onScroll = () => {
@@ -68,11 +71,17 @@ export default function SelectedProjectsSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="proyectos" className="selected-projects bg-[#efeae1] px-6 py-28 text-[#332e29] md:px-12 md:py-36 xl:px-20">
+    <section
+      ref={sectionRef}
+      id="proyectos"
+      className="selected-projects bg-[#efeae1] px-6 py-28 text-[#332e29] md:px-12 md:py-36 xl:px-20"
+    >
       <div className="mx-auto max-w-[1700px]">
         <header className="selected-projects__header grid gap-8 border-t border-black/15 pt-7 md:grid-cols-[1.25fr_.75fr] md:items-end">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#a47c3a]">Proyectos seleccionados</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#a47c3a]">
+              Proyectos seleccionados
+            </p>
             <h2 className="mt-5 max-w-4xl text-[clamp(3rem,6.2vw,7.5rem)] leading-[.84] tracking-[-.075em]">
               El paisaje define
               <br />
@@ -80,16 +89,29 @@ export default function SelectedProjectsSection() {
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-6 text-black/55 md:justify-self-end md:pb-2">
-            Tres maneras de habitar el Caribe, diseñadas desde la relación entre territorio, luz y vida cotidiana.
+            Tres maneras de habitar el Caribe, diseñadas desde la relación entre territorio, luz y
+            vida cotidiana.
           </p>
         </header>
 
         <div className="selected-projects__grid mt-16 grid gap-5 md:grid-cols-[.68fr_1.65fr_.68fr] md:items-start lg:mt-24">
           {projects.map((project, index) => (
-            <article key={project.name} className={`selected-project ${project.className}`} style={{ transitionDelay: `${index * 120}ms` }}>
-              <a href={`${base}${project.href}`} className="group block" aria-label={`Ver ${project.name}`}>
+            <article
+              key={project.name}
+              className={`selected-project ${project.className}`}
+              style={{ transitionDelay: `${index * 120}ms` }}
+            >
+              <a
+                href={`${base}${project.href}`}
+                className="group block"
+                aria-label={`Ver ${project.name}`}
+              >
                 <div className="selected-project__image relative overflow-hidden rounded-2xl bg-[#ded5c9]">
-                  <img src={`${base}${project.image}`} alt={project.name} className="h-full w-full object-cover" />
+                  <img
+                    src={`${base}${project.image}`}
+                    alt={project.name}
+                    className="h-full w-full object-cover"
+                  />
                   <span className="absolute right-4 top-4 flex size-10 translate-y-2 items-center justify-center rounded-full bg-[#f8f5ef] text-[#332e29] opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100">
                     <ArrowUpRight size={18} strokeWidth={1.6} />
                   </span>
