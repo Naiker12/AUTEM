@@ -18,7 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import type { Property } from "@/data/properties";
+import { properties, type Property } from "@/data/properties";
 import type { ProjectViewSettings, ViewMode } from "./types";
 
 interface ProjectViewControlPanelProps {
@@ -148,6 +148,38 @@ export default function ProjectViewControlPanel({
                   <FileText /> Ficha completa
                 </Link>
               </Button>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Explorar otros proyectos
+              </p>
+              <div className="mt-3 space-y-2">
+                {properties
+                  .filter((p) => p.slug !== property.slug && p.id !== property.slug)
+                  .map((otherProject) => (
+                    <Link
+                      key={otherProject.id}
+                      to="/proyecto/$slug"
+                      params={{ slug: otherProject.slug }}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card/65 p-3 transition-colors hover:border-accent"
+                    >
+                      <img
+                        src={otherProject.image}
+                        alt=""
+                        className="size-12 rounded-lg object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{otherProject.name}</p>
+                        <p className="truncate text-[10px] text-muted-foreground">
+                          {otherProject.location} · {otherProject.price}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
             </div>
           </TabsContent>
 

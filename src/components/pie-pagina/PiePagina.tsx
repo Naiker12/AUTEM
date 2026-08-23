@@ -97,25 +97,20 @@ export default function PiePagina() {
                   href={`${import.meta.env.BASE_URL}#proyectos`}
                   className="hover:text-accent transition-colors"
                 >
-                  Proyectos Destacados
+                  Proyectos Seleccionados
                 </a>
-              </li>
-              <li>
-                <Link to="/catalogo" className="hover:text-accent transition-colors">
-                  Catálogo Completo
-                </Link>
               </li>
               <li>
                 <a
                   href={`${import.meta.env.BASE_URL}#tecnologia`}
                   className="hover:text-accent transition-colors"
                 >
-                  Experiencia AR 3D
+                  Metodología & Servicios
                 </a>
               </li>
               <li>
                 <Link to="/nosotros" className="hover:text-accent transition-colors">
-                  Nosotros
+                  Estudio AUTEM
                 </Link>
               </li>
               <li>

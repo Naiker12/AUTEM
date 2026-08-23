@@ -11,93 +11,307 @@ export default function FounderBuildingScene() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
-    camera.position.set(7.4, 5.3, 9.8);
-    camera.lookAt(0, 1.6, 0);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    camera.position.set(7.6, 5.8, 10.0);
+    camera.lookAt(0, 0.2, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     mount.appendChild(renderer.domElement);
 
+    scene.add(new THREE.HemisphereLight(0xfff6dc, 0x15130e, 2.2));
+    const keyLight = new THREE.DirectionalLight(0xffd98d, 4.2);
+    keyLight.position.set(5, 8, 7);
+    scene.add(keyLight);
+    const rimLight = new THREE.PointLight(0xc5a059, 20, 16);
+    rimLight.position.set(-3, 2, 4);
+    scene.add(rimLight);
+
     const structure = new THREE.Group();
-    structure.rotation.y = -0.42;
-    structure.position.y = -0.4;
+    structure.rotation.y = -0.32;
+    structure.position.y = -0.6;
     scene.add(structure);
 
     const gold = new THREE.LineBasicMaterial({
-      color: 0xd8b15f,
+      color: 0xf5d38a,
       transparent: true,
-      opacity: 0.82,
+      opacity: 0.95,
     });
     const faintGold = new THREE.LineBasicMaterial({
-      color: 0xb9924b,
+      color: 0xc5a059,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.45,
     });
-    const glass = new THREE.MeshPhysicalMaterial({
-      color: 0x263238,
+    const roadMarking = new THREE.LineBasicMaterial({
+      color: 0xf0cf85,
       transparent: true,
-      opacity: 0.2,
-      roughness: 0.24,
+      opacity: 0.8,
+    });
+    const slateTerrain = new THREE.MeshStandardMaterial({
+      color: 0x161819,
+      roughness: 0.55,
       metalness: 0.25,
+    });
+    const terraceTerrain = new THREE.MeshStandardMaterial({
+      color: 0x1f2124,
+      roughness: 0.6,
+      metalness: 0.2,
+    });
+    const lotAvailable = new THREE.MeshStandardMaterial({
+      color: 0x222622,
+      roughness: 0.7,
+      metalness: 0.15,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const lotReserved = new THREE.MeshStandardMaterial({
+      color: 0x3d321d,
+      roughness: 0.55,
+      metalness: 0.3,
+      emissive: 0x33220a,
+      emissiveIntensity: 0.4,
+    });
+    const woodDeck = new THREE.MeshStandardMaterial({
+      color: 0x5a4631,
+      roughness: 0.6,
+      metalness: 0.15,
+    });
+    const roofMaterial = new THREE.MeshStandardMaterial({
+      color: 0x111214,
+      roughness: 0.3,
+      metalness: 0.8,
+    });
+    const poolWater = new THREE.MeshStandardMaterial({
+      color: 0x153535,
+      emissive: 0x0f2d2d,
+      emissiveIntensity: 0.7,
+      roughness: 0.08,
+      metalness: 0.9,
+    });
+    const roadMaterial = new THREE.MeshStandardMaterial({
+      color: 0x101113,
+      roughness: 0.92,
+      metalness: 0.1,
+    });
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xf3cc7a,
+      transparent: true,
+      opacity: 0.6,
+      roughness: 0.1,
+      metalness: 0.3,
+      emissive: 0x4a3410,
+      emissiveIntensity: 0.8,
       side: THREE.DoubleSide,
     });
+    const interiorGlow = new THREE.MeshStandardMaterial({
+      color: 0xfff0c2,
+      emissive: 0xe6a845,
+      emissiveIntensity: 2.5,
+      metalness: 0.1,
+      roughness: 0.2,
+    });
+    const stemMaterial = new THREE.MeshStandardMaterial({
+      color: 0xb58d44,
+      metalness: 0.7,
+      roughness: 0.3,
+    });
+    const canopyMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x273d2b,
+      transparent: true,
+      opacity: 0.82,
+      roughness: 0.7,
+      metalness: 0.1,
+    });
 
-    const levelCount = 8;
-    for (let level = 0; level < levelCount; level += 1) {
-      const taper = 1 - level * 0.035;
-      const width = 4.3 * taper;
-      const depth = 2.75 * taper;
-      const y = level * 0.62;
-      const slabGeometry = new THREE.BoxGeometry(width, 0.09, depth);
-      const slab = new THREE.Mesh(
-        slabGeometry,
-        new THREE.MeshBasicMaterial({
-          color: level === levelCount - 1 ? 0xd8b15f : 0x171a1b,
-          transparent: true,
-          opacity: level === levelCount - 1 ? 0.35 : 0.45,
-        }),
+    // 1. Wide Topographic Territory Platform (Slim stepped contours)
+    const baseContours = [
+      { w: 7.6, h: 0.06, d: 5.2, y: -0.06 },
+      { w: 7.1, h: 0.06, d: 4.7, y: 0.0 },
+      { w: 6.6, h: 0.06, d: 4.2, y: 0.06 },
+    ];
+    baseContours.forEach((t, index) => {
+      const geo = new THREE.BoxGeometry(t.w, t.h, t.d);
+      const mesh = new THREE.Mesh(geo, index % 2 === 0 ? slateTerrain : terraceTerrain);
+      mesh.position.y = t.y;
+      structure.add(mesh);
+
+      const edge = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geo),
+        index === baseContours.length - 1 ? gold : faintGold,
       );
-      slab.position.y = y;
-      structure.add(slab);
+      edge.position.copy(mesh.position);
+      structure.add(edge);
+    });
 
-      const outline = new THREE.LineSegments(new THREE.EdgesGeometry(slabGeometry), gold);
-      outline.position.y = y;
-      structure.add(outline);
+    // 2. Realistic Masterplan Road Network
+    const mainAvenue = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.015, 0.32), roadMaterial);
+    mainAvenue.position.set(0, 0.1, 0.1);
+    structure.add(mainAvenue);
+
+    const roadLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-3.0, 0.11, 0.1),
+        new THREE.Vector3(3.0, 0.11, 0.1),
+      ]),
+      roadMarking,
+    );
+    structure.add(roadLine);
+
+    const avenueWest = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.015, 3.4), roadMaterial);
+    avenueWest.position.set(-1.7, 0.1, 0.1);
+    structure.add(avenueWest);
+
+    const avenueEast = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.015, 3.4), roadMaterial);
+    avenueEast.position.set(1.7, 0.1, 0.1);
+    structure.add(avenueEast);
+
+    // 3. Grid of 24 Individual Parcel Lots
+    const lotsData: {
+      x: number;
+      z: number;
+      w: number;
+      d: number;
+      isReserved?: boolean;
+      hasVilla?: boolean;
+    }[] = [];
+
+    // Block North
+    for (let i = 0; i < 5; i++) {
+      lotsData.push({ x: -2.9 + i * 0.56, z: -1.0, w: 0.5, d: 0.85, isReserved: i === 2 });
+    }
+    for (let i = 0; i < 6; i++) {
+      lotsData.push({
+        x: -0.25 + i * 0.56,
+        z: -1.0,
+        w: 0.5,
+        d: 0.85,
+        isReserved: i === 4,
+        hasVilla: i === 1,
+      });
     }
 
-    const core = new THREE.Mesh(new THREE.BoxGeometry(1.18, 4.45, 1.12), glass);
-    core.position.set(0.45, 2.15, 0.05);
-    structure.add(core);
-    const coreEdges = new THREE.LineSegments(new THREE.EdgesGeometry(core.geometry), faintGold);
-    coreEdges.position.copy(core.position);
-    structure.add(coreEdges);
+    // Block South
+    for (let i = 0; i < 5; i++) {
+      lotsData.push({ x: -2.9 + i * 0.56, z: 1.1, w: 0.5, d: 0.85, isReserved: i === 1 });
+    }
+    for (let i = 0; i < 6; i++) {
+      lotsData.push({ x: -0.25 + i * 0.56, z: 1.1, w: 0.5, d: 0.85, isReserved: i === 3 });
+    }
 
-    const columnGeometry = new THREE.BoxGeometry(0.055, 4.45, 0.055);
-    const columnMaterial = new THREE.MeshBasicMaterial({
-      color: 0xcda555,
-      transparent: true,
-      opacity: 0.54,
-    });
-    [
-      [-1.75, -1.05],
-      [1.75, -1.05],
-      [-1.75, 1.05],
-      [1.75, 1.05],
-    ].forEach(([x, z]) => {
-      const column = new THREE.Mesh(columnGeometry, columnMaterial);
-      column.position.set(x, 2.15, z);
-      structure.add(column);
+    lotsData.forEach((lot) => {
+      const lotMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(lot.w, 0.02, lot.d),
+        lot.isReserved ? lotReserved : lotAvailable,
+      );
+      lotMesh.position.set(lot.x, 0.1, lot.z);
+      structure.add(lotMesh);
+
+      const lotBorder = new THREE.LineSegments(
+        new THREE.EdgesGeometry(lotMesh.geometry),
+        lot.isReserved || lot.hasVilla ? gold : faintGold,
+      );
+      lotBorder.position.copy(lotMesh.position);
+      structure.add(lotBorder);
+
+      if (lot.hasVilla) {
+        const villaGroup = new THREE.Group();
+        villaGroup.position.set(lot.x, 0.11, lot.z);
+
+        const deck = new THREE.Mesh(
+          new THREE.BoxGeometry(lot.w * 0.85, 0.015, lot.d * 0.75),
+          woodDeck,
+        );
+        deck.position.set(0, 0.01, 0);
+        villaGroup.add(deck);
+
+        const mainW = lot.w * 0.55;
+        const mainD = lot.d * 0.48;
+        const mainH = 0.22;
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(mainW, mainH, mainD), glassMaterial);
+        glass.position.set(-0.04, mainH / 2 + 0.01, -0.04);
+        villaGroup.add(glass);
+
+        const core = new THREE.Mesh(
+          new THREE.BoxGeometry(mainW * 0.75, mainH * 0.7, mainD * 0.75),
+          interiorGlow,
+        );
+        core.position.copy(glass.position);
+        villaGroup.add(core);
+
+        const roof = new THREE.Mesh(
+          new THREE.BoxGeometry(mainW * 1.35, 0.02, mainD * 1.35),
+          roofMaterial,
+        );
+        roof.position.set(glass.position.x + 0.02, mainH + 0.02, glass.position.z + 0.02);
+        villaGroup.add(roof);
+
+        const roofTrim = new THREE.LineSegments(new THREE.EdgesGeometry(roof.geometry), gold);
+        roofTrim.position.copy(roof.position);
+        villaGroup.add(roofTrim);
+
+        const pool = new THREE.Mesh(
+          new THREE.BoxGeometry(lot.w * 0.24, 0.02, lot.d * 0.42),
+          poolWater,
+        );
+        pool.position.set(mainW * 0.5, 0.01, 0.02);
+        villaGroup.add(pool);
+
+        structure.add(villaGroup);
+      }
     });
 
-    const base = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(5.25, 0.08, 3.75)),
-      faintGold,
-    );
-    base.position.y = -0.25;
-    structure.add(base);
+    // 4. Natural Lake / Eco-Amenity Canal
+    const lakeShape = new THREE.Shape();
+    lakeShape.moveTo(-1.5, -0.2);
+    lakeShape.bezierCurveTo(-0.9, 0.35, 0.2, -0.35, 1.3, 0.2);
+    lakeShape.bezierCurveTo(1.5, 0.55, 0.3, 0.75, -1.1, 0.45);
+    lakeShape.closePath();
+
+    const lakeGeo = new THREE.ShapeGeometry(lakeShape);
+    const lake = new THREE.Mesh(lakeGeo, poolWater);
+    lake.rotation.x = -Math.PI / 2;
+    lake.position.set(0, 0.105, -0.2);
+    structure.add(lake);
+
+    const lakeEdge = new THREE.LineSegments(new THREE.EdgesGeometry(lakeGeo), gold);
+    lakeEdge.rotation.x = -Math.PI / 2;
+    lakeEdge.position.copy(lake.position);
+    structure.add(lakeEdge);
+
+    // 5. Trees
+    const treePositions = [
+      [-3.0, 0.35],
+      [-2.4, 0.35],
+      [-1.8, 0.35],
+      [-1.2, 0.35],
+      [-0.6, 0.35],
+      [0.0, 0.35],
+      [0.6, 0.35],
+      [1.2, 0.35],
+      [1.8, 0.35],
+      [2.4, 0.35],
+      [-3.1, -1.7],
+      [3.1, -1.7],
+    ];
+
+    treePositions.forEach(([x, z]) => {
+      const treeGroup = new THREE.Group();
+      treeGroup.position.set(x, 0.09, z);
+
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.18, 5), stemMaterial);
+      stem.position.y = 0.09;
+      treeGroup.add(stem);
+
+      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 1), canopyMaterial);
+      crown.position.y = 0.21;
+      treeGroup.add(crown);
+
+      structure.add(treeGroup);
+    });
 
     for (let ringIndex = 0; ringIndex < 3; ringIndex += 1) {
       const ring = new THREE.LineLoop(
@@ -108,7 +322,7 @@ export default function FounderBuildingScene() {
             const radiusZ = 2.15 + ringIndex * 0.34;
             return new THREE.Vector3(
               Math.cos(angle) * radiusX,
-              -0.35 - ringIndex * 0.035,
+              -0.1 - ringIndex * 0.035,
               Math.sin(angle) * radiusZ,
             );
           }),
@@ -119,17 +333,17 @@ export default function FounderBuildingScene() {
     }
 
     const scan = new THREE.Mesh(
-      new THREE.PlaneGeometry(5.1, 3.55),
+      new THREE.PlaneGeometry(4.8, 3.4),
       new THREE.MeshBasicMaterial({
         color: 0xe5bd69,
         transparent: true,
-        opacity: 0.12,
+        opacity: 0.1,
         side: THREE.DoubleSide,
         depthWrite: false,
       }),
     );
     scan.rotation.x = -Math.PI / 2;
-    scan.position.y = 0.15;
+    scan.position.y = 0.25;
     structure.add(scan);
 
     const particlePositions = new Float32Array(54 * 3);
@@ -137,7 +351,7 @@ export default function FounderBuildingScene() {
       const angle = (index / 54) * Math.PI * 2;
       const radius = 3.2 + (index % 5) * 0.24;
       particlePositions[index * 3] = Math.cos(angle) * radius;
-      particlePositions[index * 3 + 1] = ((index * 0.73) % 5.2) - 0.3;
+      particlePositions[index * 3 + 1] = ((index * 0.5) % 2.2) - 0.2;
       particlePositions[index * 3 + 2] = Math.sin(angle) * radius * 0.68;
     }
     const particleGeometry = new THREE.BufferGeometry();

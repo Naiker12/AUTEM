@@ -54,19 +54,21 @@ export default function TerritoryExperienceSections() {
         <div className="mx-auto max-w-[1700px]">
           <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-end lg:gap-20">
             <div data-reveal className="reveal-up max-w-2xl pb-2">
-              <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#8c692e]">
+              <p className="text-[10px] font-bold uppercase tracking-[.26em] text-[#8c692e] dark:text-[#ddb66d]">
                 Antes de decidir
               </p>
-              <h2 className="mt-5 text-[clamp(2.9rem,5.2vw,6.2rem)] leading-[.88] tracking-[-.07em]">
+              <h2 className="mt-4 text-[clamp(2.4rem,4.8vw,5.2rem)] font-normal leading-[1.08] tracking-[-0.015em]">
                 Una inversión que se
                 <br />
-                <i className="font-serif">puede recorrer.</i>
+                <span className="font-serif italic font-normal text-[#a47c3a] dark:text-[#ddb66d]">
+                  puede recorrer.
+                </span>
               </h2>
-              <p className="mt-8 max-w-md text-base leading-7 text-[#332e29]/65 md:text-lg">
+              <p className="mt-8 max-w-md text-base leading-7 text-[#332e29]/65 dark:text-white/65 md:text-lg">
                 Accede al masterplan, compara cada entorno y entiende cómo se relaciona tu lote con
                 el paisaje antes de visitarlo.
               </p>
-              <div className="mt-9 flex items-center gap-4 text-[10px] font-bold uppercase tracking-[.16em] text-[#5b6258]">
+              <div className="mt-9 flex items-center gap-4 text-[10px] font-bold uppercase tracking-[.16em] text-[#5b6258] dark:text-[#a0a89d]">
                 <span className="size-2 rounded-full bg-[#b5863c] shadow-[0_0_0_6px_rgba(181,134,60,.14)]" />
                 Masterplan interactivo · Lotes 360°
               </div>
@@ -74,50 +76,53 @@ export default function TerritoryExperienceSections() {
 
             <div
               data-reveal
-              className="territory-map reveal-up reveal-up--late relative min-h-[320px] overflow-hidden rounded-2xl bg-[#21342c] md:min-h-[400px]"
+              className="territory-map reveal-up reveal-up--late group relative min-h-[340px] overflow-hidden rounded-2xl border border-black/10 bg-[#1a2b23] shadow-xl dark:border-white/15 md:min-h-[420px]"
             >
               <img
-                src={`${base}projects/lotes-360/masterplan-interactive-aerial.png`}
-                alt="Vista aérea del masterplan Lotes 360"
-                className="h-full w-full object-cover opacity-90"
+                src={`${base}projects/lotes-360/panoramica-render.png`}
+                alt="Perspectiva del territorio y parcelación AUTEM"
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(20,33,27,.68),transparent_58%)]" />
-              <div className="territory-map__line absolute inset-x-[7%] top-1/2 border-t border-[#f1d28e]/70" />
-              <div className="absolute left-7 top-7 rounded-full border border-white/25 bg-[#1b2b24]/75 px-4 py-2 text-[9px] font-bold uppercase tracking-[.17em] text-[#fff8e9] backdrop-blur-md">
-                Explora el territorio
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+              <div className="absolute left-6 top-6 flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3.5 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#fff8e9] backdrop-blur-md">
+                <span className="size-1.5 rounded-full bg-[#dfb86c]" />
+                Perspectiva del Territorio
               </div>
-              <div className="absolute bottom-7 left-7 max-w-[12rem] text-[#fff8e9]">
-                <p className="font-serif text-4xl leading-none">360°</p>
-                <p className="mt-2 text-[9px] font-bold uppercase tracking-[.16em] text-white/65">
-                  Perspectiva del paisaje
-                </p>
-              </div>
-              <span className="absolute bottom-7 right-7 flex size-11 items-center justify-center rounded-full border border-white/30 bg-white/10 text-[#f1d28e] backdrop-blur-md">
-                <MoveUpRight size={18} strokeWidth={1.5} />
-              </span>
+              <a
+                href={`${base}proyecto/lotes-360`}
+                className="absolute bottom-6 right-6 flex items-center gap-2.5 rounded-full border border-white/30 bg-black/60 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md transition hover:bg-[#b5863c] hover:border-[#b5863c]"
+              >
+                Explorar en 3D
+                <MoveUpRight
+                  size={14}
+                  className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                />
+              </a>
             </div>
           </div>
 
-          <div className="territory-metrics mt-10 grid overflow-hidden rounded-2xl border border-[#556257]/20 bg-[#edf0e9]/85 shadow-[0_18px_50px_rgba(33,52,44,.08)] md:grid-cols-4">
+          <div className="territory-metrics mt-6 grid overflow-hidden rounded-xl border border-[#556257]/15 bg-[#edf0e9]/80 shadow-sm backdrop-blur-sm sm:grid-cols-2 md:grid-cols-4">
             {metrics.map(({ icon: Icon, value, label }, index) => (
               <article
                 key={label}
                 data-reveal
-                className="reveal-up group border-b border-[#556257]/15 p-6 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0 lg:p-8"
-                style={{ transitionDelay: `${index * 80}ms` }}
+                className="reveal-up group flex flex-col justify-between border-b border-[#556257]/15 px-4 py-3 last:border-b-0 sm:even:border-r-0 md:border-b-0 md:border-r md:last:border-r-0 lg:px-5 lg:py-3.5"
+                style={{ transitionDelay: `${index * 60}ms` }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="flex size-8 items-center justify-center rounded-full border border-[#b5863c]/35 text-[#9e742d] transition group-hover:bg-[#b5863c] group-hover:text-white">
-                    <Icon size={15} strokeWidth={1.5} />
+                  <span className="flex size-5 items-center justify-center rounded-full border border-[#b5863c]/30 text-[#9e742d] transition group-hover:bg-[#b5863c] group-hover:text-white">
+                    <Icon size={10} strokeWidth={1.4} />
                   </span>
-                  <span className="font-mono text-[9px] text-[#8a978c]">0{index + 1}</span>
+                  <span className="font-mono text-[8px] text-[#8a978c]">0{index + 1}</span>
                 </div>
-                <p className="mt-7 font-serif text-[clamp(2rem,3vw,3rem)] leading-none tracking-[-.05em]">
-                  {value}
-                </p>
-                <p className="mt-3 max-w-[11rem] text-[10px] font-semibold uppercase leading-4 tracking-[.14em] text-[#4d574e]">
-                  {label}
-                </p>
+                <div className="mt-2">
+                  <p className="font-serif font-light text-xl leading-tight tracking-[-0.02em] text-[#2c2824] dark:text-white md:text-2xl">
+                    {value}
+                  </p>
+                  <p className="mt-0.5 text-[8px] font-semibold uppercase leading-tight tracking-[0.14em] text-[#556257]">
+                    {label}
+                  </p>
+                </div>
               </article>
             ))}
           </div>
@@ -127,13 +132,15 @@ export default function TerritoryExperienceSections() {
       <section className="territory-story px-6 py-24 md:px-12 md:py-32 xl:px-20">
         <div className="mx-auto grid max-w-[1700px] gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:gap-20">
           <div data-reveal className="reveal-up order-2 max-w-xl lg:order-1">
-            <p className="text-[10px] font-bold uppercase tracking-[.24em] text-[#a47c3a]">
+            <p className="text-[10px] font-bold uppercase tracking-[.26em] text-[#a47c3a] dark:text-[#ddb66d]">
               Diseñado con el territorio
             </p>
-            <h2 className="mt-5 text-[clamp(2.7rem,4.8vw,5.6rem)] leading-[.9] tracking-[-.06em]">
+            <h2 className="mt-4 text-[clamp(2.4rem,4.4vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.015em]">
               El proyecto empieza
               <br />
-              <i className="font-serif">antes del plano.</i>
+              <span className="font-serif italic text-[#a47c3a] dark:text-[#ddb66d]">
+                antes del plano.
+              </span>
             </h2>
             <p className="mt-8 max-w-md text-base leading-7 text-black/60 md:text-lg md:leading-8">
               Cada lote se lee a partir de su luz, vegetación, acceso y relación con el paisaje. La

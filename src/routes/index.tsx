@@ -78,9 +78,6 @@ function Index() {
   const [hideModel, setHideModel] = useState(false);
   const [showExitPopup, setShowExitPopup] = useState(false);
   const exitPopupRef = useModalA11y(showExitPopup, () => setShowExitPopup(false));
-  const [cursorVariant, setCursorVariant] = useState<"default" | "hover">("default");
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
   const loaderContainerRef = useRef<HTMLDivElement>(null);
   const mountTimeRef = useRef(performance.now());
   const [modelVisible, setModelVisible] = useState(false);
@@ -117,37 +114,6 @@ function Index() {
     const timer = setTimeout(() => setHideModel(true), SCENE_VISIBLE_DURATION_MS);
     return () => clearTimeout(timer);
   }, [modelVisible]);
-
-  // Custom cursor
-  useEffect(() => {
-    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
-    if (!hasFinePointer) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (cursorRef.current) {
-        cursorRef.current.style.opacity = "1";
-        cursorRef.current.style.transform = `translate(${e.clientX - 12}px, ${e.clientY - 12}px)`;
-      }
-      if (dotRef.current) {
-        dotRef.current.style.opacity = "1";
-        dotRef.current.style.transform = `translate(${e.clientX - 2}px, ${e.clientY - 2}px)`;
-      }
-    };
-    const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("a, button, input, textarea, [data-cursor-hover]")) {
-        setCursorVariant("hover");
-      } else {
-        setCursorVariant("default");
-      }
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseover", handleMouseOver);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseover", handleMouseOver);
-    };
-  }, []);
 
   // Exit intent popup
   useEffect(() => {
@@ -200,13 +166,6 @@ function Index() {
         modelVisible={modelVisible}
         loadProgress={loadProgress}
       />
-
-      {/* Custom Cursor (only on desktop) */}
-      <div
-        ref={cursorRef}
-        className={`custom-cursor hidden md:block ${cursorVariant === "hover" ? "is-hovering" : ""}`}
-      />
-      <div ref={dotRef} className="custom-cursor-dot hidden md:block" />
 
       {/* Navigation */}
       <Navbar variant="home" />

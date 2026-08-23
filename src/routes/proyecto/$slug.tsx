@@ -69,15 +69,12 @@ function ProjectView() {
     );
   }
 
-  const masterplanImage = `${import.meta.env.BASE_URL}projects/lotes-360/masterplan-interactive-aerial.png`;
-  const images = property.lotViewImage
-    ? [
-        property.lotViewImage,
-        `${import.meta.env.BASE_URL}projects/lotes-360/acceso-render.png`,
-        `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
-        ...(property.images ?? []),
-      ]
-    : property.images || [property.image];
+  const masterplanImage =
+    property.slug === "lotes-360" || property.slug === "residencia-azure"
+      ? `${import.meta.env.BASE_URL}projects/lotes-360/masterplan-interactive-aerial.png`
+      : property.floorPlanImage || property.image;
+
+  const images = property.images && property.images.length > 0 ? property.images : [property.image];
   const activeGalleryImage = images[galleryIndex] || property.image;
   const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
@@ -122,7 +119,7 @@ function ProjectView() {
             mapShade={viewSettings.mapShade}
             selectionOpacity={viewSettings.selectionOpacity}
           />
-        ) : mode === "tour" && selectedLot ? (
+        ) : mode === "tour" && hasLots && selectedLot ? (
           <Lot3DViewer
             lots={projectLots}
             selectedLot={selectedLot}
@@ -136,9 +133,9 @@ function ProjectView() {
                 ? activeGalleryImage
                 : mode === "lot"
                   ? lotViewImage
-                  : mode === "panorama"
-                    ? images[2] || property.image
-                    : masterplanImage
+                  : mode === "panorama" || mode === "tour"
+                    ? images[1] || images[0] || property.image
+                    : property.image
             }
             alt={property.name}
             className="absolute inset-0 h-full w-full object-cover"
@@ -152,7 +149,11 @@ function ProjectView() {
           </>
         )}
 
-        <ProjectHeader onOpenInfo={() => setIsPanelOpen(true)} contactUrl={contactUrl} />
+        <ProjectHeader
+          currentSlug={slug}
+          onOpenInfo={() => setIsPanelOpen(true)}
+          contactUrl={contactUrl}
+        />
 
         <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
           <ProjectViewControlPanel
@@ -279,8 +280,8 @@ function ProjectView() {
                 <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
                   {property.name}
                 </h1>
-                <p className="mt-2 text-sm text-white/65">
-                  {property.location} · Desde 1.080 m² · Desde $210M COP
+                <p className="mt-2 text-sm text-white/70">
+                  {property.location} · {property.m2} m² · {property.price}
                 </p>
               </div>
               {mode === "gallery" ? (

@@ -65,8 +65,8 @@ export const TECH_TAGS: { value: TechTag; label: string }[] = [
 
 export const properties: Property[] = [
   {
-    id: "residencia-azure",
-    slug: "residencia-azure",
+    id: "lotes-360",
+    slug: "lotes-360",
     name: "Lotes 360°",
     location: "Cartagena, CO · Parcelación campestre",
     zona: "Cartagena",
@@ -109,8 +109,8 @@ export const properties: Property[] = [
     id: "eco-villa-sierra",
     slug: "eco-villa-sierra",
     name: "Eco-Villa Sierra",
-    location: "Castillogrande, CO",
-    zona: "Castillogrande",
+    location: "Turbaco · Castillogrande, CO",
+    zona: "Turbaco",
     price: "Desde $850K USD",
     priceNumeric: 850000,
     m2: 410,
@@ -121,9 +121,9 @@ export const properties: Property[] = [
     image: `${BASE}projects/eco-villa-sierra/fachada.jpg`,
     lat: 10.3908,
     lng: -75.5465,
-    description: "Una villa sostenible integrada en la naturaleza de Castillogrande.",
+    description: "Una villa sostenible integrada en la naturaleza de Turbaco.",
     longDescription:
-      "Eco-Villa Sierra es arquitectura sostenible en el Caribe colombiano. Construida con materiales reciclados y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela de 2.000 m² con vistas panorámicas al Cerro de la Popa.",
+      "Eco-Villa Sierra es arquitectura sostenible en el Caribe colombiano. Construida con materiales de vanguardia y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela con vistas panorámicas excepcionales.",
     features: [
       "Certificación energética A",
       "Paneles solares",
@@ -135,7 +135,7 @@ export const properties: Property[] = [
     floorPlan: "4 habitaciones + suite · 3 plantas · azotea",
     year: 2025,
     floorPlanImage: `${BASE}projects/eco-villa-sierra/planta.jpg`,
-    lotViewImage: `${BASE}projects/lotes-360/plano-lotes-render.png`,
+    lotViewImage: `${BASE}projects/eco-villa-sierra/planta-3d.jpg`,
     floorPlanPdf: `${BASE}projects/eco-villa-sierra/export.pdf`,
     images: [
       `${BASE}projects/eco-villa-sierra/fachada.jpg`,
@@ -151,7 +151,7 @@ export const properties: Property[] = [
     id: "the-horizon-suite",
     slug: "the-horizon-suite",
     name: "The Horizon Suite",
-    location: "Manga, CO",
+    location: "Manga · Cartagena, CO",
     zona: "Manga",
     price: "Desde $2.1M USD",
     priceNumeric: 2100000,
@@ -163,12 +163,12 @@ export const properties: Property[] = [
     image: `${BASE}projects/the-horizon-suite/fachada.jpg`,
     lat: 10.4102,
     lng: -75.5345,
-    description: "6 suites, spa privado y acceso directo al Laguito en Manga.",
+    description: "6 suites, spa privado y vista panorámica a la bahía en Manga.",
     longDescription:
-      "The Horizon Suite es la suite más completa de la Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito.",
+      "The Horizon Suite es la suite más completa de Manga. Con 540 m² de espacios meticulosamente diseñados, esta propiedad ofrece seis suites con baño privado, un spa de 80 m² con sauna, baño turco y jacuzzi, y una terraza panorámica con piscina de borde infinito.",
     features: [
       "Spa privado (sauna, baño turco, jacuzzi)",
-      "Acceso directo al Laguito",
+      "Acceso directo y vista a la bahía",
       "Terraza panorámica 180°",
       "Cine en casa",
       "Cava climatizada",
@@ -177,7 +177,7 @@ export const properties: Property[] = [
     floorPlan: "6 suites · spa · terraza 120m² · garaje 4 plazas",
     year: 2024,
     floorPlanImage: `${BASE}projects/the-horizon-suite/planta.jpg`,
-    lotViewImage: `${BASE}projects/lotes-360/plano-lotes-render.png`,
+    lotViewImage: `${BASE}projects/the-horizon-suite/planta-3d.jpg`,
     floorPlanPdf: `${BASE}projects/the-horizon-suite/export.pdf`,
     images: [
       `${BASE}projects/the-horizon-suite/fachada.jpg`,
@@ -192,16 +192,28 @@ export const properties: Property[] = [
 ];
 
 export function getPropertyBySlug(slug: string): Property | undefined {
-  return properties.find((p) => p.slug === slug);
+  return properties.find(
+    (p) =>
+      p.slug === slug ||
+      p.id === slug ||
+      (slug === "residencia-azure" && (p.slug === "lotes-360" || p.id === "lotes-360")) ||
+      (slug === "lotes-360" && (p.slug === "residencia-azure" || p.id === "residencia-azure")),
+  );
 }
 
 export function getPropertyById(id: string): Property | undefined {
-  return properties.find((p) => p.id === id);
+  return properties.find(
+    (p) =>
+      p.id === id ||
+      p.slug === id ||
+      (id === "residencia-azure" && (p.id === "lotes-360" || p.slug === "lotes-360")) ||
+      (id === "lotes-360" && (p.id === "residencia-azure" || p.slug === "residencia-azure")),
+  );
 }
 
 export function getFloorPlanUrl(slug: string): string {
   if (typeof window === "undefined") return "";
-  const property = properties.find((p) => p.slug === slug);
+  const property = getPropertyBySlug(slug);
   if (property?.floorPlanImage) {
     const path = property.floorPlanImage.startsWith("http")
       ? property.floorPlanImage

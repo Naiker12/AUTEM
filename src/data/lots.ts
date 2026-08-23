@@ -70,7 +70,12 @@ export const lots: Lot[] = [
 ];
 
 export function getLotsByProject(projectSlug: string): Lot[] {
-  return lots.filter((lot) => lot.projectSlug === projectSlug);
+  return lots.filter(
+    (lot) =>
+      lot.projectSlug === projectSlug ||
+      (projectSlug === "lotes-360" && lot.projectSlug === "residencia-azure") ||
+      (projectSlug === "residencia-azure" && lot.projectSlug === "lotes-360"),
+  );
 }
 
 export function formatLotPrice(price: number): string {

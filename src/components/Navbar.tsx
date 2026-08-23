@@ -17,9 +17,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "El proyecto" },
-  { id: "tecnologia", href: `${import.meta.env.BASE_URL}#tecnologia`, label: "Experiencia 3D" },
-  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "Nosotros", page: true },
+  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "Proyectos" },
+  {
+    id: "tecnologia",
+    href: `${import.meta.env.BASE_URL}#tecnologia`,
+    label: "Metodología & Servicios",
+  },
+  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "Estudio", page: true },
   { id: "contacto", href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
 ];
 

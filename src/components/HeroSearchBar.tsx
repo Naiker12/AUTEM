@@ -2,7 +2,7 @@ import { ArrowRight, MapPin, Ruler } from "lucide-react";
 
 export default function HeroSearchBar() {
   const handleExplore = () => {
-    window.location.href = `${import.meta.env.BASE_URL}proyecto/residencia-azure`;
+    window.location.href = `${import.meta.env.BASE_URL}proyecto/lotes-360`;
   };
 
   return (
