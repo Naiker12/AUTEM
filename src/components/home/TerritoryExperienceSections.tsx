@@ -169,101 +169,222 @@ export default function TerritoryExperienceSections() {
             </p>
           </div>
 
-          {/* 3D Curved Perspective Carousel */}
-          <div className="relative mt-12 sm:mt-16">
-            {/* Carousel Container with Perspective Curve & Touch Swipe */}
-            <div
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              className="relative mx-auto flex items-center justify-center overflow-hidden sm:overflow-visible py-6 touch-pan-y"
-              style={{ perspective: "1400px" }}
-            >
-              <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-5 w-full max-w-[1480px]">
+          {/* Curved Perspective Carousel */}
+          <div className="relative mt-10 sm:mt-16">
+            {/* Mobile Carousel View (< md) */}
+            <div className="block md:hidden">
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="relative mx-auto flex h-[430px] w-full max-w-[360px] items-center justify-center overflow-hidden px-4 touch-pan-y"
+              >
                 {carouselSlides.map((slide, index) => {
                   const offset = index - activeIndex;
                   const isCenter = offset === 0;
+                  const isAdjacent = Math.abs(offset) === 1;
 
-                  // Compute 3D cylinder rotation & scale for curved spread effect
-                  const rotateY = offset * 11;
-                  const scale = isCenter ? 1 : Math.max(0.82, 1 - Math.abs(offset) * 0.08);
-                  const translateY = Math.abs(offset) * 14;
-                  const opacity = Math.abs(offset) > 2 ? 0.3 : isCenter ? 1 : 0.85;
+                  let transform = "translateX(0%) scale(1)";
+                  let opacity = 0;
+                  let pointerEvents: "auto" | "none" = "none";
+
+                  if (isCenter) {
+                    transform = "translateX(0%) scale(1)";
+                    opacity = 1;
+                    pointerEvents = "auto";
+                  } else if (offset === -1) {
+                    transform = "translateX(-104%) scale(0.92)";
+                    opacity = 0.35;
+                    pointerEvents = "auto";
+                  } else if (offset === 1) {
+                    transform = "translateX(104%) scale(0.92)";
+                    opacity = 0.35;
+                    pointerEvents = "auto";
+                  } else {
+                    transform = `translateX(${offset > 0 ? "200%" : "-200%"}) scale(0.85)`;
+                    opacity = 0;
+                    pointerEvents = "none";
+                  }
 
                   return (
                     <div
                       key={slide.id}
                       onClick={() => setActiveIndex(index)}
                       style={{
-                        transform: `rotateY(${rotateY}deg) translateY(${translateY}px) scale(${scale})`,
-                        transformStyle: "preserve-3d",
+                        transform,
                         opacity,
-                        zIndex: 10 - Math.abs(offset),
-                        transition: "all 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+                        pointerEvents,
+                        zIndex: isCenter ? 20 : isAdjacent ? 10 : 0,
+                        transition: "all 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
                       }}
-                      className={`group relative cursor-pointer overflow-hidden rounded-2xl md:rounded-3xl border border-[#403a34]/20 bg-[#23201d] shadow-[0_20px_50px_rgba(40,32,24,0.18)] transition-all ${
-                        isCenter
-                          ? "w-[240px] sm:w-[280px] md:w-[320px] lg:w-[360px] h-[340px] sm:h-[400px] md:h-[470px] ring-1 ring-[#c5a059]/40"
-                          : "w-[160px] sm:w-[200px] md:w-[250px] lg:w-[280px] h-[300px] sm:h-[360px] md:h-[420px]"
-                      }`}
+                      className="absolute inset-x-4 top-2 bottom-2 mx-auto flex w-[calc(100%-2rem)] max-w-[320px] flex-col overflow-hidden rounded-3xl border border-[#403a34]/20 bg-[#23201d] shadow-[0_20px_45px_rgba(40,32,24,0.22)]"
                     >
                       <img
                         src={slide.image}
                         alt={slide.title}
-                        className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        className="h-full w-full object-cover object-center"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
 
                       {/* Slide Content Overlay */}
-                      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white">
-                        <span className="inline-block rounded-full border border-white/25 bg-black/40 px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.16em] text-[#e5c278] backdrop-blur-md">
+                      <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                        <span className="inline-block rounded-full border border-white/30 bg-black/50 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[#e5c278] backdrop-blur-md">
                           {slide.tag}
                         </span>
-                        <h3 className="mt-2.5 font-serif text-[16px] sm:text-[19px] md:text-[21px] font-normal leading-tight text-white">
+                        <h3 className="mt-2.5 font-serif text-[20px] font-normal leading-snug text-white">
                           {slide.title}
                         </h3>
-                        <p className="mt-1 line-clamp-2 text-[11px] sm:text-[12px] text-white/70 font-light">
+                        <p className="mt-1 text-[12px] leading-relaxed text-white/75 font-light">
                           {slide.subtitle}
                         </p>
                       </div>
                     </div>
                   );
                 })}
+
+                {/* Left Floating Arrow on Mobile */}
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  aria-label="Diapositiva anterior"
+                  className="absolute left-1 top-1/2 z-30 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/95 text-[#403a34] shadow-md backdrop-blur-md transition-all active:scale-95"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+
+                {/* Right Floating Arrow on Mobile */}
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  aria-label="Diapositiva siguiente"
+                  className="absolute right-1 top-1/2 z-30 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/95 text-[#403a34] shadow-md backdrop-blur-md transition-all active:scale-95"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
 
-              {/* Left Floating Circular Navigation Arrow */}
-              <button
-                onClick={handlePrev}
-                aria-label="Diapositiva anterior"
-                className="absolute left-2 sm:left-4 md:left-8 top-1/2 z-30 flex size-12 sm:size-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/90 text-[#403a34] shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-[#403a34] hover:text-[#f6f1eb]"
-              >
-                <ChevronLeft size={22} />
-              </button>
-
-              {/* Right Floating Circular Navigation Arrow */}
-              <button
-                onClick={handleNext}
-                aria-label="Diapositiva siguiente"
-                className="absolute right-2 sm:right-4 md:right-8 top-1/2 z-30 flex size-12 sm:size-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/90 text-[#403a34] shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-[#403a34] hover:text-[#f6f1eb]"
-              >
-                <ChevronRight size={22} />
-              </button>
+              {/* Mobile Progress Bar & Counter */}
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <span className="text-[11px] font-mono font-medium tracking-wider text-[#403a34]/60">
+                  0{activeIndex + 1}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {carouselSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveIndex(idx)}
+                      aria-label={`Ir a slide ${idx + 1}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        idx === activeIndex ? "w-7 bg-[#c5a059]" : "w-1.5 bg-[#403a34]/20"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-[11px] font-mono font-medium tracking-wider text-[#403a34]/60">
+                  0{carouselSlides.length}
+                </span>
+              </div>
             </div>
 
-            {/* Bottom Progress Track Bar */}
-            <div className="mx-auto mt-8 flex max-w-[200px] items-center justify-center gap-2">
-              {carouselSlides.map((_, idx) => (
+            {/* Desktop / Tablet 3D Curved Perspective Carousel (hidden on mobile, block on md+) */}
+            <div className="hidden md:block">
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="relative mx-auto flex items-center justify-center overflow-visible py-6 touch-pan-y"
+                style={{ perspective: "1400px" }}
+              >
+                <div className="flex items-center justify-center gap-4 lg:gap-5 w-full max-w-[1480px]">
+                  {carouselSlides.map((slide, index) => {
+                    const offset = index - activeIndex;
+                    const isCenter = offset === 0;
+
+                    // Compute 3D cylinder rotation & scale for curved spread effect
+                    const rotateY = offset * 11;
+                    const scale = isCenter ? 1 : Math.max(0.82, 1 - Math.abs(offset) * 0.08);
+                    const translateY = Math.abs(offset) * 14;
+                    const opacity = Math.abs(offset) > 2 ? 0.3 : isCenter ? 1 : 0.85;
+
+                    return (
+                      <div
+                        key={slide.id}
+                        onClick={() => setActiveIndex(index)}
+                        style={{
+                          transform: `rotateY(${rotateY}deg) translateY(${translateY}px) scale(${scale})`,
+                          transformStyle: "preserve-3d",
+                          opacity,
+                          zIndex: 10 - Math.abs(offset),
+                          transition: "all 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+                        }}
+                        className={`group relative cursor-pointer overflow-hidden rounded-2xl md:rounded-3xl border border-[#403a34]/20 bg-[#23201d] shadow-[0_20px_50px_rgba(40,32,24,0.18)] transition-all ${
+                          isCenter
+                            ? "w-[280px] lg:w-[340px] xl:w-[360px] h-[400px] lg:h-[460px] xl:h-[480px] ring-1 ring-[#c5a059]/40"
+                            : "w-[200px] lg:w-[240px] xl:w-[270px] h-[350px] lg:h-[410px] xl:h-[430px]"
+                        }`}
+                      >
+                        <img
+                          src={slide.image}
+                          alt={slide.title}
+                          className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                        {/* Slide Content Overlay */}
+                        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white">
+                          <span className="inline-block rounded-full border border-white/25 bg-black/40 px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.16em] text-[#e5c278] backdrop-blur-md">
+                            {slide.tag}
+                          </span>
+                          <h3 className="mt-2.5 font-serif text-[18px] lg:text-[21px] font-normal leading-tight text-white">
+                            {slide.title}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-[11px] lg:text-[12px] text-white/70 font-light">
+                            {slide.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Left Floating Circular Navigation Arrow */}
                 <button
-                  key={idx}
-                  onClick={() => setActiveIndex(idx)}
-                  aria-label={`Ir a slide ${idx + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    idx === activeIndex
-                      ? "w-8 bg-[#c5a059]"
-                      : "w-2 bg-[#403a34]/20 hover:bg-[#403a34]/40"
-                  }`}
-                />
-              ))}
+                  type="button"
+                  onClick={handlePrev}
+                  aria-label="Diapositiva anterior"
+                  className="absolute left-2 sm:left-4 md:left-6 lg:left-8 top-1/2 z-30 flex size-12 sm:size-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/90 text-[#403a34] shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-[#403a34] hover:text-[#f6f1eb]"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+
+                {/* Right Floating Circular Navigation Arrow */}
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  aria-label="Diapositiva siguiente"
+                  className="absolute right-2 sm:right-4 md:right-6 lg:right-8 top-1/2 z-30 flex size-12 sm:size-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/90 text-[#403a34] shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-[#403a34] hover:text-[#f6f1eb]"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </div>
+
+              {/* Bottom Progress Track Bar */}
+              <div className="mx-auto mt-8 flex max-w-[200px] items-center justify-center gap-2">
+                {carouselSlides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveIndex(idx)}
+                    aria-label={`Ir a slide ${idx + 1}`}
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                      idx === activeIndex
+                        ? "w-8 bg-[#c5a059]"
+                        : "w-2 bg-[#403a34]/20 hover:bg-[#403a34]/40"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
