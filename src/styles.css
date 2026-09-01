@@ -122,35 +122,63 @@
   color: #f6f1eb;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact, .editorial-intro, .territory-overview, .territory-story) {
+.dark
+  :is(
+    .selected-projects,
+    .territory-experience,
+    .home-process,
+    .home-services,
+    .home-contact,
+    .editorial-intro,
+    .territory-overview,
+    .territory-story
+  ) {
   background-color: #151413 !important;
   color: #f6f1eb !important;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) h1,
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) h2,
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) h3 {
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  h1,
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  h2,
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  h3 {
   color: #f6f1eb !important;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) p {
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  p {
   color: #a8a29e !important;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) .text-\[\#403a34\] {
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  .text-\[\#403a34\] {
   color: #f6f1eb !important;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) .text-\[\#333333\],
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) .text-\[\#555555\] {
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  .text-\[\#333333\],
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  .text-\[\#555555\] {
   color: #a8a29e !important;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) :is(.border-\[\#403a34\], .border-\[\#403a34\]\/15, .border-\[\#403a34\]\/20) {
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  :is(.border-\[\#403a34\], .border-\[\#403a34\]\/15, .border-\[\#403a34\]\/20) {
   border-color: rgba(246, 241, 235, 0.12) !important;
 }
 
-.dark :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact) :is(.bg-\[\#f6f1eb\], .bg-\[\#ded5c9\], .bg-\[\#e8e0d5\]) {
+.dark
+  :is(.selected-projects, .territory-experience, .home-process, .home-services, .home-contact)
+  :is(.bg-\[\#f6f1eb\], .bg-\[\#ded5c9\], .bg-\[\#e8e0d5\]) {
   background-color: #1c1b19 !important;
 }
 
@@ -214,7 +242,10 @@
 
 /* Card subtle hover elevation */
 .oakame-card-hover {
-  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.5s cubic-bezier(0.19, 1, 0.22, 1), border-color 0.4s ease;
+  transition:
+    transform 0.5s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.5s cubic-bezier(0.19, 1, 0.22, 1),
+    border-color 0.4s ease;
 }
 .oakame-card-hover:hover {
   transform: translateY(-4px);
@@ -256,13 +287,23 @@ a {
   position: absolute;
   border-radius: 9999px;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(197, 160, 89, 0.65) 0%, rgba(197, 160, 89, 0.2) 55%, transparent 75%);
+  background: radial-gradient(
+    circle,
+    rgba(197, 160, 89, 0.65) 0%,
+    rgba(197, 160, 89, 0.2) 55%,
+    transparent 75%
+  );
   animation: button-ripple-burst 0.65s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
   z-index: 50;
 }
 
 .button-burst-ripple.emerald {
-  background: radial-gradient(circle, rgba(52, 211, 153, 0.75) 0%, rgba(16, 185, 129, 0.25) 55%, transparent 75%);
+  background: radial-gradient(
+    circle,
+    rgba(52, 211, 153, 0.75) 0%,
+    rgba(16, 185, 129, 0.25) 55%,
+    transparent 75%
+  );
 }
 
 @keyframes pulse-ring {
@@ -798,7 +839,6 @@ a {
   .autem-scroll-hero__terrain {
     clip-path: ellipse(130% calc(var(--hero-scroll-progress) * 115%) at 50% 100%);
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -12,7 +12,8 @@ function ProcessSection() {
     {
       number: "01",
       title: "Lectura del terreno",
-      summary: "Análisis topográfico, curvas de nivel y evaluación bioclimática del entorno natural.",
+      summary:
+        "Análisis topográfico, curvas de nivel y evaluación bioclimática del entorno natural.",
       details:
         "Estudiamos las pendientes, la vegetación nativa, los recorridos de luz y las visuales antes de trazar la primera línea, identificando el potencial paisajístico de cada coordenada.",
       highlights: [
@@ -77,7 +78,8 @@ function ProcessSection() {
             </h2>
           </div>
           <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-            Un método transparente y riguroso para transformar coordenadas naturales en arquitectura de valor perdurable.
+            Un método transparente y riguroso para transformar coordenadas naturales en arquitectura
+            de valor perdurable.
           </p>
         </div>
 
@@ -101,7 +103,10 @@ function ProcessSection() {
             {stages.map((stage, index) => {
               const isOpen = openStageIndex === index;
               return (
-                <article key={stage.title} className="transition-colors flex-1 flex flex-col justify-center">
+                <article
+                  key={stage.title}
+                  className="transition-colors flex-1 flex flex-col justify-center"
+                >
                   <button
                     type="button"
                     onClick={() => setOpenStageIndex(isOpen ? null : index)}
@@ -116,9 +121,7 @@ function ProcessSection() {
                         <h3 className="text-[19px] sm:text-[22px] font-medium tracking-[-0.02em] text-[#403a34] transition group-hover:text-[#403a34]">
                           {stage.title}
                         </h3>
-                        <p className="mt-1 text-[13px] text-[#555555]">
-                          {stage.summary}
-                        </p>
+                        <p className="mt-1 text-[13px] text-[#555555]">{stage.summary}</p>
                       </div>
                     </div>
                     <span
@@ -332,7 +335,8 @@ function EditorialContact() {
               Hablemos de tu próximo lugar.
             </h2>
             <p className="mt-6 max-w-lg text-[18px] leading-[1.5] text-[#333333]">
-              Evaluamos tu terreno, respondemos inquietudes técnicas sobre el masterplan y estructuramos una propuesta arquitectónica de valor perdurable.
+              Evaluamos tu terreno, respondemos inquietudes técnicas sobre el masterplan y
+              estructuramos una propuesta arquitectónica de valor perdurable.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -375,9 +379,7 @@ function EditorialContact() {
                   <h3 className="text-[18px] font-medium text-[#403a34] tracking-[-0.02em]">
                     {item.title}
                   </h3>
-                  <p className="mt-1 text-[14px] leading-relaxed text-[#555555]">
-                    {item.desc}
-                  </p>
+                  <p className="mt-1 text-[14px] leading-relaxed text-[#555555]">{item.desc}</p>
                 </div>
               </div>
             ))}

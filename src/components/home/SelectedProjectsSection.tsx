@@ -98,7 +98,8 @@ export default function SelectedProjectsSection() {
             </h2>
           </div>
           <p className="max-w-md text-[18px] leading-[1.5] text-[#333333] md:justify-self-end">
-            Dos visiones arquitectónicas en el Caribe colombiano, proyectadas con rigor técnico y diálogo permanente con el entorno natural.
+            Dos visiones arquitectónicas en el Caribe colombiano, proyectadas con rigor técnico y
+            diálogo permanente con el entorno natural.
           </p>
         </header>
 

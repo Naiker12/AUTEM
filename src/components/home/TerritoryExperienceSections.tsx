@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Compass, Eye, MapPin, MoveUpRight, ShieldCheck, SunMedium } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Eye,
+  MapPin,
+  MoveUpRight,
+  ShieldCheck,
+  SunMedium,
+} from "lucide-react";
 import Container from "@/components/layout/Container";
 
 const carouselSlides = [
@@ -131,7 +140,10 @@ export default function TerritoryExperienceSections() {
   };
 
   return (
-    <div ref={rootRef} className="territory-experience bg-[#f6f1eb] text-[#403a34] font-sans antialiased">
+    <div
+      ref={rootRef}
+      className="territory-experience bg-[#f6f1eb] text-[#403a34] font-sans antialiased"
+    >
       {/* =========================================================================
           SECTION: ANTES DE DECIDIR — 3D PERSPECTIVE CAROUSEL & METRIC STRIP
           ========================================================================= */}
@@ -149,9 +161,7 @@ export default function TerritoryExperienceSections() {
             <h2 className="mt-4 text-[clamp(2.5rem,5.5vw,5.5rem)] font-normal leading-[1.04] tracking-[-0.035em] text-[#403a34]">
               Una inversión que
               <br />
-              <span className="font-serif italic text-[#c5a059]">
-                puede recorrer.
-              </span>
+              <span className="font-serif italic text-[#c5a059]">puede recorrer.</span>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-[15px] sm:text-[16px] leading-relaxed text-[#555555] font-light">
               Accede al masterplan, compara cada entorno y entiende cómo se relaciona tu lote con el
@@ -272,7 +282,8 @@ export default function TerritoryExperienceSections() {
                 El proyecto empieza antes del plano.
               </h2>
               <p className="mt-6 text-[18px] leading-[1.5] text-[#333333]">
-                Cada lote se analiza a partir de su luz, vegetación nativa, topografía y relación con el paisaje para maximizar la habitabilidad bioclimática.
+                Cada lote se analiza a partir de su luz, vegetación nativa, topografía y relación
+                con el paisaje para maximizar la habitabilidad bioclimática.
               </p>
             </div>
 
@@ -283,8 +294,12 @@ export default function TerritoryExperienceSections() {
                     <Icon size={14} strokeWidth={1.5} />
                   </span>
                   <div>
-                    <h3 className="text-[17px] font-medium tracking-[-0.02em] text-[#403a34]">{title}</h3>
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-[#555555]">{description}</p>
+                    <h3 className="text-[17px] font-medium tracking-[-0.02em] text-[#403a34]">
+                      {title}
+                    </h3>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-[#555555]">
+                      {description}
+                    </p>
                   </div>
                   <span className="ml-auto text-[11px] font-medium tracking-[0.1em] text-[#403a34]">
                     0{index + 1}

@@ -110,7 +110,10 @@ export default function PiePagina() {
                 </a>
               </li>
               <li>
-                <Link to="/nosotros" className="hover:text-[#403a34] dark:hover:text-accent transition-colors">
+                <Link
+                  to="/nosotros"
+                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                >
                   Nosotros
                 </Link>
               </li>
@@ -151,7 +154,10 @@ export default function PiePagina() {
             </h3>
             <ul className="space-y-2 text-[13px] leading-5 text-[#555555] dark:text-white/52">
               <li>
-                <Link to="/politica-privacidad" className="hover:text-[#403a34] dark:hover:text-accent transition-colors">
+                <Link
+                  to="/politica-privacidad"
+                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                >
                   Política de Privacidad
                 </Link>
               </li>
@@ -173,8 +179,13 @@ export default function PiePagina() {
               className="group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:bg-[#403a34]/[0.06] hover:text-[#403a34] dark:hover:bg-white/[0.08] dark:hover:text-[#c5a059]"
               aria-label="Visitar Instagram de AUTEM"
             >
-              <Instagram size={14} className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]" />
-              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">Instagram</span>
+              <Instagram
+                size={14}
+                className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]"
+              />
+              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">
+                Instagram
+              </span>
             </a>
             <a
               href="https://linkedin.com"
@@ -183,8 +194,13 @@ export default function PiePagina() {
               className="group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:bg-[#403a34]/[0.06] hover:text-[#403a34] dark:hover:bg-white/[0.08] dark:hover:text-[#c5a059]"
               aria-label="Visitar LinkedIn de AUTEM"
             >
-              <Linkedin size={14} className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]" />
-              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">LinkedIn</span>
+              <Linkedin
+                size={14}
+                className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]"
+              />
+              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">
+                LinkedIn
+              </span>
             </a>
             <a
               href="https://youtube.com"
@@ -193,8 +209,13 @@ export default function PiePagina() {
               className="group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:bg-[#403a34]/[0.06] hover:text-[#403a34] dark:hover:bg-white/[0.08] dark:hover:text-[#c5a059]"
               aria-label="Visitar YouTube de AUTEM"
             >
-              <Youtube size={14} className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]" />
-              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">YouTube</span>
+              <Youtube
+                size={14}
+                className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]"
+              />
+              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">
+                YouTube
+              </span>
             </a>
           </div>
 

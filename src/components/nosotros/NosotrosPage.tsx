@@ -93,12 +93,30 @@ const categoryDisciplines = [
 ];
 
 const method = [
-  { step: "Entender", text: "Escuchamos la necesidad, las expectativas y definimos el reto real del cliente." },
-  { step: "Analizar", text: "Leemos normativa, clima, pendientes, topografía y oportunidades del entorno." },
-  { step: "Conceptualizar", text: "Construimos una idea rectora arquitectónica clara, medible y funcional." },
-  { step: "Diseñar", text: "Coordinamos espacio, materialidad, técnica, estética y presupuesto constructivo." },
-  { step: "Visualizar", text: "Hacemos visible el proyecto en 3D e inmersión antes de poner la primera piedra." },
-  { step: "Materializar", text: "Acompañamos decisiones, contratación, supervisión y entrega de máxima calidad." },
+  {
+    step: "Entender",
+    text: "Escuchamos la necesidad, las expectativas y definimos el reto real del cliente.",
+  },
+  {
+    step: "Analizar",
+    text: "Leemos normativa, clima, pendientes, topografía y oportunidades del entorno.",
+  },
+  {
+    step: "Conceptualizar",
+    text: "Construimos una idea rectora arquitectónica clara, medible y funcional.",
+  },
+  {
+    step: "Diseñar",
+    text: "Coordinamos espacio, materialidad, técnica, estética y presupuesto constructivo.",
+  },
+  {
+    step: "Visualizar",
+    text: "Hacemos visible el proyecto en 3D e inmersión antes de poner la primera piedra.",
+  },
+  {
+    step: "Materializar",
+    text: "Acompañamos decisiones, contratación, supervisión y entrega de máxima calidad.",
+  },
 ];
 
 const values = [
@@ -147,12 +165,12 @@ export function NosotrosPage() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("animate-in", "fade-in", "duration-700");
-            entry.target.style.opacity = "1";
+            (entry.target as HTMLElement).style.opacity = "1";
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.08 }
+      { threshold: 0.08 },
     );
     targets.forEach((target) => observer.observe(target));
 
@@ -208,7 +226,10 @@ export function NosotrosPage() {
       <div className="border-y border-[#403a34]/15 bg-[#f6f1eb]">
         <div className="mx-auto max-w-[1440px] px-6 py-8 sm:px-10 lg:px-14 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {stats.map((stat, idx) => (
-            <div key={stat.label} className="flex flex-col border-l border-[#403a34]/15 pl-4 sm:pl-6 first:border-l-0">
+            <div
+              key={stat.label}
+              className="flex flex-col border-l border-[#403a34]/15 pl-4 sm:pl-6 first:border-l-0"
+            >
               <span className="text-[36px] sm:text-[44px] font-normal leading-none tracking-[-0.05em] text-[#403a34]">
                 {stat.number}
               </span>
@@ -223,7 +244,10 @@ export function NosotrosPage() {
       {/* =========================================================================
           SECTION 01: NUESTRA FILOSOFÍA — Asymmetric Image-Text Split
           ========================================================================= */}
-      <section id="filosofia" className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
+      <section
+        id="filosofia"
+        className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto"
+      >
         <div data-oakame-reveal className="opacity-0 transition-opacity duration-700">
           <Eyebrow>Nuestra Filosofía</Eyebrow>
 
@@ -254,10 +278,7 @@ export function NosotrosPage() {
                 valiosas que trascienden el tiempo.
               </p>
               <div className="pt-4">
-                <a
-                  href="#metodo"
-                  className="oakame-pill-btn"
-                >
+                <a href="#metodo" className="oakame-pill-btn">
                   Conocer Nuestro Método
                 </a>
               </div>
@@ -294,7 +315,8 @@ export function NosotrosPage() {
               Un norte compartido.
             </h2>
             <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-              Tres principios arquitectónicos y estratégicos alinean lo que hacemos, hacia dónde vamos y el impacto que dejamos en cada lote.
+              Tres principios arquitectónicos y estratégicos alinean lo que hacemos, hacia dónde
+              vamos y el impacto que dejamos en cada lote.
             </p>
           </div>
 
@@ -318,9 +340,7 @@ export function NosotrosPage() {
                     {pillar.title}
                   </h3>
                 </div>
-                <p className="mt-8 text-[18px] leading-[1.5] text-[#333333]">
-                  {pillar.text}
-                </p>
+                <p className="mt-8 text-[18px] leading-[1.5] text-[#333333]">{pillar.text}</p>
               </div>
             ))}
           </div>
@@ -341,7 +361,8 @@ export function NosotrosPage() {
               Servicios conectados en un sistema.
             </h2>
             <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-              No son piezas aisladas: estructuran un método riguroso para estudiar, proyectar, comunicar y materializar con precisión.
+              No son piezas aisladas: estructuran un método riguroso para estudiar, proyectar,
+              comunicar y materializar con precisión.
             </p>
           </div>
 
@@ -371,9 +392,7 @@ export function NosotrosPage() {
                   <h3 className="mt-2 text-[20px] font-medium leading-snug tracking-[-0.02em] text-[#403a34]">
                     {cat.title}
                   </h3>
-                  <p className="mt-3 text-[14px] leading-relaxed text-[#555555]">
-                    {cat.text}
-                  </p>
+                  <p className="mt-3 text-[14px] leading-relaxed text-[#555555]">{cat.text}</p>
                 </div>
               </div>
             ))}
@@ -387,7 +406,10 @@ export function NosotrosPage() {
           SECTION 04: PROMESA DE VALOR — Rigor & Detalle
           ========================================================================= */}
       <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700 grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div
+          data-oakame-reveal
+          className="opacity-0 transition-opacity duration-700 grid lg:grid-cols-12 gap-12 lg:gap-16 items-start"
+        >
           <div className="lg:col-span-5 lg:sticky lg:top-28">
             <Eyebrow>Promesa de Valor</Eyebrow>
             <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
@@ -451,7 +473,8 @@ export function NosotrosPage() {
               Claridad en cada etapa.
             </h2>
             <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-              Un proceso visible y metódico reduce la incertidumbre y mantiene todas las decisiones alineadas con el presupuesto.
+              Un proceso visible y metódico reduce la incertidumbre y mantiene todas las decisiones
+              alineadas con el presupuesto.
             </p>
           </div>
 
@@ -499,7 +522,8 @@ export function NosotrosPage() {
                 Valores que se ven en la obra.
               </h2>
               <p className="mt-6 text-[18px] leading-[1.5] text-[#333333]">
-                La cultura no vive en un documento. Se refleja en la forma de escuchar al propietario, coordinar especialistas y responder con honestidad técnica.
+                La cultura no vive en un documento. Se refleja en la forma de escuchar al
+                propietario, coordinar especialistas y responder con honestidad técnica.
               </p>
 
               <div className="mt-10 border-t border-[#403a34]/15 pt-8">
@@ -549,7 +573,10 @@ export function NosotrosPage() {
           SECTION 07: CITAS & FUNDADOR — Provençal Editorial Portrait
           ========================================================================= */}
       <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700 border border-[#403a34] p-8 sm:p-14 lg:p-20 bg-[#f6f1eb]">
+        <div
+          data-oakame-reveal
+          className="opacity-0 transition-opacity duration-700 border border-[#403a34] p-8 sm:p-14 lg:p-20 bg-[#f6f1eb]"
+        >
           <div className="flex items-center justify-between border-b border-[#403a34]/15 pb-6">
             <span className="text-[10px] uppercase tracking-[0.1em] text-[#403a34]">
               La persona detrás de AUTEM
@@ -561,7 +588,8 @@ export function NosotrosPage() {
 
           <div className="mt-10 sm:mt-14">
             <blockquote className="text-[clamp(2.2rem,4.5vw,56px)] font-serif italic leading-[1.1] tracking-[-0.04em] text-[#403a34]">
-              “Transformamos ideas en proyectos con valor perdurable, conectando la esencia del territorio con la precisión de la arquitectura.”
+              “Transformamos ideas en proyectos con valor perdurable, conectando la esencia del
+              territorio con la precisión de la arquitectura.”
             </blockquote>
 
             <div className="mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-[#403a34]/15 pt-8">
@@ -588,7 +616,10 @@ export function NosotrosPage() {
       {/* =========================================================================
           SECTION 08: CONVERSION CTA — El Siguiente Paso
           ========================================================================= */}
-      <section id="contacto-nosotros" className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#403a34] text-[#f6f1eb]">
+      <section
+        id="contacto-nosotros"
+        className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#403a34] text-[#f6f1eb]"
+      >
         <div className="max-w-[1440px] mx-auto flex flex-col lg:flex-row lg:items-end justify-between gap-10">
           <div>
             <div className="flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#f6f1eb]/70 mb-4">
@@ -599,7 +630,8 @@ export function NosotrosPage() {
               Conversemos sobre el potencial de tu proyecto.
             </h2>
             <p className="mt-6 text-[18px] sm:text-[20px] leading-relaxed text-[#f6f1eb]/80 max-w-2xl font-light">
-              Estamos listos para evaluar tu terreno, conceptualizar tu visión y estructurar un plan integral de desarrollo.
+              Estamos listos para evaluar tu terreno, conceptualizar tu visión y estructurar un plan
+              integral de desarrollo.
             </p>
           </div>
 

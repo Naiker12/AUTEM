@@ -12,7 +12,12 @@ export default function HdrPanoramaViewer() {
     const container = containerRef.current;
     if (!container) return;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(
+      70,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      100,
+    );
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -27,29 +32,43 @@ export default function HdrPanoramaViewer() {
     let longitude = 0;
     let latitude = 0;
     const render = () => {
-      camera.lookAt(-Math.sin(longitude) * Math.cos(latitude), Math.sin(latitude), Math.cos(longitude) * Math.cos(latitude));
+      camera.lookAt(
+        -Math.sin(longitude) * Math.cos(latitude),
+        Math.sin(latitude),
+        Math.cos(longitude) * Math.cos(latitude),
+      );
       renderer.render(scene, camera);
     };
 
     if (PANORAMA_URL.endsWith(".hdr")) {
-      new RGBELoader().load(PANORAMA_URL, (loaded) => {
-        if (disposed) return loaded.dispose();
-        loaded.mapping = THREE.EquirectangularReflectionMapping;
-        material.map = loaded;
-        material.needsUpdate = true;
-        setStatus("ready");
-        render();
-      }, undefined, () => !disposed && setStatus("error"));
+      new RGBELoader().load(
+        PANORAMA_URL,
+        (loaded) => {
+          if (disposed) return loaded.dispose();
+          loaded.mapping = THREE.EquirectangularReflectionMapping;
+          material.map = loaded;
+          material.needsUpdate = true;
+          setStatus("ready");
+          render();
+        },
+        undefined,
+        () => !disposed && setStatus("error"),
+      );
     } else {
-      new THREE.TextureLoader().load(PANORAMA_URL, (loaded) => {
-        if (disposed) return loaded.dispose();
-        loaded.mapping = THREE.EquirectangularReflectionMapping;
-        loaded.colorSpace = THREE.SRGBColorSpace;
-        material.map = loaded;
-        material.needsUpdate = true;
-        setStatus("ready");
-        render();
-      }, undefined, () => !disposed && setStatus("error"));
+      new THREE.TextureLoader().load(
+        PANORAMA_URL,
+        (loaded) => {
+          if (disposed) return loaded.dispose();
+          loaded.mapping = THREE.EquirectangularReflectionMapping;
+          loaded.colorSpace = THREE.SRGBColorSpace;
+          material.map = loaded;
+          material.needsUpdate = true;
+          setStatus("ready");
+          render();
+        },
+        undefined,
+        () => !disposed && setStatus("error"),
+      );
     }
 
     let dragging = false;
@@ -71,7 +90,8 @@ export default function HdrPanoramaViewer() {
     };
     const up = (event: PointerEvent) => {
       dragging = false;
-      if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+      if (renderer.domElement.hasPointerCapture(event.pointerId))
+        renderer.domElement.releasePointerCapture(event.pointerId);
     };
     const resize = () => {
       camera.aspect = container.clientWidth / container.clientHeight;
@@ -90,16 +110,28 @@ export default function HdrPanoramaViewer() {
       window.removeEventListener("resize", resize);
       renderer.dispose();
       sphere.geometry.dispose();
+      material.map?.dispose();
       material.dispose();
-      texture?.dispose();
       container.replaceChildren();
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing" aria-label="Tour 360 del proyecto">
-      {status === "loading" && <div className="absolute inset-0 z-10 grid place-items-center bg-[#121811] text-xs font-bold uppercase tracking-[0.24em] text-accent">Cargando tour 360°</div>}
-      {status === "error" && <div className="absolute inset-0 z-10 grid place-items-center bg-[#121811] px-6 text-center text-sm text-white/70">No fue posible cargar el tour 360.</div>}
+    <div
+      ref={containerRef}
+      className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
+      aria-label="Tour 360 del proyecto"
+    >
+      {status === "loading" && (
+        <div className="absolute inset-0 z-10 grid place-items-center bg-[#121811] text-xs font-bold uppercase tracking-[0.24em] text-accent">
+          Cargando tour 360°
+        </div>
+      )}
+      {status === "error" && (
+        <div className="absolute inset-0 z-10 grid place-items-center bg-[#121811] px-6 text-center text-sm text-white/70">
+          No fue posible cargar el tour 360.
+        </div>
+      )}
     </div>
   );
 }

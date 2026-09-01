@@ -149,11 +149,13 @@ export default function Navbar({ variant }: NavbarProps) {
           className={`group flex items-center gap-3.5 ${isAbout ? "text-[#403a34]" : "text-foreground"}`}
           aria-label="AUTEM — Territorio y arquitectura"
         >
-          <span className={`flex size-12 items-center justify-center rounded-full border transition duration-500 ${
-            isAbout
-              ? "border-[#403a34]/30 bg-[#403a34]/[0.05] group-hover:border-[#403a34]"
-              : "border-accent/30 bg-accent/[0.06] group-hover:border-accent/65 group-hover:bg-accent/[0.12]"
-          }`}>
+          <span
+            className={`flex size-12 items-center justify-center rounded-full border transition duration-500 ${
+              isAbout
+                ? "border-[#403a34]/30 bg-[#403a34]/[0.05] group-hover:border-[#403a34]"
+                : "border-accent/30 bg-accent/[0.06] group-hover:border-accent/65 group-hover:bg-accent/[0.12]"
+            }`}
+          >
             <AutemBrandIcon
               size={33}
               className="transition-transform duration-500 group-hover:scale-105"
@@ -183,9 +185,13 @@ export default function Navbar({ variant }: NavbarProps) {
               >
                 {item.label}
                 {isActive && (
-                  <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full ${
-                    isAbout ? "bg-[#c5a059]" : "bg-accent animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.8)]"
-                  }`} />
+                  <span
+                    className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full ${
+                      isAbout
+                        ? "bg-[#c5a059]"
+                        : "bg-accent animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.8)]"
+                    }`}
+                  />
                 )}
               </a>
             );
@@ -198,7 +204,7 @@ export default function Navbar({ variant }: NavbarProps) {
             className={`hidden size-8 items-center justify-center rounded-full border text-xs transition-all md:flex ${
               isAbout
                 ? "border-[#403a34]/25 text-[#403a34] hover:bg-[#403a34]/10"
-                : (isHome && isDark)
+                : isHome && isDark
                   ? "border-white/20 hover:bg-white/10"
                   : "border-border hover:bg-muted"
             } ${isDark ? "theme-toggle-spin" : ""}`}
@@ -240,29 +246,17 @@ export default function Navbar({ variant }: NavbarProps) {
           >
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen
-                  ? "bg-foreground"
-                  : isDark
-                    ? "bg-white"
-                    : "bg-[#403a34]"
+                menuOpen ? "bg-foreground" : isDark ? "bg-white" : "bg-[#403a34]"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen
-                  ? "bg-foreground"
-                  : isDark
-                    ? "bg-white"
-                    : "bg-[#403a34]"
+                menuOpen ? "bg-foreground" : isDark ? "bg-white" : "bg-[#403a34]"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen
-                  ? "bg-foreground"
-                  : isDark
-                    ? "bg-white"
-                    : "bg-[#403a34]"
+                menuOpen ? "bg-foreground" : isDark ? "bg-white" : "bg-[#403a34]"
               }`}
             />
           </button>

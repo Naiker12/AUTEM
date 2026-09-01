@@ -140,7 +140,8 @@ function RootComponent() {
       ripple.style.left = `${x}px`;
       ripple.style.top = `${y}px`;
       ripple.className = `button-burst-ripple ${
-        target.classList.contains("border-emerald-400") || target.innerText.toLowerCase().includes("whatsapp")
+        target.classList.contains("border-emerald-400") ||
+        target.innerText.toLowerCase().includes("whatsapp")
           ? "emerald"
           : ""
       }`;

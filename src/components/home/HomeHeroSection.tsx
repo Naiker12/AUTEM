@@ -55,15 +55,13 @@ export default function HomeHeroSection({ visible }: HomeHeroSectionProps) {
         />
 
         <Container className="home-hero-scroll-stage relative h-[100svh] px-6 pb-8 pt-24 md:min-h-[720px] md:px-10 md:pt-24 lg:px-14 xl:px-20">
-
-        <a
-          href="#proyectos"
-          className={`${entranceClass} home-entrance--scroll home-hero-scroll-cue absolute bottom-5 left-1/2 z-30 hidden -translate-x-1/2 items-center gap-4 text-[8px] font-bold uppercase tracking-[0.28em] text-muted-foreground md:flex`}
-        >
-          <span className="home-scroll-line h-8 w-px bg-gradient-to-b from-accent to-transparent" />
-          <Mouse size={18} className="home-scroll-mouse text-foreground" /> Desliza para descubrir
-        </a>
-
+          <a
+            href="#proyectos"
+            className={`${entranceClass} home-entrance--scroll home-hero-scroll-cue absolute bottom-5 left-1/2 z-30 hidden -translate-x-1/2 items-center gap-4 text-[8px] font-bold uppercase tracking-[0.28em] text-muted-foreground md:flex`}
+          >
+            <span className="home-scroll-line h-8 w-px bg-gradient-to-b from-accent to-transparent" />
+            <Mouse size={18} className="home-scroll-mouse text-foreground" /> Desliza para descubrir
+          </a>
         </Container>
       </div>
     </section>
