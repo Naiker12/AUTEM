@@ -1,18 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Info, PanelLeftOpen, ScanLine } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeftOpen, ScanLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet } from "@/components/ui/sheet";
 import { getPropertyBySlug } from "@/data/properties";
 import { getLotsByProject } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
 import {
-  AerialLotMap,
-  Lot3DViewer,
+  InteractivePanorama,
   LotSelectionPanel,
-  MapControls,
   ModeSwitcher,
   DEFAULT_PROJECT_VIEW_SETTINGS,
   PROJECT_VIEW_MODES,
@@ -29,9 +26,8 @@ function ProjectView() {
   const { slug } = Route.useParams();
   const property = getPropertyBySlug(slug);
   const projectLots = useMemo(() => getLotsByProject(slug), [slug]);
-  const [mode, setMode] = useState<ViewMode>("overview");
+  const [mode, setMode] = useState<ViewMode>("tour");
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const [zoom, setZoom] = useState(1);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
   const [isLotDetailVisible, setIsLotDetailVisible] = useState(true);
@@ -69,11 +65,6 @@ function ProjectView() {
     );
   }
 
-  const masterplanImage =
-    property.slug === "lotes-360" || property.slug === "residencia-azure"
-      ? `${import.meta.env.BASE_URL}projects/lotes-360/masterplan-interactive-aerial.png`
-      : property.floorPlanImage || property.image;
-
   const images = property.images && property.images.length > 0 ? property.images : [property.image];
   const activeGalleryImage = images[galleryIndex] || property.image;
   const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
@@ -107,25 +98,8 @@ function ProjectView() {
   return (
     <main className="h-[100svh] min-h-[680px] overflow-hidden bg-background font-sans text-foreground">
       <div className="relative h-full">
-        {mode === "overview" && hasLots && selectedLot ? (
-          <AerialLotMap
-            image={masterplanImage}
-            lots={projectLots}
-            selectedLot={selectedLot}
-            onSelect={selectLot}
-            zoom={zoom}
-            showLotBoundaries={viewSettings.showLotBoundaries}
-            showLotLabels={viewSettings.showLotLabels}
-            mapShade={viewSettings.mapShade}
-            selectionOpacity={viewSettings.selectionOpacity}
-          />
-        ) : mode === "tour" && hasLots && selectedLot ? (
-          <Lot3DViewer
-            lots={projectLots}
-            selectedLot={selectedLot}
-            showHotspots={viewSettings.showMapControls}
-            showNavigationHints={viewSettings.showNavigationHints}
-          />
+        {mode === "tour" ? (
+          <InteractivePanorama />
         ) : (
           <img
             src={
@@ -133,16 +107,14 @@ function ProjectView() {
                 ? activeGalleryImage
                 : mode === "lot"
                   ? lotViewImage
-                  : mode === "panorama" || mode === "tour"
-                    ? images[1] || images[0] || property.image
-                    : property.image
+                  : property.image
             }
             alt={property.name}
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
 
-        {mode !== "overview" && mode !== "tour" && (
+        {mode !== "tour" && (
           <>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
@@ -150,10 +122,18 @@ function ProjectView() {
         )}
 
         <ProjectHeader
-          currentSlug={slug}
           onOpenInfo={() => setIsPanelOpen(true)}
           contactUrl={contactUrl}
+          activeMode={mode}
+          onModeChange={setMode}
+          showViewSwitcher={viewSettings.showViewSwitcher}
         />
+
+        {viewSettings.showViewSwitcher && (
+          <div className="xl:hidden">
+            <ModeSwitcher activeMode={mode} onChange={setMode} />
+          </div>
+        )}
 
         <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
           <ProjectViewControlPanel
@@ -186,14 +166,6 @@ function ProjectView() {
           />
         )}
 
-        {viewSettings.showViewSwitcher && (
-          <ModeSwitcher
-            activeMode={mode}
-            onChange={setMode}
-            shifted={viewSettings.showLotCatalog && isLotPanelVisible && hasLots}
-          />
-        )}
-
         {hasLots && viewSettings.showLotCatalog && (isLotPanelVisible || isMobileLotPanelOpen) && (
           <LotSelectionPanel
             lots={projectLots}
@@ -223,10 +195,6 @@ function ProjectView() {
             onView3D={() => setMode("tour")}
           />
         )}
-        {mode === "overview" && viewSettings.showMapControls && (
-          <MapControls zoom={zoom} onZoomChange={setZoom} />
-        )}
-
         {mode === "gallery" && images.length > 1 && (
           <>
             <Button
@@ -270,7 +238,7 @@ function ProjectView() {
           </div>
         )}
 
-        {mode !== "overview" && mode !== "tour" && mode !== "ar" && (
+        {mode !== "tour" && mode !== "ar" && (
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-5 xl:pl-[390px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
@@ -322,28 +290,6 @@ function ProjectView() {
               className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
             >
               Ver en 3D
-            </Button>
-          </div>
-        )}
-
-        {viewSettings.showProjectBrand && (
-          <div className="absolute bottom-4 right-4 z-20 hidden items-center gap-3 rounded-2xl border border-border bg-background/88 px-4 py-3 text-foreground shadow-2xl backdrop-blur-xl md:flex">
-            <AutemBrandIcon size={28} />
-            <div>
-              <strong className="block text-sm">Proyecto AUTEM</strong>
-              <span className="text-[8px] text-muted-foreground">
-                Naturaleza · Bienestar · Futuro
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsPanelOpen(true)}
-              className="ml-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Más información"
-            >
-              <Info />
             </Button>
           </div>
         )}

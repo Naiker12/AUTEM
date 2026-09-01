@@ -13,20 +13,6 @@ const BASE = import.meta.env.BASE_URL ?? "/";
 
 const HERO_SLIDES: HeroSlide[] = [
   {
-    image: `${BASE}projects/residencia-azure/fachada.jpg`,
-    title: "Residencia Azure",
-    location: "Bocagrande, CO",
-    tagline: "Villa contemporánea frente al Mar Caribe",
-    slug: "residencia-azure",
-  },
-  {
-    image: `${BASE}projects/the-horizon-suite/fachada.jpg`,
-    title: "The Horizon Suite",
-    location: "Manga, CO",
-    tagline: "Penthouse de lujo con spa y rooftop panorámico 180°",
-    slug: "the-horizon-suite",
-  },
-  {
     image: `${BASE}projects/eco-refugio-turbaco/fachada.jpg`,
     title: "Eco-Refugio Turbaco",
     location: "Turbaco, Bolívar, CO",

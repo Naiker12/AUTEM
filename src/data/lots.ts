@@ -11,10 +11,18 @@ export interface Lot {
   detail: string;
   previewImage: string;
   terrainPosition: [number, number];
+  /** Vertices in pixels over the equirectangular panorama. */
+  panoramaPolygon?: [number, number][];
   houseModel?: string;
   recordingVideo?: string;
   houseGallery?: string[];
 }
+
+export const PANORAMA_360 = {
+  image: `${BASE}projects/lotes-360/masterplan-panorama-360.jpg`,
+  width: 2048,
+  height: 1024,
+} as const;
 
 export const lots: Lot[] = [
   {
@@ -26,6 +34,13 @@ export const lots: Lot[] = [
     detail: "Acceso principal",
     previewImage: `${BASE}projects/lotes-360/acceso-render.png`,
     terrainPosition: [-10, 8],
+    panoramaPolygon: [
+      [90, 305],
+      [205, 278],
+      [285, 322],
+      [260, 395],
+      [125, 390],
+    ],
   },
   {
     id: "L-07",
@@ -34,8 +49,15 @@ export const lots: Lot[] = [
     price: 225_000_000,
     status: "Disponible",
     detail: "Entorno verde",
-    previewImage: `${BASE}projects/lotes-360/lot-l07-entorno-verde.png`,
+    previewImage: `${BASE}projects/lotes-360/lot-l07-entorno-verde.jpg`,
     terrainPosition: [-10, 0],
+    panoramaPolygon: [
+      [315, 285],
+      [425, 270],
+      [485, 325],
+      [440, 400],
+      [340, 375],
+    ],
   },
   {
     id: "L-12",
@@ -46,6 +68,13 @@ export const lots: Lot[] = [
     detail: "Frente a quebrada",
     previewImage: `${BASE}projects/lotes-360/lot-l12-quebrada.png`,
     terrainPosition: [5, 4],
+    panoramaPolygon: [
+      [490, 315],
+      [615, 290],
+      [700, 345],
+      [665, 422],
+      [530, 410],
+    ],
   },
   {
     id: "L-18",
@@ -56,6 +85,13 @@ export const lots: Lot[] = [
     detail: "Cerca a zona social",
     previewImage: `${BASE}projects/lotes-360/lot-l18-zona-social.png`,
     terrainPosition: [10, 0],
+    panoramaPolygon: [
+      [710, 286],
+      [820, 265],
+      [905, 325],
+      [865, 395],
+      [755, 385],
+    ],
   },
   {
     id: "L-24",
@@ -66,6 +102,13 @@ export const lots: Lot[] = [
     detail: "Punto panorámico",
     previewImage: `${BASE}projects/lotes-360/panoramica-render.png`,
     terrainPosition: [10, -8],
+    panoramaPolygon: [
+      [805, 315],
+      [925, 295],
+      [1000, 350],
+      [980, 425],
+      [850, 408],
+    ],
   },
 ];
 

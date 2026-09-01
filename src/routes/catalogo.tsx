@@ -9,5 +9,5 @@ export const Route = createFileRoute("/catalogo")({
 });
 
 function CatalogRedirect() {
-  return <Navigate to="/proyecto/$slug" params={{ slug: "residencia-azure" }} replace />;
+  return <Navigate to="/proyecto/$slug" params={{ slug: "lotes-360" }} replace />;
 }

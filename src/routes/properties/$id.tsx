@@ -25,11 +25,15 @@ export const Route = createFileRoute("/properties/$id")({
     meta: [
       {
         property: "og:image",
-        content: getPropertyById(params.id)?.image || `${import.meta.env.BASE_URL}antes.png`,
+        content:
+          getPropertyById(params.id)?.image ||
+          `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
       },
       {
         name: "twitter:image",
-        content: getPropertyById(params.id)?.image || `${import.meta.env.BASE_URL}antes.png`,
+        content:
+          getPropertyById(params.id)?.image ||
+          `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
       },
     ],
     scripts: [

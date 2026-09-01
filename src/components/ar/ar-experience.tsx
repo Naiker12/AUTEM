@@ -10,7 +10,7 @@ import { ArchitecturalAtmosphere } from "./ArchitecturalAtmosphere";
 import type { ARExperienceProps, LightingMode } from "./ar-types";
 
 export default function ARExperience({
-  initialPropertySlug = "the-horizon-suite",
+  initialPropertySlug = "lotes-360",
   showSelector = false,
   className = "",
 }: ARExperienceProps) {

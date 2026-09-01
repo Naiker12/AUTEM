@@ -1,6 +1,6 @@
-import { Box, Images, Map, MapPinned, Mountain, Route, type LucideIcon } from "lucide-react";
+import { Box, Images, MapPinned, Route, type LucideIcon } from "lucide-react";
 
-export type ViewMode = "overview" | "lot" | "tour" | "panorama" | "gallery" | "ar";
+export type ViewMode = "lot" | "tour" | "gallery" | "ar";
 
 export interface ProjectViewMode {
   id: ViewMode;
@@ -35,10 +35,8 @@ export const DEFAULT_PROJECT_VIEW_SETTINGS: ProjectViewSettings = {
 };
 
 export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
-  { id: "overview", label: "Vista general", icon: Map },
   { id: "lot", label: "Zonas", icon: MapPinned },
-  { id: "tour", label: "Recorrido 3D", icon: Route },
-  { id: "panorama", label: "Vista panorámica", icon: Mountain },
+  { id: "tour", label: "Tour 360°", icon: Route },
   { id: "gallery", label: "Galería", icon: Images },
   { id: "ar", label: "AR", icon: Box },
 ];

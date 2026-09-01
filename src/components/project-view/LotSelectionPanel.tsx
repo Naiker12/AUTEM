@@ -66,12 +66,12 @@ export default function LotSelectionPanel({
             Compara ubicación, área y precio sin salir del masterplan.
           </p>
           <Tabs value={status} onValueChange={setStatus} className="mt-4">
-            <TabsList className="grid h-9 w-full grid-cols-3 bg-muted p-1 text-muted-foreground">
+            <TabsList className="grid h-9 w-full grid-cols-3 bg-[#403a34]/[0.06] p-1 text-[#555555] dark:bg-white/[0.06]">
               {["Disponibles", "Reservados", "Todos"].map((item) => (
                 <TabsTrigger
                   key={item}
                   value={item}
-                  className="px-2 text-[9px] text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                  className="px-2 text-[9px] uppercase tracking-wider text-[#555555] data-[state=active]:bg-[#403a34] data-[state=active]:text-[#f6f1eb] dark:data-[state=active]:bg-[#c5a059] dark:data-[state=active]:text-[#151413]"
                 >
                   {item}
                 </TabsTrigger>
@@ -102,7 +102,7 @@ export default function LotSelectionPanel({
               return (
                 <article
                   key={lot.id}
-                  className={`relative overflow-hidden rounded-[14px] border transition ${selected ? "border-accent bg-accent/10 shadow-[0_0_0_1px_rgba(197,160,89,.28)]" : "border-border bg-card/75 hover:border-accent/55"}`}
+                  className={`relative overflow-hidden rounded-[14px] border transition ${selected ? "border-[#403a34] bg-[#403a34]/[0.05] dark:border-[#c5a059] dark:bg-[#c5a059]/10 shadow-[0_0_0_1px_rgba(197,160,89,.28)]" : "border-border bg-card/75 hover:border-[#403a34]/40"}`}
                 >
                   <button
                     type="button"
@@ -119,7 +119,7 @@ export default function LotSelectionPanel({
                       <div className="flex items-center gap-2">
                         <strong className="text-lg leading-none">{lot.id}</strong>
                         <Badge
-                          className={`rounded-full px-2 py-0.5 text-[7px] ${lot.status === "Disponible" ? "bg-accent/15 text-accent" : "bg-[#a5682b]/15 text-[#98581f] dark:text-[#e3a25f]"}`}
+                          className={`rounded-full px-2 py-0.5 text-[7px] ${lot.status === "Disponible" ? "bg-[#403a34]/10 text-[#403a34] dark:bg-[#c5a059]/15 dark:text-[#c5a059]" : "bg-[#a5682b]/15 text-[#98581f] dark:text-[#e3a25f]"}`}
                         >
                           {lot.status}
                         </Badge>
@@ -137,7 +137,7 @@ export default function LotSelectionPanel({
                   <button
                     type="button"
                     onClick={() => toggleSaved(lot.id)}
-                    className={`absolute right-2 top-2 flex size-7 items-center justify-center rounded-full border border-border bg-background/85 ${isSaved ? "text-accent" : "text-muted-foreground"}`}
+                    className={`absolute right-2 top-2 flex size-7 items-center justify-center rounded-full border border-border bg-background/85 ${isSaved ? "text-[#c5a059]" : "text-muted-foreground"}`}
                     aria-label={`Guardar ${lot.id}`}
                   >
                     <Heart size={13} fill={isSaved ? "currentColor" : "none"} />
@@ -150,7 +150,7 @@ export default function LotSelectionPanel({
         <div className="border-t border-border p-4">
           <Button
             asChild
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#d2a14f] to-[#f2cf7b] font-bold text-[#171007] hover:opacity-90"
+            className="h-11 w-full rounded-full border border-[#403a34] bg-[#403a34] text-[11px] font-medium uppercase tracking-[0.1em] text-[#f6f1eb] hover:bg-transparent hover:text-[#403a34] transition-all duration-300 dark:border-white/20 dark:bg-[#c5a059] dark:text-[#151413] dark:hover:bg-[#f6f1eb]"
           >
             <a href={contactUrl} target="_blank" rel="noopener noreferrer">
               <MessageCircle /> Solicitar asesoría

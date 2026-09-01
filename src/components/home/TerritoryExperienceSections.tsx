@@ -1,35 +1,93 @@
-import { useEffect, useRef } from "react";
-import { Compass, Eye, MapPin, MoveUpRight, ShieldCheck, SunMedium } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Compass, Eye, MapPin, MoveUpRight, ShieldCheck, SunMedium } from "lucide-react";
+import Container from "@/components/layout/Container";
 
-const base = import.meta.env.BASE_URL;
+const carouselSlides = [
+  {
+    id: "pavilion",
+    title: "Pabellón de Bosque & Vidrio",
+    subtitle: "Integración total con la naturaleza nativa",
+    image: `${import.meta.env.BASE_URL}images/carousel-forest-pavilion.jpg`,
+    tag: "Arquitectura 360°",
+  },
+  {
+    id: "bedroom",
+    title: "Suite Caliza & Roble",
+    subtitle: "Atmósfera provenzal en piedra y lino",
+    image: `${import.meta.env.BASE_URL}images/carousel-stone-bedroom.jpg`,
+    tag: "Interiorismo",
+  },
+  {
+    id: "lounge",
+    title: "Lounge Contemporáneo",
+    subtitle: "Elegancia en tonos grafito y luz cálida",
+    image: `${import.meta.env.BASE_URL}images/carousel-modern-lounge.jpg`,
+    tag: "Espacio Social",
+  },
+  {
+    id: "garden",
+    title: "Jardín Mediterráneo & Patio",
+    subtitle: "Senderos de piedra y microclima nocturno",
+    image: `${import.meta.env.BASE_URL}images/carousel-mediterranean-garden.jpg`,
+    tag: "Paisajismo",
+  },
+  {
+    id: "terrace",
+    title: "Terraza & Pérgola al Atardecer",
+    subtitle: "Visuales abiertas al horizonte y horizonte marino",
+    image: `${import.meta.env.BASE_URL}images/carousel-sunset-terrace.jpg`,
+    tag: "Visuales Panorámicas",
+  },
+];
 
 const metrics = [
-  { icon: MapPin, value: "05", label: "Ubicaciones para explorar" },
-  { icon: MoveUpRight, value: "1.080+", label: "m² por lote" },
-  { icon: Eye, value: "360°", label: "Lectura del paisaje" },
-  { icon: ShieldCheck, value: "24/7", label: "Acompañamiento digital" },
+  {
+    number: "01",
+    icon: MapPin,
+    value: "05",
+    label: "Ubicaciones para explorar",
+  },
+  {
+    number: "02",
+    icon: MoveUpRight,
+    value: "1.080+",
+    label: "m² por lote",
+  },
+  {
+    number: "03",
+    icon: Eye,
+    value: "360°",
+    label: "Lectura del paisaje",
+  },
+  {
+    number: "04",
+    icon: ShieldCheck,
+    value: "24/7",
+    label: "Acompañamiento digital",
+  },
 ];
 
 const principles = [
   {
     icon: Compass,
     title: "Orientación",
-    description: "Entiende la relación entre el lote, el acceso y las visuales.",
+    description: "Entiende la relación entre el lote, el acceso y las visuales protegidas.",
   },
   {
     icon: SunMedium,
     title: "Luz natural",
-    description: "Compara recorridos solares antes de tomar una decisión.",
+    description: "Compara recorridos solares y ventilación antes de tomar una decisión.",
   },
   {
     icon: Eye,
     title: "Perspectiva",
-    description: "Visualiza la escala del proyecto desde cada punto importante.",
+    description: "Visualiza la escala del proyecto y la topografía desde cada coordenada.",
   },
 ];
 
 export default function TerritoryExperienceSections() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(2); // Center on 3rd slide initially
 
   useEffect(() => {
     const root = rootRef.current;
@@ -40,7 +98,7 @@ export default function TerritoryExperienceSections() {
           if (entry.isIntersecting) entry.target.classList.add("is-revealed");
         });
       },
-      { threshold: 0.16 },
+      { threshold: 0.12 },
     );
     root
       .querySelectorAll<HTMLElement>("[data-reveal]")
@@ -48,115 +106,187 @@ export default function TerritoryExperienceSections() {
     return () => observer.disconnect();
   }, []);
 
-  return (
-    <div ref={rootRef} className="territory-experience bg-[#f4f0ea] text-[#332e29]">
-      <section className="territory-overview bg-[#dfe5dc] px-6 py-20 md:px-12 md:py-28 xl:px-20">
-        <div className="mx-auto max-w-[1700px]">
-          <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-end lg:gap-20">
-            <div data-reveal className="reveal-up max-w-2xl pb-2">
-              <p className="text-[10px] font-bold uppercase tracking-[.26em] text-[#8c692e] dark:text-[#ddb66d]">
-                Antes de decidir
-              </p>
-              <h2 className="mt-4 text-[clamp(2.4rem,4.8vw,5.2rem)] font-normal leading-[1.08] tracking-[-0.015em]">
-                Una inversión que se
-                <br />
-                <span className="font-serif italic font-normal text-[#a47c3a] dark:text-[#ddb66d]">
-                  puede recorrer.
-                </span>
-              </h2>
-              <p className="mt-8 max-w-md text-base leading-7 text-[#332e29]/65 dark:text-white/65 md:text-lg">
-                Accede al masterplan, compara cada entorno y entiende cómo se relaciona tu lote con
-                el paisaje antes de visitarlo.
-              </p>
-              <div className="mt-9 flex items-center gap-4 text-[10px] font-bold uppercase tracking-[.16em] text-[#5b6258] dark:text-[#a0a89d]">
-                <span className="size-2 rounded-full bg-[#b5863c] shadow-[0_0_0_6px_rgba(181,134,60,.14)]" />
-                Masterplan interactivo · Lotes 360°
-              </div>
-            </div>
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev > 0 ? prev - 1 : carouselSlides.length - 1));
+  };
 
-            <div
-              data-reveal
-              className="territory-map reveal-up reveal-up--late group relative min-h-[340px] overflow-hidden rounded-2xl border border-black/10 bg-[#1a2b23] shadow-xl dark:border-white/15 md:min-h-[420px]"
-            >
-              <img
-                src={`${base}projects/lotes-360/panoramica-render.png`}
-                alt="Perspectiva del territorio y parcelación AUTEM"
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-              <div className="absolute left-6 top-6 flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3.5 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#fff8e9] backdrop-blur-md">
-                <span className="size-1.5 rounded-full bg-[#dfb86c]" />
-                Perspectiva del Territorio
-              </div>
-              <a
-                href={`${base}proyecto/lotes-360`}
-                className="absolute bottom-6 right-6 flex items-center gap-2.5 rounded-full border border-white/30 bg-black/60 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md transition hover:bg-[#b5863c] hover:border-[#b5863c]"
-              >
-                Explorar en 3D
-                <MoveUpRight
-                  size={14}
-                  className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                />
-              </a>
-            </div>
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev < carouselSlides.length - 1 ? prev + 1 : 0));
+  };
+
+  const touchStartXRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const diff = touchStartXRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    touchStartXRef.current = null;
+  };
+
+  return (
+    <div ref={rootRef} className="territory-experience bg-[#f6f1eb] text-[#403a34] font-sans antialiased">
+      {/* =========================================================================
+          SECTION: ANTES DE DECIDIR — 3D PERSPECTIVE CAROUSEL & METRIC STRIP
+          ========================================================================= */}
+      <section className="relative overflow-hidden bg-[#f6f1eb] px-4 py-20 sm:px-8 md:py-28 lg:px-14">
+        {/* Subtle topographical linework background */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(64,58,52,.15)_1px,transparent_1px),linear-gradient(90deg,rgba(64,58,52,.15)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/4 size-[550px] -translate-x-1/2 rounded-full bg-[#c5a059]/[0.05] blur-[160px]" />
+
+        <div className="relative mx-auto max-w-[1560px]">
+          {/* Header Title Block */}
+          <div data-reveal className="reveal-up mx-auto max-w-3xl text-center">
+            <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-[#a47c3a] dark:text-[#c5a059]">
+              Antes de decidir
+            </p>
+            <h2 className="mt-4 text-[clamp(2.5rem,5.5vw,5.5rem)] font-normal leading-[1.04] tracking-[-0.035em] text-[#403a34]">
+              Una inversión que
+              <br />
+              <span className="font-serif italic text-[#c5a059]">
+                puede recorrer.
+              </span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-[15px] sm:text-[16px] leading-relaxed text-[#555555] font-light">
+              Accede al masterplan, compara cada entorno y entiende cómo se relaciona tu lote con el
+              paisaje antes de visitarlo.
+            </p>
           </div>
 
-          <div className="territory-metrics mt-6 grid overflow-hidden rounded-xl border border-[#556257]/15 bg-[#edf0e9]/80 shadow-sm backdrop-blur-sm sm:grid-cols-2 md:grid-cols-4">
-            {metrics.map(({ icon: Icon, value, label }, index) => (
-              <article
-                key={label}
-                data-reveal
-                className="reveal-up group flex flex-col justify-between border-b border-[#556257]/15 px-4 py-3 last:border-b-0 sm:even:border-r-0 md:border-b-0 md:border-r md:last:border-r-0 lg:px-5 lg:py-3.5"
-                style={{ transitionDelay: `${index * 60}ms` }}
+          {/* 3D Curved Perspective Carousel */}
+          <div className="relative mt-12 sm:mt-16">
+            {/* Carousel Container with Perspective Curve & Touch Swipe */}
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="relative mx-auto flex items-center justify-center overflow-hidden sm:overflow-visible py-6 touch-pan-y"
+              style={{ perspective: "1400px" }}
+            >
+              <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-5 w-full max-w-[1480px]">
+                {carouselSlides.map((slide, index) => {
+                  const offset = index - activeIndex;
+                  const isCenter = offset === 0;
+
+                  // Compute 3D cylinder rotation & scale for curved spread effect
+                  const rotateY = offset * 11;
+                  const scale = isCenter ? 1 : Math.max(0.82, 1 - Math.abs(offset) * 0.08);
+                  const translateY = Math.abs(offset) * 14;
+                  const opacity = Math.abs(offset) > 2 ? 0.3 : isCenter ? 1 : 0.85;
+
+                  return (
+                    <div
+                      key={slide.id}
+                      onClick={() => setActiveIndex(index)}
+                      style={{
+                        transform: `rotateY(${rotateY}deg) translateY(${translateY}px) scale(${scale})`,
+                        transformStyle: "preserve-3d",
+                        opacity,
+                        zIndex: 10 - Math.abs(offset),
+                        transition: "all 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+                      }}
+                      className={`group relative cursor-pointer overflow-hidden rounded-2xl md:rounded-3xl border border-[#403a34]/20 bg-[#23201d] shadow-[0_20px_50px_rgba(40,32,24,0.18)] transition-all ${
+                        isCenter
+                          ? "w-[240px] sm:w-[280px] md:w-[320px] lg:w-[360px] h-[340px] sm:h-[400px] md:h-[470px] ring-1 ring-[#c5a059]/40"
+                          : "w-[160px] sm:w-[200px] md:w-[250px] lg:w-[280px] h-[300px] sm:h-[360px] md:h-[420px]"
+                      }`}
+                    >
+                      <img
+                        src={slide.image}
+                        alt={slide.title}
+                        className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                      {/* Slide Content Overlay */}
+                      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white">
+                        <span className="inline-block rounded-full border border-white/25 bg-black/40 px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.16em] text-[#e5c278] backdrop-blur-md">
+                          {slide.tag}
+                        </span>
+                        <h3 className="mt-2.5 font-serif text-[16px] sm:text-[19px] md:text-[21px] font-normal leading-tight text-white">
+                          {slide.title}
+                        </h3>
+                        <p className="mt-1 line-clamp-2 text-[11px] sm:text-[12px] text-white/70 font-light">
+                          {slide.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Left Floating Circular Navigation Arrow */}
+              <button
+                onClick={handlePrev}
+                aria-label="Diapositiva anterior"
+                className="absolute left-2 sm:left-4 md:left-8 top-1/2 z-30 flex size-12 sm:size-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/90 text-[#403a34] shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-[#403a34] hover:text-[#f6f1eb]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="flex size-5 items-center justify-center rounded-full border border-[#b5863c]/30 text-[#9e742d] transition group-hover:bg-[#b5863c] group-hover:text-white">
-                    <Icon size={10} strokeWidth={1.4} />
-                  </span>
-                  <span className="font-mono text-[8px] text-[#8a978c]">0{index + 1}</span>
-                </div>
-                <div className="mt-2">
-                  <p className="font-serif font-light text-xl leading-tight tracking-[-0.02em] text-[#2c2824] dark:text-white md:text-2xl">
-                    {value}
-                  </p>
-                  <p className="mt-0.5 text-[8px] font-semibold uppercase leading-tight tracking-[0.14em] text-[#556257]">
-                    {label}
-                  </p>
-                </div>
-              </article>
-            ))}
+                <ChevronLeft size={22} />
+              </button>
+
+              {/* Right Floating Circular Navigation Arrow */}
+              <button
+                onClick={handleNext}
+                aria-label="Diapositiva siguiente"
+                className="absolute right-2 sm:right-4 md:right-8 top-1/2 z-30 flex size-12 sm:size-14 -translate-y-1/2 items-center justify-center rounded-full border border-[#403a34]/20 bg-white/90 text-[#403a34] shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-[#403a34] hover:text-[#f6f1eb]"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </div>
+
+            {/* Bottom Progress Track Bar */}
+            <div className="mx-auto mt-8 flex max-w-[200px] items-center justify-center gap-2">
+              {carouselSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveIndex(idx)}
+                  aria-label={`Ir a slide ${idx + 1}`}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    idx === activeIndex
+                      ? "w-8 bg-[#c5a059]"
+                      : "w-2 bg-[#403a34]/20 hover:bg-[#403a34]/40"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="territory-story px-6 py-24 md:px-12 md:py-32 xl:px-20">
-        <div className="mx-auto grid max-w-[1700px] gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:gap-20">
-          <div data-reveal className="reveal-up order-2 max-w-xl lg:order-1">
-            <p className="text-[10px] font-bold uppercase tracking-[.26em] text-[#a47c3a] dark:text-[#ddb66d]">
-              Diseñado con el territorio
-            </p>
-            <h2 className="mt-4 text-[clamp(2.4rem,4.4vw,4.8rem)] font-normal leading-[1.08] tracking-[-0.015em]">
-              El proyecto empieza
-              <br />
-              <span className="font-serif italic text-[#a47c3a] dark:text-[#ddb66d]">
-                antes del plano.
-              </span>
-            </h2>
-            <p className="mt-8 max-w-md text-base leading-7 text-black/60 md:text-lg md:leading-8">
-              Cada lote se lee a partir de su luz, vegetación, acceso y relación con el paisaje. La
-              tecnología hace visible esa información.
-            </p>
-            <div className="mt-10 divide-y divide-black/15 border-y border-black/15">
+      {/* Principles & Territorial Dialogue Section — Asymmetric Split */}
+      <section className="border-t border-[#403a34]/15 px-6 py-24 md:px-12 md:py-32 xl:px-20 max-w-[1560px] mx-auto">
+        <div className="grid gap-12 lg:grid-cols-12 lg:items-stretch">
+          <div data-reveal className="reveal-up lg:col-span-5 flex flex-col justify-between">
+            <div>
+              <div className="mb-4 flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#403a34]">
+                <span className="size-1 rounded-full bg-[#403a34]" />
+                <span>Diseñado con el Territorio</span>
+              </div>
+              <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
+                El proyecto empieza antes del plano.
+              </h2>
+              <p className="mt-6 text-[18px] leading-[1.5] text-[#333333]">
+                Cada lote se analiza a partir de su luz, vegetación nativa, topografía y relación con el paisaje para maximizar la habitabilidad bioclimática.
+              </p>
+            </div>
+
+            <div className="mt-10 divide-y divide-[#403a34]/15 border-y border-[#403a34]/15">
               {principles.map(({ icon: Icon, title, description }, index) => (
-                <div key={title} className="group flex gap-5 py-5">
-                  <span className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-full border border-[#b5863c]/35 text-[#a47c3a] transition group-hover:bg-[#b5863c] group-hover:text-white">
-                    <Icon size={16} strokeWidth={1.5} />
+                <div key={title} className="group flex items-start gap-4 py-4 sm:py-5">
+                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-[#403a34] text-[#403a34] transition group-hover:bg-[#403a34] group-hover:text-[#f6f1eb]">
+                    <Icon size={14} strokeWidth={1.5} />
                   </span>
                   <div>
-                    <h3 className="text-lg">{title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-black/55">{description}</p>
+                    <h3 className="text-[17px] font-medium tracking-[-0.02em] text-[#403a34]">{title}</h3>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-[#555555]">{description}</p>
                   </div>
-                  <span className="ml-auto pt-1 font-mono text-[10px] text-[#a47c3a]">
+                  <span className="ml-auto text-[11px] font-medium tracking-[0.1em] text-[#403a34]">
                     0{index + 1}
                   </span>
                 </div>
@@ -166,21 +296,23 @@ export default function TerritoryExperienceSections() {
 
           <div
             data-reveal
-            className="reveal-up reveal-up--late relative order-1 min-h-[460px] lg:order-2 lg:min-h-[640px]"
+            className="reveal-up reveal-up--late relative lg:col-span-7 h-full flex flex-col"
           >
-            <img
-              src={`${base}projects/lotes-360/acceso-render.png`}
-              alt="Acceso al proyecto Lotes 360"
-              className="absolute right-0 top-0 h-[78%] w-[78%] rounded-2xl object-cover"
-            />
-            <img
-              src={`${base}projects/lotes-360/lot-l18-zona-social.png`}
-              alt="Zona social rodeada de naturaleza"
-              className="absolute bottom-0 left-0 h-[48%] w-[49%] rounded-2xl border-[10px] border-[#f4f0ea] object-cover"
-            />
-            <span className="absolute bottom-[8%] right-[4%] rounded-full bg-[#332e29] px-4 py-3 text-[9px] font-bold uppercase tracking-[.18em] text-white">
-              Cartagena · Colombia
-            </span>
+            {/* 0px radius architectural photograph frame in 1px Walnut Ink border aligned with left column */}
+            <div className="border border-[#403a34] bg-[#f6f1eb] overflow-hidden h-full flex flex-col justify-between">
+              <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[440px] overflow-hidden bg-[#e8e0d5]">
+                <img
+                  src={`${import.meta.env.BASE_URL}images/territory-masterplan-nature.jpg`}
+                  alt="Acceso y Paisajismo Lotes 360°"
+                  className="absolute inset-0 h-full w-full object-cover object-center block transition-transform duration-700 hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-4 sm:p-5 border-t border-[#403a34] flex items-center justify-between text-[10px] uppercase tracking-[0.1em] text-[#555555] shrink-0">
+                <span>Lotes 360° · Acceso Privado & Paisajismo Nativo</span>
+                <span>Cartagena · Turbaco</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

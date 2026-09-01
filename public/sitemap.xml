@@ -16,17 +16,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://autem.es/properties/residencia-azure</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://autem.es/properties/eco-villa-sierra</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://autem.es/properties/the-horizon-suite</loc>
+    <loc>https://autem.es/proyecto/lotes-360</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

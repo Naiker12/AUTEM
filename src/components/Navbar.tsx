@@ -4,6 +4,8 @@ import { useModalA11y } from "@/hooks/useModalA11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { X } from "lucide-react";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
+import Container from "@/components/layout/Container";
+import { useScrollFrame } from "@/hooks/useScrollFrame";
 
 interface NavbarProps {
   variant: "home" | "inner" | "about";
@@ -23,7 +25,7 @@ const navItems: NavItem[] = [
     href: `${import.meta.env.BASE_URL}#tecnologia`,
     label: "Metodología & Servicios",
   },
-  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "Estudio", page: true },
+  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "Nosotros", page: true },
   { id: "contacto", href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
 ];
 
@@ -40,19 +42,14 @@ export default function Navbar({ variant }: NavbarProps) {
   const isHome = variant === "home";
   const isAbout = variant === "about";
 
-  useEffect(() => {
-    const handleHeaderScroll = () => setIsScrolled(window.scrollY > 48);
-    handleHeaderScroll();
-    window.addEventListener("scroll", handleHeaderScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleHeaderScroll);
-  }, []);
+  useScrollFrame(() => setIsScrolled(window.scrollY > 48));
 
   const whatsappUrl =
     `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent("Hola AUTEM, me interesa conocer más sobre sus proyectos.");
 
   // Track active section on scroll
-  useEffect(() => {
+  useScrollFrame(() => {
     if (!isHome) {
       setActiveSection("");
       return;
@@ -60,27 +57,20 @@ export default function Navbar({ variant }: NavbarProps) {
 
     const sectionIds = ["proyectos", "tecnologia", "contacto"];
 
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 220;
+    const scrollPosition = window.scrollY + 220;
 
-      for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const id = sectionIds[i];
-        const el = document.getElementById(id);
-        if (el) {
-          const top = el.offsetTop;
-          if (scrollPosition >= top) {
-            setActiveSection(id);
-            return;
-          }
+    for (let i = sectionIds.length - 1; i >= 0; i--) {
+      const id = sectionIds[i];
+      const el = document.getElementById(id);
+      if (el) {
+        const top = el.offsetTop;
+        if (scrollPosition >= top) {
+          setActiveSection(id);
+          return;
         }
       }
-      setActiveSection("");
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener("scroll", handleScroll);
+    }
+    setActiveSection("");
   }, [isHome]);
 
   useEffect(() => {
@@ -142,13 +132,13 @@ export default function Navbar({ variant }: NavbarProps) {
                 : "border-b border-border/60 bg-background/78 text-foreground backdrop-blur-xl"
           : isAbout
             ? menuOpen
-              ? "bg-primary"
-              : "border-b border-white/10 bg-[#090a0a]/80 text-white backdrop-blur-md"
+              ? "bg-[#f6f1eb] text-[#403a34]"
+              : "border-b border-[#403a34]/15 bg-[#f6f1eb]/90 text-[#403a34] backdrop-blur-md"
             : "bg-background/80 backdrop-blur-md"
       }`}
     >
-      <div
-        className={`mx-auto flex max-w-[1800px] items-center justify-between transition-all duration-500 ${
+      <Container
+        className={`flex items-center justify-between transition-all duration-500 ${
           isHome && isScrolled && !menuOpen
             ? "rounded-[2rem] border border-border/75 bg-background/88 px-5 py-3 shadow-[0_16px_50px_rgba(30,25,18,0.14)] backdrop-blur-2xl md:px-8 lg:px-10"
             : "px-6 py-5 md:px-10 lg:px-14 xl:px-20"
@@ -156,10 +146,14 @@ export default function Navbar({ variant }: NavbarProps) {
       >
         <Link
           to="/"
-          className="group flex items-center gap-3.5 text-foreground"
+          className={`group flex items-center gap-3.5 ${isAbout ? "text-[#403a34]" : "text-foreground"}`}
           aria-label="AUTEM — Territorio y arquitectura"
         >
-          <span className="flex size-12 items-center justify-center rounded-full border border-accent/30 bg-accent/[0.06] transition duration-500 group-hover:border-accent/65 group-hover:bg-accent/[0.12]">
+          <span className={`flex size-12 items-center justify-center rounded-full border transition duration-500 ${
+            isAbout
+              ? "border-[#403a34]/30 bg-[#403a34]/[0.05] group-hover:border-[#403a34]"
+              : "border-accent/30 bg-accent/[0.06] group-hover:border-accent/65 group-hover:bg-accent/[0.12]"
+          }`}>
             <AutemBrandIcon
               size={33}
               className="transition-transform duration-500 group-hover:scale-105"
@@ -171,7 +165,7 @@ export default function Navbar({ variant }: NavbarProps) {
         </Link>
         <div className="hidden gap-5 text-[10px] font-medium uppercase tracking-[0.18em] md:flex lg:gap-8 lg:text-xs lg:tracking-[0.2em]">
           {navItems.map((item) => {
-            const isActive = activeSection === item.id;
+            const isActive = isAbout ? item.id === "nosotros" : activeSection === item.id;
             return (
               <a
                 key={item.id}
@@ -179,13 +173,19 @@ export default function Navbar({ variant }: NavbarProps) {
                 onClick={(e) => handleNavClick(e, item.id, item.page)}
                 className={`relative whitespace-nowrap py-1 transition-all duration-300 ${
                   isActive
-                    ? "text-accent font-bold tracking-[0.25em]"
-                    : "hover:text-accent opacity-85 hover:opacity-100"
+                    ? isAbout
+                      ? "text-[#403a34] font-bold tracking-[0.22em]"
+                      : "text-accent font-bold tracking-[0.25em]"
+                    : isAbout
+                      ? "text-[#403a34]/75 hover:text-[#403a34]"
+                      : "hover:text-accent opacity-85 hover:opacity-100"
                 }`}
               >
                 {item.label}
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-accent animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.8)]" />
+                  <span className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full ${
+                    isAbout ? "bg-[#c5a059]" : "bg-accent animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.8)]"
+                  }`} />
                 )}
               </a>
             );
@@ -196,9 +196,11 @@ export default function Navbar({ variant }: NavbarProps) {
             onClick={() => setIsDark(!isDark)}
             aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
             className={`hidden size-8 items-center justify-center rounded-full border text-xs transition-all md:flex ${
-              (isHome && isDark) || isAbout
-                ? "border-white/20 hover:bg-white/10"
-                : "border-border hover:bg-muted"
+              isAbout
+                ? "border-[#403a34]/25 text-[#403a34] hover:bg-[#403a34]/10"
+                : (isHome && isDark)
+                  ? "border-white/20 hover:bg-white/10"
+                  : "border-border hover:bg-muted"
             } ${isDark ? "theme-toggle-spin" : ""}`}
           >
             {isDark ? "\u2600\uFE0F" : "\uD83C\uDF19"}
@@ -211,16 +213,19 @@ export default function Navbar({ variant }: NavbarProps) {
             >
               Invertir
             </a>
+          ) : isAbout ? (
+            <a
+              href="#contacto-nosotros"
+              className="hidden rounded-full border border-[#403a34] bg-transparent px-5 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[#403a34] transition-all hover:bg-[#403a34] hover:text-[#f6f1eb] md:inline-block"
+            >
+              Invertir
+            </a>
           ) : (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`hidden border px-4 py-2 text-[9px] uppercase tracking-widest transition-all lg:px-6 lg:text-[10px] md:inline-block ${
-                isAbout
-                  ? "border-white/20 hover:bg-white hover:text-primary"
-                  : "border-primary/20 hover:bg-primary hover:text-primary-foreground"
-              }`}
+              className="hidden border border-primary/20 px-4 py-2 text-[9px] uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground lg:px-6 lg:text-[10px] md:inline-block"
             >
               Agendar visita
             </a>
@@ -237,32 +242,32 @@ export default function Navbar({ variant }: NavbarProps) {
               className={`hamburger-line block h-0.5 w-6 transition-all ${
                 menuOpen
                   ? "bg-foreground"
-                  : (isHome && isDark) || isAbout
+                  : isDark
                     ? "bg-white"
-                    : "bg-foreground"
+                    : "bg-[#403a34]"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
                 menuOpen
                   ? "bg-foreground"
-                  : (isHome && isDark) || isAbout
+                  : isDark
                     ? "bg-white"
-                    : "bg-foreground"
+                    : "bg-[#403a34]"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
                 menuOpen
                   ? "bg-foreground"
-                  : (isHome && isDark) || isAbout
+                  : isDark
                     ? "bg-white"
-                    : "bg-foreground"
+                    : "bg-[#403a34]"
               }`}
             />
           </button>
         </div>
-      </div>
+      </Container>
 
       {menuOpen && (
         <div

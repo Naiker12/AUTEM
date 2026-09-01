@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useScrollFrame } from "@/hooks/useScrollFrame";
 
 interface SectionMeasureLineProps {
   index: number;
@@ -11,36 +12,19 @@ export default function SectionMeasureLine({ index, total, label }: SectionMeasu
   const fillRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  useScrollFrame(() => {
     const root = rootRef.current;
     const fill = fillRef.current;
     const marker = markerRef.current;
     const section = root?.closest("section");
     if (!root || !fill || !marker || !section) return;
+    const bounds = section.getBoundingClientRect();
+    const distance = window.innerHeight + bounds.height;
+    const progress = Math.min(1, Math.max(0, (window.innerHeight - bounds.top) / distance));
 
-    let frameId = 0;
-    const updateProgress = () => {
-      frameId = 0;
-      const bounds = section.getBoundingClientRect();
-      const distance = window.innerHeight + bounds.height;
-      const progress = Math.min(1, Math.max(0, (window.innerHeight - bounds.top) / distance));
-
-      fill.style.transform = `scaleX(${progress})`;
-      marker.style.left = `${progress * 100}%`;
-    };
-    const scheduleUpdate = () => {
-      if (!frameId) frameId = window.requestAnimationFrame(updateProgress);
-    };
-
-    updateProgress();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-    return () => {
-      if (frameId) window.cancelAnimationFrame(frameId);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
-  }, []);
+    fill.style.transform = `scaleX(${progress})`;
+    marker.style.left = `${progress * 100}%`;
+  });
 
   const number = String(index).padStart(2, "0");
   const totalNumber = String(total).padStart(2, "0");

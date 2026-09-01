@@ -1,149 +1,162 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
+import Container from "@/components/layout/Container";
+import { useScrollFrame } from "@/hooks/useScrollFrame";
 
 const base = import.meta.env.BASE_URL;
 
 const projects = [
   {
+    number: "01",
     name: "Lotes 360°",
-    type: "Parcelación campestre",
+    type: "Parcelación Campestre",
     location: "Cartagena",
-    image: "projects/lotes-360/panoramica-render.png",
+    area: "128 Lotes · Desde 1.080 m²",
+    image: "images/lotes-360-luxury-masterplan.jpg",
     href: "proyecto/lotes-360",
     className: "selected-project--left",
   },
   {
+    number: "02",
     name: "Eco Villa Sierra",
-    type: "Residencia de paisaje",
+    type: "Residencia de Paisaje",
     location: "Turbaco",
-    image: "projects/eco-villa-sierra/fachada.jpg",
+    area: "480 m² Construidos · Lote 2.200 m²",
+    image: "projects/eco-villa-sierra/fachada-home.webp",
     href: "proyecto/eco-villa-sierra",
     className: "selected-project--center",
-  },
-  {
-    name: "The Horizon Suite",
-    type: "Arquitectura residencial",
-    location: "Cartagena",
-    image: "projects/the-horizon-suite/fachada.jpg",
-    href: "proyecto/the-horizon-suite",
-    className: "selected-project--right",
   },
 ];
 
 export default function SelectedProjectsSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!section) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIsVisible(true);
+      return;
+    }
 
-    let frame = 0;
-    const cards = section.querySelectorAll<HTMLElement>(".selected-project");
-
-    const updateScrollProgress = () => {
-      frame = 0;
-      const bounds = section.getBoundingClientRect();
-      const windowH = window.innerHeight;
-
-      const progress = Math.min(1, Math.max(0, (windowH - bounds.top) / (windowH + bounds.height)));
-
-      cards.forEach((card, i) => {
-        const speed = i === 1 ? -8 : i === 0 ? 18 : -14;
-        const yOffset = (progress - 0.5) * speed;
-        card.style.setProperty("--parallax-y", `${yOffset.toFixed(2)}px`);
-      });
-    };
-
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(updateScrollProgress);
-    };
-
-    updateScrollProgress();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.16 },
+    );
+    observer.observe(section);
 
     return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      observer.disconnect();
     };
   }, []);
+
+  useScrollFrame(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const bounds = section.getBoundingClientRect();
+    const windowH = window.innerHeight;
+    const progress = Math.min(1, Math.max(0, (windowH - bounds.top) / (windowH + bounds.height)));
+    section.style.setProperty("--projects-scroll", progress.toFixed(3));
+
+    section.querySelectorAll<HTMLElement>(".selected-project").forEach((card, index) => {
+      const speed = index === 1 ? -8 : index === 0 ? 18 : -14;
+      const yOffset = (progress - 0.5) * speed;
+      card.style.setProperty("--parallax-y", `${yOffset.toFixed(2)}px`);
+    });
+  });
 
   return (
     <section
       ref={sectionRef}
       id="proyectos"
-      className="selected-projects relative z-20 overflow-hidden bg-[#efeae1] px-6 py-24 text-[#332e29] md:px-12 md:py-32 xl:px-20"
+      className="selected-projects relative z-20 overflow-hidden bg-[#f6f1eb] px-6 py-24 text-[#403a34] md:px-12 md:py-32 xl:px-20 border-t border-[#403a34]/15"
     >
-      <div className="mx-auto max-w-[1700px]">
-        <header className="selected-projects__header grid gap-8 border-t border-black/15 pt-7 md:grid-cols-[1.25fr_.75fr] md:items-end">
+      <Container>
+        <header
+          className="selected-projects__header grid gap-8 border-b border-[#403a34]/15 pb-10 md:grid-cols-[1.25fr_.75fr] md:items-end"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: `translate3d(0, ${isVisible ? "0" : "28px"}, 0)`,
+            transition:
+              "opacity 700ms cubic-bezier(.19,1,.22,1), transform 700ms cubic-bezier(.19,1,.22,1)",
+          }}
+        >
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[.28em] text-[#a47c3a] dark:text-[#ddb66d]">
-              Proyectos seleccionados
-            </p>
-            <h2 className="mt-4 max-w-4xl text-[clamp(2.5rem,5.4vw,5.5rem)] font-normal leading-[1.08] tracking-[-0.015em]">
-              El paisaje define
-              <br />
-              <span className="font-serif italic font-normal text-[#a47c3a] dark:text-[#ddb66d]">
-                la arquitectura.
-              </span>
+            <div className="mb-4 flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#403a34]">
+              <span className="size-1 rounded-full bg-[#403a34]" />
+              <span>Proyectos Seleccionados</span>
+            </div>
+            <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
+              El paisaje define la arquitectura.
             </h2>
           </div>
-          <p className="max-w-sm text-sm leading-6 text-black/60 dark:text-white/60 md:justify-self-end md:pb-2">
-            Tres visiones arquitectónicas en el Caribe colombiano, diseñadas desde la relación entre
-            territorio, luz y vida cotidiana.
+          <p className="max-w-md text-[18px] leading-[1.5] text-[#333333] md:justify-self-end">
+            Dos visiones arquitectónicas en el Caribe colombiano, proyectadas con rigor técnico y diálogo permanente con el entorno natural.
           </p>
         </header>
 
-        <div className="selected-projects__grid mt-14 grid gap-6 md:grid-cols-[.75fr_1.5fr_.75fr] md:items-start lg:mt-20">
+        <div className="selected-projects__grid mt-14 grid gap-8 md:grid-cols-2 lg:mt-20">
           {projects.map((project, index) => (
             <article
               key={project.name}
               className={`selected-project ${project.className} transition-transform duration-500 ease-out`}
-              style={{
-                transform: "translate3d(0, var(--parallax-y, 0), 0)",
-              }}
+              style={
+                {
+                  opacity: isVisible ? 1 : 0,
+                  transform: `translate3d(0, calc(var(--parallax-y, 0px) + ${isVisible ? "0px" : "44px"}), 0)`,
+                  transition:
+                    "opacity 760ms cubic-bezier(.19,1,.22,1), transform 760ms cubic-bezier(.19,1,.22,1)",
+                  transitionDelay: `${index * 110}ms`,
+                } as CSSProperties
+              }
             >
               <a
                 href={`${base}${project.href}`}
-                className="group block"
+                className="group block border border-[#403a34] bg-[#f6f1eb] p-0 overflow-hidden transition hover:border-[#403a34]"
                 aria-label={`Ver ${project.name}`}
               >
-                <div
-                  className={`selected-project__image relative overflow-hidden rounded-2xl bg-[#ded5c9] shadow-lg transition-all duration-700 group-hover:shadow-2xl ${
-                    index === 1
-                      ? "h-[420px] md:h-[560px] lg:h-[620px]"
-                      : "h-[360px] md:h-[450px] lg:h-[490px]"
-                  }`}
-                >
+                {/* 0px radius architectural photograph frame - completely flush */}
+                <div className="relative w-full h-[360px] sm:h-[440px] lg:h-[500px] overflow-hidden bg-[#e8e0d5]">
                   <img
                     src={`${base}${project.image}`}
                     alt={project.name}
-                    className="selected-project__img h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                    className="selected-project__img h-full w-full object-cover object-center block transition-transform duration-700 group-hover:scale-105"
                   />
-                  <span className="absolute right-4 top-4 flex size-11 translate-y-2 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-hover:bg-[#b5863c] group-hover:border-[#b5863c]">
-                    <ArrowUpRight size={18} strokeWidth={1.8} />
+                  <div className="absolute top-4 left-4 bg-[#f6f1eb] px-3 py-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#403a34] border border-[#403a34]/30">
+                    {project.number}
+                  </div>
+                  <span className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full border border-[#403a34] bg-[#f6f1eb] text-[#403a34] transition-all duration-300 group-hover:bg-[#403a34] group-hover:text-[#f6f1eb]">
+                    <ArrowUpRight size={16} strokeWidth={1.8} />
                   </span>
-                  <span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
                 </div>
-                <div className="selected-project__meta mt-4 flex items-start justify-between border-b border-black/20 pb-5 transition-colors group-hover:border-[#a47c3a]">
-                  <div>
-                    <h3 className="font-serif text-xl font-normal tracking-[-.02em] transition-colors group-hover:text-[#a47c3a] md:text-2xl">
-                      {project.name}
-                    </h3>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[.15em] text-black/50">
+
+                <div className="selected-project__meta p-6 sm:p-8 border-t border-[#403a34] flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
                       {project.location} · {project.type}
                     </p>
+                    <span className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
+                      {project.area}
+                    </span>
                   </div>
-                  <span className="font-mono text-[11px] font-bold text-[#a47c3a]">
-                    0{index + 1}
-                  </span>
+                  <h3 className="mt-3 text-[26px] sm:text-[32px] font-medium leading-tight tracking-[-0.03em] text-[#403a34]">
+                    {project.name}
+                  </h3>
                 </div>
               </a>
             </article>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

@@ -5,6 +5,11 @@ import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [TanStackRouterVite({ quoteStyle: "double" }), react(), tailwindcss(), tsconfigPaths()],
+  plugins: [
+    TanStackRouterVite({ quoteStyle: "double", autoCodeSplitting: true }),
+    react(),
+    tailwindcss(),
+    tsconfigPaths(),
+  ],
   base: "/",
 });

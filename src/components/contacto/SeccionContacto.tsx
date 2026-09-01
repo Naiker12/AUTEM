@@ -2,6 +2,7 @@ import TarjetaBeneficios from "./TarjetaBeneficios";
 import FormularioContacto from "./FormularioContacto";
 import { Card, CardContent } from "@/components/ui/card";
 import SectionMeasureLine from "@/components/SectionMeasureLine";
+import Container from "@/components/layout/Container";
 
 export default function SeccionContacto() {
   return (
@@ -11,7 +12,7 @@ export default function SeccionContacto() {
     >
       <SectionMeasureLine index={4} total={4} label="Contacto" />
       <div className="contact-section__glow pointer-events-none absolute -right-32 top-0 size-[480px] rounded-full bg-accent/[0.08] blur-[140px]" />
-      <div className="section-scroll-content relative mx-auto max-w-[1500px] px-5 sm:px-8 lg:px-12">
+      <Container className="section-scroll-content relative px-5 sm:px-8 lg:px-12">
         <Card className="overflow-hidden rounded-[2rem] border-border/70 bg-card/78 shadow-[0_28px_90px_rgba(35,28,18,.12)] backdrop-blur-xl dark:bg-card/62">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-6 py-4 sm:px-8 lg:px-10">
             <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-accent">
@@ -30,7 +31,7 @@ export default function SeccionContacto() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </Container>
     </section>
   );
 }

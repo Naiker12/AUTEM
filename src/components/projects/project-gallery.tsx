@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Maximize2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useModalA11y } from "@/hooks/useModalA11y";
 import type { ProjectGalleryProps } from "./project-types";
 
 export default function ProjectGallery({ property, images: customImages }: ProjectGalleryProps) {
   const images = customImages || property.images || [property.image];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const modalRef = useModalA11y(isFullscreen, () => setIsFullscreen(false));
 
   const activeImage = images[selectedIndex] || property.image;
 
@@ -88,6 +90,8 @@ export default function ProjectGallery({ property, images: customImages }: Proje
                 alt={`${property.name} thumbnail ${i + 1}`}
                 width={160}
                 height={107}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
             </button>
@@ -97,7 +101,13 @@ export default function ProjectGallery({ property, images: customImages }: Proje
 
       {/* Fullscreen Lightbox Modal */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-lg p-4">
+        <div
+          ref={modalRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-lg"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Galería de ${property.name}`}
+        >
           <button
             onClick={() => setIsFullscreen(false)}
             className="absolute right-6 top-6 z-10 flex size-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
@@ -111,12 +121,14 @@ export default function ProjectGallery({ property, images: customImages }: Proje
               <button
                 onClick={prevImage}
                 className="absolute left-6 top-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                aria-label="Imagen anterior"
               >
                 <ChevronLeft size={28} />
               </button>
               <button
                 onClick={nextImage}
                 className="absolute right-6 top-1/2 -translate-y-1/2 flex size-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                aria-label="Imagen siguiente"
               >
                 <ChevronRight size={28} />
               </button>

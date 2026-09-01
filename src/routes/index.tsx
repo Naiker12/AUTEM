@@ -30,11 +30,11 @@ export const Route = createFileRoute("/")({
     meta: [
       {
         property: "og:image",
-        content: `${import.meta.env.BASE_URL}antes.png`,
+        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
       },
       {
         name: "twitter:image",
-        content: `${import.meta.env.BASE_URL}antes.png`,
+        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
       },
     ],
     scripts: [
@@ -146,7 +146,7 @@ function Index() {
   }, [showLoader]);
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
+    <div className="home-page min-h-screen font-sans text-foreground selection:bg-accent/30">
       {/* 3D Model — persistent, never destroyed (stays alive for AR cache) */}
       <div
         ref={loaderContainerRef}

@@ -48,10 +48,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground">
       <div className="pointer-events-none absolute size-[480px] rounded-full bg-accent/8 blur-[120px]" />
       <div className="relative z-10 mx-auto max-w-lg text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-accent backdrop-blur-sm">
-          <span className="size-1.5 rounded-full bg-accent" />
-          AUTEM Studio
-        </span>
         <h1 className="mt-6 font-serif text-[clamp(2.2rem,4.5vw,3.4rem)] font-light leading-tight tracking-tight text-foreground">
           No se pudo cargar la página
         </h1>
@@ -105,12 +101,12 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       {
         property: "og:image",
-        content: `${import.meta.env.BASE_URL}antes.png`,
+        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:image",
-        content: `${import.meta.env.BASE_URL}antes.png`,
+        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
       },
     ],
     links: [
@@ -126,6 +122,48 @@ export const Route = createRootRoute({
 const queryClient = new QueryClient();
 
 function RootComponent() {
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest<HTMLElement>(
+        "button, a, .magnetic-btn, [role='button']",
+      );
+      if (!target) return;
+
+      const rect = target.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      const diameter = Math.max(rect.width, rect.height) * 1.5;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      ripple.style.width = `${diameter}px`;
+      ripple.style.height = `${diameter}px`;
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      ripple.className = `button-burst-ripple ${
+        target.classList.contains("border-emerald-400") || target.innerText.toLowerCase().includes("whatsapp")
+          ? "emerald"
+          : ""
+      }`;
+
+      // Ensure target has relative positioning and hidden overflow for contained ripple
+      const previousPosition = window.getComputedStyle(target).position;
+      if (previousPosition === "static") {
+        target.style.position = "relative";
+      }
+      target.style.overflow = "hidden";
+
+      target.appendChild(ripple);
+      setTimeout(() => {
+        ripple.remove();
+      }, 700);
+    };
+
+    document.addEventListener("click", handleGlobalClick, { passive: true });
+    return () => {
+      document.removeEventListener("click", handleGlobalClick);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ScrollProgress />

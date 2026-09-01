@@ -113,17 +113,21 @@ export default function SelectedLotPanel({ lot, onClose, onView3D }: SelectedLot
           <Button
             type="button"
             onClick={onView3D}
-            className="h-11 w-full rounded-xl bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+            className="h-11 w-full rounded-full border border-[#403a34] bg-[#403a34] text-[11px] font-medium uppercase tracking-[0.1em] text-[#f6f1eb] hover:bg-transparent hover:text-[#403a34] transition-all duration-300 dark:border-white/20 dark:bg-[#c5a059] dark:text-[#151413] dark:hover:bg-[#f6f1eb]"
           >
             <Box /> Ver en 3D / Recorrido
           </Button>
-          <Button type="button" variant="outline" className="h-10 w-full rounded-xl">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 w-full rounded-full border border-[#403a34]/30 bg-transparent text-[11px] font-medium uppercase tracking-[0.08em] text-[#403a34] hover:bg-[#403a34] hover:text-[#f6f1eb] transition-all duration-300 dark:border-white/20 dark:text-white dark:hover:bg-white dark:hover:text-[#151413]"
+          >
             <ScanLine /> Ver en AR
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="h-9 w-full rounded-xl text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="h-9 w-full rounded-full text-[10px] uppercase tracking-[0.08em] text-[#555555] hover:bg-[#403a34]/5 hover:text-[#403a34] transition-all dark:text-white/60 dark:hover:text-white"
           >
             <Download /> Descargar ficha
           </Button>
