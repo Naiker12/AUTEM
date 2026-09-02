@@ -68,7 +68,10 @@ export default function HomeHeroSection({ visible }: HomeHeroSectionProps) {
             className={`${entranceClass} home-entrance--scroll home-hero-scroll-cue pointer-events-auto absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-[#403a34]/20 bg-[#f6f1eb]/90 px-4 py-2 text-[8.5px] font-bold uppercase tracking-[0.22em] text-[#403a34] shadow-md backdrop-blur-md transition-all hover:bg-[#f6f1eb] hover:border-[#403a34]/40 md:border-0 md:bg-transparent md:shadow-none md:backdrop-blur-none md:text-muted-foreground md:px-0 md:py-0 md:gap-4 md:tracking-[0.28em]`}
           >
             <span className="home-scroll-line hidden md:block h-8 w-px bg-gradient-to-b from-accent to-transparent" />
-            <Mouse size={16} className="home-scroll-mouse text-[#403a34] md:text-foreground shrink-0" />
+            <Mouse
+              size={16}
+              className="home-scroll-mouse text-[#403a34] md:text-foreground shrink-0"
+            />
             <span>Desliza para descubrir</span>
           </a>
         </Container>
