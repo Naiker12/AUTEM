@@ -115,6 +115,21 @@ function Index() {
     return () => clearTimeout(timer);
   }, [modelVisible]);
 
+  // The entry animation intentionally starts the home page at the top. Restore
+  // an incoming hash after it finishes so links such as /#proyectos work from
+  // every internal page as well.
+  useEffect(() => {
+    if (!hideModel || !window.location.hash) return;
+
+    const sectionId = decodeURIComponent(window.location.hash.slice(1));
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+
+    const navOffset = 80;
+    const top = section.getBoundingClientRect().top + window.scrollY - navOffset;
+    window.scrollTo({ top, behavior: "auto" });
+  }, [hideModel]);
+
   // Exit intent popup
   useEffect(() => {
     if (showLoader) return;
