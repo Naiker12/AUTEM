@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Heart, Menu, MessageCircle, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Menu, MessageCircle, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ export default function ProjectHeader({
   showViewSwitcher,
 }: ProjectHeaderProps) {
   const [isDark, setIsDark] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("autem-theme");
@@ -79,16 +78,6 @@ export default function ProjectHeader({
           >
             {isDark ? <Moon className="text-accent" /> : <Sun className="text-accent" />}
             <span className="hidden sm:inline">{isDark ? "Noche" : "Día"}</span>
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setSaved((value) => !value)}
-            className={`rounded-full hover:bg-muted ${saved ? "text-accent" : "text-foreground"}`}
-            aria-label="Guardar proyecto"
-          >
-            <Heart fill={saved ? "currentColor" : "none"} />
           </Button>
           <Button
             asChild

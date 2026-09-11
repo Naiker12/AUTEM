@@ -10,7 +10,6 @@ export interface ProjectViewMode {
 
 export interface ProjectViewSettings {
   showLotCatalog: boolean;
-  showLotDetails: boolean;
   showViewSwitcher: boolean;
   showMapControls: boolean;
   showLotBoundaries: boolean;
@@ -23,7 +22,6 @@ export interface ProjectViewSettings {
 
 export const DEFAULT_PROJECT_VIEW_SETTINGS: ProjectViewSettings = {
   showLotCatalog: true,
-  showLotDetails: true,
   showViewSwitcher: true,
   showMapControls: true,
   showLotBoundaries: true,

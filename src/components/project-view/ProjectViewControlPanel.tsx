@@ -197,12 +197,6 @@ export default function ProjectViewControlPanel({
               onCheckedChange={(showLotCatalog) => onSettingsChange({ showLotCatalog })}
             />
             <SettingRow
-              title="Ficha del lote"
-              description="Datos y acciones del lote seleccionado."
-              checked={settings.showLotDetails}
-              onCheckedChange={(showLotDetails) => onSettingsChange({ showLotDetails })}
-            />
-            <SettingRow
               title="Selector de vistas"
               description="Navegación entre mapa, recorrido, galería y AR."
               checked={settings.showViewSwitcher}

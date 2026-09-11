@@ -1,6 +1,6 @@
 const BASE = import.meta.env.BASE_URL ?? "/";
 
-export type LotStatus = "Disponible" | "Últimas unidades" | "Reservado";
+export type LotStatus = "Disponible" | "Últimas unidades" | "Reservado" | "Por confirmar";
 
 export interface Lot {
   id: string;
@@ -9,7 +9,6 @@ export interface Lot {
   price: number;
   status: LotStatus;
   detail: string;
-  previewImage: string;
   terrainPosition: [number, number];
   /** Vertices in pixels over the equirectangular panorama. */
   panoramaPolygon?: [number, number][];
@@ -27,12 +26,11 @@ export const PANORAMA_360 = {
 export const lots: Lot[] = [
   {
     id: "L-01",
-    projectSlug: "residencia-azure",
-    area: 1240,
-    price: 210_000_000,
-    status: "Disponible",
-    detail: "Acceso principal",
-    previewImage: `${BASE}projects/lotes-360/acceso-render.png`,
+    projectSlug: "lotes-360",
+    area: 350.21,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 1 · Acceso principal",
     terrainPosition: [-10, 8],
     panoramaPolygon: [
       [90, 305],
@@ -43,13 +41,12 @@ export const lots: Lot[] = [
     ],
   },
   {
-    id: "L-07",
-    projectSlug: "residencia-azure",
-    area: 1080,
-    price: 225_000_000,
-    status: "Disponible",
-    detail: "Entorno verde",
-    previewImage: `${BASE}projects/lotes-360/lot-l07-entorno-verde.jpg`,
+    id: "L-02",
+    projectSlug: "lotes-360",
+    area: 371.64,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 1 · Acceso principal",
     terrainPosition: [-10, 0],
     panoramaPolygon: [
       [315, 285],
@@ -60,13 +57,12 @@ export const lots: Lot[] = [
     ],
   },
   {
-    id: "L-12",
-    projectSlug: "residencia-azure",
-    area: 1360,
-    price: 285_000_000,
-    status: "Últimas unidades",
-    detail: "Frente a quebrada",
-    previewImage: `${BASE}projects/lotes-360/lot-l12-quebrada.png`,
+    id: "L-03",
+    projectSlug: "lotes-360",
+    area: 432.97,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 1 · Vía interna",
     terrainPosition: [5, 4],
     panoramaPolygon: [
       [490, 315],
@@ -77,13 +73,12 @@ export const lots: Lot[] = [
     ],
   },
   {
-    id: "L-18",
-    projectSlug: "residencia-azure",
-    area: 1150,
-    price: 245_000_000,
-    status: "Disponible",
-    detail: "Cerca a zona social",
-    previewImage: `${BASE}projects/lotes-360/lot-l18-zona-social.png`,
+    id: "L-04",
+    projectSlug: "lotes-360",
+    area: 475.45,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 1 · Vía interna",
     terrainPosition: [10, 0],
     panoramaPolygon: [
       [710, 286],
@@ -94,13 +89,12 @@ export const lots: Lot[] = [
     ],
   },
   {
-    id: "L-24",
-    projectSlug: "residencia-azure",
-    area: 1420,
-    price: 360_000_000,
-    status: "Disponible",
-    detail: "Punto panorámico",
-    previewImage: `${BASE}projects/lotes-360/panoramica-render.png`,
+    id: "L-05",
+    projectSlug: "lotes-360",
+    area: 479.86,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 1 · Vía interna",
     terrainPosition: [10, -8],
     panoramaPolygon: [
       [805, 315],
@@ -109,6 +103,51 @@ export const lots: Lot[] = [
       [980, 425],
       [850, 408],
     ],
+  },
+  {
+    id: "L-06",
+    projectSlug: "lotes-360",
+    area: 427.72,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 2 · Vía interna",
+    terrainPosition: [10, -8],
+  },
+  {
+    id: "L-07",
+    projectSlug: "lotes-360",
+    area: 301.67,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 2 · Vía interna",
+    terrainPosition: [10, -8],
+  },
+  {
+    id: "L-08",
+    projectSlug: "lotes-360",
+    area: 300.48,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 2 · Vía interna",
+    terrainPosition: [10, -8],
+  },
+  {
+    id: "L-09",
+    projectSlug: "lotes-360",
+    area: 288.07,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 2 · Vía interna",
+    terrainPosition: [10, -8],
+  },
+  {
+    id: "L-10",
+    projectSlug: "lotes-360",
+    area: 300,
+    price: 0,
+    status: "Por confirmar",
+    detail: "Manzana 2 · Vía interna",
+    terrainPosition: [10, -8],
   },
 ];
 
@@ -122,6 +161,7 @@ export function getLotsByProject(projectSlug: string): Lot[] {
 }
 
 export function formatLotPrice(price: number): string {
+  if (price <= 0) return "Por definir";
   return `$${Math.round(price / 1_000_000)}M`;
 }
 

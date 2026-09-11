@@ -8,11 +8,12 @@ const base = import.meta.env.BASE_URL;
 const projects = [
   {
     number: "01",
-    name: "Lotes 360°",
+    name: "Villa Paraíso",
     type: "Parcelación Campestre",
-    location: "Cartagena",
-    area: "128 Lotes · Desde 1.080 m²",
-    image: "images/lotes-360-luxury-masterplan.jpg",
+    location: "Santa Rosa · Villanueva",
+    area: "338 lotes · Plano maestro",
+    image: "projects/villa-paraiso/masterplan-card.webp",
+    imageFit: "contain",
     href: "proyecto/lotes-360",
     className: "selected-project--left",
   },
@@ -130,7 +131,7 @@ export default function SelectedProjectsSection() {
                     alt={project.name}
                     loading="lazy"
                     decoding="async"
-                    className="selected-project__img h-full w-full object-cover object-center block transition-transform duration-700 group-hover:scale-105"
+                    className={`selected-project__img h-full w-full object-center block transition-transform duration-700 group-hover:scale-105 ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
                   />
                   <div className="absolute top-4 left-4 bg-[#f6f1eb] px-3 py-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#403a34] border border-[#403a34]/30">
                     {project.number}

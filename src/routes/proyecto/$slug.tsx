@@ -9,13 +9,13 @@ import { getLotsByProject } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import {
   InteractivePanorama,
+  MasterplanImageViewer,
   LotSelectionPanel,
   ModeSwitcher,
   DEFAULT_PROJECT_VIEW_SETTINGS,
   PROJECT_VIEW_MODES,
   ProjectViewControlPanel,
   ProjectHeader,
-  SelectedLotPanel,
   type ProjectViewSettings,
   type ViewMode,
 } from "@/components/project-view";
@@ -30,7 +30,6 @@ function ProjectView() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
-  const [isLotDetailVisible, setIsLotDetailVisible] = useState(true);
   const [isMobileLotPanelOpen, setIsMobileLotPanelOpen] = useState(false);
   const [viewSettings, setViewSettings] = useState<ProjectViewSettings>(
     DEFAULT_PROJECT_VIEW_SETTINGS,
@@ -38,6 +37,7 @@ function ProjectView() {
   const [selectedLotId, setSelectedLotId] = useState(
     projectLots[1]?.id ?? projectLots[0]?.id ?? "",
   );
+  const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = projectLots.find((lot) => lot.id === selectedLotId) ?? projectLots[0];
   const hasLots = projectLots.length > 0;
 
@@ -73,7 +73,7 @@ function ProjectView() {
 
   const selectLot = (lot: (typeof projectLots)[number]) => {
     setSelectedLotId(lot.id);
-    setIsLotDetailVisible(true);
+    setLotFocusRequest((request) => request + 1);
     setIsMobileLotPanelOpen(false);
   };
 
@@ -92,14 +92,27 @@ function ProjectView() {
       JSON.stringify(DEFAULT_PROJECT_VIEW_SETTINGS),
     );
     setIsLotPanelVisible(true);
-    setIsLotDetailVisible(true);
   };
 
   return (
     <main className="h-[100svh] min-h-[680px] overflow-hidden bg-background font-sans text-foreground">
       <div className="relative h-full">
         {mode === "tour" ? (
-          <InteractivePanorama />
+          property.slug === "lotes-360" ? (
+            <MasterplanImageViewer
+              image={`${import.meta.env.BASE_URL}projects/villa-paraiso/masterplan-vectorized.svg`}
+              alt="Plano maestro vectorizado de Villa Paraíso"
+              lots={projectLots}
+              selectedLotId={selectedLot?.id ?? ""}
+              focusRequest={lotFocusRequest}
+              onSelectLot={(lotId) => {
+                const lot = projectLots.find((item) => item.id === lotId);
+                if (lot) selectLot(lot);
+              }}
+            />
+          ) : (
+            <InteractivePanorama />
+          )
         ) : (
           <img
             src={
@@ -172,6 +185,7 @@ function ProjectView() {
             selectedId={selectedLot?.id ?? ""}
             mobileOpen={isMobileLotPanelOpen}
             onSelect={selectLot}
+            onView3D={() => setMode("tour")}
             onHide={() => {
               setIsLotPanelVisible(false);
               setIsMobileLotPanelOpen(false);
@@ -186,14 +200,6 @@ function ProjectView() {
           >
             <PanelLeftOpen /> Mostrar lotes
           </Button>
-        )}
-
-        {selectedLot && viewSettings.showLotDetails && isLotDetailVisible && isLotPanelVisible && (
-          <SelectedLotPanel
-            lot={selectedLot}
-            onClose={() => setIsLotDetailVisible(false)}
-            onView3D={() => setMode("tour")}
-          />
         )}
         {mode === "gallery" && images.length > 1 && (
           <>
@@ -273,25 +279,6 @@ function ProjectView() {
               )}
             </div>
           </section>
-        )}
-
-        {selectedLot && viewSettings.showLotDetails && (
-          <div className="absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-border bg-background/88 px-4 py-3 text-foreground shadow-2xl backdrop-blur-xl md:bottom-4 2xl:hidden">
-            <div>
-              <span className="block text-[8px] uppercase tracking-[0.18em] text-accent">
-                Lote seleccionado
-              </span>
-              <strong className="text-lg">{selectedLot.id}</strong>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setMode("tour")}
-              className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              Ver en 3D
-            </Button>
-          </div>
         )}
       </div>
     </main>
