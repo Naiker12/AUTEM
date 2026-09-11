@@ -1,6 +1,39 @@
-import { Bell, Save } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-const options = [["Nuevo contacto", "Avisa al equipo cuando llega un lead desde la web."], ["Proyecto publicado", "Confirma cuando un proyecto queda visible al público."], ["Cambios de disponibilidad", "Notifica modificaciones de lote y reservas."]]
-export function NotificationSettings() { return <Card id="notificaciones" className="scroll-mt-24 rounded-2xl"><CardHeader><div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-accent/10 text-accent"><Bell className="size-5" /></div><CardTitle className="font-serif text-2xl">Notificaciones</CardTitle><CardDescription>Elige qué eventos deben llegar al equipo administrativo.</CardDescription></CardHeader><CardContent className="space-y-3">{options.map(([title, text]) => <div key={title} className="flex items-center justify-between gap-5 rounded-xl border border-border/70 p-4"><div><p className="text-sm font-medium">{title}</p><p className="mt-1 text-xs text-muted-foreground">{text}</p></div><Switch defaultChecked /></div>)}<Button className="mt-2 rounded-full bg-accent text-accent-foreground"><Save className="size-4" /> Guardar notificaciones</Button></CardContent></Card> }
+import { Bell, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+const options = [
+  ["Nuevo contacto", "Avisa al equipo cuando llega un lead desde la web."],
+  ["Proyecto publicado", "Confirma cuando un proyecto queda visible al público."],
+  ["Cambios de disponibilidad", "Notifica modificaciones de lote y reservas."],
+];
+export function NotificationSettings() {
+  return (
+    <Card id="notificaciones" className="scroll-mt-24 rounded-2xl">
+      <CardHeader>
+        <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
+          <Bell className="size-5" />
+        </div>
+        <CardTitle className="font-serif text-2xl">Notificaciones</CardTitle>
+        <CardDescription>Elige qué eventos deben llegar al equipo administrativo.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {options.map(([title, text]) => (
+          <div
+            key={title}
+            className="flex items-center justify-between gap-5 rounded-xl border border-border/70 p-4"
+          >
+            <div>
+              <p className="text-sm font-medium">{title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{text}</p>
+            </div>
+            <Switch defaultChecked />
+          </div>
+        ))}
+        <Button className="mt-2 rounded-full bg-accent text-accent-foreground">
+          <Save className="size-4" /> Guardar notificaciones
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}

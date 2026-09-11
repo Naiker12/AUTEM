@@ -1,5 +1,5 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/app-sidebar";
 
 export function AdminSidebar() {
-  return <AppSidebar />
+  return <AppSidebar />;
 }
