@@ -30,11 +30,7 @@ export interface Property {
   images?: string[];
 }
 
-export const ZONAS = [
-  "Santa Rosa · Villanueva",
-  "Turbaco",
-  "Cartagena de Indias",
-] as const;
+export const ZONAS = ["Santa Rosa · Villanueva", "Turbaco", "Cartagena de Indias"] as const;
 
 const COP_PER_USD = 4200;
 

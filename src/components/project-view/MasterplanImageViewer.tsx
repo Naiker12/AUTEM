@@ -159,9 +159,7 @@ export default function MasterplanImageViewer({
           width: frame.width,
           height: frame.height,
           transform: `translate(-50%, -50%) translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
-          transition: isDragging
-            ? "none"
-            : "transform 750ms cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: isDragging ? "none" : "transform 750ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         <img src={image} alt={alt} draggable={false} className="h-full w-full select-none" />

@@ -34,7 +34,12 @@ export default function MasterplanSvgViewer({
   onSelectLot,
 }: MasterplanSvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startX: number; startY: number; initOffsetX: number; initOffsetY: number } | null>(null);
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    initOffsetX: number;
+    initOffsetY: number;
+  } | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const [scale, setScale] = useState(1);
@@ -120,7 +125,10 @@ export default function MasterplanSvgViewer({
   }, [lots]);
 
   const selectedLot = useMemo(() => lotMap.get(selectedLotId), [lotMap, selectedLotId]);
-  const hoveredLot = useMemo(() => (hoveredLotId ? lotMap.get(hoveredLotId) : null), [lotMap, hoveredLotId]);
+  const hoveredLot = useMemo(
+    () => (hoveredLotId ? lotMap.get(hoveredLotId) : null),
+    [lotMap, hoveredLotId],
+  );
 
   // Escala inicial ajustada al tamaño del contenedor
   const calculateFitTransform = useCallback(() => {
@@ -150,33 +158,30 @@ export default function MasterplanSvgViewer({
     setOffset(initialOffset);
   }, [calculateFitTransform]);
 
-  const zoom = useCallback(
-    (factor: number, clientCenter?: { x: number; y: number }) => {
-      setScale((prevScale) => {
-        const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prevScale * factor));
-        if (Math.abs(nextScale - prevScale) < 0.0001) return prevScale;
+  const zoom = useCallback((factor: number, clientCenter?: { x: number; y: number }) => {
+    setScale((prevScale) => {
+      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prevScale * factor));
+      if (Math.abs(nextScale - prevScale) < 0.0001) return prevScale;
 
-        const container = containerRef.current;
-        if (!container) return nextScale;
+      const container = containerRef.current;
+      if (!container) return nextScale;
 
-        const rect = container.getBoundingClientRect();
-        const originX = clientCenter ? clientCenter.x - rect.left : rect.width / 2;
-        const originY = clientCenter ? clientCenter.y - rect.top : rect.height / 2;
+      const rect = container.getBoundingClientRect();
+      const originX = clientCenter ? clientCenter.x - rect.left : rect.width / 2;
+      const originY = clientCenter ? clientCenter.y - rect.top : rect.height / 2;
 
-        // Mantener el punto bajo el cursor / centro quieto durante el zoom
-        setOffset((prevOffset) => {
-          const ratio = nextScale / prevScale;
-          return {
-            x: originX - (originX - prevOffset.x) * ratio,
-            y: originY - (originY - prevOffset.y) * ratio,
-          };
-        });
-
-        return nextScale;
+      // Mantener el punto bajo el cursor / centro quieto durante el zoom
+      setOffset((prevOffset) => {
+        const ratio = nextScale / prevScale;
+        return {
+          x: originX - (originX - prevOffset.x) * ratio,
+          y: originY - (originY - prevOffset.y) * ratio,
+        };
       });
-    },
-    [],
-  );
+
+      return nextScale;
+    });
+  }, []);
 
   // Observador de redimensionamiento del contenedor
   useEffect(() => {
@@ -618,7 +623,6 @@ export default function MasterplanSvgViewer({
         <Compass className="size-5 text-accent" />
         <span className="absolute -bottom-1 text-[8px] font-bold text-muted-foreground">N</span>
       </button>
-
     </div>
   );
 }

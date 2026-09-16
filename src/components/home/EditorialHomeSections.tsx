@@ -165,8 +165,6 @@ function ProcessSection() {
   );
 }
 
-
-
 function EditorialContact() {
   const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, me interesa recibir asesoría para mi proyecto.")}`;
 

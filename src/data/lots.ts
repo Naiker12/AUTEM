@@ -2,7 +2,8 @@ import villaParaisoGeometry from "./villa-paraiso-geometry.json";
 
 const BASE = import.meta.env.BASE_URL ?? "/";
 
-export type LotStatus = "Disponible" | "Últimas unidades" | "Reservado" | "Vendido" | "Por confirmar";
+export type LotStatus =
+  "Disponible" | "Últimas unidades" | "Reservado" | "Vendido" | "Por confirmar";
 
 export interface Lot {
   id: string;
@@ -85,18 +86,20 @@ const INITIAL_360_LOTS: Record<string, Partial<Lot>> = {
 };
 
 // Generar catálogo real a partir de la geometría exacta del plano maestro
-export const lots: Lot[] = (villaParaisoGeometry as Array<{
-  id: string;
-  lotNumber: number;
-  label: string;
-  manzana: string;
-  areaM2: number;
-  centroid: [number, number];
-  pathD: string;
-  isReserve: boolean;
-}>).map((item) => {
+export const lots: Lot[] = (
+  villaParaisoGeometry as Array<{
+    id: string;
+    lotNumber: number;
+    label: string;
+    manzana: string;
+    areaM2: number;
+    centroid: [number, number];
+    pathD: string;
+    isReserve: boolean;
+  }>
+).map((item) => {
   const initial = INITIAL_360_LOTS[item.id];
-  
+
   // Asignar estado comercial realista para catálogo
   let status: LotStatus = "Disponible";
   if (item.isReserve) {
@@ -135,7 +138,8 @@ export function getLotsByProject(projectSlug: string): Lot[] {
   return lots.filter(
     (lot) =>
       lot.projectSlug === projectSlug ||
-      (projectSlug === "lotes-360" && (lot.projectSlug === "villa-paraiso" || lot.projectSlug === "residencia-azure")) ||
+      (projectSlug === "lotes-360" &&
+        (lot.projectSlug === "villa-paraiso" || lot.projectSlug === "residencia-azure")) ||
       (projectSlug === "villa-paraiso" && lot.projectSlug === "lotes-360") ||
       (projectSlug === "residencia-azure" && lot.projectSlug === "lotes-360"),
   );

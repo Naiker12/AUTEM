@@ -185,7 +185,10 @@ async function extract() {
 
   for (const text of mzTexts) {
     const pt = { x: text.x, y: text.y };
-    const cleanName = text.text.replace(/\\.*?;/g, "").replace(/[{}]/g, "").trim();
+    const cleanName = text.text
+      .replace(/\\.*?;/g, "")
+      .replace(/[{}]/g, "")
+      .trim();
     const mzPoly = mzMetrics.find((m) => pointInPolygon(pt, m.poly.points));
     if (mzPoly) {
       mzPoly.name = cleanName;
@@ -536,11 +539,13 @@ async function extract() {
     roads: viaPaths,
     calzadas: calzadaPaths,
     senderos: senderoPaths,
-    manzanas: mzMetrics.filter((m) => m.name).map((m) => ({
-      name: m.name,
-      x: toSvgX(m.cx),
-      y: toSvgY(m.cy),
-    })),
+    manzanas: mzMetrics
+      .filter((m) => m.name)
+      .map((m) => ({
+        name: m.name,
+        x: toSvgX(m.cx),
+        y: toSvgY(m.cy),
+      })),
   };
   fs.writeFileSync(OUTPUT_LAYERS, JSON.stringify(layersData, null, 2), "utf8");
   console.log(`Capas de fondo guardadas en: ${OUTPUT_LAYERS}`);

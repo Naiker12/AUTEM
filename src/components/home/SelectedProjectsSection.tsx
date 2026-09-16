@@ -122,7 +122,9 @@ export default function SelectedProjectsSection() {
                 aria-label={`Ver ${project.name}`}
               >
                 {/* 0px radius architectural photograph frame - completely flush */}
-                <div className={`relative w-full h-[360px] sm:h-[440px] lg:h-[500px] overflow-hidden ${project.containerBg || "bg-[#e8e0d5]"}`}>
+                <div
+                  className={`relative w-full h-[360px] sm:h-[440px] lg:h-[500px] overflow-hidden ${project.containerBg || "bg-[#e8e0d5]"}`}
+                >
                   <img
                     src={`${base}${project.image}`}
                     alt={project.name}

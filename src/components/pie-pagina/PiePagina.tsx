@@ -60,7 +60,8 @@ export default function PiePagina() {
 
               <p className="mt-5 max-w-sm text-[13px] font-light leading-6 text-[#555555] dark:text-white/55">
                 Desarrollo arquitectónico y territorial de vanguardia en el Caribe colombiano.
-                Planimetría interactiva, visualización 3D y parcelaciones campestres en Santa Rosa de Lima, Villanueva y Turbaco.
+                Planimetría interactiva, visualización 3D y parcelaciones campestres en Santa Rosa
+                de Lima, Villanueva y Turbaco.
               </p>
             </div>
 
@@ -152,7 +153,9 @@ export default function PiePagina() {
                   className="group flex flex-col transition-colors hover:text-[#403a34] dark:hover:text-accent"
                 >
                   <span className="font-medium text-[#403a34] dark:text-white">Villa Paraíso</span>
-                  <span className="text-[11px] text-[#777777] dark:text-white/50">Parcelación Campestre · 343 lotes · Santa Rosa - Villanueva</span>
+                  <span className="text-[11px] text-[#777777] dark:text-white/50">
+                    Parcelación Campestre · 343 lotes · Santa Rosa - Villanueva
+                  </span>
                 </Link>
               </li>
               <li>
@@ -161,8 +164,12 @@ export default function PiePagina() {
                   params={{ slug: "eco-villa-sierra" }}
                   className="group flex flex-col transition-colors hover:text-[#403a34] dark:hover:text-accent"
                 >
-                  <span className="font-medium text-[#403a34] dark:text-white">Eco-Villa Sierra</span>
-                  <span className="text-[11px] text-[#777777] dark:text-white/50">Residencia de Paisaje 410 m² · Turbaco</span>
+                  <span className="font-medium text-[#403a34] dark:text-white">
+                    Eco-Villa Sierra
+                  </span>
+                  <span className="text-[11px] text-[#777777] dark:text-white/50">
+                    Residencia de Paisaje 410 m² · Turbaco
+                  </span>
                 </Link>
               </li>
               <li className="pt-1 text-[11px] text-[#888888] dark:text-white/40">
@@ -193,7 +200,10 @@ export default function PiePagina() {
 
         {/* Fila Inferior: Copyright, Redes Sociales & Botón Volver Arriba */}
         <div className="footer-reveal footer-reveal--5 mt-8 flex flex-col items-center justify-between gap-6 text-[10px] uppercase tracking-[0.14em] text-[#555555] dark:text-white/42 md:flex-row">
-          <p>© {new Date().getFullYear()} AUTEM Estudio. Arquitectura & Territorio. Todos los derechos reservados.</p>
+          <p>
+            © {new Date().getFullYear()} AUTEM Estudio. Arquitectura & Territorio. Todos los
+            derechos reservados.
+          </p>
 
           <div className="flex items-center gap-3 sm:gap-6" aria-label="Canales sociales">
             <a

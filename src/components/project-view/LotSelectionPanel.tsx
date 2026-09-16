@@ -283,7 +283,8 @@ function LotCatalog({
             // - Vendido: ROJO
             // - Disponible: VERDE CLARO
             // - Reservado: NARANJA
-            let badgeClass = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
+            let badgeClass =
+              "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
             let dotClass = "bg-emerald-500";
             let leftBorderClass = "border-l-4 border-l-emerald-500";
             let borderClass = selected
@@ -292,7 +293,8 @@ function LotCatalog({
 
             if (isSold) {
               // Vendido en ROJO
-              badgeClass = "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-300 dark:border-rose-800";
+              badgeClass =
+                "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-300 dark:border-rose-800";
               dotClass = "bg-rose-500";
               leftBorderClass = "border-l-4 border-l-rose-500";
               borderClass = selected
@@ -300,14 +302,16 @@ function LotCatalog({
                 : "border-border/70 bg-rose-500/[0.03] dark:bg-rose-950/20 hover:border-rose-500/40";
             } else if (isReserved) {
               // Reservado en NARANJA
-              badgeClass = "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300 dark:border-orange-800";
+              badgeClass =
+                "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300 dark:border-orange-800";
               dotClass = "bg-orange-500";
               leftBorderClass = "border-l-4 border-l-orange-500";
               borderClass = selected
                 ? "border-orange-600 bg-orange-500/10 shadow-[0_0_0_1px_rgba(249,115,22,.4)]"
                 : "border-border/70 bg-orange-500/[0.03] dark:bg-orange-950/20 hover:border-orange-500/40";
             } else if (isLastUnits) {
-              badgeClass = "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300 dark:border-amber-800";
+              badgeClass =
+                "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300 dark:border-amber-800";
               dotClass = "bg-amber-500";
               leftBorderClass = "border-l-4 border-l-amber-500";
             }

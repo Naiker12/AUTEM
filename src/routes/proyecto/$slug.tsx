@@ -1,6 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, PanelLeftOpen, Route as RouteIcon, ScanLine } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftOpen,
+  Route as RouteIcon,
+  ScanLine,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet } from "@/components/ui/sheet";
@@ -125,7 +131,8 @@ function ProjectView() {
                 Tour 360° en creación
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes explorar todas las zonas y lotes en el plano de Zonas.
+                Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes
+                explorar todas las zonas y lotes en el plano de Zonas.
               </p>
               <Button
                 type="button"
@@ -138,11 +145,7 @@ function ProjectView() {
           </div>
         ) : (
           <img
-            src={
-              mode === "gallery"
-                ? activeGalleryImage
-                : property.image
-            }
+            src={mode === "gallery" ? activeGalleryImage : property.image}
             alt={property.name}
             className="absolute inset-0 h-full w-full object-cover"
           />
