@@ -146,8 +146,16 @@ export default function Navbar({ variant }: NavbarProps) {
       >
         <Link
           to="/"
-          className={`group flex items-center gap-3.5 ${isAbout ? "text-[#403a34]" : "text-foreground"}`}
-          aria-label="AUTEM — Territorio y arquitectura"
+          onClick={(e) => {
+            if (isHome) {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+          className={`group flex items-center gap-3.5 cursor-pointer ${isAbout ? "text-[#403a34]" : "text-foreground"}`}
+          aria-label="AUTEM — Volver al inicio"
         >
           <span
             className={`flex size-12 items-center justify-center rounded-full border transition duration-500 ${
@@ -272,7 +280,14 @@ export default function Navbar({ variant }: NavbarProps) {
           aria-label="Menú de navegación"
         >
           <div className="flex items-center justify-between border-b border-border pb-4">
-            <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
+            <Link
+              to="/"
+              onClick={() => {
+                setMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <AutemBrandIcon className="size-8" />
               <span className="font-serif text-lg font-bold tracking-wider text-foreground">
                 AUTEM

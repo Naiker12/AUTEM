@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, PanelLeftOpen, ScanLine } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeftOpen, Route as RouteIcon, ScanLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet } from "@/components/ui/sheet";
@@ -9,7 +9,7 @@ import { getLotsByProject } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import {
   InteractivePanorama,
-  MasterplanImageViewer,
+  MasterplanSvgViewer,
   LotSelectionPanel,
   ModeSwitcher,
   DEFAULT_PROJECT_VIEW_SETTINGS,
@@ -26,7 +26,7 @@ function ProjectView() {
   const { slug } = Route.useParams();
   const property = getPropertyBySlug(slug);
   const projectLots = useMemo(() => getLotsByProject(slug), [slug]);
-  const [mode, setMode] = useState<ViewMode>("tour");
+  const [mode, setMode] = useState<ViewMode>("lot");
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
@@ -97,37 +97,58 @@ function ProjectView() {
   return (
     <main className="h-[100svh] min-h-[680px] overflow-hidden bg-background font-sans text-foreground">
       <div className="relative h-full">
-        {mode === "tour" ? (
-          property.slug === "lotes-360" ? (
-            <MasterplanImageViewer
-              image={`${import.meta.env.BASE_URL}projects/villa-paraiso/masterplan-vectorized.svg`}
-              alt="Plano maestro vectorizado de Villa Paraíso"
-              lots={projectLots}
-              selectedLotId={selectedLot?.id ?? ""}
-              focusRequest={lotFocusRequest}
-              onSelectLot={(lotId) => {
-                const lot = projectLots.find((item) => item.id === lotId);
-                if (lot) selectLot(lot);
-              }}
+        {mode === "lot" ? (
+          <MasterplanSvgViewer
+            lots={projectLots}
+            selectedLotId={selectedLot?.id ?? ""}
+            focusRequest={lotFocusRequest}
+            onSelectLot={(lotId) => {
+              const lot = projectLots.find((item) => item.id === lotId);
+              if (lot) selectLot(lot);
+            }}
+          />
+        ) : mode === "tour" ? (
+          <div className="relative flex h-full w-full items-center justify-center bg-black/75">
+            <img
+              src={property.image}
+              alt={property.name}
+              className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
             />
-          ) : (
-            <InteractivePanorama />
-          )
+            <div className="relative z-20 mx-4 max-w-md rounded-[24px] border border-border bg-background/95 p-8 text-center shadow-2xl backdrop-blur-2xl">
+              <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
+                <RouteIcon size={30} />
+              </span>
+              <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
+                Próximamente
+              </Badge>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
+                Tour 360° en creación
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes explorar todas las zonas y lotes en el plano de Zonas.
+              </p>
+              <Button
+                type="button"
+                onClick={() => setMode("lot")}
+                className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                Ver plano de Zonas
+              </Button>
+            </div>
+          </div>
         ) : (
           <img
             src={
               mode === "gallery"
                 ? activeGalleryImage
-                : mode === "lot"
-                  ? lotViewImage
-                  : property.image
+                : property.image
             }
             alt={property.name}
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
 
-        {mode !== "tour" && (
+        {mode !== "lot" && mode !== "tour" && (
           <>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
@@ -244,7 +265,7 @@ function ProjectView() {
           </div>
         )}
 
-        {mode !== "tour" && mode !== "ar" && (
+        {mode !== "lot" && mode !== "tour" && mode !== "ar" && (
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-5 xl:pl-[390px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>

@@ -1,6 +1,8 @@
+import villaParaisoGeometry from "./villa-paraiso-geometry.json";
+
 const BASE = import.meta.env.BASE_URL ?? "/";
 
-export type LotStatus = "Disponible" | "Últimas unidades" | "Reservado" | "Por confirmar";
+export type LotStatus = "Disponible" | "Últimas unidades" | "Reservado" | "Vendido" | "Por confirmar";
 
 export interface Lot {
   id: string;
@@ -15,6 +17,11 @@ export interface Lot {
   houseModel?: string;
   recordingVideo?: string;
   houseGallery?: string[];
+  centroid?: [number, number];
+  manzana?: string;
+  lotNumber?: number;
+  pathD?: string;
+  isReserve?: boolean;
 }
 
 export const PANORAMA_360 = {
@@ -23,14 +30,9 @@ export const PANORAMA_360 = {
   height: 1024,
 } as const;
 
-export const lots: Lot[] = [
-  {
-    id: "L-01",
-    projectSlug: "lotes-360",
-    area: 350.21,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 1 · Acceso principal",
+// Base inicial con datos de render 360 específicos para los primeros lotes
+const INITIAL_360_LOTS: Record<string, Partial<Lot>> = {
+  "L-01": {
     terrainPosition: [-10, 8],
     panoramaPolygon: [
       [90, 305],
@@ -40,13 +42,7 @@ export const lots: Lot[] = [
       [125, 390],
     ],
   },
-  {
-    id: "L-02",
-    projectSlug: "lotes-360",
-    area: 371.64,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 1 · Acceso principal",
+  "L-02": {
     terrainPosition: [-10, 0],
     panoramaPolygon: [
       [315, 285],
@@ -56,13 +52,7 @@ export const lots: Lot[] = [
       [340, 375],
     ],
   },
-  {
-    id: "L-03",
-    projectSlug: "lotes-360",
-    area: 432.97,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 1 · Vía interna",
+  "L-03": {
     terrainPosition: [5, 4],
     panoramaPolygon: [
       [490, 315],
@@ -72,13 +62,7 @@ export const lots: Lot[] = [
       [530, 410],
     ],
   },
-  {
-    id: "L-04",
-    projectSlug: "lotes-360",
-    area: 475.45,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 1 · Vía interna",
+  "L-04": {
     terrainPosition: [10, 0],
     panoramaPolygon: [
       [710, 286],
@@ -88,13 +72,7 @@ export const lots: Lot[] = [
       [755, 385],
     ],
   },
-  {
-    id: "L-05",
-    projectSlug: "lotes-360",
-    area: 479.86,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 1 · Vía interna",
+  "L-05": {
     terrainPosition: [10, -8],
     panoramaPolygon: [
       [805, 315],
@@ -104,58 +82,61 @@ export const lots: Lot[] = [
       [850, 408],
     ],
   },
-  {
-    id: "L-06",
+};
+
+// Generar catálogo real a partir de la geometría exacta del plano maestro
+export const lots: Lot[] = (villaParaisoGeometry as Array<{
+  id: string;
+  lotNumber: number;
+  label: string;
+  manzana: string;
+  areaM2: number;
+  centroid: [number, number];
+  pathD: string;
+  isReserve: boolean;
+}>).map((item) => {
+  const initial = INITIAL_360_LOTS[item.id];
+  
+  // Asignar estado comercial realista para catálogo
+  let status: LotStatus = "Disponible";
+  if (item.isReserve) {
+    status = "Reservado";
+  } else if (item.lotNumber % 11 === 0) {
+    status = "Vendido";
+  } else if (item.lotNumber % 7 === 0) {
+    status = "Reservado";
+  } else if (item.lotNumber % 5 === 0 && item.lotNumber % 2 !== 0) {
+    status = "Últimas unidades";
+  }
+
+  const manzanaLabel = item.manzana.replace(/^M\s*/i, "Manzana ");
+
+  return {
+    id: item.id,
     projectSlug: "lotes-360",
-    area: 427.72,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 2 · Vía interna",
-    terrainPosition: [10, -8],
-  },
-  {
-    id: "L-07",
-    projectSlug: "lotes-360",
-    area: 301.67,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 2 · Vía interna",
-    terrainPosition: [10, -8],
-  },
-  {
-    id: "L-08",
-    projectSlug: "lotes-360",
-    area: 300.48,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 2 · Vía interna",
-    terrainPosition: [10, -8],
-  },
-  {
-    id: "L-09",
-    projectSlug: "lotes-360",
-    area: 288.07,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 2 · Vía interna",
-    terrainPosition: [10, -8],
-  },
-  {
-    id: "L-10",
-    projectSlug: "lotes-360",
-    area: 300,
-    price: 0,
-    status: "Por confirmar",
-    detail: "Manzana 2 · Vía interna",
-    terrainPosition: [10, -8],
-  },
-];
+    area: item.areaM2,
+    price: item.isReserve ? 0 : Math.round(item.areaM2 * 580_000), // Precio estimado por m2
+    status,
+    detail: `${manzanaLabel} · ${item.isReserve ? "Zona de reserva" : "Vía interna"}`,
+    terrainPosition: initial?.terrainPosition ?? [0, 0],
+    panoramaPolygon: initial?.panoramaPolygon,
+    houseModel: initial?.houseModel,
+    recordingVideo: initial?.recordingVideo,
+    houseGallery: initial?.houseGallery,
+    centroid: item.centroid,
+    manzana: item.manzana,
+    lotNumber: item.lotNumber,
+    pathD: item.pathD,
+    isReserve: item.isReserve,
+  };
+});
 
 export function getLotsByProject(projectSlug: string): Lot[] {
   return lots.filter(
     (lot) =>
       lot.projectSlug === projectSlug ||
-      (projectSlug === "lotes-360" && lot.projectSlug === "residencia-azure") ||
+      (projectSlug === "lotes-360" && (lot.projectSlug === "villa-paraiso" || lot.projectSlug === "residencia-azure")) ||
+      (projectSlug === "villa-paraiso" && lot.projectSlug === "lotes-360") ||
       (projectSlug === "residencia-azure" && lot.projectSlug === "lotes-360"),
   );
 }

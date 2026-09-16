@@ -59,8 +59,8 @@ export default function PiePagina() {
               </Link>
 
               <p className="mt-5 max-w-sm text-[13px] font-light leading-6 text-[#555555] dark:text-white/55">
-                Arquitectura sin fronteras. Proyectos de alta gama, visualización 3D y maquetas
-                interactivas en Cartagena de Indias, Barú y Turbaco desde 2010.
+                Desarrollo arquitectónico y territorial de vanguardia en el Caribe colombiano.
+                Planimetría interactiva, visualización 3D y parcelaciones campestres en Santa Rosa de Lima, Villanueva y Turbaco.
               </p>
             </div>
 
@@ -68,26 +68,28 @@ export default function PiePagina() {
             <div className="space-y-2.5 text-[12px] text-[#555555] dark:text-white/52">
               <div className="flex items-center gap-2">
                 <MapPin size={14} className="text-[#c5a059] shrink-0" />
-                <span>Bocagrande, Av. San Martín 10-45 · Cartagena</span>
+                <span>Cartagena de Indias & Turbaco · Bolívar, Colombia</span>
               </div>
               <a
-                href="tel:+573007200894"
+                href="https://wa.me/573007200894"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex w-fit items-center gap-2 transition-colors hover:text-[#403a34] dark:hover:text-accent"
               >
                 <Phone size={14} className="text-[#c5a059] shrink-0" />
                 <span>+57 (300) 720-0894</span>
               </a>
               <a
-                href="mailto:hola@autem.es"
+                href="mailto:contacto@autem.com.co"
                 className="flex w-fit items-center gap-2 transition-colors hover:text-[#403a34] dark:hover:text-accent"
               >
                 <Mail size={14} className="text-[#c5a059] shrink-0" />
-                <span>hola@autem.es</span>
+                <span>contacto@autem.com.co</span>
               </a>
             </div>
           </div>
 
-          {/* Columna 2: Explorar (2 Cols) */}
+          {/* Columna 2: Navegación (2 Cols) */}
           <div className="footer-reveal footer-reveal--2 space-y-4 lg:col-span-2">
             <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#403a34] dark:text-accent md:text-[10px] md:tracking-[0.25em]">
               Navegación
@@ -102,11 +104,20 @@ export default function PiePagina() {
                 </a>
               </li>
               <li>
-                <a
-                  href={`${import.meta.env.BASE_URL}#tecnologia`}
+                <Link
+                  to="/proyecto/$slug"
+                  params={{ slug: "lotes-360" }}
                   className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
                 >
-                  Metodología & Servicios
+                  Plano Maestro Interactivo
+                </Link>
+              </li>
+              <li>
+                <a
+                  href={`${import.meta.env.BASE_URL}#proceso`}
+                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                >
+                  Metodología de Proyecto
                 </a>
               </li>
               <li>
@@ -114,7 +125,7 @@ export default function PiePagina() {
                   to="/nosotros"
                   className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
                 >
-                  Nosotros
+                  Sobre el Estudio
                 </Link>
               </li>
               <li>
@@ -122,35 +133,48 @@ export default function PiePagina() {
                   href={`${import.meta.env.BASE_URL}#contacto`}
                   className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
                 >
-                  Contacto Privado
+                  Contacto & Asesoría
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Columna 3: Zonas Exclusivas en Cartagena (3 Cols) */}
+          {/* Columna 3: Proyectos & Territorio (3 Cols) */}
           <div className="footer-reveal footer-reveal--3 space-y-4 lg:col-span-3">
             <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#403a34] dark:text-accent md:text-[10px] md:tracking-[0.25em]">
-              Zonas Exclusivas
+              Proyectos & Territorio
             </h3>
-            <div className="grid grid-cols-2 gap-x-5 gap-y-2 text-[13px] leading-5 text-[#555555] dark:text-white/68">
-              {ZONAS.map((z) => (
+            <ul className="space-y-3 text-[13px] leading-5 text-[#555555] dark:text-white/68">
+              <li>
                 <Link
-                  key={z}
-                  to="/catalogo"
-                  search={{ zona: z }}
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                  to="/proyecto/$slug"
+                  params={{ slug: "lotes-360" }}
+                  className="group flex flex-col transition-colors hover:text-[#403a34] dark:hover:text-accent"
                 >
-                  {z}
+                  <span className="font-medium text-[#403a34] dark:text-white">Villa Paraíso</span>
+                  <span className="text-[11px] text-[#777777] dark:text-white/50">Parcelación Campestre · 343 lotes · Santa Rosa - Villanueva</span>
                 </Link>
-              ))}
-            </div>
+              </li>
+              <li>
+                <Link
+                  to="/proyecto/$slug"
+                  params={{ slug: "eco-villa-sierra" }}
+                  className="group flex flex-col transition-colors hover:text-[#403a34] dark:hover:text-accent"
+                >
+                  <span className="font-medium text-[#403a34] dark:text-white">Eco-Villa Sierra</span>
+                  <span className="text-[11px] text-[#777777] dark:text-white/50">Residencia de Paisaje 410 m² · Turbaco</span>
+                </Link>
+              </li>
+              <li className="pt-1 text-[11px] text-[#888888] dark:text-white/40">
+                Corredores bioclimáticos y naturaleza protegida en Bolívar, Colombia.
+              </li>
+            </ul>
           </div>
 
-          {/* Columna 4: Legal & Fiduciarias (3 Cols) */}
+          {/* Columna 4: Legal & Documentación Técnica (3 Cols) */}
           <div className="footer-reveal footer-reveal--4 space-y-4 lg:col-span-3">
             <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#403a34] dark:text-accent md:text-[10px] md:tracking-[0.25em]">
-              Información legal
+              Información legal & técnica
             </h3>
             <ul className="space-y-2 text-[13px] leading-5 text-[#555555] dark:text-white/52">
               <li>
@@ -161,15 +185,15 @@ export default function PiePagina() {
                   Política de Privacidad
                 </Link>
               </li>
-              <li>Información comercial y documentación disponible a solicitud.</li>
-              <li>Asesoría para conocer el proceso de compra y el proyecto.</li>
+              <li>Planimetría CAD topográfica y licencias disponibles a solicitud.</li>
+              <li>Asesoría directa para reserva, titulación y adquisición de lotes.</li>
             </ul>
           </div>
         </div>
 
         {/* Fila Inferior: Copyright, Redes Sociales & Botón Volver Arriba */}
         <div className="footer-reveal footer-reveal--5 mt-8 flex flex-col items-center justify-between gap-6 text-[10px] uppercase tracking-[0.14em] text-[#555555] dark:text-white/42 md:flex-row">
-          <p>© {new Date().getFullYear()} AUTEM Real Estate. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} AUTEM Estudio. Arquitectura & Territorio. Todos los derechos reservados.</p>
 
           <div className="flex items-center gap-3 sm:gap-6" aria-label="Canales sociales">
             <a

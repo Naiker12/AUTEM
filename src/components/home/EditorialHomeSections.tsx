@@ -165,136 +165,7 @@ function ProcessSection() {
   );
 }
 
-function ServicesSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const services = [
-    {
-      number: "01",
-      title: "Visualización 3D & Realidad Aumentada",
-      summary: "Recorre y experimenta el proyecto antes de la primera piedra.",
-      details:
-        "Creamos modelos arquitectónicos tridimensionales con fidelidad espacial absoluta, iluminación fotorrealista de día y noche, recorridos 360° y visualización en Realidad Aumentada para proyectar cada volumen en su entorno real.",
-      highlights: [
-        "Renders 4K fotorrealistas con iluminación natural",
-        "Maquetas interactivas y modelos 3D navegables",
-        "Visualización en Realidad Aumentada (WebXR)",
-        "Recorridos peatonales y vistas aéreas",
-      ],
-      tag: "Tecnología & Espacio",
-    },
-    {
-      number: "02",
-      title: "Selección & Análisis Territorial de Lote",
-      summary: "Compara orientación solar, topografía, vientos, accesos y privacidad.",
-      details:
-        "Analizamos cada lote con cartografía de precisión, curvas de nivel y patrones bioclimáticos para garantizar que el diseño arquitectónico aproveche al máximo las visuales, la brisa y el asoleamiento.",
-      highlights: [
-        "Estudio de asoleamiento y recorridos solares",
-        "Modelado digital de curvas de nivel y pendientes",
-        "Evaluación de privacidad, visuales y accesos",
-        "Diagnóstico de linderos y disponibilidad técnica",
-      ],
-      tag: "Territorio & Bioclima",
-    },
-    {
-      number: "03",
-      title: "Acompañamiento & Consultoría Integral",
-      summary: "Información clara, asesoría técnica y supervisión en cada etapa.",
-      details:
-        "Acompañamiento continuo y personalizado desde la conceptualización hasta la entrega final, conectando diseño arquitectónico, viabilidad técnica, presupuestos reales y cumplimiento normativo.",
-      highlights: [
-        "Asesoría técnica y arquitectónica cercana",
-        "Estructuración de presupuestos y costos detallados",
-        "Coordinación de diseño, ingeniería y licencias",
-        "Seguimiento y control de calidad en obra",
-      ],
-      tag: "Gestión & Viabilidad",
-    },
-  ];
-
-  return (
-    <section
-      data-scroll-scene
-      className="home-services bg-[#f6f1eb] px-6 py-24 text-[#403a34] md:px-12 xl:px-20 border-t border-[#403a34]/15"
-    >
-      <Container>
-        <div className="border-b border-[#403a34]/15 pb-8">
-          <div className="mb-4 flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#403a34]">
-            <span className="size-1 rounded-full bg-[#403a34]" />
-            <span>Capacidades & Disciplinas</span>
-          </div>
-          <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-            La Experiencia AUTEM
-          </h2>
-        </div>
-
-        <div className="divide-y divide-[#403a34]/15 border-b border-[#403a34]/15">
-          {services.map((service, index) => {
-            const isOpen = openIndex === index;
-            return (
-              <article key={service.title} className="transition-colors">
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="group flex w-full items-center justify-between py-8 text-left transition-all hover:bg-[#403a34]/[0.03]"
-                  aria-expanded={isOpen}
-                >
-                  <div className="flex min-w-0 items-center gap-5 sm:gap-8">
-                    <span className="shrink-0 text-[12px] font-medium tracking-[0.1em] text-[#403a34]">
-                      {service.number}
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="text-[22px] sm:text-[28px] font-medium tracking-[-0.02em] text-[#403a34]">
-                        {service.title}
-                      </h3>
-                      <p className="mt-1 text-[14px] text-[#555555]">{service.summary}</p>
-                    </div>
-                  </div>
-                  <div className="ml-4 flex shrink-0 items-center gap-4">
-                    <span className="hidden rounded-full border border-[#403a34] px-3.5 py-1 text-[9px] font-medium uppercase tracking-[0.083em] text-[#403a34] sm:inline-block">
-                      {service.tag}
-                    </span>
-                    <span
-                      className={`flex size-9 items-center justify-center rounded-full border border-[#403a34]/20 text-[#403a34] transition-all duration-300 ${
-                        isOpen
-                          ? "rotate-180 border-[#403a34] bg-[#403a34] text-[#f6f1eb]"
-                          : "group-hover:border-[#403a34]"
-                      }`}
-                    >
-                      <ChevronDown size={15} />
-                    </span>
-                  </div>
-                </button>
-
-                {isOpen && (
-                  <div className="animate-fade-up pb-8 pt-2 pl-8 sm:pl-12">
-                    <div className="border-l-2 border-[#403a34] pl-6 py-2">
-                      <p className="max-w-3xl text-[15px] sm:text-[16px] leading-relaxed text-[#333333]">
-                        {service.details}
-                      </p>
-                      <div className="mt-6 grid gap-3 border-t border-[#403a34]/15 pt-5 sm:grid-cols-2">
-                        {service.highlights.map((item) => (
-                          <div
-                            key={item}
-                            className="flex items-center gap-2.5 text-[13px] text-[#555555]"
-                          >
-                            <span className="size-1 rounded-full bg-[#403a34]" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      </Container>
-    </section>
-  );
-}
 
 function EditorialContact() {
   const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, me interesa recibir asesoría para mi proyecto.")}`;
@@ -443,7 +314,6 @@ export default function EditorialHomeSections() {
     <div ref={rootRef}>
       <SelectedProjectsSection />
       <TerritoryExperienceSections />
-      <ServicesSection />
       <ProcessSection />
       <EditorialContact />
     </div>

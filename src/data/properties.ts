@@ -31,13 +31,9 @@ export interface Property {
 }
 
 export const ZONAS = [
-  "Bocagrande",
-  "Castillogrande",
-  "Manga",
-  "Pie de la Popa",
-  "Santa Ana",
-  "Barú",
+  "Santa Rosa · Villanueva",
   "Turbaco",
+  "Cartagena de Indias",
 ] as const;
 
 const COP_PER_USD = 4200;
@@ -67,10 +63,10 @@ export const properties: Property[] = [
   {
     id: "lotes-360",
     slug: "lotes-360",
-    name: "Lotes 360°",
-    location: "Cartagena, CO · Parcelación campestre",
-    zona: "Cartagena",
-    price: "Desde $210M COP",
+    name: "Villa Paraíso",
+    location: "Santa Rosa · Villanueva, Bolívar",
+    zona: "Santa Rosa · Villanueva",
+    price: "Lotes desde $210M COP",
     priceNumeric: 210000000,
     m2: 1080,
     bedrooms: 0,
@@ -93,8 +89,8 @@ export const properties: Property[] = [
     ],
     floorPlan: "Parcelación campestre · lotes seleccionados por ubicación",
     year: 2026,
-    floorPlanImage: `${BASE}projects/lotes-360/plano-lotes-render.png`,
-    lotViewImage: `${BASE}projects/lotes-360/plano-lotes-render.png`,
+    floorPlanImage: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
+    lotViewImage: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
     floorPlanPdf: undefined,
     images: [
       `${BASE}projects/lotes-360/panoramica-render.png`,
@@ -102,7 +98,7 @@ export const properties: Property[] = [
       `${BASE}projects/lotes-360/lot-l07-entorno-verde.png`,
       `${BASE}projects/lotes-360/lot-l12-quebrada.png`,
       `${BASE}projects/lotes-360/lot-l18-zona-social.png`,
-      `${BASE}projects/lotes-360/plano-lotes-render.png`,
+      `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
     ],
   },
   {

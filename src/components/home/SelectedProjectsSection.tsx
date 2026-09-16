@@ -12,8 +12,9 @@ const projects = [
     type: "Parcelación Campestre",
     location: "Santa Rosa · Villanueva",
     area: "338 lotes · Plano maestro",
-    image: "projects/villa-paraiso/masterplan-card.webp",
+    image: "projects/villa-paraiso/masterplan-clean.svg",
     imageFit: "contain",
+    containerBg: "bg-[#f8f6f0]",
     href: "proyecto/lotes-360",
     className: "selected-project--left",
   },
@@ -81,7 +82,7 @@ export default function SelectedProjectsSection() {
     >
       <Container>
         <header
-          className="selected-projects__header grid gap-8 border-b border-[#403a34]/15 pb-10 md:grid-cols-[1.25fr_.75fr] md:items-end"
+          className="selected-projects__header border-b border-[#403a34]/15 pb-10"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: `translate3d(0, ${isVisible ? "0" : "28px"}, 0)`,
@@ -98,10 +99,6 @@ export default function SelectedProjectsSection() {
               El paisaje define la arquitectura.
             </h2>
           </div>
-          <p className="max-w-md text-[18px] leading-[1.5] text-[#333333] md:justify-self-end">
-            Dos visiones arquitectónicas en el Caribe colombiano, proyectadas con rigor técnico y
-            diálogo permanente con el entorno natural.
-          </p>
         </header>
 
         <div className="selected-projects__grid mt-14 grid gap-8 md:grid-cols-2 lg:mt-20">
@@ -125,13 +122,13 @@ export default function SelectedProjectsSection() {
                 aria-label={`Ver ${project.name}`}
               >
                 {/* 0px radius architectural photograph frame - completely flush */}
-                <div className="relative w-full h-[360px] sm:h-[440px] lg:h-[500px] overflow-hidden bg-[#e8e0d5]">
+                <div className={`relative w-full h-[360px] sm:h-[440px] lg:h-[500px] overflow-hidden ${project.containerBg || "bg-[#e8e0d5]"}`}>
                   <img
                     src={`${base}${project.image}`}
                     alt={project.name}
                     loading="lazy"
                     decoding="async"
-                    className={`selected-project__img h-full w-full object-center block transition-transform duration-700 group-hover:scale-105 ${project.imageFit === "contain" ? "object-contain" : "object-cover"}`}
+                    className={`selected-project__img h-full w-full object-center block transition-transform duration-700 group-hover:scale-105 ${project.imageFit === "contain" ? "object-contain p-3 sm:p-5 drop-shadow-[0_8px_24px_rgba(0,0,0,0.09)]" : "object-cover"}`}
                   />
                   <div className="absolute top-4 left-4 bg-[#f6f1eb] px-3 py-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#403a34] border border-[#403a34]/30">
                     {project.number}

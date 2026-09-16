@@ -44,23 +44,35 @@ export default function LotSelectionPanel({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [minArea, setMinArea] = useState("all");
   const [maxPrice, setMaxPrice] = useState("all");
-  const [sort, setSort] = useState("area-asc");
+  // Orden por defecto: Lote 1 al último (1 a 343)
+  const [sort, setSort] = useState("lot-asc");
+
   const statusLots =
     status === "Todos"
       ? lots
       : status === "Reservados"
         ? lots.filter((lot) => lot.status === "Reservado")
-        : lots.filter((lot) => lot.status !== "Reservado");
+        : status === "Vendidos"
+          ? lots.filter((lot) => lot.status === "Vendido")
+          : lots.filter((lot) => lot.status === "Disponible" || lot.status === "Últimas unidades");
+
   const filteredLots = statusLots
     .filter((lot) => minArea === "all" || lot.area >= Number(minArea))
     .filter((lot) => maxPrice === "all" || lot.price <= Number(maxPrice) * 1_000_000)
     .sort((first, second) => {
+      if (sort === "lot-asc") return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
+      if (sort === "lot-desc") return (second.lotNumber ?? 0) - (first.lotNumber ?? 0);
       if (sort === "area-desc") return second.area - first.area;
+      if (sort === "area-asc") return first.area - second.area;
       if (sort === "price-asc") return first.price - second.price;
       if (sort === "price-desc") return second.price - first.price;
-      return first.area - second.area;
+      return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
     });
-  const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, quiero recibir asesoría sobre los lotes disponibles.")}`;
+
+  const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
+    "Hola AUTEM, quiero recibir asesoría sobre los lotes del plano maestro.",
+  )}`;
+
   return (
     <aside
       aria-label="Catálogo de lotes"
@@ -84,7 +96,7 @@ export default function LotSelectionPanel({
           onClearAdvanced={() => {
             setMinArea("all");
             setMaxPrice("all");
-            setSort("area-asc");
+            setSort("lot-asc");
           }}
           onSelect={onSelect}
           onView3D={onView3D}
@@ -145,35 +157,39 @@ function LotCatalog({
 }) {
   return (
     <>
-      <header className="border-b border-border px-5 pb-2 pt-5">
+      <header className="border-b border-border px-5 pb-3 pt-5">
         <div className="flex items-center gap-3">
           <Trees className="size-6 text-accent" />
           <div>
-            <h2 className="text-base font-semibold">Lotes de prueba</h2>
+            <h2 className="text-base font-semibold">Plano Maestro</h2>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              10 lotes ubicados en el plano maestro
+              {lots.length} lotes con geometría real
             </p>
           </div>
           <Badge className="ml-auto rounded-full bg-accent/15 text-[9px] text-accent hover:bg-accent/20">
-            {lots.length} lotes de prueba
+            {filteredLots.length} lotes
           </Badge>
         </div>
-        <p className="mt-4 text-xs leading-5 text-muted-foreground">
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">
           Compara ubicación, área y precio sin salir del masterplan.
         </p>
-        <Tabs value={status} onValueChange={onStatusChange} className="mt-4">
-          <TabsList className="grid h-9 w-full grid-cols-3 bg-[#403a34]/[0.06] p-1 text-[#555555] dark:bg-white/[0.06]">
-            {["Disponibles", "Reservados", "Todos"].map((item) => (
+
+        {/* Pestañas de Filtro por Estado Comercial */}
+        <Tabs value={status} onValueChange={onStatusChange} className="mt-3">
+          <TabsList className="grid h-9 w-full grid-cols-4 bg-[#403a34]/[0.06] p-1 text-[#555555] dark:bg-white/[0.06]">
+            {["Todos", "Disponibles", "Reservados", "Vendidos"].map((item) => (
               <TabsTrigger
                 key={item}
                 value={item}
-                className="px-2 text-[9px] uppercase tracking-wider text-[#555555] data-[state=active]:bg-[#403a34] data-[state=active]:text-[#f6f1eb] dark:data-[state=active]:bg-[#c5a059] dark:data-[state=active]:text-[#151413]"
+                className="px-1 text-[8.5px] font-semibold uppercase tracking-wider text-[#555555] data-[state=active]:bg-[#403a34] data-[state=active]:text-[#f6f1eb] dark:data-[state=active]:bg-[#c5a059] dark:data-[state=active]:text-[#151413]"
               >
                 {item}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
+
+        {/* Filtros avanzados desplegables */}
         <Button
           type="button"
           variant="ghost"
@@ -192,8 +208,9 @@ function LotCatalog({
                 onValueChange={onMinAreaChange}
                 items={[
                   { value: "all", label: "Cualquier área" },
-                  { value: "1100", label: "Desde 1.100 m²" },
-                  { value: "1300", label: "Desde 1.300 m²" },
+                  { value: "250", label: "Desde 250 m²" },
+                  { value: "350", label: "Desde 350 m²" },
+                  { value: "450", label: "Desde 450 m²" },
                 ]}
               />
               <FilterSelect
@@ -202,8 +219,9 @@ function LotCatalog({
                 onValueChange={onMaxPriceChange}
                 items={[
                   { value: "all", label: "Cualquier precio" },
+                  { value: "150", label: "Hasta $150M" },
+                  { value: "200", label: "Hasta $200M" },
                   { value: "250", label: "Hasta $250M" },
-                  { value: "300", label: "Hasta $300M" },
                 ]}
               />
             </div>
@@ -212,6 +230,8 @@ function LotCatalog({
               value={sort}
               onValueChange={onSortChange}
               items={[
+                { value: "lot-asc", label: "Número de lote (1 a 343)" },
+                { value: "lot-desc", label: "Número de lote (343 a 1)" },
                 { value: "area-asc", label: "Área: menor a mayor" },
                 { value: "area-desc", label: "Área: mayor a menor" },
                 { value: "price-asc", label: "Precio: menor a mayor" },
@@ -230,10 +250,22 @@ function LotCatalog({
           </div>
         )}
       </header>
+
       <div className="flex items-center justify-between px-5 pb-2 pt-3">
         <strong className="text-sm">{filteredLots.length} lotes</strong>
-        <span className="text-[8px] uppercase tracking-[0.18em] text-muted-foreground">Área ↓</span>
+        <span className="text-[8px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {sort === "lot-asc"
+            ? "Lotes 1 → 343"
+            : sort === "lot-desc"
+              ? "Lotes 343 → 1"
+              : sort === "area-asc"
+                ? "Área ↑"
+                : sort === "area-desc"
+                  ? "Área ↓"
+                  : "Precio"}
+        </span>
       </div>
+
       <ScrollArea className="min-h-0 flex-1 px-3">
         <div className="space-y-2 pb-3">
           {filteredLots.length === 0 && (
@@ -243,10 +275,51 @@ function LotCatalog({
           )}
           {filteredLots.map((lot) => {
             const selected = lot.id === selectedId;
+            const isSold = lot.status === "Vendido";
+            const isReserved = lot.status === "Reservado";
+            const isLastUnits = lot.status === "Últimas unidades";
+
+            // Colores según especificación:
+            // - Vendido: ROJO
+            // - Disponible: VERDE CLARO
+            // - Reservado: NARANJA
+            let badgeClass = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
+            let dotClass = "bg-emerald-500";
+            let leftBorderClass = "border-l-4 border-l-emerald-500";
+            let borderClass = selected
+              ? "border-[#403a34] bg-emerald-500/[0.04] shadow-[0_0_0_1px_rgba(34,197,94,.4)] dark:border-emerald-500 dark:bg-emerald-500/10"
+              : "border-border bg-card/90 hover:border-emerald-500/40";
+
+            if (isSold) {
+              // Vendido en ROJO
+              badgeClass = "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-300 dark:border-rose-800";
+              dotClass = "bg-rose-500";
+              leftBorderClass = "border-l-4 border-l-rose-500";
+              borderClass = selected
+                ? "border-rose-600 bg-rose-500/10 shadow-[0_0_0_1px_rgba(225,29,72,.4)]"
+                : "border-border/70 bg-rose-500/[0.03] dark:bg-rose-950/20 hover:border-rose-500/40";
+            } else if (isReserved) {
+              // Reservado en NARANJA
+              badgeClass = "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300 dark:border-orange-800";
+              dotClass = "bg-orange-500";
+              leftBorderClass = "border-l-4 border-l-orange-500";
+              borderClass = selected
+                ? "border-orange-600 bg-orange-500/10 shadow-[0_0_0_1px_rgba(249,115,22,.4)]"
+                : "border-border/70 bg-orange-500/[0.03] dark:bg-orange-950/20 hover:border-orange-500/40";
+            } else if (isLastUnits) {
+              badgeClass = "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300 dark:border-amber-800";
+              dotClass = "bg-amber-500";
+              leftBorderClass = "border-l-4 border-l-amber-500";
+            }
+
             return (
               <article
                 key={lot.id}
-                className={`relative overflow-hidden rounded-[14px] border transition ${selected ? "border-[#403a34] bg-[#403a34]/[0.05] shadow-[0_0_0_1px_rgba(197,160,89,.28)] dark:border-[#c5a059] dark:bg-[#c5a059]/10" : "border-border bg-card/75 hover:border-[#403a34]/40"}`}
+                style={{
+                  contentVisibility: "auto",
+                  containIntrinsicSize: "0 94px",
+                }}
+                className={`relative overflow-hidden rounded-[14px] border transition-all duration-150 ${leftBorderClass} ${borderClass}`}
               >
                 <button
                   type="button"
@@ -254,20 +327,30 @@ function LotCatalog({
                   className="w-full p-4 pr-14 text-left"
                 >
                   <div className="flex items-center gap-2">
-                    <strong className="text-xl leading-none">{lot.id}</strong>
+                    <strong className="text-xl font-bold tracking-tight leading-none">
+                      {lot.id}
+                    </strong>
                     <Badge
-                      className={`rounded-full px-2 py-0.5 text-[7px] ${lot.status === "Por confirmar" ? "bg-[#a5682b]/15 text-[#98581f] dark:text-[#e3a25f]" : "bg-[#403a34]/10 text-[#403a34] dark:bg-[#c5a059]/15 dark:text-[#c5a059]"}`}
+                      variant="outline"
+                      className={`rounded-full px-2 py-0.5 text-[8px] font-semibold flex items-center gap-1.5 ${badgeClass}`}
                     >
+                      <span className={`size-1.5 rounded-full ${dotClass}`} />
                       {lot.status}
                     </Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">{lot.detail}</p>
-                  <div className="mt-3 flex items-center gap-3 text-xs text-foreground/70">
+                  <div className="mt-3 flex items-center gap-3 text-xs text-foreground/80">
                     <span className="flex items-center gap-1">
-                      <Ruler size={11} />
+                      <Ruler size={11} className="text-muted-foreground" />
                       {formatLotArea(lot.area)}
                     </span>
-                    <strong>{formatLotPrice(lot.price)}</strong>
+                    {isSold ? (
+                      <span className="text-xs font-semibold text-slate-500">Vendido</span>
+                    ) : (
+                      <strong className="font-bold text-foreground">
+                        {formatLotPrice(lot.price)}
+                      </strong>
+                    )}
                   </div>
                 </button>
                 <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-1">
