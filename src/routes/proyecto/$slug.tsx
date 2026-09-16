@@ -22,6 +22,7 @@ import {
   PROJECT_VIEW_MODES,
   ProjectViewControlPanel,
   ProjectHeader,
+  ProjectLoadingScreen,
   type ProjectViewSettings,
   type ViewMode,
 } from "@/components/project-view";
@@ -102,6 +103,11 @@ function ProjectView() {
 
   return (
     <main className="h-[100svh] min-h-[680px] overflow-hidden bg-background font-sans text-foreground">
+      <ProjectLoadingScreen
+        key={slug}
+        projectName={property.name}
+        projectLocation={property.location}
+      />
       <div className="relative h-full">
         {mode === "lot" ? (
           <MasterplanSvgViewer

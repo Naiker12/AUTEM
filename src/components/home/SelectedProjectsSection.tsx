@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import Container from "@/components/layout/Container";
 import { useScrollFrame } from "@/hooks/useScrollFrame";
 
@@ -9,6 +10,7 @@ const projects = [
   {
     number: "01",
     name: "Villa Paraíso",
+    slug: "lotes-360",
     type: "Parcelación Campestre",
     location: "Santa Rosa · Villanueva",
     area: "338 lotes · Plano maestro",
@@ -21,6 +23,7 @@ const projects = [
   {
     number: "02",
     name: "Eco Villa Sierra",
+    slug: "eco-villa-sierra",
     type: "Residencia de Paisaje",
     location: "Turbaco",
     area: "480 m² Construidos · Lote 2.200 m²",
@@ -116,8 +119,9 @@ export default function SelectedProjectsSection() {
                 } as CSSProperties
               }
             >
-              <a
-                href={`${base}${project.href}`}
+              <Link
+                to="/proyecto/$slug"
+                params={{ slug: project.slug }}
                 className="group block border border-[#403a34] bg-[#f6f1eb] p-0 overflow-hidden transition hover:border-[#403a34]"
                 aria-label={`Ver ${project.name}`}
               >
@@ -153,7 +157,7 @@ export default function SelectedProjectsSection() {
                     {project.name}
                   </h3>
                 </div>
-              </a>
+              </Link>
             </article>
           ))}
         </div>
