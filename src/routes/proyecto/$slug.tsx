@@ -195,7 +195,7 @@ function ProjectView() {
           <Button
             type="button"
             onClick={() => setIsMobileLotPanelOpen(true)}
-            className="absolute left-4 top-[86px] z-30 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 xl:hidden"
+            className="absolute left-4 top-[84px] z-30 h-10 rounded-full bg-accent px-4 text-xs font-semibold text-accent-foreground shadow-lg hover:bg-accent/90 xl:hidden"
           >
             <PanelLeftOpen /> Elegir lote
           </Button>
@@ -275,7 +275,7 @@ function ProjectView() {
         )}
 
         {mode !== "lot" && mode !== "tour" && mode !== "ar" && (
-          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-5 xl:pl-[390px]">
+          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 xl:pb-5 xl:pl-[390px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
                 <Badge className="border border-accent/40 bg-background/80 text-[9px] uppercase tracking-[0.18em] text-accent backdrop-blur-xl">

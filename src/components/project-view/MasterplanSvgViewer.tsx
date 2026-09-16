@@ -550,7 +550,7 @@ export default function MasterplanSvgViewer({
 
       {/* Botones de Control Flotantes (Zoom, Pan, Reset, Fullscreen) */}
       <div
-        className="no-drag absolute right-4 top-20 flex flex-col items-center gap-1.5 rounded-full border border-border/70 bg-background/95 p-1.5 shadow-xl backdrop-blur-md z-30 select-none"
+        className="no-drag absolute right-3.5 top-1/2 -translate-y-1/2 xl:top-24 xl:translate-y-0 flex flex-col items-center gap-1.5 rounded-full border border-border/70 bg-background/95 p-1.5 shadow-xl backdrop-blur-md z-30 select-none"
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
@@ -616,7 +616,7 @@ export default function MasterplanSvgViewer({
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
-        className="no-drag absolute right-4 top-4 flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground shadow-md backdrop-blur-sm z-30 transition-all hover:bg-muted active:scale-90 cursor-pointer"
+        className="no-drag absolute right-4 top-[84px] flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground shadow-md backdrop-blur-sm z-30 transition-all hover:bg-muted active:scale-90 cursor-pointer"
         title="Orientación Norte (Clic para restablecer vista)"
         aria-label="Norte - Restablecer vista"
       >
