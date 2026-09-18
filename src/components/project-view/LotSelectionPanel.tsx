@@ -266,7 +266,9 @@ const LotCardItem = memo(
           className={`w-full text-left ${isMobile ? "p-2.5 pr-[96px]" : "p-3.5 pr-[108px]"}`}
         >
           <div className="flex items-center gap-2">
-            <strong className={`font-bold tracking-tight leading-none ${isMobile ? "text-sm sm:text-base" : "text-xl"}`}>
+            <strong
+              className={`font-bold tracking-tight leading-none ${isMobile ? "text-sm sm:text-base" : "text-xl"}`}
+            >
               {lot.id}
             </strong>
             <Badge
@@ -277,14 +279,24 @@ const LotCardItem = memo(
               {lot.status}
             </Badge>
           </div>
-          <p className={`text-muted-foreground line-clamp-1 ${isMobile ? "mt-0.5 text-[10px] leading-tight" : "mt-2 text-xs"}`}>{lot.detail}</p>
-          <div className={`flex items-center gap-2.5 text-foreground/80 ${isMobile ? "mt-1 text-[11px]" : "mt-3 text-xs"}`}>
+          <p
+            className={`text-muted-foreground line-clamp-1 ${isMobile ? "mt-0.5 text-[10px] leading-tight" : "mt-2 text-xs"}`}
+          >
+            {lot.detail}
+          </p>
+          <div
+            className={`flex items-center gap-2.5 text-foreground/80 ${isMobile ? "mt-1 text-[11px]" : "mt-3 text-xs"}`}
+          >
             <span className="flex items-center gap-1">
               <Ruler size={isMobile ? 11 : 11} className="text-muted-foreground" />
               {formatLotArea(lot.area)}
             </span>
             {isSold ? (
-              <span className={`${isMobile ? "text-[10px]" : "text-xs"} font-semibold text-slate-500`}>Vendido</span>
+              <span
+                className={`${isMobile ? "text-[10px]" : "text-xs"} font-semibold text-slate-500`}
+              >
+                Vendido
+              </span>
             ) : (
               <strong className={`font-bold text-foreground ${isMobile ? "text-[11px]" : ""}`}>
                 {formatLotPrice(lot.price)}
@@ -418,14 +430,16 @@ function LotCatalog({
 
   return (
     <>
-      <header className={`border-b border-border ${isMobile ? "px-3.5 pb-1.5 pt-2" : "px-5 pb-3 pt-5"}`}>
+      <header
+        className={`border-b border-border ${isMobile ? "px-3.5 pb-1.5 pt-2" : "px-5 pb-3 pt-5"}`}
+      >
         <div className="flex items-center gap-2">
           <Trees className={`${isMobile ? "size-4" : "size-6"} text-accent`} />
           <div>
-            <h2 className={`${isMobile ? "text-xs" : "text-base"} font-semibold leading-tight`}>Plano Urbanístico</h2>
-            <p className="mt-0.5 text-[9px] text-muted-foreground">
-              {lots.length} lotes
-            </p>
+            <h2 className={`${isMobile ? "text-xs" : "text-base"} font-semibold leading-tight`}>
+              Plano Urbanístico
+            </h2>
+            <p className="mt-0.5 text-[9px] text-muted-foreground">{lots.length} lotes</p>
           </div>
           <Badge className="ml-auto rounded-full bg-accent/15 text-[8.5px] px-2 py-0.5 text-accent hover:bg-accent/20">
             {filteredLots.length} lotes
@@ -438,8 +452,14 @@ function LotCatalog({
         )}
 
         {/* Pestañas de Filtro por Estado Comercial */}
-        <Tabs value={status} onValueChange={onStatusChange} className={`${isMobile ? "mt-1.5" : "mt-3"}`}>
-          <TabsList className={`grid ${isMobile ? "h-7" : "h-9"} w-full grid-cols-4 bg-[#403a34]/[0.06] p-0.5 text-[#555555] dark:bg-white/[0.06]`}>
+        <Tabs
+          value={status}
+          onValueChange={onStatusChange}
+          className={`${isMobile ? "mt-1.5" : "mt-3"}`}
+        >
+          <TabsList
+            className={`grid ${isMobile ? "h-7" : "h-9"} w-full grid-cols-4 bg-[#403a34]/[0.06] p-0.5 text-[#555555] dark:bg-white/[0.06]`}
+          >
             {["Todos", "Disponibles", "Reservados", "Vendidos"].map((item) => (
               <TabsTrigger
                 key={item}
@@ -532,8 +552,12 @@ function LotCatalog({
         )}
       </header>
 
-      <div className={`flex items-center justify-between ${isMobile ? "px-3.5 py-1" : "px-5 pb-2 pt-3"}`}>
-        <strong className={isMobile ? "text-xs font-bold" : "text-sm"}>{filteredLots.length} lotes</strong>
+      <div
+        className={`flex items-center justify-between ${isMobile ? "px-3.5 py-1" : "px-5 pb-2 pt-3"}`}
+      >
+        <strong className={isMobile ? "text-xs font-bold" : "text-sm"}>
+          {filteredLots.length} lotes
+        </strong>
         <span className="text-[7.5px] sm:text-[8px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {sort === "lot-asc"
             ? "Lotes 1 → 343"
@@ -548,7 +572,9 @@ function LotCatalog({
       </div>
 
       <ScrollArea className={`min-h-0 flex-1 ${isMobile ? "px-2" : "px-3"}`}>
-        <div className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-2.5 max-w-4xl mx-auto" : "space-y-2 pb-3"}`}>
+        <div
+          className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-2.5 max-w-4xl mx-auto" : "space-y-2 pb-3"}`}
+        >
           {filteredLots.length === 0 && (
             <p className="col-span-full rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs leading-5 text-muted-foreground">
               No hay lotes que cumplan estos filtros.
@@ -573,7 +599,8 @@ function LotCatalog({
           className={`${isMobile ? "h-8 text-[10px]" : "h-11 text-[11px]"} w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-transparent hover:text-[#403a34] dark:border-white/20 dark:bg-[#c5a059] dark:text-[#151413] dark:hover:bg-[#f6f1eb]`}
         >
           <a href={contactUrl} target="_blank" rel="noopener noreferrer">
-            <MessageCircle className={isMobile ? "size-3.5 mr-1" : "size-4 mr-1.5"} /> Solicitar asesoría
+            <MessageCircle className={isMobile ? "size-3.5 mr-1" : "size-4 mr-1.5"} /> Solicitar
+            asesoría
           </a>
         </Button>
       </div>

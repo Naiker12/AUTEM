@@ -31,9 +31,7 @@ export default function ModeSwitcher({
               className="group flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-0.5 h-8 min-w-[42px] text-muted-foreground transition hover:bg-muted hover:text-foreground data-[state=on]:bg-accent/15 data-[state=on]:text-accent"
             >
               <Icon size={13} strokeWidth={1.8} />
-              <span className="text-[7px] font-bold leading-none tracking-wide">
-                {label}
-              </span>
+              <span className="text-[7px] font-bold leading-none tracking-wide">{label}</span>
             </ToggleGroupItem>
           ))}
         </ToggleGroup>

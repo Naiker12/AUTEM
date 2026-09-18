@@ -40,10 +40,16 @@ export default function ProjectHeader({
   return (
     <header className="absolute inset-x-0 top-0 z-40 h-14 sm:h-16 lg:h-[72px] border-b border-border bg-background/94 text-foreground shadow-2xl backdrop-blur-2xl">
       <div className="relative flex h-full items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-7">
-        <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Volver a AUTEM">
+        <Link
+          to="/"
+          className="flex shrink-0 items-center gap-2 sm:gap-3"
+          aria-label="Volver a AUTEM"
+        >
           <AutemBrandIcon size={26} />
           <div className="hidden sm:block">
-            <strong className="block text-lg sm:text-xl leading-none tracking-[0.08em]">AUTEM</strong>
+            <strong className="block text-lg sm:text-xl leading-none tracking-[0.08em]">
+              AUTEM
+            </strong>
             <span className="mt-1 block text-[7px] uppercase tracking-[0.32em] text-muted-foreground">
               Vida que inspira
             </span>

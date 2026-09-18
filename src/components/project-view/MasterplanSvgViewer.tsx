@@ -258,7 +258,8 @@ export default function MasterplanSvgViewer({
         };
         transformRef.current = { scale: nextScale, offset: nextOffset };
         if (viewportGroupRef.current) {
-          viewportGroupRef.current.style.transition = "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)";
+          viewportGroupRef.current.style.transition =
+            "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)";
           viewportGroupRef.current.style.transform = `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${nextScale})`;
         }
         return nextOffset;
@@ -325,9 +326,7 @@ export default function MasterplanSvgViewer({
       ? containerSize.width / 2 + (isDesktopSidebarOpen ? 180 : 0)
       : containerSize.width / 2;
     // Considerar el espacio de la barra de navegación superior (56-64px) en escritorio
-    const targetCenterY = isDesktop
-      ? (containerSize.height + 36) / 2
-      : containerSize.height / 2;
+    const targetCenterY = isDesktop ? (containerSize.height + 36) / 2 : containerSize.height / 2;
 
     const targetOffset = {
       x: targetCenterX - cx * targetScale,
@@ -396,7 +395,10 @@ export default function MasterplanSvgViewer({
     const isDesktop = containerSize.width >= 1024;
     const sidebarWidth = isDesktop && isDesktopSidebarOpen ? 360 : 0;
     const availableWidth = Math.max(200, containerSize.width - sidebarWidth);
-    const availableHeight = Math.max(200, isDesktop ? containerSize.height - 40 : containerSize.height);
+    const availableHeight = Math.max(
+      200,
+      isDesktop ? containerSize.height - 40 : containerSize.height,
+    );
 
     // Ajustar escala para que quepan todos los lotes con 12% de holgura visual
     const scaleX = (availableWidth * 0.88) / boxWidth;
@@ -407,12 +409,8 @@ export default function MasterplanSvgViewer({
     const maxAllowedScale = count <= 2 ? 3.4 : 2.8;
     targetScale = Math.min(maxAllowedScale, Math.max(minReasonableScale, targetScale));
 
-    const targetCenterX = isDesktop
-      ? sidebarWidth + availableWidth / 2
-      : containerSize.width / 2;
-    const targetCenterY = isDesktop
-      ? (containerSize.height + 36) / 2
-      : containerSize.height / 2;
+    const targetCenterX = isDesktop ? sidebarWidth + availableWidth / 2 : containerSize.width / 2;
+    const targetCenterY = isDesktop ? (containerSize.height + 36) / 2 : containerSize.height / 2;
 
     const targetOffsetX = targetCenterX - boxCenterX * targetScale;
     const targetOffsetY = targetCenterY - boxCenterY * targetScale;
@@ -520,7 +518,10 @@ export default function MasterplanSvgViewer({
 
   const handlePointerMove = (event: React.PointerEvent) => {
     if (pointersMapRef.current.has(event.pointerId)) {
-      pointersMapRef.current.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+      pointersMapRef.current.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
     }
 
     // Verificar si el puntero se ha movido más de 6px para distinguir clic de arrastre
@@ -720,7 +721,8 @@ export default function MasterplanSvgViewer({
               const isReserved = lot.status === "Reservado";
               const isSold = lot.status === "Vendido";
               const isLastUnits = lot.status === "Últimas unidades";
-              const isMatch = !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
+              const isMatch =
+                !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
 
               // Si hay filtro activo y el lote NO coincide con el filtro:
               // SE DEBEN VER TODOS LOS LOTES con total claridad (fondo blanco limpio y borde perimetral slate definido),
@@ -814,7 +816,8 @@ export default function MasterplanSvgViewer({
               const [cx, cy] = lot.centroid;
               const isSelected = lot.id === selectedLotId;
               const isHovered = lot.id === hoveredLotId;
-              const isMatch = !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
+              const isMatch =
+                !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
               const isFaded = isFilterActive && !isMatch;
 
               const label = lot.lotNumber ?? lot.id.replace("L-", "");
@@ -824,12 +827,7 @@ export default function MasterplanSvgViewer({
                 const markerFontSize = scale < 0.28 ? 12 : 11;
                 return (
                   <g key={`marker-selected-${lot.id}`} transform={`translate(${cx}, ${cy})`}>
-                    <circle
-                      r={markerR}
-                      fill="#0284c7"
-                      stroke="#ffffff"
-                      strokeWidth={2.2}
-                    />
+                    <circle r={markerR} fill="#0284c7" stroke="#ffffff" strokeWidth={2.2} />
                     <text
                       textAnchor="middle"
                       dominantBaseline="central"
@@ -963,7 +961,9 @@ export default function MasterplanSvgViewer({
           aria-label="Norte - Restablecer vista"
         >
           <Compass className="size-4 lg:size-4.5 text-accent" />
-          <span className="absolute -bottom-1 text-[6.5px] lg:text-[7.5px] font-bold text-muted-foreground">N</span>
+          <span className="absolute -bottom-1 text-[6.5px] lg:text-[7.5px] font-bold text-muted-foreground">
+            N
+          </span>
         </button>
 
         {/* Barra de Controles de Zoom */}
@@ -1015,7 +1015,11 @@ export default function MasterplanSvgViewer({
             title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
             aria-label="Pantalla completa"
           >
-            {isFullscreen ? <Shrink className="size-3.5 lg:size-4" /> : <Expand className="size-3.5 lg:size-4" />}
+            {isFullscreen ? (
+              <Shrink className="size-3.5 lg:size-4" />
+            ) : (
+              <Expand className="size-3.5 lg:size-4" />
+            )}
           </button>
         </div>
       </div>

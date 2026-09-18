@@ -131,9 +131,7 @@ export default function LotSearchDialog({
 
         {/* Accesos rápidos de números */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar text-xs">
-          <span className="text-[10px] font-semibold text-muted-foreground shrink-0">
-            Accesos:
-          </span>
+          <span className="text-[10px] font-semibold text-muted-foreground shrink-0">Accesos:</span>
           {QUICK_SEARCH_CHIPS.map((num) => (
             <button
               key={num}
@@ -152,9 +150,7 @@ export default function LotSearchDialog({
 
         {/* Lista de Resultados Filtrados */}
         <div className="flex items-center justify-between px-1 text-[11px] font-medium text-muted-foreground">
-          <span>
-            {searchTerm ? `Resultados para "${searchTerm}":` : "Lotes sugeridos:"}
-          </span>
+          <span>{searchTerm ? `Resultados para "${searchTerm}":` : "Lotes sugeridos:"}</span>
           <span className="text-[10px] font-bold text-accent">
             {filteredResults.length} encontrados
           </span>

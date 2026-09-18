@@ -116,26 +116,6 @@ function ProjectView() {
     }
   }, []);
 
-  if (!property) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-6 text-center text-foreground">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">AUTEM</p>
-          <h1 className="mt-4 text-4xl">Proyecto no encontrado</h1>
-          <Button asChild variant="outline" className="mt-8">
-            <Link to="/">Volver al inicio</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const images = property.images && property.images.length > 0 ? property.images : [property.image];
-  const activeGalleryImage = images[galleryIndex] || property.image;
-  const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
-  const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
-  const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
-
   const [sheetPercent, setSheetPercent] = useState(48);
   const [isDraggingSheet, setIsDraggingSheet] = useState(false);
   const dragStartYRef = useRef(0);
@@ -229,6 +209,26 @@ function ProjectView() {
     );
     setIsLotPanelVisible(true);
   };
+
+  if (!property) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6 text-center text-foreground">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">AUTEM</p>
+          <h1 className="mt-4 text-4xl">Proyecto no encontrado</h1>
+          <Button asChild variant="outline" className="mt-8">
+            <Link to="/">Volver al inicio</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const images = property.images && property.images.length > 0 ? property.images : [property.image];
+  const activeGalleryImage = images[galleryIndex] || property.image;
+  const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
+  const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
+  const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
 
   return (
     <main className="h-[100svh] min-h-[680px] overflow-hidden bg-background font-sans text-foreground">
@@ -339,7 +339,9 @@ function ProjectView() {
                 ref={sheetWrapperRef}
                 style={{
                   height: `calc(${sheetPercent}% - 30px)`,
-                  transition: isDraggingSheet ? "none" : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+                  transition: isDraggingSheet
+                    ? "none"
+                    : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
                 className="relative w-full overflow-hidden lg:hidden"
               >
@@ -479,10 +481,16 @@ function ProjectView() {
               >
                 <span className="font-bold text-foreground text-xs">Lote {selectedLot.id}</span>
                 <span className="text-[10px] text-muted-foreground">·</span>
-                <span className="text-xs font-semibold text-accent">{formatLotPrice(selectedLot.price)}</span>
+                <span className="text-xs font-semibold text-accent">
+                  {formatLotPrice(selectedLot.price)}
+                </span>
                 <span className="text-[10px] text-muted-foreground">·</span>
-                <span className="text-[11px] text-muted-foreground">{formatLotArea(selectedLot.area)}</span>
-                <span className="ml-1 text-[10px] text-muted-foreground/80 group-hover:text-foreground">→</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {formatLotArea(selectedLot.area)}
+                </span>
+                <span className="ml-1 text-[10px] text-muted-foreground/80 group-hover:text-foreground">
+                  →
+                </span>
               </button>
             )}
           </div>
