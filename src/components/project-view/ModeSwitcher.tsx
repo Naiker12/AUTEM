@@ -5,13 +5,42 @@ interface ModeSwitcherProps {
   activeMode: ViewMode;
   onChange: (mode: ViewMode) => void;
   inHeader?: boolean;
+  compact?: boolean;
 }
 
 export default function ModeSwitcher({
   activeMode,
   onChange,
   inHeader = false,
+  compact = false,
 }: ModeSwitcherProps) {
+  if (compact) {
+    return (
+      <nav aria-label="Modos de vista" className="w-fit select-none">
+        <ToggleGroup
+          type="single"
+          value={activeMode}
+          onValueChange={(value) => value && onChange(value as ViewMode)}
+          className="flex gap-0.5 rounded-full border border-border/80 bg-background/95 p-1 shadow-lg backdrop-blur-xl"
+        >
+          {PROJECT_VIEW_MODES.map(({ id, label, icon: Icon }) => (
+            <ToggleGroupItem
+              key={id}
+              value={id}
+              aria-label={label}
+              className="group flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-0.5 h-8 min-w-[42px] text-muted-foreground transition hover:bg-muted hover:text-foreground data-[state=on]:bg-accent/15 data-[state=on]:text-accent"
+            >
+              <Icon size={13} strokeWidth={1.8} />
+              <span className="text-[7px] font-bold leading-none tracking-wide">
+                {label}
+              </span>
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </nav>
+    );
+  }
+
   return (
     <nav
       aria-label="Modos de vista"

@@ -17,9 +17,14 @@ import layersData from "@/data/villa-paraiso-layers.json";
 
 interface MasterplanSvgViewerProps {
   lots: Lot[];
+  filteredLots?: Lot[];
+  isFilterActive?: boolean;
+  filterRequest?: number;
   selectedLotId: string;
   focusRequest: number;
   onSelectLot: (lotId: string) => void;
+  isDesktopSidebarOpen?: boolean;
+  onClearFilter?: () => void;
 }
 
 const MIN_SCALE = 0.15;
@@ -29,9 +34,14 @@ const SVG_HEIGHT = layersData.dimensions.height;
 
 export default function MasterplanSvgViewer({
   lots,
+  filteredLots,
+  isFilterActive = false,
+  filterRequest = 0,
   selectedLotId,
   focusRequest,
   onSelectLot,
+  isDesktopSidebarOpen = true,
+  onClearFilter,
 }: MasterplanSvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -40,14 +50,68 @@ export default function MasterplanSvgViewer({
     initOffsetX: number;
     initOffsetY: number;
   } | null>(null);
+  const pointersMapRef = useRef<Map<number, { clientX: number; clientY: number }>>(new Map());
+  const pinchStateRef = useRef<{
+    initDist: number;
+    initScale: number;
+    initOffset: { x: number; y: number };
+    midX: number;
+    midY: number;
+  } | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  // Referencias para detección precisa de toque/clic en lotes sin interferencia de arrastre
+  const pointerDownLotRef = useRef<string | null>(null);
+  const pointerDownPosRef = useRef<{ x: number; y: number } | null>(null);
+  const isDragConfirmedRef = useRef(false);
+  const lastSelectTimeRef = useRef<number>(0);
+  const lastHandledFocusRef = useRef<number>(0);
+  const lastHandledFilterRef = useRef<number>(0);
 
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const cachedContainerRectRef = useRef<DOMRect | null>(null);
+  const isTouchDeviceRef = useRef(false);
+  const rafPendingRef = useRef(false);
+  const latestTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+
+  // Referencias para manipulación directa en GPU (evita re-renders en cada pixel de arrastre)
+  const viewportGroupRef = useRef<SVGGElement>(null);
+  const transformRef = useRef({ scale: 1, offset: { x: 0, y: 0 } });
+  transformRef.current = { scale, offset };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      isTouchDeviceRef.current = window.matchMedia("(pointer: coarse)").matches;
+    }
+    return () => {
+      rafPendingRef.current = false;
+    };
+  }, []);
+
+  const applyPendingTransform = useCallback(() => {
+    rafPendingRef.current = false;
+    if (!viewportGroupRef.current || !latestTransformRef.current) return;
+    const { x, y, scale: s } = latestTransformRef.current;
+    viewportGroupRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${s})`;
+  }, []);
+
+  // Handlers de hover protegidos para dispositivos táctiles y durante arrastre
+  const handleLotPointerEnter = useCallback((e: React.PointerEvent, lotId: string) => {
+    if (e.pointerType === "touch" || isDraggingRef.current || isTouchDeviceRef.current) return;
+    setHoveredLotId(lotId);
+    setTooltipPos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleLotPointerLeave = useCallback(() => {
+    if (isDraggingRef.current || isTouchDeviceRef.current) return;
+    setHoveredLotId(null);
+    setTooltipPos(null);
+  }, []);
 
   // Memorizar elementos estáticos de fondo para evitar re-cálculos en cada frame
   const staticBackgroundElements = useMemo(
@@ -130,6 +194,16 @@ export default function MasterplanSvgViewer({
     [lotMap, hoveredLotId],
   );
 
+  // Conjunto de IDs de lotes filtrados para consultas instantáneas O(1)
+  const filteredLotIds = useMemo(() => {
+    if (!isFilterActive || !filteredLots) return null;
+    const set = new Set<string>();
+    for (const lot of filteredLots) {
+      set.add(lot.id);
+    }
+    return set;
+  }, [filteredLots, isFilterActive]);
+
   // Escala inicial ajustada al tamaño del contenedor
   const calculateFitTransform = useCallback(() => {
     const container = containerRef.current;
@@ -140,8 +214,8 @@ export default function MasterplanSvgViewer({
     if (!cWidth || !cHeight) return { scale: 0.9, offset: { x: 0, y: 0 } };
 
     const fitScale = Math.min(cWidth / SVG_WIDTH, cHeight / SVG_HEIGHT) * 0.96;
-    const isDesktop = cWidth >= 1200;
-    const desktopShift = isDesktop ? 60 : 0;
+    const isDesktop = cWidth >= 1280;
+    const desktopShift = isDesktop && isDesktopSidebarOpen ? 90 : 0;
 
     return {
       scale: fitScale,
@@ -150,12 +224,17 @@ export default function MasterplanSvgViewer({
         y: (cHeight - SVG_HEIGHT * fitScale) / 2,
       },
     };
-  }, []);
+  }, [isDesktopSidebarOpen]);
 
   const reset = useCallback(() => {
     const { scale: initialScale, offset: initialOffset } = calculateFitTransform();
     setScale(initialScale);
     setOffset(initialOffset);
+    transformRef.current = { scale: initialScale, offset: initialOffset };
+    if (viewportGroupRef.current) {
+      viewportGroupRef.current.style.transition = "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
+      viewportGroupRef.current.style.transform = `translate3d(${initialOffset.x}px, ${initialOffset.y}px, 0) scale(${initialScale})`;
+    }
   }, [calculateFitTransform]);
 
   const zoom = useCallback((factor: number, clientCenter?: { x: number; y: number }) => {
@@ -173,15 +252,34 @@ export default function MasterplanSvgViewer({
       // Mantener el punto bajo el cursor / centro quieto durante el zoom
       setOffset((prevOffset) => {
         const ratio = nextScale / prevScale;
-        return {
+        const nextOffset = {
           x: originX - (originX - prevOffset.x) * ratio,
           y: originY - (originY - prevOffset.y) * ratio,
         };
+        transformRef.current = { scale: nextScale, offset: nextOffset };
+        if (viewportGroupRef.current) {
+          viewportGroupRef.current.style.transition = "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)";
+          viewportGroupRef.current.style.transform = `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${nextScale})`;
+        }
+        return nextOffset;
       });
 
       return nextScale;
     });
   }, []);
+
+  // Selección segura de lotes con prevención de doble disparo (pointerup + click)
+  const handleSelectLotSafe = useCallback(
+    (lotId: string) => {
+      const now = Date.now();
+      if (now - lastSelectTimeRef.current < 120) return;
+      lastSelectTimeRef.current = now;
+      setHoveredLotId(null);
+      setTooltipPos(null);
+      onSelectLot(lotId);
+    },
+    [onSelectLot],
+  );
 
   // Observador de redimensionamiento del contenedor
   useEffect(() => {
@@ -203,30 +301,139 @@ export default function MasterplanSvgViewer({
 
   // Inicializar encuadre cuando el contenedor esté listo
   useEffect(() => {
-    if (containerSize.width > 0 && containerSize.height > 0) {
+    if (containerSize.width > 0 && containerSize.height > 0 && focusRequest === 0) {
       const { scale: initialScale, offset: initialOffset } = calculateFitTransform();
       setScale(initialScale);
       setOffset(initialOffset);
+      transformRef.current = { scale: initialScale, offset: initialOffset };
     }
-  }, [containerSize.width, containerSize.height, calculateFitTransform]);
+  }, [containerSize.width, containerSize.height, calculateFitTransform, focusRequest]);
 
-  // Centrado suave sobre el centroide del lote seleccionado con zoom profundo
+  // Centrado suave y zoom potente sobre el centroide del lote seleccionado
   useEffect(() => {
-    if (!selectedLot?.centroid || containerSize.width === 0) return;
+    if (!selectedLot?.centroid || containerSize.width === 0 || focusRequest === 0) return;
+    if (focusRequest === lastHandledFocusRef.current) return;
+    lastHandledFocusRef.current = focusRequest;
 
     const [cx, cy] = selectedLot.centroid;
-    // Zoom profundo e inmersivo para apreciar con detalle los linderos del lote y su entorno
-    const focusScale = 4.5;
-    setScale(focusScale);
+    const isDesktop = containerSize.width >= 1024;
+    // Escala balanceada: zoom cercano (3.4 en desktop, 2.6 en móvil) para ver el lote en primer plano
+    const targetScale = isDesktop ? 3.4 : 2.6;
 
-    const isDesktop = containerSize.width >= 1200;
-    const panelOffset = isDesktop ? 140 : 0;
+    // En escritorio, con panel lateral visible de 360px, centrar en el área libre visible
+    const targetCenterX = isDesktop
+      ? containerSize.width / 2 + (isDesktopSidebarOpen ? 180 : 0)
+      : containerSize.width / 2;
+    // Considerar el espacio de la barra de navegación superior (56-64px) en escritorio
+    const targetCenterY = isDesktop
+      ? (containerSize.height + 36) / 2
+      : containerSize.height / 2;
 
-    setOffset({
-      x: containerSize.width / 2 - cx * focusScale + panelOffset,
-      y: containerSize.height / 2 - cy * focusScale,
-    });
-  }, [focusRequest, selectedLot, containerSize.width, containerSize.height]);
+    const targetOffset = {
+      x: targetCenterX - cx * targetScale,
+      y: targetCenterY - cy * targetScale,
+    };
+
+    setScale(targetScale);
+    setOffset(targetOffset);
+    transformRef.current = { scale: targetScale, offset: targetOffset };
+
+    if (viewportGroupRef.current) {
+      viewportGroupRef.current.style.transition = "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
+      viewportGroupRef.current.style.transform = `translate3d(${targetOffset.x}px, ${targetOffset.y}px, 0) scale(${targetScale})`;
+    }
+  }, [focusRequest, selectedLot, containerSize.width, containerSize.height, isDesktopSidebarOpen]);
+
+  // Encuadre automático y zoom fluido cuando se aplica o cambia un filtro
+  useEffect(() => {
+    if (filterRequest === 0) return;
+    if (filterRequest === lastHandledFilterRef.current) return;
+    lastHandledFilterRef.current = filterRequest;
+
+    if (containerSize.width === 0 || containerSize.height === 0) return;
+
+    // Si se desactivó el filtro o se volvió a "Todos" sin filtros extra
+    if (!isFilterActive || !filteredLots || filteredLots.length === 0) {
+      reset();
+      return;
+    }
+
+    // Calcular la caja envolvente de todos los lotes filtrados
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let count = 0;
+
+    for (const lot of filteredLots) {
+      if (lot.centroid) {
+        const [cx, cy] = lot.centroid;
+        if (cx < minX) minX = cx;
+        if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy;
+        if (cy > maxY) maxY = cy;
+        count++;
+      }
+    }
+
+    if (count === 0) {
+      reset();
+      return;
+    }
+
+    // Margen de seguridad dinámico según la cantidad de lotes
+    const pad = count === 1 ? 90 : 130;
+    minX = Math.max(0, minX - pad);
+    minY = Math.max(0, minY - pad);
+    maxX = Math.min(SVG_WIDTH, maxX + pad);
+    maxY = Math.min(SVG_HEIGHT, maxY + pad);
+
+    const boxWidth = Math.max(180, maxX - minX);
+    const boxHeight = Math.max(180, maxY - minY);
+    const boxCenterX = (minX + maxX) / 2;
+    const boxCenterY = (minY + maxY) / 2;
+
+    const isDesktop = containerSize.width >= 1024;
+    const sidebarWidth = isDesktop && isDesktopSidebarOpen ? 360 : 0;
+    const availableWidth = Math.max(200, containerSize.width - sidebarWidth);
+    const availableHeight = Math.max(200, isDesktop ? containerSize.height - 40 : containerSize.height);
+
+    // Ajustar escala para que quepan todos los lotes con 12% de holgura visual
+    const scaleX = (availableWidth * 0.88) / boxWidth;
+    const scaleY = (availableHeight * 0.88) / boxHeight;
+    let targetScale = Math.min(scaleX, scaleY);
+
+    const minReasonableScale = isDesktop ? 0.35 : 0.22;
+    const maxAllowedScale = count <= 2 ? 3.4 : 2.8;
+    targetScale = Math.min(maxAllowedScale, Math.max(minReasonableScale, targetScale));
+
+    const targetCenterX = isDesktop
+      ? sidebarWidth + availableWidth / 2
+      : containerSize.width / 2;
+    const targetCenterY = isDesktop
+      ? (containerSize.height + 36) / 2
+      : containerSize.height / 2;
+
+    const targetOffsetX = targetCenterX - boxCenterX * targetScale;
+    const targetOffsetY = targetCenterY - boxCenterY * targetScale;
+
+    setScale(targetScale);
+    setOffset({ x: targetOffsetX, y: targetOffsetY });
+    transformRef.current = { scale: targetScale, offset: { x: targetOffsetX, y: targetOffsetY } };
+
+    if (viewportGroupRef.current) {
+      viewportGroupRef.current.style.transition = "transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)";
+      viewportGroupRef.current.style.transform = `translate3d(${targetOffsetX}px, ${targetOffsetY}px, 0) scale(${targetScale})`;
+    }
+  }, [
+    filterRequest,
+    isFilterActive,
+    filteredLots,
+    containerSize.width,
+    containerSize.height,
+    isDesktopSidebarOpen,
+    reset,
+  ]);
 
   // Zoom con la rueda del ratón
   useEffect(() => {
@@ -243,65 +450,194 @@ export default function MasterplanSvgViewer({
     return () => container.removeEventListener("wheel", handleWheel);
   }, [zoom]);
 
-  // Gestor de eventos de arrastre / pan
+  // Gestor de eventos táctiles y de arrastre (pan + pinch-to-zoom con fluidez extrema en GPU y RAF)
   const handlePointerDown = (event: React.PointerEvent) => {
-    if (event.button !== 0) return;
     const target = event.target as HTMLElement;
     // Si se hizo clic sobre un botón o control interactivo, NO capturar ni arrastrar
     if (target.closest("button") || target.closest("a") || target.closest(".no-drag")) {
       return;
     }
-    dragRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      initOffsetX: offset.x,
-      initOffsetY: offset.y,
-    };
-    setIsDragging(false);
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+
+    // Cachear bounding client rect para evitar layout thrashing en pointermove
+    if (containerRef.current) {
+      cachedContainerRectRef.current = containerRef.current.getBoundingClientRect();
+      containerRef.current.style.cursor = "grabbing";
+    }
+
+    // Desactivar temporalmente transiciones y punteros en el SVG para arrastre instantáneo a 120fps
+    if (viewportGroupRef.current) {
+      viewportGroupRef.current.style.transition = "none";
+      viewportGroupRef.current.style.pointerEvents = "none";
+    }
+
+    // Detectar si el puntero se posó sobre un lote
+    const lotElement = (event.target as Element | null)?.closest('[id^="lot-"]');
+    if (lotElement) {
+      pointerDownLotRef.current = lotElement.id.replace(/^lot-/, "");
+    } else {
+      pointerDownLotRef.current = null;
+    }
+
+    pointerDownPosRef.current = { x: event.clientX, y: event.clientY };
+    isDragConfirmedRef.current = false;
+    isDraggingRef.current = true;
+
+    // Registrar puntero activo para soporte multi-touch
+    pointersMapRef.current.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+
+    if (pointersMapRef.current.size === 1) {
+      // Arrastre simple (un dedo o mouse)
+      dragRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        initOffsetX: transformRef.current.offset.x,
+        initOffsetY: transformRef.current.offset.y,
+      };
+    } else if (pointersMapRef.current.size === 2) {
+      // Pinch-to-zoom (dos dedos)
+      const points = Array.from(pointersMapRef.current.values());
+      const p1 = points[0];
+      const p2 = points[1];
+      const dist = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+      const midX = (p1.clientX + p2.clientX) / 2;
+      const midY = (p1.clientY + p2.clientY) / 2;
+
+      pinchStateRef.current = {
+        initDist: dist,
+        initScale: transformRef.current.scale,
+        initOffset: { ...transformRef.current.offset },
+        midX,
+        midY,
+      };
+    }
+
+    try {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {
+      // Ignorar si el navegador no permite captura
+    }
   };
 
   const handlePointerMove = (event: React.PointerEvent) => {
-    if (!dragRef.current) {
-      if (hoveredLotId) {
-        setTooltipPos({ x: event.clientX, y: event.clientY });
+    if (pointersMapRef.current.has(event.pointerId)) {
+      pointersMapRef.current.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    }
+
+    // Verificar si el puntero se ha movido más de 6px para distinguir clic de arrastre
+    if (!isDragConfirmedRef.current && pointerDownPosRef.current) {
+      const distMoved = Math.hypot(
+        event.clientX - pointerDownPosRef.current.x,
+        event.clientY - pointerDownPosRef.current.y,
+      );
+      if (distMoved > 6) {
+        isDragConfirmedRef.current = true;
+      }
+    }
+
+    if (!isDraggingRef.current) return;
+
+    if (pointersMapRef.current.size === 2 && pinchStateRef.current) {
+      // Gestionar pellizco suave sin layout thrashing utilizando el rect cacheado
+      const points = Array.from(pointersMapRef.current.values());
+      const p1 = points[0];
+      const p2 = points[1];
+      const dist = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+      const ratio = dist / pinchStateRef.current.initDist;
+
+      const nextScale = Math.min(
+        MAX_SCALE,
+        Math.max(MIN_SCALE, pinchStateRef.current.initScale * ratio),
+      );
+
+      const rect = cachedContainerRectRef.current || containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const originX = pinchStateRef.current.midX - rect.left;
+      const originY = pinchStateRef.current.midY - rect.top;
+
+      const scaleRatio = nextScale / pinchStateRef.current.initScale;
+      const nextOffset = {
+        x: originX - (originX - pinchStateRef.current.initOffset.x) * scaleRatio,
+        y: originY - (originY - pinchStateRef.current.initOffset.y) * scaleRatio,
+      };
+
+      transformRef.current = { scale: nextScale, offset: nextOffset };
+      latestTransformRef.current = { x: nextOffset.x, y: nextOffset.y, scale: nextScale };
+
+      if (!rafPendingRef.current) {
+        rafPendingRef.current = true;
+        requestAnimationFrame(applyPendingTransform);
       }
       return;
     }
 
-    const clientX = event.clientX;
-    const clientY = event.clientY;
+    // Arrastre simple (pan) optimizado en RAF directamente en GPU mediante CSS translate3d
+    if (dragRef.current && pointersMapRef.current.size === 1) {
+      const dx = event.clientX - dragRef.current.startX;
+      const dy = event.clientY - dragRef.current.startY;
 
-    if (rafRef.current !== null) return;
+      const nextOffset = {
+        x: dragRef.current.initOffsetX + dx,
+        y: dragRef.current.initOffsetY + dy,
+      };
 
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
-      if (!dragRef.current) return;
-      const dx = clientX - dragRef.current.startX;
-      const dy = clientY - dragRef.current.startY;
+      transformRef.current.offset = nextOffset;
+      latestTransformRef.current = {
+        x: nextOffset.x,
+        y: nextOffset.y,
+        scale: transformRef.current.scale,
+      };
 
-      if (Math.hypot(dx, dy) > 2) {
-        setIsDragging(true);
-        setOffset({
-          x: dragRef.current.initOffsetX + dx,
-          y: dragRef.current.initOffsetY + dy,
-        });
+      if (!rafPendingRef.current) {
+        rafPendingRef.current = true;
+        requestAnimationFrame(applyPendingTransform);
       }
-    });
+    }
   };
 
   const handlePointerUp = (event: React.PointerEvent) => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
+    pointersMapRef.current.delete(event.pointerId);
+
+    if (pointersMapRef.current.size === 0) {
+      isDraggingRef.current = false;
+      dragRef.current = null;
+      pinchStateRef.current = null;
+
+      if (containerRef.current) {
+        containerRef.current.style.cursor = "grab";
+      }
+      if (viewportGroupRef.current) {
+        viewportGroupRef.current.style.pointerEvents = "auto";
+      }
+
+      // Aplicar de inmediato cualquier transformación pendiente
+      if (latestTransformRef.current && viewportGroupRef.current) {
+        const { x, y, scale: s } = latestTransformRef.current;
+        viewportGroupRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${s})`;
+      }
+
+      // Sincronizar estado React al soltar
+      setScale(transformRef.current.scale);
+      setOffset(transformRef.current.offset);
+
+      // Si no hubo arrastre y se soltó sobre un lote, seleccionarlo
+      if (!isDragConfirmedRef.current && pointerDownLotRef.current) {
+        handleSelectLotSafe(pointerDownLotRef.current);
+      }
+    } else if (pointersMapRef.current.size === 1) {
+      // Pasar a arrastre con el dedo restante
+      const remaining = Array.from(pointersMapRef.current.values())[0];
+      dragRef.current = {
+        startX: remaining.clientX,
+        startY: remaining.clientY,
+        initOffsetX: transformRef.current.offset.x,
+        initOffsetY: transformRef.current.offset.y,
+      };
+      pinchStateRef.current = null;
     }
-    dragRef.current = null;
-    setIsDragging(false);
-    try {
-      (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
-    } catch {
-      // Ignore if not captured
-    }
+
+    pointerDownLotRef.current = null;
+    pointerDownPosRef.current = null;
+    isDragConfirmedRef.current = false;
   };
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -322,8 +658,8 @@ export default function MasterplanSvgViewer({
     }
   };
 
-  // Nivel de detalle semántico
-  const showDetailedLabels = scale >= 0.72;
+  // Tamaño de fuente optimizado para que desde lejos se vea el número de lote pequeño pero perfectamente visible
+  const baseLabelFontSize = scale < 0.28 ? 16 : scale < 0.55 ? 14 : scale < 1.0 ? 12.5 : 11;
 
   return (
     <div
@@ -333,21 +669,22 @@ export default function MasterplanSvgViewer({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      style={{ cursor: "grab" }}
     >
-      {/* Lienzo SVG unificado con pan & zoom sincronizado en <g> */}
+      {/* Lienzo SVG con pan & zoom sincronizado en <g> (sin viewBox para coincidencia directa de píxeles) */}
       <svg
-        viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
         className="h-full w-full pointer-events-none"
         style={{
           overflow: "visible",
         }}
       >
         <g
+          ref={viewportGroupRef}
           style={{
-            transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+            transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
             transformOrigin: "0 0",
-            transition: isDragging ? "none" : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+            transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+            willChange: "transform",
           }}
           className="pointer-events-auto"
         >
@@ -383,6 +720,34 @@ export default function MasterplanSvgViewer({
               const isReserved = lot.status === "Reservado";
               const isSold = lot.status === "Vendido";
               const isLastUnits = lot.status === "Últimas unidades";
+              const isMatch = !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
+
+              // Si hay filtro activo y el lote NO coincide con el filtro:
+              // SE DEBEN VER TODOS LOS LOTES con total claridad (fondo blanco limpio y borde perimetral slate definido),
+              // pero sin color comercial para que solo resalten los filtrados
+              if (isFilterActive && !isMatch) {
+                return (
+                  <path
+                    key={lot.id}
+                    id={`lot-${lot.id}`}
+                    d={lot.pathD}
+                    fill={isHovered ? "#f1f5f9" : "#ffffff"}
+                    stroke={isHovered ? "#475569" : "#cbd5e1"}
+                    strokeWidth={isHovered ? 1.8 : 1.15}
+                    opacity={1}
+                    style={{
+                      transition: "fill 0.15s ease, stroke 0.15s ease",
+                      cursor: "pointer",
+                    }}
+                    onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}
+                    onPointerLeave={handleLotPointerLeave}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectLotSafe(lot.id);
+                    }}
+                  />
+                );
+              }
 
               // Estilos por estado según especificación:
               // - Vendido: ROJO
@@ -391,22 +756,22 @@ export default function MasterplanSvgViewer({
               // - Seleccionado: AZUL CIELO
               let fill = "#dcfce7"; // Verde claro visible y vibrante
               let stroke = "#16a34a"; // Borde verde definido
-              let strokeWidth = 1.5;
+              let strokeWidth = isFilterActive ? 2.2 : 1.5;
 
               if (isSold) {
                 // Vendido en ROJO
                 fill = isHovered ? "#fca5a5" : "#fee2e2";
                 stroke = "#dc2626";
-                strokeWidth = isHovered ? 2.6 : 1.5;
+                strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
               } else if (isReserved) {
                 // Reservado en NARANJA
                 fill = isHovered ? "#fdba74" : "#ffedd5";
                 stroke = "#ea580c";
-                strokeWidth = isHovered ? 2.6 : 1.5;
+                strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
               } else if (isLastUnits) {
                 fill = isHovered ? "#fde047" : "#fef9c3";
                 stroke = "#ca8a04";
-                strokeWidth = isHovered ? 2.6 : 1.5;
+                strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
               } else if (isHovered) {
                 fill = "#bbf7d0";
                 stroke = "#15803d";
@@ -431,50 +796,45 @@ export default function MasterplanSvgViewer({
                     transition: "fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease",
                     cursor: "pointer",
                   }}
-                  onPointerEnter={(e) => {
-                    setHoveredLotId(lot.id);
-                    setTooltipPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  onPointerLeave={() => {
-                    setHoveredLotId(null);
-                    setTooltipPos(null);
-                  }}
+                  onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}
+                  onPointerLeave={handleLotPointerLeave}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelectLot(lot.id);
+                    handleSelectLotSafe(lot.id);
                   }}
                 />
               );
             })}
           </g>
 
-          {/* Capa 6: Números de Lote en sus Centroides Matemáticos Exactos */}
+          {/* Capa 6: Números de Lote en sus Centroides Matemáticos Exactos (Siempre visibles, incluso desde lejos) */}
           <g id="svg-labels" className="pointer-events-none">
             {lots.map((lot) => {
               if (!lot.centroid || lot.isReserve) return null;
               const [cx, cy] = lot.centroid;
               const isSelected = lot.id === selectedLotId;
               const isHovered = lot.id === hoveredLotId;
-
-              // En zoom alejado solo mostramos el seleccionado o hover
-              if (!showDetailedLabels && !isSelected && !isHovered) return null;
+              const isMatch = !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
+              const isFaded = isFilterActive && !isMatch;
 
               const label = lot.lotNumber ?? lot.id.replace("L-", "");
 
               if (isSelected) {
+                const markerR = scale < 0.28 ? 18 : 15;
+                const markerFontSize = scale < 0.28 ? 12 : 11;
                 return (
                   <g key={`marker-selected-${lot.id}`} transform={`translate(${cx}, ${cy})`}>
                     <circle
-                      r={14 / Math.min(scale, 2.5)}
+                      r={markerR}
                       fill="#0284c7"
                       stroke="#ffffff"
-                      strokeWidth={2.5 / Math.min(scale, 2.5)}
+                      strokeWidth={2.2}
                     />
                     <text
                       textAnchor="middle"
                       dominantBaseline="central"
                       fill="#ffffff"
-                      fontSize={11 / Math.min(scale, 2.5)}
+                      fontSize={markerFontSize}
                       fontWeight={800}
                       fontFamily="system-ui, -apple-system, sans-serif"
                     >
@@ -484,6 +844,12 @@ export default function MasterplanSvgViewer({
                 );
               }
 
+              const fontSize = isHovered
+                ? baseLabelFontSize + 2.5
+                : isFaded
+                  ? Math.max(9, baseLabelFontSize - 1.5)
+                  : baseLabelFontSize;
+
               return (
                 <text
                   key={`label-${lot.id}`}
@@ -491,9 +857,9 @@ export default function MasterplanSvgViewer({
                   y={cy}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill={isHovered ? "#0f172a" : "#334155"}
-                  fontSize={isHovered ? 12.5 : 10.5}
-                  fontWeight={isHovered ? 800 : 700}
+                  fill={isHovered ? "#0f172a" : isFaded ? "#64748b" : "#1e293b"}
+                  fontSize={fontSize}
+                  fontWeight={isHovered ? 800 : isFaded ? 600 : 700}
                   fontFamily="system-ui, -apple-system, sans-serif"
                 >
                   {label}
@@ -548,81 +914,111 @@ export default function MasterplanSvgViewer({
         </div>
       )}
 
-      {/* Botones de Control Flotantes (Zoom, Pan, Reset, Fullscreen) */}
+      {/* Píldora Flotante Informativa de Filtros Activos con botón de restablecer */}
+      {isFilterActive && filteredLots && (
+        <div
+          className="no-drag absolute top-14 left-2.5 lg:left-4 lg:top-4 z-20 flex items-center gap-2 rounded-full border border-border/80 bg-background/95 px-2.5 py-1 lg:px-3 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95 duration-200"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-accent" />
+          </span>
+          <span className="text-[10px] lg:text-xs font-semibold text-foreground whitespace-nowrap">
+            {filteredLots.length} {filteredLots.length === 1 ? "lote filtrado" : "lotes filtrados"}
+          </span>
+          {onClearFilter && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClearFilter();
+              }}
+              className="ml-0.5 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+              title="Restablecer filtros y ver todos los lotes"
+              aria-label="Restablecer filtros"
+            >
+              <RotateCcw className="size-3" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Botones de Control Flotantes Integrados (Brújula + Zoom + Reset + Pantalla Completa) */}
       <div
-        className="no-drag absolute right-3.5 top-1/2 -translate-y-1/2 xl:top-24 xl:translate-y-0 flex flex-col items-center gap-1.5 rounded-full border border-border/70 bg-background/95 p-1.5 shadow-xl backdrop-blur-md z-30 select-none"
+        className="no-drag absolute right-3 lg:right-4 top-1/2 -translate-y-1/2 lg:top-[92px] lg:translate-y-0 flex flex-col items-center gap-2 z-30 select-none"
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            zoom(1.35);
-          }}
-          className="flex size-9 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
-          title="Acercar (Zoom In)"
-          aria-label="Acercar"
-        >
-          <Plus className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            zoom(1 / 1.35);
-          }}
-          className="flex size-9 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
-          title="Alejar (Zoom Out)"
-          aria-label="Alejar"
-        >
-          <Minus className="size-4" />
-        </button>
-        <div className="h-px w-5 bg-border/60" />
+        {/* Brújula Norte */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             reset();
           }}
-          className="flex size-9 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
-          title="Restablecer vista inicial"
-          aria-label="Restablecer vista"
+          className="relative flex size-8 lg:size-9.5 items-center justify-center rounded-full border border-border/70 bg-background/95 text-foreground shadow-lg backdrop-blur-md transition-all hover:bg-muted active:scale-90 cursor-pointer"
+          title="Orientación Norte (Clic para restablecer vista)"
+          aria-label="Norte - Restablecer vista"
         >
-          <RotateCcw className="size-4" />
+          <Compass className="size-4 lg:size-4.5 text-accent" />
+          <span className="absolute -bottom-1 text-[6.5px] lg:text-[7.5px] font-bold text-muted-foreground">N</span>
         </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFullscreen();
-          }}
-          className="flex size-9 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
-          title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-          aria-label="Pantalla completa"
-        >
-          {isFullscreen ? <Shrink className="size-4" /> : <Expand className="size-4" />}
-        </button>
-      </div>
 
-      {/* Brújula Norte en esquina superior derecha */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          reset();
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        className="no-drag absolute right-4 top-[84px] flex size-10 items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground shadow-md backdrop-blur-sm z-30 transition-all hover:bg-muted active:scale-90 cursor-pointer"
-        title="Orientación Norte (Clic para restablecer vista)"
-        aria-label="Norte - Restablecer vista"
-      >
-        <Compass className="size-5 text-accent" />
-        <span className="absolute -bottom-1 text-[8px] font-bold text-muted-foreground">N</span>
-      </button>
+        {/* Barra de Controles de Zoom */}
+        <div className="flex flex-col items-center gap-1 rounded-full border border-border/70 bg-background/95 p-1 lg:p-1.5 shadow-xl backdrop-blur-md">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              zoom(1.35);
+            }}
+            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
+            title="Acercar (Zoom In)"
+            aria-label="Acercar"
+          >
+            <Plus className="size-3.5 lg:size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              zoom(1 / 1.35);
+            }}
+            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
+            title="Alejar (Zoom Out)"
+            aria-label="Alejar"
+          >
+            <Minus className="size-3.5 lg:size-4" />
+          </button>
+          <div className="h-px w-4 lg:w-5 bg-border/60" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              reset();
+            }}
+            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
+            title="Restablecer vista inicial"
+            aria-label="Restablecer vista"
+          >
+            <RotateCcw className="size-3.5 lg:size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
+            title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            aria-label="Pantalla completa"
+          >
+            {isFullscreen ? <Shrink className="size-3.5 lg:size-4" /> : <Expand className="size-3.5 lg:size-4" />}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

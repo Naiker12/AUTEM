@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet } from "@/components/ui/sheet";
 import { getPropertyBySlug } from "@/data/properties";
-import { getLotsByProject } from "@/data/lots";
+import { getLotsByProject, formatLotPrice, formatLotArea } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import {
   InteractivePanorama,
@@ -37,7 +37,6 @@ function ProjectView() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
-  const [isMobileLotPanelOpen, setIsMobileLotPanelOpen] = useState(false);
   const [viewSettings, setViewSettings] = useState<ProjectViewSettings>(
     DEFAULT_PROJECT_VIEW_SETTINGS,
   );
@@ -47,6 +46,65 @@ function ProjectView() {
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = projectLots.find((lot) => lot.id === selectedLotId) ?? projectLots[0];
   const hasLots = projectLots.length > 0;
+
+  // Estados de filtrado sincronizados para el mapa interactivo y el catálogo
+  const [filterStatus, setFilterStatus] = useState("Todos");
+  const [filterMinArea, setFilterMinArea] = useState("all");
+  const [filterMaxPrice, setFilterMaxPrice] = useState("all");
+  const [filterSort, setFilterSort] = useState("lot-asc");
+  const [filterRequest, setFilterRequest] = useState(0);
+
+  const handleStatusChange = useCallback((newStatus: string) => {
+    setFilterStatus(newStatus);
+    setFilterRequest((prev) => prev + 1);
+  }, []);
+
+  const handleMinAreaChange = useCallback((newArea: string) => {
+    setFilterMinArea(newArea);
+    setFilterRequest((prev) => prev + 1);
+  }, []);
+
+  const handleMaxPriceChange = useCallback((newPrice: string) => {
+    setFilterMaxPrice(newPrice);
+    setFilterRequest((prev) => prev + 1);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilterMinArea("all");
+    setFilterMaxPrice("all");
+    setFilterSort("lot-asc");
+    setFilterStatus("Todos");
+    setFilterRequest((prev) => prev + 1);
+  }, []);
+
+  const isFilterActive =
+    filterStatus !== "Todos" || filterMinArea !== "all" || filterMaxPrice !== "all";
+
+  const filteredLots = useMemo(() => {
+    const statusLots =
+      filterStatus === "Todos"
+        ? projectLots
+        : filterStatus === "Reservados"
+          ? projectLots.filter((lot) => lot.status === "Reservado")
+          : filterStatus === "Vendidos"
+            ? projectLots.filter((lot) => lot.status === "Vendido")
+            : projectLots.filter(
+                (lot) => lot.status === "Disponible" || lot.status === "Últimas unidades",
+              );
+
+    return statusLots
+      .filter((lot) => filterMinArea === "all" || lot.area >= Number(filterMinArea))
+      .filter((lot) => filterMaxPrice === "all" || lot.price <= Number(filterMaxPrice) * 1_000_000)
+      .sort((first, second) => {
+        if (filterSort === "lot-asc") return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
+        if (filterSort === "lot-desc") return (second.lotNumber ?? 0) - (first.lotNumber ?? 0);
+        if (filterSort === "area-desc") return second.area - first.area;
+        if (filterSort === "area-asc") return first.area - second.area;
+        if (filterSort === "price-asc") return first.price - second.price;
+        if (filterSort === "price-desc") return second.price - first.price;
+        return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
+      });
+  }, [projectLots, filterStatus, filterMinArea, filterMaxPrice, filterSort]);
 
   useEffect(() => {
     const storedSettings = localStorage.getItem("autem-project-view-settings");
@@ -78,11 +136,82 @@ function ProjectView() {
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
   const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
 
-  const selectLot = (lot: (typeof projectLots)[number]) => {
+  const [sheetPercent, setSheetPercent] = useState(48);
+  const [isDraggingSheet, setIsDraggingSheet] = useState(false);
+  const dragStartYRef = useRef(0);
+  const dragStartPercentRef = useRef(48);
+  const currentDragPercentRef = useRef(48);
+  const containerHeightRef = useRef(0);
+  const sheetRafPendingRef = useRef(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const mapWrapperRef = useRef<HTMLDivElement>(null);
+  const sheetWrapperRef = useRef<HTMLDivElement>(null);
+
+  const handleSheetDragStart = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // Ignorar
+    }
+    containerHeightRef.current = splitContainerRef.current?.clientHeight || window.innerHeight;
+    dragStartYRef.current = e.clientY;
+    dragStartPercentRef.current = sheetPercent;
+    currentDragPercentRef.current = sheetPercent;
+    setIsDraggingSheet(true);
+  };
+
+  const handleSheetDragMove = (e: React.PointerEvent) => {
+    if (!isDraggingSheet) return;
+    const totalHeight = containerHeightRef.current;
+    if (totalHeight <= 0) return;
+
+    // Arrastrar hacia arriba (clientY disminuye) aumenta la altura del catálogo
+    const deltaY = dragStartYRef.current - e.clientY;
+    const deltaPercent = (deltaY / totalHeight) * 100;
+    const nextPercent = Math.min(84, Math.max(16, dragStartPercentRef.current + deltaPercent));
+    currentDragPercentRef.current = nextPercent;
+
+    // Rendimiento extremo 60-120fps alineado con RAF sin layout thrashing
+    if (!sheetRafPendingRef.current) {
+      sheetRafPendingRef.current = true;
+      requestAnimationFrame(() => {
+        sheetRafPendingRef.current = false;
+        if (mapWrapperRef.current) {
+          mapWrapperRef.current.style.height = `${100 - currentDragPercentRef.current}%`;
+        }
+        if (sheetWrapperRef.current) {
+          sheetWrapperRef.current.style.height = `calc(${currentDragPercentRef.current}% - 30px)`;
+        }
+      });
+    }
+  };
+
+  const handleSheetDragEnd = (e: React.PointerEvent) => {
+    if (!isDraggingSheet) return;
+    setIsDraggingSheet(false);
+    sheetRafPendingRef.current = false;
+    // Sincronizar una sola vez con React al soltar
+    setSheetPercent(currentDragPercentRef.current);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignorar
+    }
+  };
+
+  const handleToggleSheetSize = useCallback(() => {
+    setSheetPercent((prev) => (prev > 62 ? 46 : 76));
+  }, []);
+
+  const selectLot = useCallback((lot: (typeof projectLots)[number]) => {
     setSelectedLotId(lot.id);
     setLotFocusRequest((request) => request + 1);
-    setIsMobileLotPanelOpen(false);
-  };
+  }, []);
+
+  const handleView3D = useCallback(() => setMode("tour"), []);
+  const handleViewAR = useCallback(() => setMode("ar"), []);
+  const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
 
   const updateViewSettings = (changes: Partial<ProjectViewSettings>) => {
     setViewSettings((currentSettings) => {
@@ -110,15 +239,156 @@ function ProjectView() {
       />
       <div className="relative h-full">
         {mode === "lot" ? (
-          <MasterplanSvgViewer
-            lots={projectLots}
-            selectedLotId={selectedLot?.id ?? ""}
-            focusRequest={lotFocusRequest}
-            onSelectLot={(lotId) => {
-              const lot = projectLots.find((item) => item.id === lotId);
-              if (lot) selectLot(lot);
-            }}
-          />
+          <div
+            ref={splitContainerRef}
+            className="relative flex h-full flex-col pt-14 sm:pt-16 lg:block lg:pt-0"
+          >
+            {/* Mitad superior en móvil / Pantalla completa en escritorio */}
+            <div
+              ref={mapWrapperRef}
+              style={{
+                height: `${100 - sheetPercent}%`,
+                transition: isDraggingSheet ? "none" : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+              className="relative w-full min-h-[140px] lg:!h-full lg:absolute lg:inset-0"
+            >
+              <MasterplanSvgViewer
+                lots={projectLots}
+                filteredLots={filteredLots}
+                isFilterActive={isFilterActive}
+                filterRequest={filterRequest}
+                onClearFilter={handleClearFilters}
+                selectedLotId={selectedLot?.id ?? ""}
+                focusRequest={lotFocusRequest}
+                onSelectLot={(lotId) => {
+                  const cleanId = lotId.replace(/^lot-/, "");
+                  const lot = projectLots.find(
+                    (item) =>
+                      item.id === cleanId ||
+                      item.id === `L-${cleanId}` ||
+                      item.id.replace(/^L-/, "") === cleanId.replace(/^L-/, "") ||
+                      String(item.lotNumber) === cleanId.replace(/^L-/, ""),
+                  );
+                  if (lot) {
+                    selectLot(lot);
+                    setIsLotPanelVisible(true);
+                  }
+                }}
+                isDesktopSidebarOpen={isLotPanelVisible}
+              />
+              {viewSettings.showViewSwitcher && (
+                <div className="absolute top-2.5 left-2.5 z-20 lg:hidden">
+                  <ModeSwitcher activeMode={mode} onChange={setMode} compact />
+                </div>
+              )}
+            </div>
+
+            {/* Barra divisora táctil y dinámica para ajustar tamaño (solo móvil) */}
+            {hasLots && viewSettings.showLotCatalog && (
+              <div
+                onPointerDown={handleSheetDragStart}
+                onPointerMove={handleSheetDragMove}
+                onPointerUp={handleSheetDragEnd}
+                onPointerCancel={handleSheetDragEnd}
+                className="relative z-30 flex h-7.5 w-full shrink-0 cursor-row-resize touch-none items-center justify-between px-3 bg-background/95 border-t border-border/80 shadow-md backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
+                title="Desliza para ajustar la división entre mapa y catálogo"
+              >
+                {/* Botón rápido: Más Mapa */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSheetPercent(24);
+                  }}
+                  className={`rounded-full px-2 py-0.5 text-[8px] font-semibold transition-all ${sheetPercent <= 30 ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                >
+                  Más mapa
+                </button>
+
+                {/* Tirador central táctil */}
+                <div
+                  className="flex flex-col items-center justify-center py-1 cursor-row-resize px-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleSheetSize();
+                  }}
+                >
+                  <div className="h-1 w-10 rounded-full bg-muted-foreground/40 hover:w-14 hover:bg-accent transition-all" />
+                  <span className="mt-0.5 text-[7px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    ↕ Desliza
+                  </span>
+                </div>
+
+                {/* Botón rápido: Más Lotes */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSheetPercent(76);
+                  }}
+                  className={`rounded-full px-2 py-0.5 text-[8px] font-semibold transition-all ${sheetPercent >= 65 ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                >
+                  Más lotes
+                </button>
+              </div>
+            )}
+
+            {/* Mitad inferior en móvil: Catálogo de lotes dinámico */}
+            {hasLots && viewSettings.showLotCatalog && (
+              <div
+                ref={sheetWrapperRef}
+                style={{
+                  height: `calc(${sheetPercent}% - 30px)`,
+                  transition: isDraggingSheet ? "none" : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                className="relative w-full overflow-hidden lg:hidden"
+              >
+                <LotSelectionPanel
+                  lots={projectLots}
+                  filteredLots={filteredLots}
+                  status={filterStatus}
+                  onStatusChange={handleStatusChange}
+                  minArea={filterMinArea}
+                  onMinAreaChange={handleMinAreaChange}
+                  maxPrice={filterMaxPrice}
+                  onMaxPriceChange={handleMaxPriceChange}
+                  sort={filterSort}
+                  onSortChange={setFilterSort}
+                  onClearAdvanced={handleClearFilters}
+                  selectedId={selectedLot?.id ?? ""}
+                  onSelect={selectLot}
+                  onView3D={handleView3D}
+                  onViewAR={handleViewAR}
+                  onHide={() => {}}
+                  isMobileSplit
+                />
+              </div>
+            )}
+
+            {/* Panel lateral flotante en escritorio */}
+            {hasLots && viewSettings.showLotCatalog && isLotPanelVisible && (
+              <div className="hidden lg:block">
+                <LotSelectionPanel
+                  lots={projectLots}
+                  filteredLots={filteredLots}
+                  status={filterStatus}
+                  onStatusChange={handleStatusChange}
+                  minArea={filterMinArea}
+                  onMinAreaChange={handleMinAreaChange}
+                  maxPrice={filterMaxPrice}
+                  onMaxPriceChange={handleMaxPriceChange}
+                  sort={filterSort}
+                  onSortChange={setFilterSort}
+                  onClearAdvanced={handleClearFilters}
+                  selectedId={selectedLot?.id ?? ""}
+                  onSelect={selectLot}
+                  onView3D={handleView3D}
+                  onViewAR={handleViewAR}
+                  onHide={handleHideDesktopPanel}
+                />
+              </div>
+            )}
+          </div>
         ) : mode === "tour" ? (
           <div className="relative flex h-full w-full items-center justify-center bg-black/75">
             <img
@@ -172,8 +442,8 @@ function ProjectView() {
           showViewSwitcher={viewSettings.showViewSwitcher}
         />
 
-        {viewSettings.showViewSwitcher && (
-          <div className="xl:hidden">
+        {viewSettings.showViewSwitcher && mode !== "lot" && (
+          <div className="lg:hidden">
             <ModeSwitcher activeMode={mode} onChange={setMode} />
           </div>
         )}
@@ -191,45 +461,31 @@ function ProjectView() {
           />
         </Sheet>
 
-        {hasLots && viewSettings.showLotCatalog && (
-          <Button
-            type="button"
-            onClick={() => setIsMobileLotPanelOpen(true)}
-            className="absolute left-4 top-[84px] z-30 h-10 rounded-full bg-accent px-4 text-xs font-semibold text-accent-foreground shadow-lg hover:bg-accent/90 xl:hidden"
-          >
-            <PanelLeftOpen /> Elegir lote
-          </Button>
-        )}
-        {isMobileLotPanelOpen && (
-          <button
-            type="button"
-            aria-label="Cerrar catálogo de lotes"
-            onClick={() => setIsMobileLotPanelOpen(false)}
-            className="fixed inset-0 z-40 bg-black/70 xl:hidden"
-          />
-        )}
-
-        {hasLots && viewSettings.showLotCatalog && (isLotPanelVisible || isMobileLotPanelOpen) && (
-          <LotSelectionPanel
-            lots={projectLots}
-            selectedId={selectedLot?.id ?? ""}
-            mobileOpen={isMobileLotPanelOpen}
-            onSelect={selectLot}
-            onView3D={() => setMode("tour")}
-            onHide={() => {
-              setIsLotPanelVisible(false);
-              setIsMobileLotPanelOpen(false);
-            }}
-          />
-        )}
         {hasLots && viewSettings.showLotCatalog && !isLotPanelVisible && (
-          <Button
-            type="button"
-            onClick={() => setIsLotPanelVisible(true)}
-            className="absolute bottom-5 left-5 z-30 hidden rounded-full bg-accent text-accent-foreground hover:bg-accent/90 xl:flex"
-          >
-            <PanelLeftOpen /> Mostrar lotes
-          </Button>
+          <div className="absolute bottom-5 left-5 z-30 hidden items-center gap-2.5 lg:flex">
+            <Button
+              type="button"
+              onClick={() => setIsLotPanelVisible(true)}
+              className="rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90"
+            >
+              <PanelLeftOpen className="size-4 mr-1.5" /> Mostrar lotes
+            </Button>
+            {selectedLot && (
+              <button
+                type="button"
+                onClick={() => setIsLotPanelVisible(true)}
+                className="group flex items-center gap-2 rounded-full border border-border/80 bg-background/95 px-3.5 py-1.5 shadow-lg backdrop-blur-xl transition-all hover:bg-muted hover:border-accent cursor-pointer"
+                title="Clic para ver detalles en el catálogo"
+              >
+                <span className="font-bold text-foreground text-xs">Lote {selectedLot.id}</span>
+                <span className="text-[10px] text-muted-foreground">·</span>
+                <span className="text-xs font-semibold text-accent">{formatLotPrice(selectedLot.price)}</span>
+                <span className="text-[10px] text-muted-foreground">·</span>
+                <span className="text-[11px] text-muted-foreground">{formatLotArea(selectedLot.area)}</span>
+                <span className="ml-1 text-[10px] text-muted-foreground/80 group-hover:text-foreground">→</span>
+              </button>
+            )}
+          </div>
         )}
         {mode === "gallery" && images.length > 1 && (
           <>
@@ -240,7 +496,7 @@ function ProjectView() {
               onClick={() =>
                 setGalleryIndex((index) => (index - 1 + images.length) % images.length)
               }
-              className="absolute left-5 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground xl:left-[390px]"
+              className="absolute left-5 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground lg:left-[380px]"
               aria-label="Imagen anterior"
             >
               <ChevronLeft />
@@ -275,7 +531,7 @@ function ProjectView() {
         )}
 
         {mode !== "lot" && mode !== "tour" && mode !== "ar" && (
-          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 xl:pb-5 xl:pl-[390px]">
+          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:pb-5 lg:pl-[380px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
                 <Badge className="border border-accent/40 bg-background/80 text-[9px] uppercase tracking-[0.18em] text-accent backdrop-blur-xl">
