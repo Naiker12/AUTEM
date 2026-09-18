@@ -1,11 +1,14 @@
-import { Box, Images, MapPinned, Route, type LucideIcon } from "lucide-react";
+import { Images, MapPinned, Orbit, Route, type LucideIcon } from "lucide-react";
 
-export type ViewMode = "lot" | "tour" | "gallery" | "ar";
+export type ViewMode = "lot" | "perspective" | "tour" | "gallery";
 
 export interface ProjectViewMode {
   id: ViewMode;
   label: string;
+  shortLabel?: string;
   icon: LucideIcon;
+  badge?: string;
+  available?: boolean;
 }
 
 export interface ProjectViewSettings {
@@ -33,8 +36,34 @@ export const DEFAULT_PROJECT_VIEW_SETTINGS: ProjectViewSettings = {
 };
 
 export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
-  { id: "lot", label: "Zonas", icon: MapPinned },
-  { id: "tour", label: "Tour 360°", icon: Route },
-  { id: "gallery", label: "Galería", icon: Images },
-  { id: "ar", label: "AR", icon: Box },
+  {
+    id: "lot",
+    label: "Plano Urbanístico",
+    shortLabel: "Plano",
+    icon: MapPinned,
+    available: true,
+  },
+  {
+    id: "perspective",
+    label: "Perspectiva 3D",
+    shortLabel: "Perspectiva",
+    icon: Orbit,
+    badge: "Próx.",
+    available: false,
+  },
+  {
+    id: "tour",
+    label: "Tour 360°",
+    shortLabel: "Tour 360°",
+    icon: Route,
+    badge: "Próx.",
+    available: false,
+  },
+  {
+    id: "gallery",
+    label: "Galería",
+    shortLabel: "Galería",
+    icon: Images,
+    available: true,
+  },
 ];

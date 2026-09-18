@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Check, ChevronDown, MoveRight } from "lucide-react";
 import SelectedProjectsSection from "./SelectedProjectsSection";
-import TerritoryExperienceSections from "./TerritoryExperienceSections";
+import TerritoryLocationMap from "./TerritoryLocationMap";
 import Container from "@/components/layout/Container";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 
@@ -87,14 +87,14 @@ function ProcessSection() {
           <div className="lg:col-span-5 border border-[#403a34] bg-[#f6f1eb] overflow-hidden h-full flex flex-col justify-between">
             <div className="relative w-full flex-1 min-h-[380px] sm:min-h-[440px] overflow-hidden bg-[#e8e0d5]">
               <img
-                src={`${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`}
-                alt="Perspectiva del Masterplan y Parcelación AUTEM"
+                src={`${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`}
+                alt="Perspectiva del Masterplan y Parcelación Villa Paraíso"
                 className="absolute inset-0 h-full w-full object-cover object-center block transition-transform duration-700 hover:scale-105"
                 loading="lazy"
               />
             </div>
             <div className="p-4 sm:p-5 border-t border-[#403a34] flex items-center justify-between text-[10px] uppercase tracking-[0.1em] text-[#555555] shrink-0">
-              <span>Masterplan Lotes 360° · Vista Territorial</span>
+              <span>Masterplan Villa Paraíso · Vista Territorial</span>
               <span>AUTEM 2026</span>
             </div>
           </div>
@@ -311,9 +311,9 @@ export default function EditorialHomeSections() {
   return (
     <div ref={rootRef}>
       <SelectedProjectsSection />
-      <TerritoryExperienceSections />
       <ProcessSection />
       <EditorialContact />
+      <TerritoryLocationMap />
     </div>
   );
 }

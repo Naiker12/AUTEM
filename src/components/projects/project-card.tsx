@@ -1,6 +1,4 @@
 import { Property } from "@/data/properties";
-import { getARModel } from "@/data/ar-models";
-import { QrCode, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 interface ProjectCardProps {
@@ -9,8 +7,6 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ property, className = "" }: ProjectCardProps) {
-  const arModel = getARModel(property.slug);
-
   return (
     <Link
       to="/proyecto/$slug"
@@ -39,15 +35,6 @@ export default function ProjectCard({ property, className = "" }: ProjectCardPro
             </span>
           ))}
         </div>
-
-        {/* AR Badge if model exists */}
-        {arModel && (
-          <div className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-accent-foreground shadow-md">
-            <Sparkles size={12} />
-            <span>AR 3D</span>
-            <QrCode size={12} className="ml-0.5" />
-          </div>
-        )}
 
         {/* Bottom Card Header */}
         <div className="absolute bottom-4 left-4 right-4">

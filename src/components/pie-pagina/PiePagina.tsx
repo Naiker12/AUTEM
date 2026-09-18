@@ -158,20 +158,6 @@ export default function PiePagina() {
                   </span>
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/proyecto/$slug"
-                  params={{ slug: "eco-villa-sierra" }}
-                  className="group flex flex-col transition-colors hover:text-[#403a34] dark:hover:text-accent"
-                >
-                  <span className="font-medium text-[#403a34] dark:text-white">
-                    Eco-Villa Sierra
-                  </span>
-                  <span className="text-[11px] text-[#777777] dark:text-white/50">
-                    Residencia de Paisaje 410 m² · Turbaco
-                  </span>
-                </Link>
-              </li>
               <li className="pt-1 text-[11px] text-[#888888] dark:text-white/40">
                 Corredores bioclimáticos y naturaleza protegida en Bolívar, Colombia.
               </li>

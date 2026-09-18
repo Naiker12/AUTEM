@@ -26,23 +26,16 @@ const HERO_SLIDES: HeroSlide[] = [
     tagline: "Residencia estilo farmhouse con piscina rectangular y jardines",
     slug: "casa-campestre",
   },
-  {
-    image: `${BASE}projects/eco-villa-sierra/fachada.jpg`,
-    title: "Eco-Villa Sierra",
-    location: "Castillogrande, CO",
-    tagline: "Arquitectura sostenible e integración bioclimática",
-    slug: "eco-villa-sierra",
-  },
 ];
 
 const SLIDE_INTERVAL_MS = 6000;
 
 const LOT_SLIDES: HeroSlide[] = [
   {
-    image: `${BASE}projects/lotes-360/panoramica-render.png`,
-    title: "Lotes 360°",
-    location: "Cartagena, Colombia",
-    tagline: "Parcelación campestre con entorno natural y vista panorámica",
+    image: `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
+    title: "Villa Paraíso",
+    location: "Santa Rosa · Villanueva, Bolívar",
+    tagline: "Parcelación campestre con 343 lotes, vías internas y entorno natural",
     slug: "lotes-360",
   },
 ];

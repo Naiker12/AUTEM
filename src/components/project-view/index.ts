@@ -4,7 +4,10 @@ export { default as HdrPanoramaViewer } from "./HdrPanoramaViewer";
 export { default as InteractivePanorama } from "./InteractivePanorama";
 export { default as MasterplanImageViewer } from "./MasterplanImageViewer";
 export { default as MasterplanSvgViewer } from "./MasterplanSvgViewer";
-export { default as ProjectViewControlPanel } from "./ProjectViewControlPanel";
+export {
+  default as ProjectViewControlPanel,
+  ProjectViewControlPanelContent,
+} from "./ProjectViewControlPanel";
 export { default as ProjectHeader } from "./ProjectHeader";
 export { default as ProjectLoadingScreen } from "./ProjectLoadingScreen";
 export {

@@ -3,6 +3,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/politica-privacidad")({
+  head: () => ({
+    meta: [{ title: "Política de Privacidad | AUTEM" }],
+  }),
   component: PoliticaPrivacidad,
 });
 
@@ -43,7 +46,7 @@ function PoliticaPrivacidad() {
             </h2>
             <p className="mt-2">
               El sitio usa almacenamiento local del navegador para recordar preferencias de
-              interfaz, como el tema visual y los tutoriales de realidad aumentada. Si se incorporan
+              interfaz, como el tema visual y las opciones del visor interactivo. Si se incorporan
               cookies de analítica o marketing, se solicitará el consentimiento correspondiente
               antes de activarlas.
             </p>

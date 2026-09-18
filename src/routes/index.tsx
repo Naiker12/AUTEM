@@ -30,11 +30,11 @@ export const Route = createFileRoute("/")({
     meta: [
       {
         property: "og:image",
-        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
+        content: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
       },
       {
         name: "twitter:image",
-        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
+        content: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
       },
     ],
     scripts: [
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/")({
           "@type": "RealEstateAgent",
           name: "AUTEM Real Estate",
           description:
-            "Bienes raíces en Cartagena con visualización 3D, tours virtuales y realidad aumentada.",
+            "Bienes raíces en Cartagena con visualización 3D inmersiva y planos interactivos.",
           areaServed: "Colombia",
         }),
       },
@@ -162,7 +162,7 @@ function Index() {
 
   return (
     <div className="home-page min-h-screen font-sans text-foreground selection:bg-accent/30">
-      {/* 3D Model — persistent, never destroyed (stays alive for AR cache) */}
+      {/* 3D Model — persistent loader scene */}
       <div
         ref={loaderContainerRef}
         className={`fixed inset-0 z-[9998] overflow-hidden transition-opacity duration-500 ${

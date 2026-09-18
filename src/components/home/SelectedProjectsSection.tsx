@@ -1,41 +1,20 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import Container from "@/components/layout/Container";
-import { useScrollFrame } from "@/hooks/useScrollFrame";
-
-const base = import.meta.env.BASE_URL;
-
-const projects = [
-  {
-    number: "01",
-    name: "Villa Paraíso",
-    slug: "lotes-360",
-    type: "Parcelación Campestre",
-    location: "Santa Rosa · Villanueva",
-    area: "338 lotes · Plano maestro",
-    image: "projects/villa-paraiso/masterplan-clean.svg",
-    imageFit: "contain",
-    containerBg: "bg-[#f8f6f0]",
-    href: "proyecto/lotes-360",
-    className: "selected-project--left",
-  },
-  {
-    number: "02",
-    name: "Eco Villa Sierra",
-    slug: "eco-villa-sierra",
-    type: "Residencia de Paisaje",
-    location: "Turbaco",
-    area: "480 m² Construidos · Lote 2.200 m²",
-    image: "projects/eco-villa-sierra/fachada-home.webp",
-    href: "proyecto/eco-villa-sierra",
-    className: "selected-project--center",
-  },
-];
+import { getLotsByProject } from "@/data/lots";
+import MasterplanSvgViewer from "@/components/project-view/MasterplanSvgViewer";
 
 export default function SelectedProjectsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const lots = useMemo(() => getLotsByProject("lotes-360"), []);
+  const [selectedLotId, setSelectedLotId] = useState(lots[1]?.id ?? lots[0]?.id ?? "");
+
+  const selectedLot = useMemo(
+    () => lots.find((l) => l.id === selectedLotId) ?? lots[0],
+    [lots, selectedLotId],
+  );
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -44,7 +23,6 @@ export default function SelectedProjectsSection() {
       setIsVisible(true);
       return;
     }
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -52,40 +30,21 @@ export default function SelectedProjectsSection() {
           observer.disconnect();
         }
       },
-      { threshold: 0.16 },
+      { threshold: 0.12 },
     );
     observer.observe(section);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
-
-  useScrollFrame(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const bounds = section.getBoundingClientRect();
-    const windowH = window.innerHeight;
-    const progress = Math.min(1, Math.max(0, (windowH - bounds.top) / (windowH + bounds.height)));
-    section.style.setProperty("--projects-scroll", progress.toFixed(3));
-
-    section.querySelectorAll<HTMLElement>(".selected-project").forEach((card, index) => {
-      const speed = index === 1 ? -8 : index === 0 ? 18 : -14;
-      const yOffset = (progress - 0.5) * speed;
-      card.style.setProperty("--parallax-y", `${yOffset.toFixed(2)}px`);
-    });
-  });
 
   return (
     <section
       ref={sectionRef}
       id="proyectos"
-      className="selected-projects relative z-20 overflow-hidden bg-[#f6f1eb] px-6 py-24 text-[#403a34] md:px-12 md:py-32 xl:px-20 border-t border-[#403a34]/15"
+      className="selected-projects relative z-20 overflow-hidden border-t border-[#403a34]/15 bg-[#f6f1eb] px-4 py-14 text-[#403a34] sm:px-8 md:px-12 md:py-20 xl:px-16"
     >
-      <Container>
+      <Container className="max-w-[1680px]">
         <header
-          className="selected-projects__header border-b border-[#403a34]/15 pb-10"
+          className="border-b border-[#403a34]/15 pb-6 sm:pb-8"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: `translate3d(0, ${isVisible ? "0" : "28px"}, 0)`,
@@ -93,74 +52,77 @@ export default function SelectedProjectsSection() {
               "opacity 700ms cubic-bezier(.19,1,.22,1), transform 700ms cubic-bezier(.19,1,.22,1)",
           }}
         >
-          <div>
-            <div className="mb-4 flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#403a34]">
-              <span className="size-1 rounded-full bg-[#403a34]" />
-              <span>Proyectos Seleccionados</span>
+          <div className="mb-3 sm:mb-4 flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em]">
+            <span className="size-1 rounded-full bg-[#c5a059]" />
+            <span>Proyecto destacado</span>
+          </div>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="max-w-4xl text-[clamp(2.2rem,4.2vw,48px)] font-medium leading-[1.1] tracking-[-0.056em] uppercase">
+                Villa Paraíso.
+              </h2>
+              <p className="mt-3 sm:mt-4 text-[11px] font-medium uppercase tracking-[0.12em] text-[#776d62]">
+                Santa Rosa · Villanueva, Bolívar <span className="mx-2 text-[#c5a059]">—</span>{" "}
+                Parcelación campestre · 343 lotes
+              </p>
             </div>
-            <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-              El paisaje define la arquitectura.
-            </h2>
+            <Link
+              to="/proyecto/$slug"
+              params={{ slug: "lotes-360" }}
+              className="inline-flex shrink-0 items-center gap-2.5 rounded-full border border-[#403a34] bg-[#403a34] px-6 py-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f6f1eb] shadow-md transition-all duration-300 hover:bg-[#c5a059] hover:border-[#c5a059] hover:text-[#1c1917] hover:scale-105 active:scale-95"
+            >
+              Ir al proyecto <ArrowUpRight size={16} strokeWidth={2} />
+            </Link>
           </div>
         </header>
 
-        <div className="selected-projects__grid mt-14 grid gap-8 md:grid-cols-2 lg:mt-20">
-          {projects.map((project, index) => (
-            <article
-              key={project.name}
-              className={`selected-project ${project.className} transition-transform duration-500 ease-out`}
-              style={
-                {
-                  opacity: isVisible ? 1 : 0,
-                  transform: `translate3d(0, calc(var(--parallax-y, 0px) + ${isVisible ? "0px" : "44px"}), 0)`,
-                  transition:
-                    "opacity 760ms cubic-bezier(.19,1,.22,1), transform 760ms cubic-bezier(.19,1,.22,1)",
-                  transitionDelay: `${index * 110}ms`,
-                } as CSSProperties
-              }
-            >
+        <article
+          className="relative mt-6 sm:mt-8 overflow-hidden rounded-3xl"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: `translate3d(0, ${isVisible ? "0" : "40px"}, 0)`,
+            transition:
+              "opacity 900ms 130ms cubic-bezier(.19,1,.22,1), transform 900ms 130ms cubic-bezier(.19,1,.22,1)",
+          }}
+        >
+          <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,.18),transparent_33%),linear-gradient(110deg,rgba(246,241,235,.08),transparent_45%)]" />
+
+          {/* Masterplan en formato panorámico: horizontalmente más largo y verticalmente más corto */}
+          <div className="relative h-[400px] sm:h-[460px] md:h-[500px] lg:h-[540px] xl:h-[580px]">
+            <MasterplanSvgViewer
+              lots={lots}
+              selectedLotId={selectedLotId}
+              focusRequest={0}
+              onSelectLot={setSelectedLotId}
+              isDesktopSidebarOpen={false}
+              initialScaleMultiplier={1.05}
+              transparentCanvas
+              disableWheelZoom={true}
+            />
+          </div>
+
+          {/* Indicador flotante translúcido y elegante del lote seleccionado */}
+          {selectedLot && (
+            <div className="absolute top-5 left-5 z-30 flex flex-wrap items-center gap-3 rounded-2xl border border-white/50 bg-white/40 dark:bg-black/40 px-4 py-2.5 shadow-[0_8px_32px_rgba(71,55,35,.10)] backdrop-blur-xl transition-all sm:top-6 sm:left-6">
+              <div className="flex items-center gap-2">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#403a34] dark:text-white">
+                  Lote {selectedLot.lotNumber ?? selectedLot.id}
+                </span>
+                <span className="text-[11px] text-[#776d62] dark:text-stone-300">
+                  {selectedLot.area} m² · {selectedLot.manzana}
+                </span>
+              </div>
               <Link
                 to="/proyecto/$slug"
-                params={{ slug: project.slug }}
-                className="group block border border-[#403a34] bg-[#f6f1eb] p-0 overflow-hidden transition hover:border-[#403a34]"
-                aria-label={`Ver ${project.name}`}
+                params={{ slug: "lotes-360" }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#403a34] px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#f6f1eb] backdrop-blur-md transition-all duration-300 hover:bg-[#c5a059] hover:text-[#1c1917] active:scale-95"
               >
-                {/* 0px radius architectural photograph frame - completely flush */}
-                <div
-                  className={`relative w-full h-[360px] sm:h-[440px] lg:h-[500px] overflow-hidden ${project.containerBg || "bg-[#e8e0d5]"}`}
-                >
-                  <img
-                    src={`${base}${project.image}`}
-                    alt={project.name}
-                    loading="lazy"
-                    decoding="async"
-                    className={`selected-project__img h-full w-full object-center block transition-transform duration-700 group-hover:scale-105 ${project.imageFit === "contain" ? "object-contain p-3 sm:p-5 drop-shadow-[0_8px_24px_rgba(0,0,0,0.09)]" : "object-cover"}`}
-                  />
-                  <div className="absolute top-4 left-4 bg-[#f6f1eb] px-3 py-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#403a34] border border-[#403a34]/30">
-                    {project.number}
-                  </div>
-                  <span className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full border border-[#403a34] bg-[#f6f1eb] text-[#403a34] transition-all duration-300 group-hover:bg-[#403a34] group-hover:text-[#f6f1eb]">
-                    <ArrowUpRight size={16} strokeWidth={1.8} />
-                  </span>
-                </div>
-
-                <div className="selected-project__meta p-6 sm:p-8 border-t border-[#403a34] flex flex-col justify-between">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
-                      {project.location} · {project.type}
-                    </p>
-                    <span className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
-                      {project.area}
-                    </span>
-                  </div>
-                  <h3 className="mt-3 text-[26px] sm:text-[32px] font-medium leading-tight tracking-[-0.03em] text-[#403a34]">
-                    {project.name}
-                  </h3>
-                </div>
+                Ver en proyecto <ArrowUpRight size={13} strokeWidth={2} />
               </Link>
-            </article>
-          ))}
-        </div>
+            </div>
+          )}
+        </article>
       </Container>
     </section>
   );

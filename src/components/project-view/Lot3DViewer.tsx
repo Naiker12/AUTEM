@@ -301,7 +301,7 @@ export default function Lot3DViewer({
         <div className="absolute inset-0 flex items-center justify-center bg-[#132019]/85 text-center backdrop-blur-sm">
           <div>
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-accent">
-              Lotes 360°
+              Villa Paraíso
             </span>
             <p className="mt-3 text-sm text-white/80">Cargando maqueta del terreno…</p>
           </div>

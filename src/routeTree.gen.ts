@@ -17,7 +17,6 @@ import { Route as IndexRouteImport } from "./routes/index"
 import { Route as AdminIndexRouteImport } from "./routes/admin/index"
 import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
 import { Route as PropertiesIdRouteImport } from "./routes/properties/$id"
-import { Route as ArPropertyIdRouteImport } from "./routes/ar/$propertyId"
 import { Route as AdminProyectosRouteImport } from "./routes/admin/proyectos"
 import { Route as AdminConfiguracionRouteImport } from "./routes/admin/configuracion"
 import { Route as AdminConfiguracionIndexRouteImport } from "./routes/admin/configuracion/index"
@@ -65,11 +64,6 @@ const ProyectoSlugRoute = ProyectoSlugRouteImport.update({
 const PropertiesIdRoute = PropertiesIdRouteImport.update({
   id: "/properties/$id",
   path: "/properties/$id",
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ArPropertyIdRoute = ArPropertyIdRouteImport.update({
-  id: "/ar/$propertyId",
-  path: "/ar/$propertyId",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminProyectosRoute = AdminProyectosRouteImport.update({
@@ -126,7 +120,6 @@ export interface FileRoutesByFullPath {
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
   "/admin/proyectos": typeof AdminProyectosRoute
-  "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin/": typeof AdminIndexRoute
@@ -143,7 +136,6 @@ export interface FileRoutesByTo {
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/admin/proyectos": typeof AdminProyectosRoute
-  "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin": typeof AdminIndexRoute
@@ -163,7 +155,6 @@ export interface FileRoutesById {
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
   "/admin/proyectos": typeof AdminProyectosRoute
-  "/ar/$propertyId": typeof ArPropertyIdRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin/": typeof AdminIndexRoute
@@ -184,7 +175,6 @@ export interface FileRouteTypes {
     | "/politica-privacidad"
     | "/admin/configuracion"
     | "/admin/proyectos"
-    | "/ar/$propertyId"
     | "/properties/$id"
     | "/proyecto/$slug"
     | "/admin/"
@@ -201,7 +191,6 @@ export interface FileRouteTypes {
     | "/nosotros"
     | "/politica-privacidad"
     | "/admin/proyectos"
-    | "/ar/$propertyId"
     | "/properties/$id"
     | "/proyecto/$slug"
     | "/admin"
@@ -220,7 +209,6 @@ export interface FileRouteTypes {
     | "/politica-privacidad"
     | "/admin/configuracion"
     | "/admin/proyectos"
-    | "/ar/$propertyId"
     | "/properties/$id"
     | "/proyecto/$slug"
     | "/admin/"
@@ -238,7 +226,6 @@ export interface RootRouteChildren {
   CatalogoRoute: typeof CatalogoRoute
   NosotrosRoute: typeof NosotrosRoute
   PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
-  ArPropertyIdRoute: typeof ArPropertyIdRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   ProyectoSlugRoute: typeof ProyectoSlugRoute
 }
@@ -299,13 +286,6 @@ declare module "@tanstack/react-router" {
       path: "/properties/$id"
       fullPath: "/properties/$id"
       preLoaderRoute: typeof PropertiesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    "/ar/$propertyId": {
-      id: "/ar/$propertyId"
-      path: "/ar/$propertyId"
-      fullPath: "/ar/$propertyId"
-      preLoaderRoute: typeof ArPropertyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/admin/proyectos": {
@@ -408,7 +388,6 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogoRoute: CatalogoRoute,
   NosotrosRoute: NosotrosRoute,
   PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
-  ArPropertyIdRoute: ArPropertyIdRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   ProyectoSlugRoute: ProyectoSlugRoute,
 }

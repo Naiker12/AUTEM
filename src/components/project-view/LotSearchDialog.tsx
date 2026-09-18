@@ -17,9 +17,6 @@ interface LotSearchDialogProps {
   onSelectLot: (lot: Lot) => void;
 }
 
-// Chips de accesos rápidos para saltar velozmente a lotes representativos
-const QUICK_SEARCH_CHIPS = ["1", "15", "50", "116", "200", "280", "343"];
-
 export default function LotSearchDialog({
   open,
   onOpenChange,
@@ -32,8 +29,8 @@ export default function LotSearchDialog({
   const filteredResults = useMemo(() => {
     const raw = searchTerm.trim().toLowerCase();
     if (!raw) {
-      // Mostrar primeros 15 lotes por defecto cuando no hay búsqueda
-      return lots.slice(0, 15);
+      // Mostrar solo 4 sugerencias compactas si aún no ha buscado
+      return lots.slice(0, 4);
     }
 
     const numericOnly = raw.replace(/\D/g, "");
@@ -84,15 +81,15 @@ export default function LotSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[94vw] max-w-md max-h-[85vh] p-4 sm:p-5 rounded-2xl flex flex-col gap-3 overflow-hidden border-border bg-background/98 shadow-2xl backdrop-blur-2xl">
-        <DialogHeader className="space-y-1 text-left">
-          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-foreground">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-accent/15 text-accent">
-              <Search className="size-4" />
+      <DialogContent className="w-[92vw] max-w-[380px] max-h-[82vh] p-3.5 sm:p-4 rounded-3xl flex flex-col gap-2.5 overflow-hidden border-border/80 bg-background/98 shadow-2xl backdrop-blur-2xl">
+        <DialogHeader className="space-y-0 text-left pr-6">
+          <DialogTitle className="flex items-center gap-2 text-sm sm:text-base font-bold text-foreground">
+            <span className="flex size-6 items-center justify-center rounded-xl bg-accent/15 text-accent">
+              <Search className="size-3.5" />
             </span>
             Buscar Lote por Número
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+          <DialogDescription className="sr-only">
             Ingresa el número de lote para localizarlo y hacer zoom directo sin desplazarte.
           </DialogDescription>
         </DialogHeader>
@@ -107,63 +104,44 @@ export default function LotSearchDialog({
           }}
           className="relative flex items-center"
         >
-          <Hash className="absolute left-3 size-4 text-muted-foreground pointer-events-none" />
+          <Hash className="absolute left-2.5 size-3.5 text-muted-foreground/70 pointer-events-none" />
           <input
             type="text"
             inputMode="numeric"
-            placeholder="Ejemplo: 116, 25, 4, M 12..."
+            placeholder="Ej: 116, 25, 4, M 12..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             autoFocus
-            className="h-10.5 w-full rounded-xl border border-border/90 bg-muted/40 pl-9 pr-9 text-sm font-medium text-foreground placeholder:text-muted-foreground/70 focus:border-accent focus:bg-background focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+            className="h-9 w-full rounded-2xl border border-border/80 bg-muted/40 pl-8 pr-8 text-xs font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-accent focus:bg-background focus:outline-none focus:ring-1.5 focus:ring-accent/25 transition-all shadow-2xs"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="absolute right-2.5 flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              className="absolute right-2 flex size-5 items-center justify-center rounded-full text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
               title="Limpiar búsqueda"
             >
-              <X className="size-3.5" />
+              <X className="size-3" />
             </button>
           )}
         </form>
 
-        {/* Accesos rápidos de números */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar text-xs">
-          <span className="text-[10px] font-semibold text-muted-foreground shrink-0">Accesos:</span>
-          {QUICK_SEARCH_CHIPS.map((num) => (
-            <button
-              key={num}
-              type="button"
-              onClick={() => setSearchTerm(num)}
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition-all shrink-0 cursor-pointer ${
-                searchTerm === num
-                  ? "bg-accent text-accent-foreground shadow-xs"
-                  : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              L-{num}
-            </button>
-          ))}
-        </div>
-
-        {/* Lista de Resultados Filtrados */}
-        <div className="flex items-center justify-between px-1 text-[11px] font-medium text-muted-foreground">
-          <span>{searchTerm ? `Resultados para "${searchTerm}":` : "Lotes sugeridos:"}</span>
-          <span className="text-[10px] font-bold text-accent">
-            {filteredResults.length} encontrados
+        {/* Encabezado de Lista de Resultados */}
+        <div className="flex items-center justify-between px-1 text-[10px] font-medium text-muted-foreground">
+          <span>{searchTerm ? `Resultados para "${searchTerm}":` : "Lotes sugeridos"}</span>
+          <span className="text-[9.5px] font-semibold text-accent">
+            {filteredResults.length} {searchTerm ? "encontrados" : "sugeridos"}
           </span>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-[340px]">
+        <div className="min-h-0 flex-1 overflow-y-auto space-y-1.5 pr-0.5 max-h-[290px] sm:max-h-[310px] [scrollbar-width:thin] [scrollbar-color:oklch(var(--muted-foreground)/0.2)_transparent]">
           {filteredResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-              <Search className="size-8 text-muted-foreground/40 mb-2" />
+            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+              <Search className="size-7 text-muted-foreground/40 mb-1.5" />
               <p className="text-xs font-semibold text-foreground">
                 No encontramos el lote "{searchTerm}"
               </p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-[10.5px] text-muted-foreground">
                 Intenta con un número entre 1 y 343 o el nombre de una manzana.
               </p>
             </div>
@@ -195,45 +173,39 @@ export default function LotSearchDialog({
                   key={lot.id}
                   type="button"
                   onClick={() => handleSelect(lot)}
-                  className="group flex w-full items-center justify-between rounded-xl border border-border/70 bg-card/80 p-2.5 text-left transition-all hover:border-accent hover:bg-accent/5 hover:shadow-sm active:scale-[0.99] cursor-pointer"
+                  className="group flex w-full items-center justify-between rounded-2xl border border-border/70 dark:border-white/10 bg-card/90 dark:bg-stone-900/80 px-3 py-2 text-left transition-all hover:border-accent/80 hover:bg-accent/5 dark:hover:bg-white/5 hover:shadow-xs active:scale-[0.99] cursor-pointer"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#403a34] font-bold text-sm text-[#f6f1eb] shadow-xs group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                      {lot.lotNumber ?? lot.id.replace(/^L-/, "")}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-xs font-bold text-foreground group-hover:text-accent transition-colors">
+                        {lot.id}
+                      </strong>
+                      <Badge
+                        variant="outline"
+                        className={`rounded-full px-1.5 py-0 text-[7.5px] font-semibold flex items-center gap-1 ${badgeClass}`}
+                      >
+                        <span className={`size-1 rounded-full ${dotClass}`} />
+                        {lot.status}
+                      </Badge>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <strong className="text-xs sm:text-sm font-bold text-foreground">
-                          {lot.id}
-                        </strong>
-                        <Badge
-                          variant="outline"
-                          className={`rounded-full px-1.5 py-0 text-[7.5px] font-semibold flex items-center gap-1 ${badgeClass}`}
-                        >
-                          <span className={`size-1 rounded-full ${dotClass}`} />
-                          {lot.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[10.5px] text-muted-foreground">
-                        <span className="flex items-center gap-0.5">
-                          <MapPin className="size-2.5 text-accent" /> {lot.manzana}
-                        </span>
-                        <span>·</span>
-                        <span>{formatLotArea(lot.area)}</span>
-                        {lot.price > 0 && (
-                          <>
-                            <span>·</span>
-                            <span className="font-semibold text-foreground">
-                              {formatLotPrice(lot.price)}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[10.5px] text-muted-foreground truncate">
+                      <span className="flex items-center gap-0.5">
+                        <MapPin className="size-2.5 text-accent" /> {lot.manzana}
+                      </span>
+                      <span>·</span>
+                      <span>{formatLotArea(lot.area)}</span>
+                      {lot.price > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="font-semibold text-foreground">
+                            {formatLotPrice(lot.price)}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground group-hover:text-accent transition-colors pl-2 shrink-0">
-                    <span className="hidden sm:inline text-[10px]">Ir</span>
+                  <div className="flex items-center pl-2 shrink-0 text-muted-foreground group-hover:text-accent transition-colors">
                     <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>

@@ -1,5 +1,4 @@
 import {
-  Compass,
   Expand,
   Minus,
   Plus,
@@ -25,12 +24,21 @@ interface MasterplanSvgViewerProps {
   onSelectLot: (lotId: string) => void;
   isDesktopSidebarOpen?: boolean;
   onClearFilter?: () => void;
+  /** Extra initial scale for editorial embeds that should crop the drawing slightly. */
+  initialScaleMultiplier?: number;
+  /** Lets an embedded map inherit the page background instead of rendering as a card. */
+  transparentCanvas?: boolean;
+  isDark?: boolean;
+  isRightPanelOpen?: boolean;
+  disableWheelZoom?: boolean;
 }
 
 const MIN_SCALE = 0.15;
 const MAX_SCALE = 8.5;
 const SVG_WIDTH = layersData.dimensions.width;
 const SVG_HEIGHT = layersData.dimensions.height;
+const LOTS_CENTER_X = 1347;
+const LOTS_CENTER_Y = 1106;
 
 export default function MasterplanSvgViewer({
   lots,
@@ -41,7 +49,12 @@ export default function MasterplanSvgViewer({
   focusRequest,
   onSelectLot,
   isDesktopSidebarOpen = true,
+  isRightPanelOpen = false,
   onClearFilter,
+  initialScaleMultiplier = 1,
+  transparentCanvas = false,
+  isDark: propIsDark,
+  disableWheelZoom = false,
 }: MasterplanSvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -84,9 +97,25 @@ export default function MasterplanSvgViewer({
   const transformRef = useRef({ scale: 1, offset: { x: 0, y: 0 } });
   transformRef.current = { scale, offset };
 
+  const [internalIsDark, setInternalIsDark] = useState(() =>
+    typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false,
+  );
+  const isDark = propIsDark !== undefined ? propIsDark : internalIsDark;
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       isTouchDeviceRef.current = window.matchMedia("(pointer: coarse)").matches;
+    }
+    if (typeof document !== "undefined") {
+      const checkDark = () =>
+        setInternalIsDark(document.documentElement.classList.contains("dark"));
+      checkDark();
+      const observer = new MutationObserver(checkDark);
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      return () => {
+        observer.disconnect();
+        rafPendingRef.current = false;
+      };
     }
     return () => {
       rafPendingRef.current = false;
@@ -113,7 +142,7 @@ export default function MasterplanSvgViewer({
     setTooltipPos(null);
   }, []);
 
-  // Memorizar elementos estáticos de fondo para evitar re-cálculos en cada frame
+  // Memorizar elementos estáticos de fondo para evitar re-cálculos en cada frame (adaptables a modo oscuro)
   const staticBackgroundElements = useMemo(
     () => (
       <>
@@ -122,10 +151,10 @@ export default function MasterplanSvgViewer({
             <path
               key={`lindero-${i}`}
               d={d}
-              fill="#ede4cf"
-              stroke="#9e8d72"
-              strokeWidth={3.2}
-              className="pointer-events-none"
+              fill={isDark ? "#181614" : "#ede4cf"}
+              stroke={isDark ? "#383229" : "#9e8d72"}
+              strokeWidth={3.5}
+              className="pointer-events-none transition-colors duration-500"
             />
           ))}
         </g>
@@ -134,10 +163,10 @@ export default function MasterplanSvgViewer({
             <path
               key={`green-${i}`}
               d={d}
-              fill="#b8e0a2"
-              stroke="#5e8f42"
-              strokeWidth={1.8}
-              className="pointer-events-none"
+              fill={isDark ? "#12281a" : "#b8e0a2"}
+              stroke={isDark ? "#1d472c" : "#5e8f42"}
+              strokeWidth={2}
+              className="pointer-events-none transition-colors duration-500"
             />
           ))}
         </g>
@@ -146,20 +175,20 @@ export default function MasterplanSvgViewer({
             <path
               key={`road-${i}`}
               d={d}
-              fill="#ded6c2"
-              stroke="#998a72"
-              strokeWidth={1.8}
-              className="pointer-events-none"
+              fill={isDark ? "#221e1a" : "#ded6c2"}
+              stroke={isDark ? "#3d352b" : "#998a72"}
+              strokeWidth={2}
+              className="pointer-events-none transition-colors duration-500"
             />
           ))}
           {layersData.calzadas.map((d, i) => (
             <path
               key={`calzada-${i}`}
               d={d}
-              fill="#d5cbba"
-              stroke="#8f7e65"
+              fill={isDark ? "#1b1814" : "#d5cbba"}
+              stroke={isDark ? "#332c24" : "#8f7e65"}
               strokeWidth={2}
-              className="pointer-events-none"
+              className="pointer-events-none transition-colors duration-500"
             />
           ))}
           {layersData.senderos.map((d, i) => (
@@ -167,16 +196,16 @@ export default function MasterplanSvgViewer({
               key={`sendero-${i}`}
               d={d}
               fill="none"
-              stroke="#8a7a63"
+              stroke={isDark ? "#c5a059" : "#8a7a63"}
               strokeWidth={2.2}
               strokeDasharray="6 4"
-              className="pointer-events-none"
+              className="pointer-events-none transition-colors duration-500"
             />
           ))}
         </g>
       </>
     ),
-    [],
+    [isDark],
   );
 
   // Mapa rápido de lotes por ID para consultas O(1)
@@ -213,18 +242,19 @@ export default function MasterplanSvgViewer({
     const cHeight = container.clientHeight;
     if (!cWidth || !cHeight) return { scale: 0.9, offset: { x: 0, y: 0 } };
 
-    const fitScale = Math.min(cWidth / SVG_WIDTH, cHeight / SVG_HEIGHT) * 0.96;
+    const fitScale = Math.min(cWidth / 2050, cHeight / 2000) * 0.95 * initialScaleMultiplier;
     const isDesktop = cWidth >= 1280;
-    const desktopShift = isDesktop && isDesktopSidebarOpen ? 90 : 0;
+    const desktopShift =
+      (isDesktop && isDesktopSidebarOpen ? 90 : 0) - (isDesktop && isRightPanelOpen ? 85 : 0);
 
     return {
       scale: fitScale,
       offset: {
-        x: (cWidth - SVG_WIDTH * fitScale) / 2 + desktopShift,
-        y: (cHeight - SVG_HEIGHT * fitScale) / 2,
+        x: cWidth / 2 - LOTS_CENTER_X * fitScale + desktopShift,
+        y: cHeight / 2 - LOTS_CENTER_Y * fitScale,
       },
     };
-  }, [isDesktopSidebarOpen]);
+  }, [initialScaleMultiplier, isDesktopSidebarOpen, isRightPanelOpen]);
 
   const reset = useCallback(() => {
     const { scale: initialScale, offset: initialOffset } = calculateFitTransform();
@@ -321,9 +351,9 @@ export default function MasterplanSvgViewer({
     // Escala balanceada: zoom cercano (3.4 en desktop, 2.6 en móvil) para ver el lote en primer plano
     const targetScale = isDesktop ? 3.4 : 2.6;
 
-    // En escritorio, con panel lateral visible de 360px, centrar en el área libre visible
+    // En escritorio, centrar en el área libre visible considerando los paneles laterales activos
     const targetCenterX = isDesktop
-      ? containerSize.width / 2 + (isDesktopSidebarOpen ? 180 : 0)
+      ? containerSize.width / 2 + (isDesktopSidebarOpen ? 180 : 0) - (isRightPanelOpen ? 170 : 0)
       : containerSize.width / 2;
     // Considerar el espacio de la barra de navegación superior (56-64px) en escritorio
     const targetCenterY = isDesktop ? (containerSize.height + 36) / 2 : containerSize.height / 2;
@@ -341,7 +371,14 @@ export default function MasterplanSvgViewer({
       viewportGroupRef.current.style.transition = "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
       viewportGroupRef.current.style.transform = `translate3d(${targetOffset.x}px, ${targetOffset.y}px, 0) scale(${targetScale})`;
     }
-  }, [focusRequest, selectedLot, containerSize.width, containerSize.height, isDesktopSidebarOpen]);
+  }, [
+    focusRequest,
+    selectedLot,
+    containerSize.width,
+    containerSize.height,
+    isDesktopSidebarOpen,
+    isRightPanelOpen,
+  ]);
 
   // Encuadre automático y zoom fluido cuando se aplica o cambia un filtro
   useEffect(() => {
@@ -433,8 +470,9 @@ export default function MasterplanSvgViewer({
     reset,
   ]);
 
-  // Zoom con la rueda del ratón
+  // Zoom con la rueda del ratón (desactivable para embebidos en el home)
   useEffect(() => {
+    if (disableWheelZoom) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -446,7 +484,7 @@ export default function MasterplanSvgViewer({
 
     container.addEventListener("wheel", handleWheel, { passive: false });
     return () => container.removeEventListener("wheel", handleWheel);
-  }, [zoom]);
+  }, [zoom, disableWheelZoom]);
 
   // Gestor de eventos táctiles y de arrastre (pan + pinch-to-zoom con fluidez extrema en GPU y RAF)
   const handlePointerDown = (event: React.PointerEvent) => {
@@ -665,7 +703,13 @@ export default function MasterplanSvgViewer({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 overflow-hidden bg-[#f7f4ed] touch-none select-none"
+      className={`absolute inset-0 overflow-hidden touch-none select-none transition-colors duration-500 ${
+        transparentCanvas
+          ? "bg-transparent"
+          : isDark
+            ? "bg-[#11100f] bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:28px_28px]"
+            : "bg-[#f7f4ed]"
+      }`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -701,11 +745,12 @@ export default function MasterplanSvgViewer({
                 y={m.y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill="#78716c"
-                opacity={scale < 1 ? 0.55 : 0.28}
+                fill={isDark ? "#c5a059" : "#78716c"}
+                opacity={isDark ? (scale < 1 ? 0.7 : 0.4) : scale < 1 ? 0.55 : 0.28}
                 fontSize={scale < 1 ? 32 : 24}
                 fontWeight={900}
                 fontFamily="system-ui, -apple-system, sans-serif"
+                className="transition-colors duration-500"
               >
                 {m.name}
               </text>
@@ -725,16 +770,31 @@ export default function MasterplanSvgViewer({
                 !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
 
               // Si hay filtro activo y el lote NO coincide con el filtro:
-              // SE DEBEN VER TODOS LOS LOTES con total claridad (fondo blanco limpio y borde perimetral slate definido),
-              // pero sin color comercial para que solo resalten los filtrados
+              // SE DEBEN VER TODOS LOS LOTES con total claridad pero sin color comercial
               if (isFilterActive && !isMatch) {
                 return (
                   <path
                     key={lot.id}
                     id={`lot-${lot.id}`}
                     d={lot.pathD}
-                    fill={isHovered ? "#f1f5f9" : "#ffffff"}
-                    stroke={isHovered ? "#475569" : "#cbd5e1"}
+                    fill={
+                      isDark
+                        ? isHovered
+                          ? "#26221d"
+                          : "#171513"
+                        : isHovered
+                          ? "#f1f5f9"
+                          : "#ffffff"
+                    }
+                    stroke={
+                      isDark
+                        ? isHovered
+                          ? "#4a3f33"
+                          : "#2d2720"
+                        : isHovered
+                          ? "#475569"
+                          : "#cbd5e1"
+                    }
                     strokeWidth={isHovered ? 1.8 : 1.15}
                     opacity={1}
                     style={{
@@ -756,33 +816,55 @@ export default function MasterplanSvgViewer({
               // - Disponible: VERDE CLARO
               // - Reservado: NARANJA
               // - Seleccionado: AZUL CIELO
-              let fill = "#dcfce7"; // Verde claro visible y vibrante
-              let stroke = "#16a34a"; // Borde verde definido
+              let fill = isDark
+                ? isHovered
+                  ? "#1b5232"
+                  : "#0f331f"
+                : isHovered
+                  ? "#bbf7d0"
+                  : "#dcfce7";
+              let stroke = isDark ? "#22c55e" : "#16a34a";
               let strokeWidth = isFilterActive ? 2.2 : 1.5;
 
               if (isSold) {
-                // Vendido en ROJO
-                fill = isHovered ? "#fca5a5" : "#fee2e2";
-                stroke = "#dc2626";
+                fill = isDark
+                  ? isHovered
+                    ? "#54191e"
+                    : "#361114"
+                  : isHovered
+                    ? "#fca5a5"
+                    : "#fee2e2";
+                stroke = isDark ? "#ef4444" : "#dc2626";
                 strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
               } else if (isReserved) {
-                // Reservado en NARANJA
-                fill = isHovered ? "#fdba74" : "#ffedd5";
-                stroke = "#ea580c";
+                fill = isDark
+                  ? isHovered
+                    ? "#5c2e0e"
+                    : "#381c08"
+                  : isHovered
+                    ? "#fdba74"
+                    : "#ffedd5";
+                stroke = isDark ? "#f97316" : "#ea580c";
                 strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
               } else if (isLastUnits) {
-                fill = isHovered ? "#fde047" : "#fef9c3";
-                stroke = "#ca8a04";
+                fill = isDark
+                  ? isHovered
+                    ? "#543f0c"
+                    : "#332707"
+                  : isHovered
+                    ? "#fde047"
+                    : "#fef9c3";
+                stroke = isDark ? "#eab308" : "#ca8a04";
                 strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
               } else if (isHovered) {
-                fill = "#bbf7d0";
-                stroke = "#15803d";
+                fill = isDark ? "#1e603b" : "#bbf7d0";
+                stroke = isDark ? "#4ade80" : "#15803d";
                 strokeWidth = 2.8;
               }
 
               if (isSelected) {
-                fill = "#7dd3fc";
-                stroke = "#0284c7";
+                fill = isDark ? "#0284c7" : "#7dd3fc";
+                stroke = isDark ? "#38bdf8" : "#0284c7";
                 strokeWidth = 3.6;
               }
 
@@ -809,13 +891,16 @@ export default function MasterplanSvgViewer({
             })}
           </g>
 
-          {/* Capa 6: Números de Lote en sus Centroides Matemáticos Exactos (Siempre visibles, incluso desde lejos) */}
+          {/* Capa 6: Números de Lote en sus Centroides Matemáticos Exactos */}
           <g id="svg-labels" className="pointer-events-none">
             {lots.map((lot) => {
               if (!lot.centroid || lot.isReserve) return null;
               const [cx, cy] = lot.centroid;
               const isSelected = lot.id === selectedLotId;
               const isHovered = lot.id === hoveredLotId;
+              const isReserved = lot.status === "Reservado";
+              const isSold = lot.status === "Vendido";
+              const isLastUnits = lot.status === "Últimas unidades";
               const isMatch =
                 !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
               const isFaded = isFilterActive && !isMatch;
@@ -855,7 +940,25 @@ export default function MasterplanSvgViewer({
                   y={cy}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill={isHovered ? "#0f172a" : isFaded ? "#64748b" : "#1e293b"}
+                  fill={
+                    isDark
+                      ? isHovered
+                        ? "#ffffff"
+                        : isFaded
+                          ? "#78716c"
+                          : isSold
+                            ? "#fca5a5"
+                            : isReserved
+                              ? "#fed7aa"
+                              : isLastUnits
+                                ? "#fef08a"
+                                : "#e2fbe8"
+                      : isHovered
+                        ? "#0f172a"
+                        : isFaded
+                          ? "#64748b"
+                          : "#1e293b"
+                  }
                   fontSize={fontSize}
                   fontWeight={isHovered ? 800 : isFaded ? 600 : 700}
                   fontFamily="system-ui, -apple-system, sans-serif"
@@ -868,7 +971,7 @@ export default function MasterplanSvgViewer({
         </g>
       </svg>
 
-      {/* Tooltip flotante en hover de lote */}
+      {/* Tooltip flotante en hover de lote (diseño translúcido glassmorphic) */}
       {hoveredLot && tooltipPos && (
         <div
           className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full pb-3 text-left transition-all duration-75 ease-out"
@@ -877,20 +980,20 @@ export default function MasterplanSvgViewer({
             top: tooltipPos.y,
           }}
         >
-          <div className="rounded-xl border border-border/80 bg-background/95 p-3 shadow-2xl backdrop-blur-md">
+          <div className="rounded-2xl border border-white/45 dark:border-white/15 bg-white/50 dark:bg-stone-900/55 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.14)] backdrop-blur-2xl">
             <div className="flex items-center gap-2">
               <span className="font-bold text-foreground text-sm">
                 Lote {hoveredLot.lotNumber ?? hoveredLot.id}
               </span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border backdrop-blur-md ${
                   hoveredLot.status === "Disponible"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    ? "bg-emerald-500/15 text-emerald-800 border-emerald-500/30 dark:text-emerald-300"
                     : hoveredLot.status === "Reservado"
-                      ? "bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-950/50 dark:text-orange-300"
+                      ? "bg-orange-500/15 text-orange-800 border-orange-500/30 dark:text-orange-300"
                       : hoveredLot.status === "Vendido"
-                        ? "bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/50 dark:text-rose-300"
-                        : "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300"
+                        ? "bg-rose-500/15 text-rose-800 border-rose-500/30 dark:text-rose-300"
+                        : "bg-amber-500/15 text-amber-800 border-amber-500/30 dark:text-amber-300"
                 }`}
               >
                 {hoveredLot.status}
@@ -915,7 +1018,7 @@ export default function MasterplanSvgViewer({
       {/* Píldora Flotante Informativa de Filtros Activos con botón de restablecer */}
       {isFilterActive && filteredLots && (
         <div
-          className="no-drag absolute top-14 left-2.5 lg:left-4 lg:top-4 z-20 flex items-center gap-2 rounded-full border border-border/80 bg-background/95 px-2.5 py-1 lg:px-3 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95 duration-200"
+          className="no-drag absolute top-14 left-2.5 lg:left-4 lg:top-4 z-20 flex items-center gap-2 rounded-full border border-white/35 dark:border-white/15 bg-white/50 dark:bg-stone-900/50 px-2.5 py-1 lg:px-3 shadow-lg backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <span className="relative flex size-2">
@@ -944,30 +1047,21 @@ export default function MasterplanSvgViewer({
 
       {/* Botones de Control Flotantes Integrados (Brújula + Zoom + Reset + Pantalla Completa) */}
       <div
-        className="no-drag absolute right-3 lg:right-4 top-1/2 -translate-y-1/2 lg:top-[92px] lg:translate-y-0 flex flex-col items-center gap-2 z-30 select-none"
+        className={`no-drag absolute ${
+          isRightPanelOpen ? "right-3 md:right-[356px]" : "right-3 lg:right-4"
+        } top-1/2 -translate-y-1/2 lg:top-[92px] lg:translate-y-0 flex flex-col items-center gap-2 z-30 select-none transition-[right] duration-300 ease-out`}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
       >
-        {/* Brújula Norte */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            reset();
-          }}
-          className="relative flex size-8 lg:size-9.5 items-center justify-center rounded-full border border-border/70 bg-background/95 text-foreground shadow-lg backdrop-blur-md transition-all hover:bg-muted active:scale-90 cursor-pointer"
-          title="Orientación Norte (Clic para restablecer vista)"
-          aria-label="Norte - Restablecer vista"
-        >
-          <Compass className="size-4 lg:size-4.5 text-accent" />
-          <span className="absolute -bottom-1 text-[6.5px] lg:text-[7.5px] font-bold text-muted-foreground">
-            N
-          </span>
-        </button>
-
         {/* Barra de Controles de Zoom */}
-        <div className="flex flex-col items-center gap-1 rounded-full border border-border/70 bg-background/95 p-1 lg:p-1.5 shadow-xl backdrop-blur-md">
+        <div
+          className={`flex flex-col items-center gap-1 rounded-full p-1 lg:p-1.5 shadow-2xl backdrop-blur-xl transition-colors ${
+            isDark
+              ? "border border-white/10 bg-stone-900/85 text-stone-200 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+              : "border border-white/35 bg-white/50 text-foreground/80 shadow-xl"
+          }`}
+        >
           <button
             type="button"
             onClick={(e) => {

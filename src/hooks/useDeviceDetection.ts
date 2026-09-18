@@ -5,7 +5,6 @@ export interface DeviceInfo {
   isDesktop: boolean;
   isIOS: boolean;
   isAndroid: boolean;
-  supportsAR: boolean;
   browserName: string;
 }
 
@@ -15,7 +14,6 @@ export function useDeviceDetection(): DeviceInfo {
     isDesktop: true,
     isIOS: false,
     isAndroid: false,
-    supportsAR: false,
     browserName: "unknown",
   });
 
@@ -26,10 +24,6 @@ export function useDeviceDetection(): DeviceInfo {
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isAndroid = /Android/.test(ua);
     const isMobile = isIOS || isAndroid || /Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-
-    // Native AR is delegated to Quick Look on iOS and Scene Viewer on Android.
-    // WebXR is optional and must not be used as the only compatibility signal.
-    const supportsAR = isIOS || isAndroid;
 
     let browserName = "unknown";
     if (/CriOS/.test(ua)) browserName = "Chrome iOS";
@@ -44,7 +38,6 @@ export function useDeviceDetection(): DeviceInfo {
       isDesktop: !isMobile,
       isIOS,
       isAndroid,
-      supportsAR,
       browserName,
     });
   }, []);

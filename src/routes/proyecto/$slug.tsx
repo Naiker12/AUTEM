@@ -1,12 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  PanelLeftOpen,
-  Route as RouteIcon,
-  ScanLine,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Orbit, PanelLeftOpen, Route as RouteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet } from "@/components/ui/sheet";
@@ -21,13 +15,30 @@ import {
   DEFAULT_PROJECT_VIEW_SETTINGS,
   PROJECT_VIEW_MODES,
   ProjectViewControlPanel,
+  ProjectViewControlPanelContent,
   ProjectHeader,
   ProjectLoadingScreen,
   type ProjectViewSettings,
   type ViewMode,
 } from "@/components/project-view";
 
-export const Route = createFileRoute("/proyecto/$slug")({ component: ProjectView });
+export const Route = createFileRoute("/proyecto/$slug")({
+  head: ({ params }) => {
+    const prop = getPropertyBySlug(params.slug);
+    return {
+      meta: [
+        {
+          title: prop ? `${prop.name} | AUTEM` : "Proyecto | AUTEM",
+        },
+        {
+          property: "og:title",
+          content: prop ? `${prop.name} | AUTEM` : "Proyecto | AUTEM",
+        },
+      ],
+    };
+  },
+  component: ProjectView,
+});
 
 function ProjectView() {
   const { slug } = Route.useParams();
@@ -46,6 +57,44 @@ function ProjectView() {
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = projectLots.find((lot) => lot.id === selectedLotId) ?? projectLots[0];
   const hasLots = projectLots.length > 0;
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== "undefined") {
+      const stored = localStorage.getItem("autem-theme");
+      if (stored) return stored === "dark";
+      return (
+        document.documentElement.classList.contains("dark") ||
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      );
+    }
+    return false;
+  });
+
+  const handleToggleTheme = useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev;
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.toggle("dark", next);
+        localStorage.setItem("autem-theme", next ? "dark" : "light");
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("dark", isDark);
+      localStorage.setItem("autem-theme", isDark ? "dark" : "light");
+    }
+  }, [isDark]);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Estados de filtrado sincronizados para el mapa interactivo y el catálogo
   const [filterStatus, setFilterStatus] = useState("Todos");
@@ -149,7 +198,7 @@ function ProjectView() {
     // Arrastrar hacia arriba (clientY disminuye) aumenta la altura del catálogo
     const deltaY = dragStartYRef.current - e.clientY;
     const deltaPercent = (deltaY / totalHeight) * 100;
-    const nextPercent = Math.min(84, Math.max(16, dragStartPercentRef.current + deltaPercent));
+    const nextPercent = Math.min(84, Math.max(34, dragStartPercentRef.current + deltaPercent));
     currentDragPercentRef.current = nextPercent;
 
     // Rendimiento extremo 60-120fps alineado con RAF sin layout thrashing
@@ -181,7 +230,7 @@ function ProjectView() {
   };
 
   const handleToggleSheetSize = useCallback(() => {
-    setSheetPercent((prev) => (prev > 62 ? 46 : 76));
+    setSheetPercent((prev) => (prev > 62 ? 42 : 76));
   }, []);
 
   const selectLot = useCallback((lot: (typeof projectLots)[number]) => {
@@ -190,7 +239,6 @@ function ProjectView() {
   }, []);
 
   const handleView3D = useCallback(() => setMode("tour"), []);
-  const handleViewAR = useCallback(() => setMode("ar"), []);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
 
   const updateViewSettings = (changes: Partial<ProjectViewSettings>) => {
@@ -237,7 +285,21 @@ function ProjectView() {
         projectName={property.name}
         projectLocation={property.location}
       />
-      <div className="relative h-full">
+
+      {/* Header fijo e intacto al 100% de ancho de la pantalla, sin encogerse ni moverse */}
+      <ProjectHeader
+        propertyName={property.name}
+        onOpenInfo={() => setIsPanelOpen((prev) => !prev)}
+        contactUrl={contactUrl}
+        activeMode={mode}
+        onModeChange={setMode}
+        showViewSwitcher={viewSettings.showViewSwitcher}
+        isPanelOpen={isPanelOpen}
+        isDark={isDark}
+        onToggleTheme={handleToggleTheme}
+      />
+
+      <div className="relative h-full w-full">
         {mode === "lot" ? (
           <div
             ref={splitContainerRef}
@@ -275,6 +337,8 @@ function ProjectView() {
                   }
                 }}
                 isDesktopSidebarOpen={isLotPanelVisible}
+                isRightPanelOpen={isPanelOpen}
+                isDark={isDark}
               />
               {viewSettings.showViewSwitcher && (
                 <div className="absolute top-2.5 left-2.5 z-20 lg:hidden">
@@ -290,32 +354,32 @@ function ProjectView() {
                 onPointerMove={handleSheetDragMove}
                 onPointerUp={handleSheetDragEnd}
                 onPointerCancel={handleSheetDragEnd}
-                className="relative z-30 flex h-7.5 w-full shrink-0 cursor-row-resize touch-none items-center justify-between px-3 bg-background/95 border-t border-border/80 shadow-md backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
+                className="relative z-30 flex h-8 w-full shrink-0 cursor-row-resize touch-none items-center justify-between px-3 bg-background/95 border-t border-border/80 shadow-md backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
                 title="Desliza para ajustar la división entre mapa y catálogo"
               >
-                {/* Botón rápido: Más Mapa */}
+                {/* Botón rápido: Más Mapa (con límite seguro para no cortar el catálogo) */}
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSheetPercent(24);
+                    setSheetPercent(36);
                   }}
-                  className={`rounded-full px-2 py-0.5 text-[8px] font-semibold transition-all ${sheetPercent <= 30 ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                  className={`rounded-full px-2 py-0.5 text-[8px] font-semibold transition-all ${sheetPercent <= 40 ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
                 >
                   Más mapa
                 </button>
 
-                {/* Tirador central táctil */}
+                {/* Tirador central táctil con etiqueta destacada de Plano Urbanístico */}
                 <div
-                  className="flex flex-col items-center justify-center py-1 cursor-row-resize px-4"
+                  className="flex items-center justify-center py-1 cursor-row-resize px-2 gap-1.5"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleToggleSheetSize();
                   }}
                 >
-                  <div className="h-1 w-10 rounded-full bg-muted-foreground/40 hover:w-14 hover:bg-accent transition-all" />
-                  <span className="mt-0.5 text-[7px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    ↕ Desliza
+                  <div className="h-1 w-6 rounded-full bg-muted-foreground/40 hover:w-9 hover:bg-accent transition-all" />
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-foreground/80">
+                    Plano Urbanístico ↕
                   </span>
                 </div>
 
@@ -333,12 +397,13 @@ function ProjectView() {
               </div>
             )}
 
-            {/* Mitad inferior en móvil: Catálogo de lotes dinámico */}
+            {/* Mitad inferior en móvil: Catálogo de lotes dinámico con altura mínima segura */}
             {hasLots && viewSettings.showLotCatalog && (
               <div
                 ref={sheetWrapperRef}
                 style={{
-                  height: `calc(${sheetPercent}% - 30px)`,
+                  height: `calc(${sheetPercent}% - 32px)`,
+                  minHeight: "175px",
                   transition: isDraggingSheet
                     ? "none"
                     : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -360,7 +425,6 @@ function ProjectView() {
                   selectedId={selectedLot?.id ?? ""}
                   onSelect={selectLot}
                   onView3D={handleView3D}
-                  onViewAR={handleViewAR}
                   onHide={() => {}}
                   isMobileSplit
                 />
@@ -385,7 +449,6 @@ function ProjectView() {
                   selectedId={selectedLot?.id ?? ""}
                   onSelect={selectLot}
                   onView3D={handleView3D}
-                  onViewAR={handleViewAR}
                   onHide={handleHideDesktopPanel}
                 />
               </div>
@@ -396,6 +459,8 @@ function ProjectView() {
             <img
               src={property.image}
               alt={property.name}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
             />
             <div className="relative z-20 mx-4 max-w-md rounded-[24px] border border-border bg-background/95 p-8 text-center shadow-2xl backdrop-blur-2xl">
@@ -410,39 +475,80 @@ function ProjectView() {
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes
-                explorar todas las zonas y lotes en el plano de Zonas.
+                explorar todos los lotes en el Plano Urbanístico.
               </p>
               <Button
                 type="button"
                 onClick={() => setMode("lot")}
                 className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
               >
-                Ver plano de Zonas
+                Ver Plano Urbanístico
+              </Button>
+            </div>
+          </div>
+        ) : mode === "perspective" ? (
+          <div className="relative flex h-full w-full items-center justify-center bg-black/80">
+            <img
+              src={property.image}
+              alt="Perspectiva 3D Villa Paraíso"
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover opacity-35 filter blur-[2px] transition-all duration-700"
+            />
+            <div className="relative z-20 mx-4 max-w-lg rounded-[28px] border border-border/80 bg-background/95 p-8 sm:p-10 text-center shadow-2xl backdrop-blur-2xl">
+              <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
+                <Orbit size={32} />
+              </span>
+              <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
+                Perspectiva 3D · Próximamente
+              </Badge>
+              <h2 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Perspectiva 3D en desarrollo
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Estamos preparando la maqueta topográfica y volumétrica interactiva de{" "}
+                {property.name}. Próximamente podrás rotar la vista aérea del proyecto, inspeccionar
+                cotas y desniveles del terreno y proyectar construcciones.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
+                  Topografía real
+                </span>
+                <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
+                  Volumetría de lotes
+                </span>
+                <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
+                  Orientación solar
+                </span>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setMode("lot")}
+                className="mt-6 w-full rounded-xl bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
+              >
+                Ver Plano Urbanístico
               </Button>
             </div>
           </div>
         ) : (
-          <img
-            src={mode === "gallery" ? activeGalleryImage : property.image}
-            alt={property.name}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <div className="relative h-full w-full bg-black/20">
+            <img
+              key={mode === "gallery" ? activeGalleryImage : property.image}
+              src={mode === "gallery" ? activeGalleryImage : property.image}
+              alt={property.name}
+              loading="eager"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+            />
+          </div>
         )}
 
-        {mode !== "lot" && mode !== "tour" && (
+        {mode === "gallery" && (
           <>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
           </>
         )}
-
-        <ProjectHeader
-          onOpenInfo={() => setIsPanelOpen(true)}
-          contactUrl={contactUrl}
-          activeMode={mode}
-          onModeChange={setMode}
-          showViewSwitcher={viewSettings.showViewSwitcher}
-        />
 
         {viewSettings.showViewSwitcher && mode !== "lot" && (
           <div className="lg:hidden">
@@ -450,18 +556,22 @@ function ProjectView() {
           </div>
         )}
 
-        <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
-          <ProjectViewControlPanel
-            property={property}
-            settings={viewSettings}
-            onSettingsChange={updateViewSettings}
-            onResetSettings={resetViewSettings}
-            onSelectMode={(nextMode) => {
-              setMode(nextMode);
-              setIsPanelOpen(false);
-            }}
-          />
-        </Sheet>
+        {/* Botón flotante para restaurar Plano Urbanístico en móvil si está oculto */}
+        {hasLots && mode === "lot" && (!viewSettings.showLotCatalog || !isLotPanelVisible) && (
+          <div className="absolute bottom-4 left-3 z-30 flex items-center gap-2 lg:hidden animate-in fade-in zoom-in-95 duration-200">
+            <Button
+              type="button"
+              onClick={() => {
+                updateViewSettings({ showLotCatalog: true });
+                setIsLotPanelVisible(true);
+                setSheetPercent(48);
+              }}
+              className="rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-accent-foreground shadow-xl hover:bg-accent/90 cursor-pointer"
+            >
+              <PanelLeftOpen className="size-3.5 mr-1.5" /> Mostrar Plano Urbanístico
+            </Button>
+          </div>
+        )}
 
         {hasLots && viewSettings.showLotCatalog && !isLotPanelVisible && (
           <div className="absolute bottom-5 left-5 z-30 hidden items-center gap-2.5 lg:flex">
@@ -522,23 +632,7 @@ function ProjectView() {
           </>
         )}
 
-        {mode === "ar" && (
-          <div className="absolute left-1/2 top-1/2 z-20 w-[min(90vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-[22px] border border-border bg-background/90 p-7 text-center text-foreground shadow-2xl backdrop-blur-2xl">
-            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-accent/15 text-accent">
-              <ScanLine size={27} />
-            </span>
-            <h2 className="mt-5 text-2xl font-semibold">Visualización AR</h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Abre el proyecto desde un dispositivo compatible para ubicar el modelo sobre una
-              superficie real.
-            </p>
-            <Button className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
-              Preparar experiencia AR
-            </Button>
-          </div>
-        )}
-
-        {mode !== "lot" && mode !== "tour" && mode !== "ar" && (
+        {mode === "gallery" && (
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:pb-5 lg:pl-[380px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
@@ -574,6 +668,46 @@ function ProjectView() {
             </div>
           </section>
         )}
+      </div>
+
+      {/* Panel lateral flotante en PC (estrictamente por debajo del header, sin moverlo ni achicarlo) */}
+      <aside
+        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[340px] flex-col p-3 transition-transform duration-300 ease-out md:flex ${
+          isPanelOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
+        }`}
+      >
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border dark:border-white/10 bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] dark:shadow-[20px_20px_70px_rgba(0,0,0,.5)] backdrop-blur-2xl">
+          <ProjectViewControlPanelContent
+            property={property}
+            settings={viewSettings}
+            onSettingsChange={updateViewSettings}
+            onResetSettings={resetViewSettings}
+            onClose={() => setIsPanelOpen(false)}
+            onSelectMode={(nextMode) => {
+              setMode(nextMode);
+              setIsPanelOpen(false);
+            }}
+            isMobile={false}
+          />
+        </div>
+      </aside>
+
+      {/* Modal Sheet en móvil (solo para celulares pequeños < 768px) */}
+      <div className="md:hidden">
+        <Sheet open={isPanelOpen && isMobile} onOpenChange={setIsPanelOpen}>
+          <ProjectViewControlPanel
+            property={property}
+            settings={viewSettings}
+            onSettingsChange={updateViewSettings}
+            onResetSettings={resetViewSettings}
+            onClose={() => setIsPanelOpen(false)}
+            onSelectMode={(nextMode) => {
+              setMode(nextMode);
+              setIsPanelOpen(false);
+            }}
+            isMobile={true}
+          />
+        </Sheet>
       </div>
     </main>
   );

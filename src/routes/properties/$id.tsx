@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useContactForm } from "@/hooks/useContactForm";
-import { Download, Map, Smartphone } from "lucide-react";
+import { Download, Map } from "lucide-react";
 import { properties, getPropertyById } from "@/data/properties";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { contactSchema, type ContactFormData } from "@/lib/validation";
@@ -11,55 +11,58 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MagneticButton from "@/components/MagneticButton";
 import { ProjectGallery, ProjectFloorPlan, ProjectMap } from "@/components/projects";
-import { getARModel } from "@/data/ar-models";
 
 export const Route = createFileRoute("/properties/$id")({
   component: PropertyDetail,
-  head: ({ params }) => ({
-    links: [
-      {
-        rel: "canonical",
-        href: `https://autem.es/properties/${params.id}`,
-      },
-    ],
-    meta: [
-      {
-        property: "og:image",
-        content:
-          getPropertyById(params.id)?.image ||
-          `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
-      },
-      {
-        name: "twitter:image",
-        content:
-          getPropertyById(params.id)?.image ||
-          `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
-      },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "RealEstateListing",
-          name: getPropertyById(params.id)?.name || "Propiedad",
-          description: getPropertyById(params.id)?.description || "",
-          url: `https://autem.es/properties/${params.id}`,
-          image: getPropertyById(params.id)?.image || "",
-          offers: {
-            "@type": "Offer",
-            price:
-              getPropertyById(params.id)
-                ?.price.replace("Desde ", "")
-                .replace("$", "")
-                .replace("M USD", "000000")
-                .replace("K USD", "000") || "0",
-            priceCurrency: "USD",
-          },
-        }),
-      },
-    ],
-  }),
+  head: ({ params }) => {
+    const prop = getPropertyById(params.id);
+    return {
+      links: [
+        {
+          rel: "canonical",
+          href: `https://autem.es/properties/${params.id}`,
+        },
+      ],
+      meta: [
+        {
+          title: prop ? `${prop.name} | AUTEM` : "Propiedad | AUTEM",
+        },
+        {
+          property: "og:image",
+          content:
+            prop?.image || `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+        },
+        {
+          name: "twitter:image",
+          content:
+            prop?.image || `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+        },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "RealEstateListing",
+            name: prop?.name || "Propiedad",
+            description: prop?.description || "",
+            url: `https://autem.es/properties/${params.id}`,
+            image: prop?.image || "",
+            offers: {
+              "@type": "Offer",
+              price:
+                prop?.price
+                  .replace("Desde ", "")
+                  .replace("$", "")
+                  .replace("M USD", "000000")
+                  .replace("K USD", "000") || "0",
+              priceCurrency: "USD",
+            },
+          }),
+        },
+      ],
+    };
+  },
 });
 
 function PropertyDetail() {
@@ -290,14 +293,6 @@ function PropertyDetail() {
                     >
                       Solicitar información
                     </a>
-                    {getARModel(property.slug) && (
-                      <Link
-                        to={`/ar/${property.slug}`}
-                        className="flex w-full items-center justify-center gap-2 border border-border px-6 py-4 text-xs font-medium uppercase tracking-widest transition-all hover:border-accent hover:text-accent"
-                      >
-                        <Smartphone size={14} /> Ver en Realidad Aumentada
-                      </Link>
-                    )}
                     {property.floorPlanPdf && (
                       <a
                         href={property.floorPlanPdf}

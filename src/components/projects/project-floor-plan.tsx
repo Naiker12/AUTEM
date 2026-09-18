@@ -1,18 +1,7 @@
 import { useState } from "react";
-import {
-  Download,
-  QrCode,
-  Smartphone,
-  X,
-  ExternalLink,
-  Copy,
-  Check,
-  Layers,
-  Sparkles,
-} from "lucide-react";
+import { Download, QrCode, X, ExternalLink, Copy, Check, Layers } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { getFloorPlanUrl } from "@/data/properties";
-import { getARModel, getFullARUrl } from "@/data/ar-models";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import type { ProjectFloorPlanProps } from "./project-types";
@@ -33,8 +22,10 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
         : property.floorPlanImage || `${planBase}/planta.jpg`;
 
   const downloadUrl = property.floorPlanPdf || currentPlanImage;
-  const qrUrl = getFullARUrl(property.slug);
-  const arModel = getARModel(property.slug);
+  const qrUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${import.meta.env.BASE_URL}properties/${property.slug}`
+      : `https://autem.es/properties/${property.slug}`;
 
   const whatsappCadUrl =
     `${WHATSAPP_BASE_URL}?text=` +
@@ -58,15 +49,6 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
         >
           <QrCode size={18} /> Ver planos (3 Vistas) & Código QR
         </button>
-
-        {arModel && (
-          <a
-            href={`${import.meta.env.BASE_URL}ar/${property.slug}`}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/60 dark:border-stone-700 dark:bg-stone-900 px-5 py-3.5 text-xs font-medium uppercase tracking-widest text-foreground dark:text-white transition-all hover:border-accent hover:text-accent"
-          >
-            <Smartphone size={15} /> Experiencia AR 3D
-          </a>
-        )}
 
         <a
           href={whatsappCadUrl}
@@ -180,8 +162,8 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
                   Explorar en smartphone
                 </h4>
                 <p className="mt-2 text-xs text-muted-foreground dark:text-stone-400 leading-relaxed">
-                  Apunta con la cámara de tu smartphone para abrir la experiencia interactiva en
-                  Realidad Aumentada 3D y recorrer la propiedad.
+                  Apunta con la cámara de tu smartphone para abrir la ficha interactiva y explorar
+                  los planos arquitectónicos de la propiedad.
                 </p>
               </div>
 

@@ -11,7 +11,7 @@ export default function HomeHeroSection({ visible }: HomeHeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const entranceClass = visible ? "home-entrance" : "opacity-0";
   const heroScene = `${import.meta.env.BASE_URL}images/autem-hero-approved-scene-v2.png`;
-  const terrainReveal = `${import.meta.env.BASE_URL}images/autem-hero-terrain-reveal.png`;
+  const terrainReveal = `${import.meta.env.BASE_URL}projects/villa-paraiso/masterplan-clean.svg`;
   const masterplan = `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`;
 
   useScrollFrame(() => {
@@ -46,10 +46,10 @@ export default function HomeHeroSection({ visible }: HomeHeroSectionProps) {
         <div className="autem-scroll-hero__terrain-wrapper absolute inset-0 h-full w-full pointer-events-none">
           <img
             src={terrainReveal}
-            alt="Paisaje y territorio natural AUTEM"
+            alt="Plano maestro de Villa Paraíso"
             aria-hidden="true"
             decoding="async"
-            className="autem-scroll-hero__terrain absolute inset-0 h-full w-full object-cover object-[center_35%]"
+            className="autem-scroll-hero__terrain absolute inset-0 h-full w-full object-cover object-center"
           />
         </div>
 

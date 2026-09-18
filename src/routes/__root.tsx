@@ -82,12 +82,12 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
-        title: "AUTEM — Visualización 3D y realidad aumentada en bienes raíces",
+        title: "AUTEM",
       },
       {
         name: "description",
         content:
-          "Propiedades con renders 3D, tours virtuales y realidad aumentada para que las recorras, personalices y veas antes de la primera piedra.",
+          "Propiedades con renders 3D, planos interactivos y tours virtuales para que las recorras, personalices y veas antes de la primera piedra.",
       },
       {
         property: "og:title",
@@ -101,12 +101,12 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       {
         property: "og:image",
-        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
+        content: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:image",
-        content: `${import.meta.env.BASE_URL}projects/lotes-360/panoramica-render.png`,
+        content: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
       },
     ],
     links: [

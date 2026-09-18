@@ -5,7 +5,6 @@ import {
   MessageCircle,
   PanelLeftClose,
   Ruler,
-  ScanLine,
   Search,
   SlidersHorizontal,
   Trees,
@@ -30,7 +29,6 @@ interface LotSelectionPanelProps {
   selectedId: string;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
-  onViewAR?: () => void;
   onHide: () => void;
   mobileOpen?: boolean;
   isMobileSplit?: boolean;
@@ -52,7 +50,6 @@ export default function LotSelectionPanel({
   selectedId,
   onSelect,
   onView3D,
-  onViewAR,
   onHide,
   mobileOpen = false,
   isMobileSplit = false,
@@ -143,7 +140,6 @@ export default function LotSelectionPanel({
             onClearAdvanced={handleClearAdvanced}
             onSelect={onSelect}
             onView3D={onView3D}
-            onViewAR={onViewAR}
             contactUrl={contactUrl}
             isMobile
           />
@@ -175,7 +171,6 @@ export default function LotSelectionPanel({
           onClearAdvanced={handleClearAdvanced}
           onSelect={onSelect}
           onView3D={onView3D}
-          onViewAR={onViewAR}
           contactUrl={contactUrl}
         />
       </div>
@@ -199,7 +194,6 @@ interface LotCardItemProps {
   isSelected: boolean;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
-  onViewAR?: () => void;
   isMobile?: boolean;
 }
 
@@ -209,7 +203,6 @@ const LotCardItem = memo(
     isSelected,
     onSelect,
     onView3D,
-    onViewAR,
     isMobile = false,
   }: LotCardItemProps) {
     const isSold = lot.status === "Vendido";
@@ -221,34 +214,34 @@ const LotCardItem = memo(
     // - Disponible: VERDE CLARO
     // - Reservado: NARANJA
     let badgeClass =
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60";
     let dotClass = "bg-emerald-500";
-    let leftBorderClass = "border-l-4 border-l-emerald-500";
+    let leftBorderClass = "border-l-[3px] border-l-emerald-500";
     let borderClass = isSelected
-      ? "border-[#403a34] bg-emerald-500/[0.06] shadow-[0_0_0_1.5px_rgba(34,197,94,.5)] dark:border-emerald-500 dark:bg-emerald-500/15"
-      : "border-border bg-card/90 hover:border-emerald-500/40";
+      ? "border-[#403a34] bg-emerald-500/[0.06] shadow-[0_0_0_1.5px_rgba(34,197,94,.5)] dark:border-emerald-400 dark:bg-emerald-500/15 dark:shadow-[0_0_16px_rgba(34,197,94,.3)]"
+      : "border-border dark:border-white/10 bg-card/90 dark:bg-stone-900/85 hover:border-emerald-500/40 dark:hover:border-emerald-500/50";
 
     if (isSold) {
       badgeClass =
-        "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-300 dark:border-rose-800";
+        "bg-rose-50 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300 dark:border-rose-700/60";
       dotClass = "bg-rose-500";
-      leftBorderClass = "border-l-4 border-l-rose-500";
+      leftBorderClass = "border-l-[3px] border-l-rose-500";
       borderClass = isSelected
-        ? "border-rose-600 bg-rose-500/10 shadow-[0_0_0_1.5px_rgba(225,29,72,.5)]"
-        : "border-border/70 bg-rose-500/[0.03] dark:bg-rose-950/20 hover:border-rose-500/40";
+        ? "border-rose-600 bg-rose-500/10 shadow-[0_0_0_1.5px_rgba(225,29,72,.5)] dark:border-rose-400 dark:bg-rose-500/20"
+        : "border-border/70 dark:border-white/10 bg-rose-500/[0.03] dark:bg-stone-900/85 hover:border-rose-500/40";
     } else if (isReserved) {
       badgeClass =
-        "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300 dark:border-orange-800";
+        "bg-orange-50 text-orange-700 dark:bg-orange-950/70 dark:text-orange-300 border-orange-300 dark:border-orange-700/60";
       dotClass = "bg-orange-500";
-      leftBorderClass = "border-l-4 border-l-orange-500";
+      leftBorderClass = "border-l-[3px] border-l-orange-500";
       borderClass = isSelected
-        ? "border-orange-600 bg-orange-500/10 shadow-[0_0_0_1.5px_rgba(249,115,22,.5)]"
-        : "border-border/70 bg-orange-500/[0.03] dark:bg-orange-950/20 hover:border-orange-500/40";
+        ? "border-orange-600 bg-orange-500/10 shadow-[0_0_0_1.5px_rgba(249,115,22,.5)] dark:border-orange-400 dark:bg-orange-500/20"
+        : "border-border/70 dark:border-white/10 bg-orange-500/[0.03] dark:bg-stone-900/85 hover:border-orange-500/40";
     } else if (isLastUnits) {
       badgeClass =
-        "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300 dark:border-amber-800";
+        "bg-amber-50 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 dark:border-amber-700/60";
       dotClass = "bg-amber-500";
-      leftBorderClass = "border-l-4 border-l-amber-500";
+      leftBorderClass = "border-l-[3px] border-l-amber-500";
     }
 
     return (
@@ -256,58 +249,60 @@ const LotCardItem = memo(
         id={`lot-card-${lot.id}`}
         style={{
           contentVisibility: "auto",
-          containIntrinsicSize: isMobile ? "78px" : "96px",
+          containIntrinsicSize: isMobile ? "50px" : "56px",
         }}
-        className={`relative overflow-hidden rounded-[10px] sm:rounded-[14px] border transition-all duration-150 ${leftBorderClass} ${borderClass}`}
+        className={`relative overflow-hidden rounded-xl border transition-all duration-150 ${leftBorderClass} ${borderClass}`}
       >
         <button
           type="button"
           onClick={() => onSelect(lot)}
-          className={`w-full text-left ${isMobile ? "p-2.5 pr-[96px]" : "p-3.5 pr-[108px]"}`}
+          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5 pr-[68px]" : "py-2 px-3 pr-[76px]"}`}
         >
-          <div className="flex items-center gap-2">
+          {/* Fila 1: ID, Estado y Precio en una sola línea compacta */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <strong
-              className={`font-bold tracking-tight leading-none ${isMobile ? "text-sm sm:text-base" : "text-xl"}`}
+              className={`font-bold tracking-tight leading-none text-foreground ${isMobile ? "text-[13px]" : "text-[14px] sm:text-[15px]"}`}
             >
               {lot.id}
             </strong>
             <Badge
               variant="outline"
-              className={`rounded-full ${isMobile ? "px-1.5 py-0 text-[7.5px]" : "px-2 py-0.5 text-[8px]"} font-semibold flex items-center gap-1 ${badgeClass}`}
+              className={`rounded-full ${isMobile ? "px-1.5 py-0 text-[7px]" : "px-2 py-0 text-[7.5px]"} font-semibold flex items-center gap-1 leading-none ${badgeClass}`}
             >
               <span className={`${isMobile ? "size-1" : "size-1.5"} rounded-full ${dotClass}`} />
               {lot.status}
             </Badge>
-          </div>
-          <p
-            className={`text-muted-foreground line-clamp-1 ${isMobile ? "mt-0.5 text-[10px] leading-tight" : "mt-2 text-xs"}`}
-          >
-            {lot.detail}
-          </p>
-          <div
-            className={`flex items-center gap-2.5 text-foreground/80 ${isMobile ? "mt-1 text-[11px]" : "mt-3 text-xs"}`}
-          >
-            <span className="flex items-center gap-1">
-              <Ruler size={isMobile ? 11 : 11} className="text-muted-foreground" />
-              {formatLotArea(lot.area)}
-            </span>
             {isSold ? (
               <span
-                className={`${isMobile ? "text-[10px]" : "text-xs"} font-semibold text-slate-500`}
+                className={`ml-auto font-semibold text-slate-500 dark:text-stone-400 ${isMobile ? "text-[10px]" : "text-[11px]"}`}
               >
                 Vendido
               </span>
             ) : (
-              <strong className={`font-bold text-foreground ${isMobile ? "text-[11px]" : ""}`}>
+              <span
+                className={`ml-auto font-bold text-foreground tracking-tight ${isMobile ? "text-[11px]" : "text-xs"}`}
+              >
                 {formatLotPrice(lot.price)}
-              </strong>
+              </span>
             )}
+          </div>
+
+          {/* Fila 2: Detalle (Manzana) y Área en una línea esbelta */}
+          <div
+            className={`flex items-center gap-1.5 text-muted-foreground ${isMobile ? "mt-0.5 text-[9.5px]" : "mt-1 text-[11px]"}`}
+          >
+            <span className="truncate max-w-[130px] sm:max-w-[160px]">{lot.detail}</span>
+            <span className="text-muted-foreground/50">·</span>
+            <span className="flex items-center gap-1 shrink-0 font-medium text-foreground/80">
+              <Ruler size={isMobile ? 10 : 11} className="text-muted-foreground" />
+              {formatLotArea(lot.area)}
+            </span>
           </div>
         </button>
 
-        {/* Acciones de lote: Barra horizontal compacta, perfectamente centrada sin recortes ni desbordes */}
+        {/* Acciones de lote compactas */}
         <div
-          className={`absolute ${isMobile ? "right-2 gap-1" : "right-2.5 gap-1.5"} top-1/2 -translate-y-1/2 flex items-center`}
+          className={`absolute ${isMobile ? "right-1.5 gap-1" : "right-2 gap-1.5"} top-1/2 -translate-y-1/2 flex items-center`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -319,22 +314,9 @@ const LotCardItem = memo(
             }}
             title={`Ver ${lot.id} en 3D`}
             aria-label={`Ver ${lot.id} en 3D`}
-            className={`flex ${isMobile ? "size-6.5 rounded-md" : "size-7 rounded-lg"} items-center justify-center bg-[#403a34] text-[#f6f1eb] shadow-xs transition-all hover:bg-accent hover:text-accent-foreground active:scale-90 cursor-pointer`}
+            className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center bg-[#403a34] text-[#f6f1eb] dark:bg-stone-800 dark:text-stone-200 dark:border dark:border-white/10 shadow-xs transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-[#151413] active:scale-90 cursor-pointer`}
           >
-            <Box size={isMobile ? 12 : 13.5} />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(lot);
-              onViewAR?.();
-            }}
-            title={`Ver ${lot.id} en AR`}
-            aria-label={`Ver ${lot.id} en AR`}
-            className={`flex ${isMobile ? "size-6.5 rounded-md" : "size-7 rounded-lg"} items-center justify-center border border-border/80 bg-background/90 text-foreground/80 shadow-xs transition-all hover:border-accent hover:text-accent active:scale-90 cursor-pointer`}
-          >
-            <ScanLine size={isMobile ? 12 : 13.5} />
+            <Box size={isMobile ? 11 : 12.5} />
           </button>
           <button
             type="button"
@@ -350,9 +332,9 @@ const LotCardItem = memo(
             }}
             title={`Descargar ficha de ${lot.id}`}
             aria-label={`Descargar ficha de ${lot.id}`}
-            className={`flex ${isMobile ? "size-6.5 rounded-md" : "size-7 rounded-lg"} items-center justify-center border border-border/80 bg-background/90 text-foreground/80 shadow-xs transition-all hover:border-accent hover:text-accent active:scale-90 cursor-pointer`}
+            className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center border border-border/80 dark:border-white/10 bg-background/90 dark:bg-stone-800/80 text-foreground/80 dark:text-stone-300 shadow-xs transition-all hover:border-accent hover:text-accent active:scale-90 cursor-pointer`}
           >
-            <Download size={isMobile ? 12 : 13.5} />
+            <Download size={isMobile ? 11 : 12.5} />
           </button>
         </div>
       </article>
@@ -386,7 +368,6 @@ function LotCatalog({
   onClearAdvanced,
   onSelect,
   onView3D,
-  onViewAR,
   contactUrl,
   isMobile = false,
 }: {
@@ -406,7 +387,6 @@ function LotCatalog({
   onClearAdvanced: () => void;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
-  onViewAR?: () => void;
   contactUrl: string;
   isMobile?: boolean;
 }) {
@@ -431,40 +411,42 @@ function LotCatalog({
   return (
     <>
       <header
-        className={`border-b border-border ${isMobile ? "px-3.5 pb-1.5 pt-2" : "px-5 pb-3 pt-5"}`}
+        className={`border-b border-border dark:border-white/10 ${
+          isMobile ? "px-3.5 pb-1.5 pt-2" : "px-4 pb-2.5 pt-3"
+        }`}
       >
         <div className="flex items-center gap-2">
-          <Trees className={`${isMobile ? "size-4" : "size-6"} text-accent`} />
-          <div>
-            <h2 className={`${isMobile ? "text-xs" : "text-base"} font-semibold leading-tight`}>
+          <Trees className="size-4 sm:size-4.5 text-accent shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xs sm:text-sm font-semibold tracking-tight text-foreground leading-tight">
               Plano Urbanístico
             </h2>
-            <p className="mt-0.5 text-[9px] text-muted-foreground">{lots.length} lotes</p>
+            <p className="text-[9.5px] sm:text-[10px] text-muted-foreground leading-tight truncate mt-0.5">
+              Compara ubicación, área y precio.
+            </p>
           </div>
-          <Badge className="ml-auto rounded-full bg-accent/15 text-[8.5px] px-2 py-0.5 text-accent hover:bg-accent/20">
+          <Badge
+            variant="outline"
+            className="ml-auto rounded-full border-accent/40 bg-accent/10 text-[8px] font-semibold text-accent uppercase tracking-wider py-0 px-1.5 shrink-0"
+          >
             {filteredLots.length} lotes
           </Badge>
         </div>
-        {!isMobile && (
-          <p className="mt-3 text-xs leading-5 text-muted-foreground">
-            Compara ubicación, área y precio.
-          </p>
-        )}
 
         {/* Pestañas de Filtro por Estado Comercial */}
         <Tabs
           value={status}
           onValueChange={onStatusChange}
-          className={`${isMobile ? "mt-1.5" : "mt-3"}`}
+          className={`${isMobile ? "mt-1.5" : "mt-2"}`}
         >
           <TabsList
-            className={`grid ${isMobile ? "h-7" : "h-9"} w-full grid-cols-4 bg-[#403a34]/[0.06] p-0.5 text-[#555555] dark:bg-white/[0.06]`}
+            className={`grid ${isMobile ? "h-7" : "h-9"} w-full grid-cols-4 bg-[#403a34]/[0.06] p-0.5 text-muted-foreground dark:bg-stone-900/90 dark:border dark:border-white/10`}
           >
             {["Todos", "Disponibles", "Reservados", "Vendidos"].map((item) => (
               <TabsTrigger
                 key={item}
                 value={item}
-                className={`px-0.5 ${isMobile ? "text-[7.5px]" : "text-[8.5px]"} font-semibold uppercase tracking-wider text-[#555555] data-[state=active]:bg-[#403a34] data-[state=active]:text-[#f6f1eb] dark:data-[state=active]:bg-[#c5a059] dark:data-[state=active]:text-[#151413]`}
+                className={`px-0.5 ${isMobile ? "text-[7.5px]" : "text-[8.5px]"} font-semibold uppercase tracking-wider text-muted-foreground data-[state=active]:bg-[#403a34] data-[state=active]:text-[#f6f1eb] dark:text-stone-400 dark:hover:text-stone-200 dark:data-[state=active]:bg-[#c5a059] dark:data-[state=active]:text-[#151413] dark:data-[state=active]:shadow-md`}
               >
                 {item}
               </TabsTrigger>
@@ -477,7 +459,7 @@ function LotCatalog({
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-accent/40 bg-accent/10 font-bold text-accent transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-xs cursor-pointer ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-accent/40 bg-accent/10 font-bold text-accent transition-all hover:bg-accent hover:text-accent-foreground dark:bg-accent/15 dark:hover:bg-accent dark:hover:text-[#151413] active:scale-95 shadow-xs cursor-pointer ${
               isMobile ? "h-6.5 text-[8.5px] px-2" : "h-8 text-[10px] px-3"
             }`}
             title="Buscar lote por número específico (Lupa)"
@@ -493,7 +475,7 @@ function LotCatalog({
             onClick={onAdvancedOpenChange}
             className={`${
               isMobile ? "h-6.5 text-[8px] px-2" : "h-8 text-[9px] px-2.5"
-            } rounded-xl border border-border/70 bg-muted/40 uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground`}
+            } rounded-xl border border-border/70 bg-muted/40 uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground dark:border-white/10 dark:bg-stone-900/60 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-white`}
             title="Filtros avanzados de área, precio y orden"
           >
             <SlidersHorizontal className={isMobile ? "size-3 mr-1" : "size-3.5 mr-1"} />
@@ -573,7 +555,7 @@ function LotCatalog({
 
       <ScrollArea className={`min-h-0 flex-1 ${isMobile ? "px-2" : "px-3"}`}>
         <div
-          className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-2.5 max-w-4xl mx-auto" : "space-y-2 pb-3"}`}
+          className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-2.5 max-w-4xl mx-auto" : "space-y-1.5 pb-2.5"}`}
         >
           {filteredLots.length === 0 && (
             <p className="col-span-full rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs leading-5 text-muted-foreground">
@@ -587,20 +569,20 @@ function LotCatalog({
               isSelected={lot.id === selectedId}
               onSelect={onSelect}
               onView3D={onView3D}
-              onViewAR={onViewAR}
               isMobile={isMobile}
             />
           ))}
         </div>
       </ScrollArea>
-      <div className={`border-t border-border ${isMobile ? "p-2" : "p-4"}`}>
+      <div
+        className={`border-t border-border dark:border-white/10 ${isMobile ? "p-2" : "p-2.5 sm:px-3 sm:py-2.5"}`}
+      >
         <Button
           asChild
-          className={`${isMobile ? "h-8 text-[10px]" : "h-11 text-[11px]"} w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-transparent hover:text-[#403a34] dark:border-white/20 dark:bg-[#c5a059] dark:text-[#151413] dark:hover:bg-[#f6f1eb]`}
+          className={`${isMobile ? "h-7.5 text-[9.5px]" : "h-8.5 sm:h-9 text-[10px] sm:text-[10.5px]"} w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold dark:shadow-[0_4px_16px_rgba(197,160,89,0.3)] dark:hover:brightness-110`}
         >
           <a href={contactUrl} target="_blank" rel="noopener noreferrer">
-            <MessageCircle className={isMobile ? "size-3.5 mr-1" : "size-4 mr-1.5"} /> Solicitar
-            asesoría
+            <MessageCircle className="size-3.5 mr-1.5" /> Solicitar asesoría
           </a>
         </Button>
       </div>

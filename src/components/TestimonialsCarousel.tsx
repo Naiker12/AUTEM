@@ -27,7 +27,7 @@ const TESTIMONIALS_DATA: Testimonial[] = [
   {
     id: "1",
     quote:
-      "Comprar desde Bogotá sin haber viajado a Cartagena daba temor, pero el tour 3D interactivo y la maqueta AR en mi sala nos dieron el 100% de confianza. Hoy Residencia Azure en Bocagrande produce un 14.8% EA en rentas cortas.",
+      "Comprar desde Bogotá sin haber viajado a Cartagena daba temor, pero el plano urbanístico interactivo y la maqueta 3D nos dieron el 100% de confianza. Hoy Residencia Azure en Bocagrande produce un 14.8% EA en rentas cortas.",
     author: "Dra. María Elena Vargas",
     role: "Inversionista Médica",
     location: "Bogotá, Colombia",
@@ -65,20 +65,6 @@ const TESTIMONIALS_DATA: Testimonial[] = [
     yieldReturn: "Casa de Descanso",
     avatar:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    id: "4",
-    quote:
-      "La integración del modelo 3D con las licencias turísticas de Airbnb-Ready es el futuro del real estate en Cartagena. Mi propiedad en Eco-Villa Sierra está rentando desde el primer mes de entrega.",
-    author: "Alejandro Mendoza",
-    role: "Empresario Inmobiliario",
-    location: "Monterrey, México",
-    project: "Eco-Villa Sierra",
-    projectZone: "Castillogrande, Cartagena",
-    rating: 5,
-    yieldReturn: "15.2% Yield Neto",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
   },
 ];
 

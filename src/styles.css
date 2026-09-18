@@ -1962,6 +1962,11 @@ a {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Filtro editorial de lujo para mapa OpenStreetMap (Alabastro / Caliza) */
+.editorial-map-tile {
+  filter: sepia(28%) saturate(55%) contrast(94%) brightness(102%);
+}
+
 /* Scroll progress bar */
 .scroll-progress {
   position: fixed;
@@ -2308,4 +2313,15 @@ model-viewer {
 
 .oakame-hairline-dark {
   border-color: #403a34;
+}
+
+/* Cartografía Territorial Editorial */
+@keyframes territoryRouteDash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+.animate-territory-dash {
+  animation: territoryRouteDash 1.2s linear infinite;
 }

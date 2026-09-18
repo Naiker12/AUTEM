@@ -1,7 +1,7 @@
 const BASE = import.meta.env.BASE_URL ?? "/";
 
 export type PropertyType = "villa" | "apartamento" | "penthouse" | "terreno";
-export type TechTag = "3D Tour" | "AR Ready" | "Nuevo lanzamiento";
+export type TechTag = "3D Tour" | "Nuevo lanzamiento";
 
 export interface Property {
   id: string;
@@ -30,7 +30,7 @@ export interface Property {
   images?: string[];
 }
 
-export const ZONAS = ["Santa Rosa · Villanueva", "Turbaco", "Cartagena de Indias"] as const;
+export const ZONAS = ["Santa Rosa · Villanueva"] as const;
 
 const COP_PER_USD = 4200;
 
@@ -51,7 +51,6 @@ export const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
 
 export const TECH_TAGS: { value: TechTag; label: string }[] = [
   { value: "3D Tour", label: "3D Tour" },
-  { value: "AR Ready", label: "AR Ready" },
   { value: "Nuevo lanzamiento", label: "Nuevo lanzamiento" },
 ];
 
@@ -62,81 +61,40 @@ export const properties: Property[] = [
     name: "Villa Paraíso",
     location: "Santa Rosa · Villanueva, Bolívar",
     zona: "Santa Rosa · Villanueva",
-    price: "Lotes desde $210M COP",
-    priceNumeric: 210000000,
-    m2: 1080,
+    price: "Lotes desde $161M COP",
+    priceNumeric: 161000000,
+    m2: 280,
     bedrooms: 0,
     bathrooms: 0,
     type: "terreno",
     tags: ["3D Tour"],
-    image: `${BASE}projects/lotes-360/panoramica-render.png`,
+    image: `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
     lat: 10.4008,
     lng: -75.5532,
-    description: "Parcelación campestre de lotes amplios, naturaleza protegida y vistas abiertas.",
+    description:
+      "Parcelación campestre de 343 lotes con vías internas, naturaleza protegida y amenidades.",
     longDescription:
-      "Lotes 360° reúne lotes campestres desde 1.080 m², conectados por vías internas, corredores naturales y zonas para disfrutar el paisaje. Cada render representa una ubicación real dentro del mismo desarrollo.",
+      "Villa Paraíso reúne 343 lotes campestres en Santa Rosa · Villanueva, Bolívar. Cuenta con vías internas pavimentadas, corredores biológicos naturales, zona social y acceso controlado a pocos minutos de Cartagena.",
     features: [
-      "Lotes desde 1.080 m²",
+      "343 lotes campestres",
       "Vías internas pavimentadas",
-      "Quebrada y corredores naturales",
-      "Zona social campestre",
-      "Miradores panorámicos",
-      "Acceso controlado",
+      "Corredores naturales y arroyo",
+      "Zona social y amenidades",
+      "Redes y servicios planificados",
+      "Acceso y portería controlada",
     ],
-    floorPlan: "Parcelación campestre · lotes seleccionados por ubicación",
+    floorPlan: "Parcelación campestre · 343 lotes",
     year: 2026,
     floorPlanImage: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
     lotViewImage: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
     floorPlanPdf: undefined,
     images: [
-      `${BASE}projects/lotes-360/panoramica-render.png`,
+      `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
       `${BASE}projects/lotes-360/acceso-render.png`,
       `${BASE}projects/lotes-360/lot-l07-entorno-verde.png`,
       `${BASE}projects/lotes-360/lot-l12-quebrada.png`,
       `${BASE}projects/lotes-360/lot-l18-zona-social.png`,
       `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
-    ],
-  },
-  {
-    id: "eco-villa-sierra",
-    slug: "eco-villa-sierra",
-    name: "Eco-Villa Sierra",
-    location: "Turbaco · Castillogrande, CO",
-    zona: "Turbaco",
-    price: "Desde $850K USD",
-    priceNumeric: 850000,
-    m2: 410,
-    bedrooms: 5,
-    bathrooms: 4,
-    type: "villa",
-    tags: ["Nuevo lanzamiento"],
-    image: `${BASE}projects/eco-villa-sierra/fachada.jpg`,
-    lat: 10.3908,
-    lng: -75.5465,
-    description: "Una villa sostenible integrada en la naturaleza de Turbaco.",
-    longDescription:
-      "Eco-Villa Sierra es arquitectura sostenible en el Caribe colombiano. Construida con materiales de vanguardia y sistemas de energía renovable, esta propiedad de 410 m² se asienta sobre una parcela con vistas panorámicas excepcionales.",
-    features: [
-      "Certificación energética A",
-      "Paneles solares",
-      "Recolección de aguas pluviales",
-      "Jardín nativo de bajo consumo",
-      "Cocina exterior equipada",
-      "Cargador para vehículo eléctrico",
-    ],
-    floorPlan: "4 habitaciones + suite · 3 plantas · azotea",
-    year: 2025,
-    floorPlanImage: `${BASE}projects/eco-villa-sierra/planta.jpg`,
-    lotViewImage: `${BASE}projects/eco-villa-sierra/planta-3d.jpg`,
-    floorPlanPdf: `${BASE}projects/eco-villa-sierra/export.pdf`,
-    images: [
-      `${BASE}projects/eco-villa-sierra/fachada.jpg`,
-      `${BASE}projects/eco-villa-sierra/sala.jpg`,
-      `${BASE}projects/eco-villa-sierra/habitacion-1.jpg`,
-      `${BASE}projects/eco-villa-sierra/cocina.jpg`,
-      `${BASE}projects/eco-villa-sierra/planta.jpg`,
-      `${BASE}projects/eco-villa-sierra/planta-2d.jpg`,
-      `${BASE}projects/eco-villa-sierra/planta-3d.jpg`,
     ],
   },
 ];
