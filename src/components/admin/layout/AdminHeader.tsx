@@ -1,4 +1,4 @@
-import { Moon, Plus, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -12,7 +12,7 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ isDark, onThemeChange }: AdminHeaderProps) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/80 px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border/80 bg-background/95 px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger className="text-foreground" />
       <Separator orientation="vertical" className="h-5" />
       <div className="min-w-0">
@@ -27,13 +27,6 @@ export function AdminHeader({ isDark, onThemeChange }: AdminHeaderProps) {
         aria-label={isDark ? "Activar tema claro" : "Activar tema oscuro"}
       >
         {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-      </Button>
-      <Button
-        disabled
-        title="Requiere conectar almacenamiento y autenticación"
-        className="rounded-full bg-accent px-4 text-xs font-semibold uppercase tracking-wider text-accent-foreground hover:bg-accent/85"
-      >
-        <Plus className="size-4" /> Nuevo proyecto
       </Button>
     </header>
   );

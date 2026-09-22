@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Navigate, Outlet, createFileRoute } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/layout/AdminShell";
 
 export const Route = createFileRoute("/admin")({
@@ -9,6 +9,13 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminRoute() {
+  const hasAccess =
+    typeof window !== "undefined" && sessionStorage.getItem("autem-admin-demo-access") === "true";
+
+  if (!hasAccess) {
+    return <Navigate to="/login-admin" replace />;
+  }
+
   return (
     <AdminShell>
       <Outlet />

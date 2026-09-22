@@ -49,7 +49,9 @@ function ProjectView() {
   const [introReady, setIntroReady] = useState(false);
   const finishIntro = useCallback(() => setIntroReady(true), []);
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(
+    () => typeof window === "undefined" || window.innerWidth >= 768,
+  );
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
   const [viewSettings, setViewSettings] = useState<ProjectViewSettings>(
     DEFAULT_PROJECT_VIEW_SETTINGS,
@@ -60,7 +62,9 @@ function ProjectView() {
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = projectLots.find((lot) => lot.id === selectedLotId) ?? projectLots[0];
   const hasLots = projectLots.length > 0;
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
 
   const [isDark, setIsDark] = useState(() => {
     if (typeof document !== "undefined") {
@@ -98,6 +102,10 @@ function ProjectView() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  useEffect(() => {
+    setIsPanelOpen(!isMobile);
+  }, [isMobile]);
 
   // Estados de filtrado sincronizados para el mapa interactivo y el catálogo
   const [filterStatus, setFilterStatus] = useState("Todos");

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminContentTransition } from "./AdminContentTransition";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 
@@ -17,7 +18,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <AdminSidebar />
       <SidebarInset className="bg-background">
         <AdminHeader isDark={isDark} onThemeChange={() => setIsDark((current) => !current)} />
-        {children}
+        <AdminContentTransition>{children}</AdminContentTransition>
       </SidebarInset>
     </SidebarProvider>
   );

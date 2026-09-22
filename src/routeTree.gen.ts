@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as PoliticaPrivacidadRouteImport } from "./routes/politica-privacidad"
 import { Route as NosotrosRouteImport } from "./routes/nosotros"
+import { Route as LoginAdminRouteImport } from "./routes/login-admin"
 import { Route as CatalogoRouteImport } from "./routes/catalogo"
 import { Route as AdminRouteImport } from "./routes/admin"
 import { Route as IndexRouteImport } from "./routes/index"
@@ -18,8 +19,12 @@ import { Route as AdminIndexRouteImport } from "./routes/admin/index"
 import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
 import { Route as PropertiesIdRouteImport } from "./routes/properties/$id"
 import { Route as AdminProyectosRouteImport } from "./routes/admin/proyectos"
+import { Route as AdminLotesUnidadesRouteImport } from "./routes/admin/lotes-unidades"
+import { Route as AdminGaleriasPlanosRecorridosRouteImport } from "./routes/admin/galerias-planos-recorridos"
 import { Route as AdminConfiguracionRouteImport } from "./routes/admin/configuracion"
 import { Route as AdminConfiguracionIndexRouteImport } from "./routes/admin/configuracion/index"
+import { Route as AdminContenidoPortadaRouteImport } from "./routes/admin/contenido/portada"
+import { Route as AdminContenidoSectionRouteImport } from "./routes/admin/contenido/$section"
 import { Route as AdminConfiguracionNotificacionesRouteImport } from "./routes/admin/configuracion/notificaciones"
 import { Route as AdminConfiguracionIntegracionesRouteImport } from "./routes/admin/configuracion/integraciones"
 import { Route as AdminConfiguracionGeneralRouteImport } from "./routes/admin/configuracion/general"
@@ -34,6 +39,11 @@ const PoliticaPrivacidadRoute = PoliticaPrivacidadRouteImport.update({
 const NosotrosRoute = NosotrosRouteImport.update({
   id: "/nosotros",
   path: "/nosotros",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginAdminRoute = LoginAdminRouteImport.update({
+  id: "/login-admin",
+  path: "/login-admin",
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogoRoute = CatalogoRouteImport.update({
@@ -71,6 +81,17 @@ const AdminProyectosRoute = AdminProyectosRouteImport.update({
   path: "/proyectos",
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLotesUnidadesRoute = AdminLotesUnidadesRouteImport.update({
+  id: "/lotes-unidades",
+  path: "/lotes-unidades",
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGaleriasPlanosRecorridosRoute =
+  AdminGaleriasPlanosRecorridosRouteImport.update({
+    id: "/galerias-planos-recorridos",
+    path: "/galerias-planos-recorridos",
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
   id: "/configuracion",
   path: "/configuracion",
@@ -80,6 +101,16 @@ const AdminConfiguracionIndexRoute = AdminConfiguracionIndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => AdminConfiguracionRoute,
+} as any)
+const AdminContenidoPortadaRoute = AdminContenidoPortadaRouteImport.update({
+  id: "/contenido/portada",
+  path: "/contenido/portada",
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContenidoSectionRoute = AdminContenidoSectionRouteImport.update({
+  id: "/contenido/$section",
+  path: "/contenido/$section",
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminConfiguracionNotificacionesRoute =
   AdminConfiguracionNotificacionesRouteImport.update({
@@ -116,9 +147,12 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/admin": typeof AdminRouteWithChildren
   "/catalogo": typeof CatalogoRoute
+  "/login-admin": typeof LoginAdminRoute
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
+  "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
+  "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/proyectos": typeof AdminProyectosRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
@@ -128,13 +162,18 @@ export interface FileRoutesByFullPath {
   "/admin/configuracion/general": typeof AdminConfiguracionGeneralRoute
   "/admin/configuracion/integraciones": typeof AdminConfiguracionIntegracionesRoute
   "/admin/configuracion/notificaciones": typeof AdminConfiguracionNotificacionesRoute
+  "/admin/contenido/$section": typeof AdminContenidoSectionRoute
+  "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/catalogo": typeof CatalogoRoute
+  "/login-admin": typeof LoginAdminRoute
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
+  "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
+  "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/proyectos": typeof AdminProyectosRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
@@ -144,6 +183,8 @@ export interface FileRoutesByTo {
   "/admin/configuracion/general": typeof AdminConfiguracionGeneralRoute
   "/admin/configuracion/integraciones": typeof AdminConfiguracionIntegracionesRoute
   "/admin/configuracion/notificaciones": typeof AdminConfiguracionNotificacionesRoute
+  "/admin/contenido/$section": typeof AdminContenidoSectionRoute
+  "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/configuracion": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRoutesById {
@@ -151,9 +192,12 @@ export interface FileRoutesById {
   "/": typeof IndexRoute
   "/admin": typeof AdminRouteWithChildren
   "/catalogo": typeof CatalogoRoute
+  "/login-admin": typeof LoginAdminRoute
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
+  "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
+  "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/proyectos": typeof AdminProyectosRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
@@ -163,6 +207,8 @@ export interface FileRoutesById {
   "/admin/configuracion/general": typeof AdminConfiguracionGeneralRoute
   "/admin/configuracion/integraciones": typeof AdminConfiguracionIntegracionesRoute
   "/admin/configuracion/notificaciones": typeof AdminConfiguracionNotificacionesRoute
+  "/admin/contenido/$section": typeof AdminContenidoSectionRoute
+  "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRouteTypes {
@@ -171,9 +217,12 @@ export interface FileRouteTypes {
     | "/"
     | "/admin"
     | "/catalogo"
+    | "/login-admin"
     | "/nosotros"
     | "/politica-privacidad"
     | "/admin/configuracion"
+    | "/admin/galerias-planos-recorridos"
+    | "/admin/lotes-unidades"
     | "/admin/proyectos"
     | "/properties/$id"
     | "/proyecto/$slug"
@@ -183,13 +232,18 @@ export interface FileRouteTypes {
     | "/admin/configuracion/general"
     | "/admin/configuracion/integraciones"
     | "/admin/configuracion/notificaciones"
+    | "/admin/contenido/$section"
+    | "/admin/contenido/portada"
     | "/admin/configuracion/"
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
     | "/catalogo"
+    | "/login-admin"
     | "/nosotros"
     | "/politica-privacidad"
+    | "/admin/galerias-planos-recorridos"
+    | "/admin/lotes-unidades"
     | "/admin/proyectos"
     | "/properties/$id"
     | "/proyecto/$slug"
@@ -199,15 +253,20 @@ export interface FileRouteTypes {
     | "/admin/configuracion/general"
     | "/admin/configuracion/integraciones"
     | "/admin/configuracion/notificaciones"
+    | "/admin/contenido/$section"
+    | "/admin/contenido/portada"
     | "/admin/configuracion"
   id:
     | "__root__"
     | "/"
     | "/admin"
     | "/catalogo"
+    | "/login-admin"
     | "/nosotros"
     | "/politica-privacidad"
     | "/admin/configuracion"
+    | "/admin/galerias-planos-recorridos"
+    | "/admin/lotes-unidades"
     | "/admin/proyectos"
     | "/properties/$id"
     | "/proyecto/$slug"
@@ -217,6 +276,8 @@ export interface FileRouteTypes {
     | "/admin/configuracion/general"
     | "/admin/configuracion/integraciones"
     | "/admin/configuracion/notificaciones"
+    | "/admin/contenido/$section"
+    | "/admin/contenido/portada"
     | "/admin/configuracion/"
   fileRoutesById: FileRoutesById
 }
@@ -224,6 +285,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
+  LoginAdminRoute: typeof LoginAdminRoute
   NosotrosRoute: typeof NosotrosRoute
   PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
@@ -244,6 +306,13 @@ declare module "@tanstack/react-router" {
       path: "/nosotros"
       fullPath: "/nosotros"
       preLoaderRoute: typeof NosotrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/login-admin": {
+      id: "/login-admin"
+      path: "/login-admin"
+      fullPath: "/login-admin"
+      preLoaderRoute: typeof LoginAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/catalogo": {
@@ -295,6 +364,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AdminProyectosRouteImport
       parentRoute: typeof AdminRoute
     }
+    "/admin/lotes-unidades": {
+      id: "/admin/lotes-unidades"
+      path: "/lotes-unidades"
+      fullPath: "/admin/lotes-unidades"
+      preLoaderRoute: typeof AdminLotesUnidadesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    "/admin/galerias-planos-recorridos": {
+      id: "/admin/galerias-planos-recorridos"
+      path: "/galerias-planos-recorridos"
+      fullPath: "/admin/galerias-planos-recorridos"
+      preLoaderRoute: typeof AdminGaleriasPlanosRecorridosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     "/admin/configuracion": {
       id: "/admin/configuracion"
       path: "/configuracion"
@@ -308,6 +391,20 @@ declare module "@tanstack/react-router" {
       fullPath: "/admin/configuracion/"
       preLoaderRoute: typeof AdminConfiguracionIndexRouteImport
       parentRoute: typeof AdminConfiguracionRoute
+    }
+    "/admin/contenido/portada": {
+      id: "/admin/contenido/portada"
+      path: "/contenido/portada"
+      fullPath: "/admin/contenido/portada"
+      preLoaderRoute: typeof AdminContenidoPortadaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    "/admin/contenido/$section": {
+      id: "/admin/contenido/$section"
+      path: "/contenido/$section"
+      fullPath: "/admin/contenido/$section"
+      preLoaderRoute: typeof AdminContenidoSectionRouteImport
+      parentRoute: typeof AdminRoute
     }
     "/admin/configuracion/notificaciones": {
       id: "/admin/configuracion/notificaciones"
@@ -370,14 +467,22 @@ const AdminConfiguracionRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminConfiguracionRoute: typeof AdminConfiguracionRouteWithChildren
+  AdminGaleriasPlanosRecorridosRoute: typeof AdminGaleriasPlanosRecorridosRoute
+  AdminLotesUnidadesRoute: typeof AdminLotesUnidadesRoute
   AdminProyectosRoute: typeof AdminProyectosRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminContenidoSectionRoute: typeof AdminContenidoSectionRoute
+  AdminContenidoPortadaRoute: typeof AdminContenidoPortadaRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminConfiguracionRoute: AdminConfiguracionRouteWithChildren,
+  AdminGaleriasPlanosRecorridosRoute: AdminGaleriasPlanosRecorridosRoute,
+  AdminLotesUnidadesRoute: AdminLotesUnidadesRoute,
   AdminProyectosRoute: AdminProyectosRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminContenidoSectionRoute: AdminContenidoSectionRoute,
+  AdminContenidoPortadaRoute: AdminContenidoPortadaRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -386,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
+  LoginAdminRoute: LoginAdminRoute,
   NosotrosRoute: NosotrosRoute,
   PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
   PropertiesIdRoute: PropertiesIdRoute,

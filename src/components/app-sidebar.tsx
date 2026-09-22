@@ -1,11 +1,12 @@
 import * as React from "react";
 import {
+  Boxes,
   ClipboardList,
   FileImage,
   LayoutDashboard,
   MapPinned,
+  PanelTop,
   Settings,
-  Users,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -33,9 +34,50 @@ const data = {
       title: "Proyectos",
       url: "/admin/proyectos",
       icon: MapPinned,
-      items: [{ title: "Todos los proyectos", url: "/admin/proyectos" }],
+      items: [
+        { title: "Catálogo", url: "/admin/proyectos" },
+        { title: "Lotes y unidades", url: "/admin/lotes-unidades" },
+        { title: "Medios del proyecto", url: "/admin/galerias-planos-recorridos" },
+      ],
     },
-    { title: "Contenido y medios", url: "/admin#contenido", icon: FileImage },
+    {
+      title: "Contenido y medios",
+      url: "/admin/contenido/portada",
+      icon: FileImage,
+      isActive: true,
+      items: [
+        { title: "Portada e identidad", url: "/admin/contenido/portada" },
+        { title: "Presentación", url: "/admin/contenido/presentacion" },
+        { title: "Servicios", url: "/admin/contenido/servicios" },
+        { title: "Áreas de trabajo", url: "/admin/contenido/areas-de-trabajo" },
+        { title: "Proceso", url: "/admin/contenido/proceso" },
+        { title: "Recursos del proyecto", url: "/admin/contenido/recursos-del-proyecto" },
+        { title: "Contacto", url: "/admin/contenido/contacto" },
+        { title: "Nosotros", url: "/admin/contenido/nosotros" },
+        { title: "Navegación y pie", url: "/admin/contenido/navegacion-y-pie" },
+        { title: "Privacidad", url: "/admin/contenido/privacidad" },
+      ],
+    },
+    {
+      title: "Experiencias del proyecto",
+      url: "/admin#contenido",
+      icon: Boxes,
+      items: [
+        { title: "Visor de lotes", disabled: true },
+        { title: "Masterplan interactivo", disabled: true },
+        { title: "Tour panorámico y 3D", disabled: true },
+      ],
+    },
+    {
+      title: "Páginas públicas",
+      url: "/admin#contenido",
+      icon: PanelTop,
+      items: [
+        { title: "Inicio", disabled: true },
+        { title: "Catálogo", disabled: true },
+        { title: "Detalle de propiedad", disabled: true },
+      ],
+    },
     {
       title: "Configuración",
       url: "/admin/configuracion",

@@ -50,7 +50,8 @@
 
 :root {
   color-scheme: light;
-  --radius: 0.25rem;
+  /* Shared shadcn radius scale: inputs, buttons, menus and panels stay softly rounded. */
+  --radius: 0.75rem;
   --color-walnut-ink: #403a34;
   --color-linen-canvas: #f6f1eb;
   --color-charcoal-note: #333333;
@@ -821,7 +822,6 @@ a {
   transform-origin: center top;
   will-change: opacity, transform;
 }
-
 
 @keyframes project-scan-pass {
   0% {
@@ -1707,7 +1707,6 @@ a {
   }
 }
 
-
 /* About page: cinematic opening and portrait mask */
 @keyframes about-hero-rise {
   from {
@@ -2298,6 +2297,203 @@ model-viewer {
 
 .oakame-hairline-dark {
   border-color: #403a34;
+}
+
+/* Administración: textura arquitectónica de malla y firma de marca animada. */
+.admin-login-brand-wall {
+  background-color: #403a34;
+  background-image:
+    radial-gradient(ellipse at 50% 46%, rgb(197 160 89 / 0.23), transparent 18%),
+    radial-gradient(circle at 50% 46%, rgb(246 241 235 / 0.055), transparent 36%),
+    linear-gradient(rgb(246 241 235 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(246 241 235 / 0.035) 1px, transparent 1px),
+    linear-gradient(135deg, rgb(197 160 89 / 0.026) 1px, transparent 1px),
+    linear-gradient(45deg, rgb(197 160 89 / 0.026) 1px, transparent 1px);
+  background-position:
+    center,
+    center,
+    0 0,
+    0 0,
+    0 0,
+    0 0;
+  background-size:
+    auto,
+    auto,
+    64px 64px,
+    64px 64px,
+    128px 128px,
+    128px 128px;
+}
+
+.admin-login-brand-wall::before {
+  position: absolute;
+  inset: 9%;
+  border: 1px solid rgb(228 194 115 / 0.1);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 100px rgb(228 194 115 / 0.035),
+    0 0 120px rgb(0 0 0 / 0.12);
+  content: "";
+  transform: scale(1.1);
+}
+
+.admin-login-brand-wall::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(47 42 37 / 0.34),
+      transparent 35%,
+      transparent 65%,
+      rgb(47 42 37 / 0.34)
+    ),
+    radial-gradient(circle at center, transparent 8%, rgb(38 34 31 / 0.22) 72%, #2f2a25 120%);
+  content: "";
+}
+
+.admin-login-brand-mark {
+  position: relative;
+  background: radial-gradient(circle, rgb(246 241 235 / 0.05), transparent 66%);
+  filter: drop-shadow(0 12px 30px rgb(0 0 0 / 0.26));
+  animation: admin-login-mark-glow 3.2s ease-in-out infinite;
+}
+
+.admin-login-brand-mark::before,
+.admin-login-brand-mark::after {
+  position: absolute;
+  border: 1px solid rgb(228 194 115 / 0.22);
+  border-radius: inherit;
+  content: "";
+}
+
+.admin-login-brand-mark::before {
+  inset: 0;
+}
+
+.admin-login-brand-mark::after {
+  inset: 8px;
+  border-color: rgb(228 194 115 / 0.1);
+}
+
+.admin-login-brand-mark > * {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-login-brand-rule {
+  width: clamp(5rem, 10vw, 8rem);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #e4c273 28%,
+    #f6f1eb 50%,
+    #e4c273 72%,
+    transparent
+  );
+  box-shadow: 0 0 14px rgb(228 194 115 / 0.26);
+}
+
+.admin-login-brand-tagline {
+  color: rgb(246 241 235 / 0.72);
+  font-size: clamp(0.65rem, 0.9vw, 0.78rem);
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.admin-login-brand-letter {
+  display: inline-block;
+  background: linear-gradient(
+    105deg,
+    #d7c7b5 20%,
+    #f6f1eb 36%,
+    #e4c273 47%,
+    #fff8dc 52%,
+    #c5a059 58%,
+    #f6f1eb 72%,
+    #d7c7b5 84%
+  );
+  background-position: 115% 50%;
+  background-size: 300% 100%;
+  background-clip: text;
+  color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 8px 16px rgb(0 0 0 / 0.2));
+  animation: admin-login-letter-wave 3.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+/* Administración: sello de marca durante la preparación de medios. */
+@keyframes admin-upload-mark-orbit {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgb(197 160 89 / 0.18),
+      0 6px 18px rgb(0 0 0 / 0.06);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9px rgb(197 160 89 / 0),
+      0 9px 24px rgb(197 160 89 / 0.14);
+    transform: scale(1.045);
+  }
+}
+
+.admin-upload-mark {
+  animation: admin-upload-mark-orbit 1.6s ease-in-out infinite;
+}
+
+/* Administración: transición contenida entre vistas, sin afectar el panel lateral. */
+@keyframes admin-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-view-enter {
+  animation: admin-view-enter 280ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+.admin-view-loader-mark {
+  animation: admin-upload-mark-orbit 1.35s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-view-enter,
+  .admin-view-loader-mark {
+    animation: none;
+  }
+}
+
+@keyframes admin-login-mark-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 12px 30px rgb(0 0 0 / 0.26));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgb(228 194 115 / 0.2)) drop-shadow(0 12px 30px rgb(0 0 0 / 0.3));
+  }
+}
+
+@keyframes admin-login-letter-wave {
+  0%,
+  20%,
+  100% {
+    background-position: 115% 50%;
+    transform: translateY(0);
+  }
+  10% {
+    background-position: 0% 50%;
+    transform: translateY(-0.045em);
+  }
 }
 
 /* Cartografía Territorial Editorial */
