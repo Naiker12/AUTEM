@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1917" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="35%" stop-color="#c5a059" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Background Container -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <rect x="8" y="8" width="496" height="496" rx="120" fill="none" stroke="url(#goldGrad)" stroke-width="12" stroke-opacity="0.4" />
+
+  <!-- Signature Architectural "A" Logo Mark -->
+  <path
+    d="M256 70L80 430H170L210 330H302L342 430H432L256 70ZM256 195L287 270H225L256 195Z"
+    fill="url(#goldGrad)"
+    filter="url(#shadow)"
+  />
+</svg>

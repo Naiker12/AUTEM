@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-bzQ4Vb5N.js";import{s as t}from"./index-DaS2lEbO.js";var n=e();function r(){return(0,n.jsx)(t,{to:`/proyecto/$slug`,params:{slug:`lotes-360`},replace:!0})}export{r as component};
