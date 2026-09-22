@@ -23,11 +23,11 @@ export function GeneralSettings() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="company-email">Correo administrativo</Label>
-          <Input id="company-email" type="email" defaultValue="administracion@autem.co" />
+          <Input id="company-email" type="email" placeholder="Pendiente de confirmar" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="company-phone">Teléfono de contacto</Label>
-          <Input id="company-phone" defaultValue="+57 300 000 0000" />
+          <Input id="company-phone" defaultValue="+57 300 720 0894" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="company-city">Ciudad principal</Label>

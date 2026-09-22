@@ -1,13 +1,6 @@
-import { useEffect, useRef } from "react";
-import { ArrowDown, ArrowUpRight, Check, Mouse, MoveRight } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { ArrowUpRight, MoveRight } from "lucide-react";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import { useScrollFrame } from "@/hooks/useScrollFrame";
+import "@/components/home/editorial.css";
 
 const pillars = [
   {
@@ -73,21 +66,21 @@ const categoryDisciplines = [
     number: "02",
     title: "Urbanismo & Loteos",
     meta: "Territorio / Comunidad / Paisaje",
-    image: `${import.meta.env.BASE_URL}projects/eco-refugio-turbaco/fachada.jpg`,
+    image: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
     text: "Parcelaciones, condominios campestres, vías de acceso, espacios públicos y paisajismo sostenible.",
   },
   {
     number: "03",
     title: "Topografía & SIG",
     meta: "Datos / Relieve / Precisión",
-    image: `${import.meta.env.BASE_URL}images/provencal-oak-detail.jpg`,
+    image: `${import.meta.env.BASE_URL}images/autem-proceso-territorio.png`,
     text: "Modelos digitales del terreno, curvas de nivel, cartografía satelital y análisis de capas territoriales.",
   },
   {
     number: "04",
     title: "Desarrollo & Modelo 3D",
     meta: "Concepto / Viabilidad / Proyecto",
-    image: `${import.meta.env.BASE_URL}projects/casa-campestre/fachada.jpg`,
+    image: `${import.meta.env.BASE_URL}images/carousel-forest-pavilion.jpg`,
     text: "Un proceso integral: estudio de viabilidad, arquitectura, presupuestos rigurosos y supervisión técnica.",
   },
 ];
@@ -137,103 +130,97 @@ const stats = [
   { number: "3", label: "Ciudades Caribe" },
 ];
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-4 flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#403a34]">
-      <span className="size-1 rounded-full bg-[#403a34]" />
-      <span>{children}</span>
-    </div>
-  );
-}
-
-function HairlineDivider() {
-  return <div className="h-px w-full bg-[#403a34]/15" />;
-}
+const tickerItems = [
+  "ARQUITECTURA CON PROPÓSITO",
+  "RIGOR TERRITORIAL",
+  "DISEÑO INTEGRADO AL PAISAJE",
+  "ACOMPAÑAMIENTO PERSONALIZADO",
+  "VISUALIZACIÓN INMERSIVA 3D",
+];
 
 export function NosotrosPage() {
-  const heroRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-oakame-reveal]"));
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) {
-      targets.forEach((target) => target.classList.add("opacity-100"));
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("animate-in", "fade-in", "duration-700");
-            (entry.target as HTMLElement).style.opacity = "1";
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.08 },
-    );
-    targets.forEach((target) => observer.observe(target));
-
-    return () => observer.disconnect();
-  }, []);
-
   const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, me gustaría conversar sobre un proyecto.")}`;
   const heroScene = `${import.meta.env.BASE_URL}images/autem-hero-approved-scene-v2.png`;
 
-  useScrollFrame(() => {
-    const hero = heroRef.current;
-    if (!hero) return;
-    const bounds = hero.getBoundingClientRect();
-    const progress = Math.min(1, Math.max(0, -bounds.top / Math.max(window.innerHeight * 0.55, 1)));
-    hero.style.setProperty("--about-hero-scroll", progress.toFixed(4));
-  });
-
   return (
-    <div className="oakame-canvas min-h-screen bg-[#f6f1eb] text-[#403a34] font-sans antialiased selection:bg-[#403a34] selection:text-[#f6f1eb]">
+    <div className="bg-[#f0ebe6] text-[#4f4742] font-sans antialiased selection:bg-[#4f4742]/15 selection:text-[#4f4742]">
       {/* =========================================================================
-          HERO SECTION — Sunlit Provençal Atelier & Monumental Typography
+          HERO SECTION — Same Editorial Framed Composition as Home
           ========================================================================= */}
-      <section
-        ref={heroRef}
-        id="top"
-        className="about-image-hero relative min-h-[100svh] md:h-[100svh] w-full overflow-hidden bg-[#f6f1eb] text-[#403a34]"
-      >
-        {/* Background Architectural Canvas Layer */}
-        <img
-          src={heroScene}
-          alt="Jaime Buelvas, fundador de AUTEM"
-          fetchPriority="high"
-          decoding="async"
-          className="about-image-hero__scene pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
-        />
+      <section id="top" className="pt-[75px] pb-4 px-3 sm:px-4 md:px-6">
+        <div className="hero-backdrop-entrance relative w-full h-[calc(100svh-95px)] min-h-[580px] max-h-[860px] rounded-[12px] overflow-hidden bg-[#4f4742] shadow-sm">
+          {/* Main Hero Image */}
+          <img
+            src={heroScene}
+            alt="Jaime Buelvas, director y fundador de AUTEM"
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          {/* Ambient Contrast Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/15" />
 
-        {/* Provençal Sunlight & Cadastral Overlay */}
+          {/* Hero Content Overlay */}
+          <div className="relative flex h-full flex-col justify-end p-6 sm:p-8 md:p-10 lg:p-12 text-white">
+            <div className="grid items-end gap-6 border-b border-white/70 pb-6 md:grid-cols-12 md:gap-10 md:pb-8">
+              <h1 className="about-hero-reveal text-[clamp(36px,4.5vw,78px)] font-normal leading-[1.06] tracking-[-0.05em] uppercase md:col-span-7">
+                Arquitectura, visión y territorio.
+              </h1>
 
-        {/* Hero Bottom Bar: Centered Scroll Cue (Layer z-30) */}
-        <div className="absolute inset-x-0 bottom-6 z-30 mx-auto flex items-center justify-center">
-          <a
-            href="#filosofia"
-            className="inline-flex items-center gap-3 text-[9px] font-bold uppercase tracking-[0.24em] text-[#555555] hover:text-[#403a34] transition-colors"
-          >
-            <span className="h-5 w-px bg-[#403a34]/40" />
-            <Mouse size={16} className="text-[#403a34]" />
-            <span>Desliza para descubrir</span>
-          </a>
+              <div className="about-hero-reveal about-hero-reveal-delay max-w-[30rem] md:col-span-5 md:justify-self-end">
+                <p className="text-[14px] sm:text-[15px] leading-[1.45] tracking-[-0.02em] text-white/95">
+                  Diseñamos proyectos inmobiliarios y arquitectónicos que conectan el paisaje, la
+                  inversión y la forma de habitar con rigor técnico y criterio atemporal.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <a
+                    href="#filosofia"
+                    className="about-hero-reveal about-hero-reveal-delay-2 inline-flex items-center gap-2 rounded-full bg-[#f0ebe6] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.06em] text-[#4f4742] transition hover:bg-white"
+                  >
+                    Nuestra Filosofía <ArrowUpRight size={14} />
+                  </a>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="about-hero-reveal about-hero-reveal-delay-2 inline-flex items-center gap-2 rounded-full bg-[#4f4742]/85 px-5 py-3 text-[11px] font-medium uppercase tracking-[0.06em] text-white backdrop-blur-sm transition hover:bg-[#4f4742]"
+                  >
+                    Agendar consulta <ArrowUpRight size={14} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* Running Ticker Banner */}
+      <div className="w-full border-y border-[#4f4742]/15 bg-[#f0ebe6] py-5 overflow-hidden select-none">
+        <div className="animate-framer-ticker flex items-center whitespace-nowrap">
+          {[...tickerItems, ...tickerItems, ...tickerItems].map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-10 mx-6 text-[12px] sm:text-[13px] font-medium tracking-[0.14em] uppercase text-[#4f4742]"
+            >
+              <span>{item}</span>
+              <span className="text-[10px] text-[#4f4742]/60">°</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Discrete Stats Bar */}
-      <div className="border-y border-[#403a34]/15 bg-[#f6f1eb]">
-        <div className="mx-auto max-w-[1440px] px-6 py-8 sm:px-10 lg:px-14 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {stats.map((stat, idx) => (
+      <div className="border-b border-[#4f4742]/15 bg-[#f0ebe6]">
+        <div className="mx-auto w-[93%] max-w-[1360px] py-10 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          {stats.map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col border-l border-[#403a34]/15 pl-4 sm:pl-6 first:border-l-0"
+              className="flex flex-col border-l border-[#4f4742]/15 pl-4 sm:pl-6 first:border-l-0"
             >
-              <span className="text-[36px] sm:text-[44px] font-normal leading-none tracking-[-0.05em] text-[#403a34]">
+              <span className="text-[36px] sm:text-[44px] font-normal leading-none tracking-[-0.05em] text-[#4f4742]">
                 {stat.number}
               </span>
-              <span className="mt-2 text-[10px] font-medium uppercase tracking-[0.1em] text-[#555555]">
+              <span className="mt-2 text-[10px] font-medium uppercase tracking-[0.1em] text-[#57504b]">
                 {stat.label}
               </span>
             </div>
@@ -242,157 +229,166 @@ export function NosotrosPage() {
       </div>
 
       {/* =========================================================================
-          SECTION 01: NUESTRA FILOSOFÍA — Asymmetric Image-Text Split
+          SECTION 01: NUESTRA FILOSOFÍA
           ========================================================================= */}
-      <section
-        id="filosofia"
-        className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto"
-      >
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700">
-          <Eyebrow>Nuestra Filosofía</Eyebrow>
+      <section id="filosofia" className="py-20 md:py-28">
+        <div className="w-[93%] max-w-[1360px] mx-auto">
+          <div className="text-center mb-14 md:mb-16">
+            <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#57504b] block mb-3">
+              NUESTRA FILOSOFÍA
+            </span>
+            <h2 className="text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans max-w-4xl mx-auto">
+              NO DISEÑAMOS ÚNICAMENTE ESPACIOS. PROYECTAMOS IDENTIDAD, VALOR Y TERRITORIO.
+            </h2>
+            <p className="mt-4 text-[13px] sm:text-[14px] leading-[1.6] tracking-[0.04em] text-[#57504b] uppercase max-w-2xl mx-auto font-normal">
+              Acompañamos proyectos de arquitectura, urbanismo y diseño desde la primera pregunta
+              hasta su materialización.
+            </p>
+          </div>
 
-          {/* Monumental Section Display Heading */}
-          <h2 className="text-[clamp(2.5rem,5vw,60px)] font-medium leading-[1.15] tracking-[-0.056em] text-[#403a34] max-w-5xl uppercase">
-            No diseñamos únicamente espacios. Proyectamos identidad, valor y territorio.
-          </h2>
-
-          {/* Asymmetric 2-Column Split */}
-          <div className="mt-16 sm:mt-20 grid lg:grid-cols-12 gap-10 lg:gap-16 items-start border-t border-[#403a34]/15 pt-12">
-            <div className="lg:col-span-4">
-              <p className="text-[18px] sm:text-[20px] font-medium leading-relaxed tracking-[-0.01em] text-[#403a34] lg:text-right">
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+            <div className="lg:col-span-5 flex flex-col justify-center">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#4f4742]">
                 VISIÓN INTEGRAL & RIGOR TERRITORIAL
-              </p>
-              <p className="mt-2 text-[12px] uppercase tracking-[0.083em] text-[#555555] lg:text-right">
+              </span>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.1em] text-[#57504b]">
                 Cartagena · Turbaco · Santa Marta
               </p>
-            </div>
-
-            <div className="lg:col-span-8 space-y-6 text-[18px] sm:text-[20px] leading-[1.5] text-[#333333] max-w-[56ch]">
-              <p>
+              <p className="mt-6 text-[15px] sm:text-[16px] leading-[1.65] text-[#57504b]">
                 Acompañamos proyectos de arquitectura, urbanismo, diseño, construcción, consultoría
                 y planificación territorial desde la primera pregunta hasta su materialización.
               </p>
-              <p>
+              <p className="mt-4 text-[15px] sm:text-[16px] leading-[1.65] text-[#57504b]">
                 Combinamos criterio creativo, conocimiento técnico y herramientas digitales para
                 convertir necesidades y terrenos en soluciones funcionales, atractivas, viables y
                 valiosas que trascienden el tiempo.
               </p>
-              <div className="pt-4">
-                <a href="#metodo" className="oakame-pill-btn">
-                  Conocer Nuestro Método
+              <div className="mt-8">
+                <a
+                  href="#metodo"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#4f4742] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[#f0ebe6] transition hover:bg-black"
+                >
+                  Conocer Nuestro Método <ArrowUpRight size={14} />
                 </a>
               </div>
             </div>
-          </div>
 
-          {/* Monolithic Warm Stone & Reclaimed Wood Architectural Photo Spread */}
-          <div className="mt-16 sm:mt-20 border border-[#403a34] bg-[#f6f1eb]">
-            <img
-              src={`${import.meta.env.BASE_URL}images/provencal-architecture-stone.jpg`}
-              alt="Arquitectura AUTEM en piedra cálida y madera noble"
-              className="w-full h-[380px] sm:h-[540px] lg:h-[640px] object-cover object-center"
-              loading="lazy"
-            />
-            <div className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4 border-t border-[#403a34]/15 text-[10px] uppercase tracking-[0.1em] text-[#555555]">
-              <span>Atelier de Arquitectura · Piedra Caliza, Roble Recuperado y Luz Natural</span>
-              <span>AUTEM 2026</span>
+            <div className="lg:col-span-7">
+              <div className="rounded-[8px] overflow-hidden shadow-sm border border-[#4f4742]/15 bg-[#ded5c9]/30">
+                <img
+                  src={`${import.meta.env.BASE_URL}images/provencal-architecture-stone.jpg`}
+                  alt="Arquitectura AUTEM en piedra cálida y madera noble"
+                  className="w-full h-[360px] sm:h-[460px] object-cover object-center"
+                  loading="lazy"
+                />
+                <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 border-t border-[#4f4742]/15 text-[10px] uppercase tracking-[0.1em] text-[#57504b]">
+                  <span>Atelier de Arquitectura · Piedra Caliza, Roble y Luz Natural</span>
+                  <span>AUTEM 2026</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <HairlineDivider />
-
       {/* =========================================================================
-          SECTION 02: NUESTRA DIRECCIÓN — 3-Pillar Architectural Grid
+          SECTION 02: NUESTRA DIRECCIÓN — 3 Pillars
           ========================================================================= */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700">
-          <Eyebrow>Nuestra Dirección</Eyebrow>
-
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-12 border-b border-[#403a34]/15">
-            <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-              Un norte compartido.
+      <section className="py-20 md:py-28 border-t border-[#4f4742]/15">
+        <div className="w-[93%] max-w-[1360px] mx-auto">
+          <div className="text-center mb-14 md:mb-16">
+            <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#57504b] block mb-3">
+              NUESTRA DIRECCIÓN
+            </span>
+            <h2 className="text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
+              UN NORTE COMPARTIDO
             </h2>
-            <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-              Tres principios arquitectónicos y estratégicos alinean lo que hacemos, hacia dónde
-              vamos y el impacto que dejamos en cada lote.
+            <p className="mt-3 text-[13px] sm:text-[14px] leading-[1.6] tracking-[0.04em] text-[#57504b] uppercase max-w-lg mx-auto font-normal">
+              TRES PRINCIPIOS QUE ALINEAN LO QUE HACEMOS, HACIA DÓNDE VAMOS Y EL IMPACTO QUE
+              DEJAMOS.
             </p>
           </div>
 
-          {/* 3 Pillars Grid with 1px Walnut Ink borders */}
-          <div className="mt-12 grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {pillars.map((pillar) => (
               <div
                 key={pillar.title}
-                className="border border-[#403a34] bg-[#f6f1eb] p-8 sm:p-10 flex flex-col justify-between min-h-[340px] transition hover:bg-[#efe8df]"
+                className="rounded-[8px] border border-[#4f4742]/15 bg-[#ded5c9]/30 hover:bg-[#ded5c9]/60 p-8 sm:p-10 flex flex-col justify-between min-h-[320px] transition-all duration-300 shadow-sm"
               >
                 <div>
-                  <div className="flex items-center justify-between border-b border-[#403a34]/15 pb-4">
-                    <span className="text-[12px] font-medium tracking-[0.1em] text-[#403a34]">
+                  <div className="flex items-center justify-between border-b border-[#4f4742]/15 pb-4">
+                    <span className="text-[12px] font-semibold tracking-[0.1em] text-[#4f4742]">
                       {pillar.number}
                     </span>
-                    <span className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
+                    <span className="text-[10px] uppercase tracking-[0.1em] text-[#57504b]">
                       {pillar.kicker}
                     </span>
                   </div>
-                  <h3 className="mt-6 text-[32px] sm:text-[40px] font-medium leading-none tracking-[-0.04em] text-[#403a34]">
+                  <h3 className="mt-6 text-[26px] sm:text-[30px] font-medium leading-none tracking-[-0.03em] uppercase text-[#4f4742]">
                     {pillar.title}
                   </h3>
                 </div>
-                <p className="mt-8 text-[18px] leading-[1.5] text-[#333333]">{pillar.text}</p>
+                <p className="mt-8 text-[14px] sm:text-[15px] leading-relaxed text-[#57504b]">
+                  {pillar.text}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <HairlineDivider />
-
       {/* =========================================================================
-          SECTION 03: PRODUCT & CATEGORY GRID — Nos Catégories Style
+          SECTION 03: DISCIPLINAS & CAPACIDADES
           ========================================================================= */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700">
-          <Eyebrow>Disciplinas & Capacidades</Eyebrow>
-
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-12 border-b border-[#403a34]/15">
-            <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-              Servicios conectados en un sistema.
+      <section className="py-20 md:py-28 border-t border-[#4f4742]/15">
+        <div className="w-[93%] max-w-[1360px] mx-auto">
+          <div className="text-center mb-14 md:mb-16">
+            <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#57504b] block mb-3">
+              DISCIPLINAS & CAPACIDADES
+            </span>
+            <h2 className="text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
+              SERVICIOS CONECTADOS EN UN SISTEMA
             </h2>
-            <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-              No son piezas aisladas: estructuran un método riguroso para estudiar, proyectar,
-              comunicar y materializar con precisión.
+            <p className="mt-3 text-[13px] sm:text-[14px] leading-[1.6] tracking-[0.04em] text-[#57504b] uppercase max-w-lg mx-auto font-normal">
+              UN MÉTODO RIGUROSO PARA ESTUDIAR, PROYECTAR, COMUNICAR Y MATERIALIZAR CON PRECISIÓN.
             </p>
           </div>
 
-          {/* 4-Column Category Grid with 1px Walnut Ink borders, 0px radius */}
-          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {categoryDisciplines.map((cat) => (
               <div
                 key={cat.title}
-                className="group border border-[#403a34] bg-[#f6f1eb] overflow-hidden flex flex-col justify-between transition hover:border-[#403a34]"
+                className="rounded-[8px] border border-[#4f4742]/15 bg-[#f0ebe6] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#4f4742]/40 shadow-sm group"
               >
-                <div className="relative aspect-square w-full overflow-hidden bg-[#e8e0d5]">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#e8e0d5]">
                   <img
                     src={cat.image}
                     alt={cat.title}
                     className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     loading="lazy"
                   />
-                  <div className="absolute top-3 left-3 bg-[#f6f1eb] px-2.5 py-1 text-[9px] font-medium tracking-[0.1em] uppercase text-[#403a34] border border-[#403a34]/30">
+                  <div className="absolute top-3 left-3 rounded-full bg-[#f0ebe6]/90 backdrop-blur-sm px-2.5 py-1 text-[9px] font-semibold tracking-[0.1em] uppercase text-[#4f4742] border border-[#4f4742]/20">
                     {cat.number}
                   </div>
                 </div>
 
-                <div className="p-6 border-t border-[#403a34]">
-                  <p className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
-                    {cat.meta}
-                  </p>
-                  <h3 className="mt-2 text-[20px] font-medium leading-snug tracking-[-0.02em] text-[#403a34]">
-                    {cat.title}
-                  </h3>
-                  <p className="mt-3 text-[14px] leading-relaxed text-[#555555]">{cat.text}</p>
+                <div className="p-6 border-t border-[#4f4742]/15 flex flex-col justify-between flex-1">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.1em] text-[#57504b]">
+                      {cat.meta}
+                    </p>
+                    <h3 className="mt-2 text-[18px] sm:text-[20px] font-medium leading-snug tracking-[-0.02em] uppercase text-[#4f4742]">
+                      {cat.title}
+                    </h3>
+                    <p className="mt-3 text-[13px] sm:text-[14px] leading-relaxed text-[#57504b]">
+                      {cat.text}
+                    </p>
+                  </div>
+                  <div className="mt-6 flex justify-end">
+                    <div className="framer-circular-btn !w-10 !h-10 shrink-0">
+                      <ArrowUpRight size={16} />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -400,22 +396,19 @@ export function NosotrosPage() {
         </div>
       </section>
 
-      <HairlineDivider />
-
       {/* =========================================================================
-          SECTION 04: PROMESA DE VALOR — Rigor & Detalle
+          SECTION 04: PROMESA DE VALOR
           ========================================================================= */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div
-          data-oakame-reveal
-          className="opacity-0 transition-opacity duration-700 grid lg:grid-cols-12 gap-12 lg:gap-16 items-start"
-        >
+      <section className="py-20 md:py-28 border-t border-[#4f4742]/15">
+        <div className="w-[93%] max-w-[1360px] mx-auto grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           <div className="lg:col-span-5 lg:sticky lg:top-28">
-            <Eyebrow>Promesa de Valor</Eyebrow>
-            <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-              De la primera idea al último detalle.
+            <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#57504b] block mb-3">
+              PROMESA DE VALOR
+            </span>
+            <h2 className="text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
+              DE LA PRIMERA IDEA AL ÚLTIMO DETALLE
             </h2>
-            <p className="mt-6 text-[18px] leading-[1.5] text-[#333333]">
+            <p className="mt-6 text-[15px] sm:text-[16px] leading-[1.65] text-[#57504b]">
               No fragmentamos el proyecto. Conectamos cada decisión técnica, estética y financiera
               para que el resultado conserve intención, viabilidad y calidad insuperable.
             </p>
@@ -424,9 +417,9 @@ export function NosotrosPage() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="oakame-filled-btn"
+                className="inline-flex items-center gap-2 rounded-full bg-[#4f4742] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[#f0ebe6] transition hover:bg-black"
               >
-                Conversar con un Asesor
+                Conversar con un Asesor <ArrowUpRight size={14} />
               </a>
             </div>
           </div>
@@ -435,21 +428,21 @@ export function NosotrosPage() {
             {valuePromises.map((item) => (
               <div
                 key={item.title}
-                className="border border-[#403a34] bg-[#f6f1eb] p-7 flex flex-col justify-between min-h-[260px] transition hover:bg-[#efe8df]"
+                className="rounded-[8px] border border-[#4f4742]/15 bg-[#ded5c9]/30 hover:bg-[#ded5c9]/60 p-7 flex flex-col justify-between min-h-[230px] transition-all duration-300 shadow-sm"
               >
-                <div className="flex items-center justify-between border-b border-[#403a34]/15 pb-3">
-                  <span className="text-[12px] font-medium tracking-[0.1em] text-[#403a34]">
+                <div className="flex items-center justify-between border-b border-[#4f4742]/15 pb-3">
+                  <span className="text-[12px] font-semibold tracking-[0.1em] text-[#4f4742]">
                     {item.number}
                   </span>
-                  <span className="rounded-full border border-[#403a34] px-3 py-0.5 text-[9px] font-medium uppercase tracking-[0.083em] text-[#403a34]">
+                  <span className="rounded-full border border-[#4f4742]/30 px-3 py-0.5 text-[9px] font-medium uppercase tracking-[0.083em] text-[#4f4742]">
                     {item.tag}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-[20px] font-medium tracking-[-0.02em] text-[#403a34]">
+                  <h3 className="mt-4 text-[18px] sm:text-[20px] font-medium tracking-[-0.02em] uppercase text-[#4f4742]">
                     {item.title}
                   </h3>
-                  <p className="mt-2.5 text-[14px] leading-relaxed text-[#555555]">
+                  <p className="mt-2 text-[13px] leading-relaxed text-[#57504b]">
                     {item.description}
                   </p>
                 </div>
@@ -459,45 +452,44 @@ export function NosotrosPage() {
         </div>
       </section>
 
-      <HairlineDivider />
-
       {/* =========================================================================
-          SECTION 05: MÉTODO AUTEM — 6-Stage Process Grid
+          SECTION 05: MÉTODO AUTEM
           ========================================================================= */}
-      <section id="metodo" className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700">
-          <Eyebrow>Método AUTEM</Eyebrow>
-
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-12 border-b border-[#403a34]/15">
-            <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-              Claridad en cada etapa.
+      <section id="metodo" className="py-20 md:py-28 border-t border-[#4f4742]/15">
+        <div className="w-[93%] max-w-[1360px] mx-auto">
+          <div className="text-center mb-14 md:mb-16">
+            <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#57504b] block mb-3">
+              MÉTODO AUTEM
+            </span>
+            <h2 className="text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
+              CLARIDAD EN CADA ETAPA
             </h2>
-            <p className="max-w-md text-[18px] leading-[1.5] text-[#333333]">
-              Un proceso visible y metódico reduce la incertidumbre y mantiene todas las decisiones
-              alineadas con el presupuesto.
+            <p className="mt-3 text-[13px] sm:text-[14px] leading-[1.6] tracking-[0.04em] text-[#57504b] uppercase max-w-lg mx-auto font-normal">
+              UN PROCESO VISIBLE Y METÓDICO QUE MANTIENE TODAS LAS DECISIONES ALINEADAS CON EL
+              PRESUPUESTO.
             </p>
           </div>
 
-          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {method.map((item, idx) => (
               <div
                 key={item.step}
-                className="group border border-[#403a34] bg-[#f6f1eb] p-8 flex flex-col justify-between min-h-[220px] transition hover:bg-[#403a34] hover:text-[#f6f1eb]"
+                className="rounded-[8px] border border-[#4f4742]/15 bg-[#ded5c9]/30 p-8 flex flex-col justify-between min-h-[210px] transition-all duration-300 hover:bg-[#4f4742] hover:text-[#f0ebe6] group shadow-sm"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-medium tracking-[0.1em] text-[#403a34] group-hover:text-[#f6f1eb]">
+                  <span className="text-[12px] font-semibold tracking-[0.1em] text-[#4f4742] group-hover:text-[#f0ebe6]">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
                   <MoveRight
                     size={16}
-                    className="text-[#403a34]/40 group-hover:text-[#f6f1eb] group-hover:translate-x-1 transition-transform"
+                    className="text-[#4f4742]/50 group-hover:text-[#f0ebe6] group-hover:translate-x-1 transition-transform"
                   />
                 </div>
                 <div>
-                  <h3 className="text-[26px] sm:text-[32px] font-medium leading-tight tracking-[-0.03em] text-[#403a34] group-hover:text-[#f6f1eb]">
+                  <h3 className="text-[22px] sm:text-[26px] font-medium leading-tight tracking-[-0.03em] uppercase text-[#4f4742] group-hover:text-[#f0ebe6]">
                     {item.step}
                   </h3>
-                  <p className="mt-3 text-[14px] leading-relaxed text-[#555555] group-hover:text-[#f6f1eb]/80">
+                  <p className="mt-3 text-[13px] sm:text-[14px] leading-relaxed text-[#57504b] group-hover:text-[#f0ebe6]/80">
                     {item.text}
                   </p>
                 </div>
@@ -507,129 +499,122 @@ export function NosotrosPage() {
         </div>
       </section>
 
-      <HairlineDivider />
-
       {/* =========================================================================
-          SECTION 06: CULTURA & DIFERENCIALES
+          SECTION 06: CULTURA & PRINCIPIOS
           ========================================================================= */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div data-oakame-reveal className="opacity-0 transition-opacity duration-700">
-          <Eyebrow>Cultura & Principios</Eyebrow>
+      <section className="py-20 md:py-28 border-t border-[#4f4742]/15">
+        <div className="w-[93%] max-w-[1360px] mx-auto grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          <div className="lg:col-span-5">
+            <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#57504b] block mb-3">
+              CULTURA & PRINCIPIOS
+            </span>
+            <h2 className="text-[clamp(26px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
+              VALORES QUE SE VEN EN LA OBRA
+            </h2>
+            <p className="mt-6 text-[15px] sm:text-[16px] leading-[1.65] text-[#57504b]">
+              La cultura no vive en un documento. Se refleja en la forma de escuchar al propietario,
+              coordinar especialistas y responder con honestidad técnica.
+            </p>
 
-          <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-            <div className="lg:col-span-5">
-              <h2 className="text-[clamp(2.4rem,4.5vw,50px)] font-medium leading-[1.1] tracking-[-0.056em] text-[#403a34] uppercase">
-                Valores que se ven en la obra.
-              </h2>
-              <p className="mt-6 text-[18px] leading-[1.5] text-[#333333]">
-                La cultura no vive en un documento. Se refleja en la forma de escuchar al
-                propietario, coordinar especialistas y responder con honestidad técnica.
+            <div className="mt-10 border-t border-[#4f4742]/15 pt-8">
+              <p className="text-[10px] uppercase tracking-[0.1em] text-[#57504b] mb-4 font-semibold">
+                Preguntas clave que resolvemos
               </p>
-
-              <div className="mt-10 border-t border-[#403a34]/15 pt-8">
-                <p className="text-[10px] uppercase tracking-[0.1em] text-[#555555] mb-4">
-                  Preguntas clave que resolvemos
-                </p>
-                <div className="space-y-3">
-                  {[
-                    "¿Qué potencial real tiene mi terreno?",
-                    "¿Cómo hacerlo viable financiera y legalmente?",
-                    "¿Cómo diseñar para maximizar la plusvalía natural?",
-                  ].map((q) => (
-                    <div
-                      key={q}
-                      className="flex items-center justify-between border-b border-[#403a34]/15 pb-3 text-[15px] font-medium text-[#403a34]"
-                    >
-                      <span>{q}</span>
-                      <ArrowUpRight size={16} className="text-[#403a34]/60" />
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-3">
+                {[
+                  "¿Qué potencial real tiene mi terreno?",
+                  "¿Cómo hacerlo viable financiera y legalmente?",
+                  "¿Cómo diseñar para maximizar la plusvalía natural?",
+                ].map((q) => (
+                  <div
+                    key={q}
+                    className="flex items-center justify-between border-b border-[#4f4742]/15 pb-3 text-[14px] font-medium text-[#4f4742]"
+                  >
+                    <span>{q}</span>
+                    <ArrowUpRight size={15} className="text-[#4f4742]/60" />
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className="lg:col-span-7 grid sm:grid-cols-2 gap-4">
-              {values.map((val, idx) => (
-                <div
-                  key={val}
-                  className="border border-[#403a34] bg-[#f6f1eb] p-6 flex flex-col justify-between min-h-[140px] transition hover:bg-[#efe8df]"
-                >
-                  <span className="text-[10px] font-medium tracking-[0.1em] text-[#555555]">
-                    {String(idx + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="text-[20px] font-medium tracking-[-0.02em] text-[#403a34]">
-                    {val}
-                  </h3>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <HairlineDivider />
-
-      {/* =========================================================================
-          SECTION 07: CITAS & FUNDADOR — Provençal Editorial Portrait
-          ========================================================================= */}
-      <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 max-w-[1440px] mx-auto">
-        <div
-          data-oakame-reveal
-          className="opacity-0 transition-opacity duration-700 border border-[#403a34] p-8 sm:p-14 lg:p-20 bg-[#f6f1eb]"
-        >
-          <div className="flex items-center justify-between border-b border-[#403a34]/15 pb-6">
-            <span className="text-[10px] uppercase tracking-[0.1em] text-[#403a34]">
-              La persona detrás de AUTEM
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.1em] text-[#555555]">
-              Cartagena de Indias · Colombia
-            </span>
           </div>
 
-          <div className="mt-10 sm:mt-14">
-            <blockquote className="text-[clamp(2.2rem,4.5vw,56px)] font-serif italic leading-[1.1] tracking-[-0.04em] text-[#403a34]">
-              “Transformamos ideas en proyectos con valor perdurable, conectando la esencia del
-              territorio con la precisión de la arquitectura.”
-            </blockquote>
-
-            <div className="mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-[#403a34]/15 pt-8">
-              <div>
-                <p className="text-[18px] font-medium text-[#403a34]">Jaime Buelvas</p>
-                <p className="text-[11px] uppercase tracking-[0.1em] text-[#555555] mt-0.5">
-                  Fundador y Director de AUTEM
-                </p>
-              </div>
-
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="oakame-pill-btn self-start sm:self-auto"
+          <div className="lg:col-span-7 grid sm:grid-cols-2 gap-4">
+            {values.map((val, idx) => (
+              <div
+                key={val}
+                className="rounded-[8px] border border-[#4f4742]/15 bg-[#ded5c9]/30 p-6 flex flex-col justify-between min-h-[110px] transition hover:bg-[#ded5c9]/60 shadow-sm"
               >
-                Conversar con Jaime
-              </a>
+                <span className="text-[10px] font-semibold tracking-[0.1em] text-[#57504b]">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <h3 className="text-[17px] sm:text-[19px] font-medium tracking-[-0.02em] uppercase text-[#4f4742]">
+                  {val}
+                </h3>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 07: CITAS & FUNDADOR
+          ========================================================================= */}
+      <section className="py-20 md:py-28 border-t border-[#4f4742]/15">
+        <div className="w-[93%] max-w-[1360px] mx-auto">
+          <div className="rounded-[12px] bg-[#4f4742] text-[#f0ebe6] p-8 sm:p-12 lg:p-16 shadow-md">
+            <div className="flex items-center justify-between border-b border-[#f0ebe6]/20 pb-6">
+              <span className="text-[10px] uppercase tracking-[0.14em] text-[#f0ebe6]/80 font-medium">
+                La persona detrás de AUTEM
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.14em] text-[#f0ebe6]/60">
+                Cartagena de Indias · Colombia
+              </span>
+            </div>
+
+            <div className="mt-8 sm:mt-10">
+              <blockquote className="text-[clamp(20px,2.8vw,36px)] font-normal leading-[1.28] tracking-[-0.03em] text-[#f0ebe6] uppercase font-sans">
+                “Transformamos ideas en proyectos con valor perdurable, conectando la esencia del
+                territorio con la precisión de la arquitectura.”
+              </blockquote>
+
+              <div className="mt-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-[#f0ebe6]/20 pt-8">
+                <div>
+                  <p className="text-[18px] font-medium text-[#f0ebe6]">Jaime Buelvas</p>
+                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#f0ebe6]/70 mt-0.5">
+                    Fundador y Director de AUTEM
+                  </p>
+                </div>
+
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#f0ebe6] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[#4f4742] transition hover:bg-white self-start sm:self-auto"
+                >
+                  Conversar con Jaime <ArrowUpRight size={14} />
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          SECTION 08: CONVERSION CTA — El Siguiente Paso
+          SECTION 08: EL SIGUIENTE PASO (CTA)
           ========================================================================= */}
       <section
         id="contacto-nosotros"
-        className="py-24 sm:py-32 px-6 sm:px-10 lg:px-14 bg-[#403a34] text-[#f6f1eb]"
+        className="py-20 md:py-28 px-6 sm:px-10 lg:px-14 bg-[#403a34] text-[#f0ebe6]"
       >
-        <div className="max-w-[1440px] mx-auto flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+        <div className="max-w-[1360px] w-[93%] mx-auto flex flex-col lg:flex-row lg:items-end justify-between gap-10">
           <div>
-            <div className="flex items-center gap-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#f6f1eb]/70 mb-4">
-              <span className="size-1 rounded-full bg-[#f6f1eb]" />
-              <span>El Siguiente Paso</span>
-            </div>
-            <h2 className="text-[clamp(2.5rem,5.5vw,64px)] font-normal leading-[1.05] tracking-[-0.05em] text-[#f6f1eb] max-w-4xl uppercase">
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#f0ebe6]/70 block mb-3">
+              EL SIGUIENTE PASO
+            </span>
+            <h2 className="text-[clamp(28px,3.5vw,48px)] font-medium leading-[1.1] tracking-[-1px] text-[#f0ebe6] max-w-3xl uppercase font-sans">
               Conversemos sobre el potencial de tu proyecto.
             </h2>
-            <p className="mt-6 text-[18px] sm:text-[20px] leading-relaxed text-[#f6f1eb]/80 max-w-2xl font-light">
+            <p className="mt-4 text-[14px] sm:text-[15px] leading-relaxed text-[#f0ebe6]/80 max-w-xl font-light">
               Estamos listos para evaluar tu terreno, conceptualizar tu visión y estructurar un plan
               integral de desarrollo.
             </p>
@@ -640,14 +625,14 @@ export function NosotrosPage() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-3 rounded-full bg-[#f6f1eb] px-8 py-4 text-[11px] font-medium uppercase tracking-[0.1em] text-[#403a34] transition hover:bg-white"
+              className="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#f0ebe6] px-8 py-4 text-[11px] font-medium uppercase tracking-[0.1em] text-[#4f4742] transition hover:bg-white shadow-md"
             >
               Hablemos por WhatsApp
               <ArrowUpRight size={16} />
             </a>
             <a
               href={`${import.meta.env.BASE_URL}#proyectos`}
-              className="inline-flex items-center justify-center rounded-full border border-[#f6f1eb]/40 px-8 py-4 text-[11px] font-medium uppercase tracking-[0.1em] text-[#f6f1eb] transition hover:border-[#f6f1eb] hover:bg-[#f6f1eb]/10"
+              className="inline-flex items-center justify-center rounded-full border border-[#f0ebe6]/40 px-8 py-4 text-[11px] font-medium uppercase tracking-[0.1em] text-[#f0ebe6] transition hover:border-[#f0ebe6] hover:bg-[#f0ebe6]/10"
             >
               Ver Proyectos
             </a>

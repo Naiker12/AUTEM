@@ -141,11 +141,6 @@
   --sidebar-ring: #c5a059;
 }
 
-.dark .home-page {
-  background-color: #151413;
-  color: #f6f1eb;
-}
-
 .dark
   :is(
     .selected-projects,
@@ -246,13 +241,8 @@
 }
 
 .home-page {
-  --home-atlas: url("/images/autem-linen-atlas-background.webp");
-  background-color: #f6f1eb;
-  background-image: var(--home-atlas);
-  background-position: 50% 0%;
-  background-repeat: repeat-y;
-  background-size: max(1440px, 100%) auto;
-  animation: home-atlas-drift 40s ease-in-out infinite alternate;
+  background-color: #f0ebe6;
+  color: #4f4742;
 }
 
 @keyframes home-atlas-drift {
@@ -832,74 +822,6 @@ a {
   will-change: opacity, transform;
 }
 
-/* AUTEM hero: a scroll-controlled passage from founder to territory. */
-.autem-scroll-hero {
-  --hero-scroll-progress: 0;
-  background: #f6f1eb;
-  height: 340svh;
-}
-
-.autem-scroll-hero__terrain-wrapper {
-  z-index: 10;
-  will-change: clip-path, filter;
-  filter: drop-shadow(0 -8px 24px rgba(40, 32, 24, 0.22));
-}
-
-.autem-scroll-hero__terrain {
-  clip-path: ellipse(125% calc(var(--hero-scroll-progress) * 125%) at 50% 100%);
-  transform: scale(calc(1 + var(--hero-scroll-progress) * 0.08));
-  transform-origin: 50% 68%;
-  will-change: clip-path, transform;
-}
-
-.autem-scroll-hero__masterplan {
-  z-index: 11;
-  opacity: clamp(0, calc((var(--hero-scroll-progress) - 0.55) * 2.4), 1);
-  transform: scale(calc(1.04 - var(--hero-scroll-progress) * 0.04));
-  filter: saturate(0.92) contrast(1.04);
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-@media (max-width: 767px) {
-  .autem-scroll-hero {
-    height: 280svh;
-  }
-
-  .autem-scroll-hero__terrain-wrapper {
-    filter: drop-shadow(0 -6px 18px rgba(40, 32, 24, 0.25));
-  }
-
-  .autem-scroll-hero__terrain {
-    /* Refined, gentle panoramic arc calibrated for portrait mobile screens:
-       A broader 165% radius creates a graceful architectural curve across the phone,
-       smoothly transitioning to 100% full screen coverage */
-    clip-path: ellipse(165% calc(var(--hero-scroll-progress) * 126%) at 50% 100%);
-    transform: scale(calc(1 + var(--hero-scroll-progress) * 0.05));
-    transform-origin: 50% 60%;
-  }
-
-  .autem-scroll-hero__masterplan {
-    opacity: clamp(0, calc((var(--hero-scroll-progress) - 0.52) * 2.3), 1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .autem-scroll-hero {
-    height: 100svh;
-  }
-
-  .autem-scroll-hero__terrain {
-    clip-path: none;
-    transform: none;
-  }
-
-  .autem-scroll-hero__masterplan {
-    filter: none;
-    transform: none;
-    opacity: 0;
-  }
-}
 
 @keyframes project-scan-pass {
   0% {
@@ -1731,6 +1653,61 @@ a {
   animation: fade-in-up 0.8s cubic-bezier(0.19, 1, 0.22, 1) both;
 }
 
+/* Editorial motion system — a single calm cadence for the sections imported
+   from Framer. Keeping the motion on the content wrapper avoids layout shift
+   while images, cards and ticker remain fully interactive. */
+@keyframes nav-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translate3d(-2.5rem, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes nav-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translate3d(2.5rem, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes nav-logo-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -0.9rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.nav-entrance__brand {
+  animation: nav-slide-in-left 0.9s cubic-bezier(0.44, 0, 0.1, 1.02) 0.16s both;
+}
+
+.nav-entrance__links {
+  animation: fade-in-up 0.8s cubic-bezier(0.44, 0, 0.1, 1.02) 0.26s both;
+}
+
+.nav-entrance__actions {
+  animation: nav-slide-in-right 0.9s cubic-bezier(0.44, 0, 0.1, 1.02) 0.22s both;
+}
+
+@media (min-width: 768px) {
+  .nav-entrance__brand {
+    animation: nav-logo-rise 0.9s cubic-bezier(0.44, 0, 0.1, 1.02) 0.14s both;
+  }
+}
+
+
 /* About page: cinematic opening and portrait mask */
 @keyframes about-hero-rise {
   from {
@@ -2050,6 +2027,9 @@ a {
     animation: none !important;
   }
   .home-entrance,
+  .nav-entrance__brand,
+  .nav-entrance__links,
+  .nav-entrance__actions,
   .hero-backdrop-entrance,
   .home-hero-scroll-stage,
   .reveal-up,
@@ -2086,6 +2066,11 @@ a {
     transition: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+  [data-section-reveal] > div:first-child {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 
@@ -2324,4 +2309,93 @@ model-viewer {
 
 .animate-territory-dash {
   animation: territoryRouteDash 1.2s linear infinite;
+}
+
+/* Framer Template Styling & Animations */
+@keyframes framerTicker {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-framer-ticker {
+  animation: framerTicker 28s linear infinite;
+}
+
+.animate-framer-ticker:hover {
+  animation-play-state: paused;
+}
+
+@keyframes framerMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-framer-marquee {
+  animation: framerMarquee 35s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.framer-circular-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  border: 1px solid rgb(79, 71, 66);
+  color: rgb(79, 71, 66);
+  background: transparent;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.framer-circular-btn:hover {
+  background-color: rgb(79, 71, 66);
+  color: #f0ebe6;
+  transform: scale(1.06);
+}
+
+.framer-circular-btn svg {
+  transform: rotate(57deg);
+  transition: transform 0.35s ease;
+}
+
+.framer-circular-btn:hover svg {
+  transform: rotate(57deg) translate(2px, -2px);
+}
+
+/* =========================================================================
+   Nosotros page — nav link hover underline (mirrors the home-page rule
+   in editorial.css but without overriding the fixed navbar position)
+   ========================================================================= */
+.nav-entrance__links a {
+  position: relative;
+}
+.nav-entrance__links a::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-entrance__links a:hover::after,
+.nav-entrance__links a:focus-visible::after {
+  transform: scaleX(1);
+}
+/* Home page already provides its own version — prevent double rule via specificity */
+.home-page .nav-entrance__links a::after {
+  bottom: 0;
 }

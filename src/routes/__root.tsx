@@ -128,6 +128,7 @@ function RootComponent() {
         "button, a, .magnetic-btn, [role='button']",
       );
       if (!target) return;
+      if (target.closest(".home-page")) return;
 
       const rect = target.getBoundingClientRect();
       const ripple = document.createElement("span");

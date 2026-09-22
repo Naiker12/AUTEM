@@ -7,6 +7,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { getPropertyBySlug } from "@/data/properties";
 import { getLotsByProject, formatLotPrice, formatLotArea } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
+import "@/components/project-view/project-editorial.css";
 import {
   InteractivePanorama,
   MasterplanSvgViewer,
@@ -45,6 +46,8 @@ function ProjectView() {
   const property = getPropertyBySlug(slug);
   const projectLots = useMemo(() => getLotsByProject(slug), [slug]);
   const [mode, setMode] = useState<ViewMode>("lot");
+  const [introReady, setIntroReady] = useState(false);
+  const finishIntro = useCallback(() => setIntroReady(true), []);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
@@ -156,12 +159,12 @@ function ProjectView() {
   }, [projectLots, filterStatus, filterMinArea, filterMaxPrice, filterSort]);
 
   useEffect(() => {
-    const storedSettings = localStorage.getItem("autem-project-view-settings");
+    const storedSettings = localStorage.getItem("autem-project-view-settings-v2");
     if (!storedSettings) return;
     try {
       setViewSettings({ ...DEFAULT_PROJECT_VIEW_SETTINGS, ...JSON.parse(storedSettings) });
     } catch {
-      localStorage.removeItem("autem-project-view-settings");
+      localStorage.removeItem("autem-project-view-settings-v2");
     }
   }, []);
 
@@ -244,7 +247,7 @@ function ProjectView() {
   const updateViewSettings = (changes: Partial<ProjectViewSettings>) => {
     setViewSettings((currentSettings) => {
       const nextSettings = { ...currentSettings, ...changes };
-      localStorage.setItem("autem-project-view-settings", JSON.stringify(nextSettings));
+      localStorage.setItem("autem-project-view-settings-v2", JSON.stringify(nextSettings));
       return nextSettings;
     });
   };
@@ -252,7 +255,7 @@ function ProjectView() {
   const resetViewSettings = () => {
     setViewSettings(DEFAULT_PROJECT_VIEW_SETTINGS);
     localStorage.setItem(
-      "autem-project-view-settings",
+      "autem-project-view-settings-v2",
       JSON.stringify(DEFAULT_PROJECT_VIEW_SETTINGS),
     );
     setIsLotPanelVisible(true);
@@ -279,11 +282,16 @@ function ProjectView() {
   const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
 
   return (
-    <main className="h-[100svh] min-h-[680px] overflow-hidden bg-background font-sans text-foreground">
+    <main
+      data-theme={isDark ? "dark" : "light"}
+      data-ready={introReady}
+      className="project-editorial h-[100svh] overflow-hidden bg-background font-sans text-foreground"
+    >
       <ProjectLoadingScreen
         key={slug}
         projectName={property.name}
         projectLocation={property.location}
+        onFinish={finishIntro}
       />
 
       {/* Header fijo e intacto al 100% de ancho de la pantalla, sin encogerse ni moverse */}
@@ -299,7 +307,7 @@ function ProjectView() {
         onToggleTheme={handleToggleTheme}
       />
 
-      <div className="relative h-full w-full">
+      <div key={mode} className="project-view-stage relative h-full w-full">
         {mode === "lot" ? (
           <div
             ref={splitContainerRef}
@@ -315,6 +323,7 @@ function ProjectView() {
               className="relative w-full min-h-[140px] lg:!h-full lg:absolute lg:inset-0"
             >
               <MasterplanSvgViewer
+                settings={viewSettings}
                 lots={projectLots}
                 filteredLots={filteredLots}
                 isFilterActive={isFilterActive}

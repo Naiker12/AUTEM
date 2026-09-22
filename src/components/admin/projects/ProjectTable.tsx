@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
-import { demoProjects } from "@/data/admin-dashboard";
+import { adminProjects } from "@/data/admin-dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,7 +25,7 @@ export function ProjectTable() {
   const [status, setStatus] = useState("todos");
   const visibleProjects = useMemo(
     () =>
-      demoProjects.filter(
+      adminProjects.filter(
         (project) =>
           project.name.toLowerCase().includes(query.toLowerCase()) &&
           (status === "todos" || project.status === status),
@@ -51,8 +51,7 @@ export function ProjectTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="Publicado">Publicado</SelectItem>
-            <SelectItem value="Borrador">Borrador</SelectItem>
+            <SelectItem value="Configurado">Configurado</SelectItem>
           </SelectContent>
         </Select>
       </div>

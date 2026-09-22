@@ -28,7 +28,11 @@ export function AdminHeader({ isDark, onThemeChange }: AdminHeaderProps) {
       >
         {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
       </Button>
-      <Button className="rounded-full bg-accent px-4 text-xs font-semibold uppercase tracking-wider text-accent-foreground hover:bg-accent/85">
+      <Button
+        disabled
+        title="Requiere conectar almacenamiento y autenticación"
+        className="rounded-full bg-accent px-4 text-xs font-semibold uppercase tracking-wider text-accent-foreground hover:bg-accent/85"
+      >
         <Plus className="size-4" /> Nuevo proyecto
       </Button>
     </header>

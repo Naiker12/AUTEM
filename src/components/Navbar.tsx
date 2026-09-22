@@ -19,14 +19,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "Proyectos" },
-  {
-    id: "tecnologia",
-    href: `${import.meta.env.BASE_URL}#tecnologia`,
-    label: "Metodología & Servicios",
-  },
-  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "Nosotros", page: true },
-  { id: "contacto", href: `${import.meta.env.BASE_URL}#contacto`, label: "Contacto" },
+  { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "NOSOTROS", page: true },
+  { id: "design-process", href: `${import.meta.env.BASE_URL}#design-process`, label: "PROCESO" },
+  { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "PROYECTOS" },
+  { id: "servicios", href: `${import.meta.env.BASE_URL}#servicios`, label: "SERVICIOS" },
 ];
 
 export default function Navbar({ variant }: NavbarProps) {
@@ -55,7 +51,7 @@ export default function Navbar({ variant }: NavbarProps) {
       return;
     }
 
-    const sectionIds = ["proyectos", "tecnologia", "contacto"];
+    const sectionIds = ["about", "proyectos", "servicios", "design-process", "contacto"];
 
     const scrollPosition = window.scrollY + 220;
 
@@ -94,7 +90,13 @@ export default function Navbar({ variant }: NavbarProps) {
   }, [menuOpen]);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string, isPage = false) => {
-    if (isPage) return;
+    if (isPage) {
+      if (isAbout && id === "nosotros") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
     const targetUrl = `${import.meta.env.BASE_URL}#${id}`;
     if (isHome) {
       e.preventDefault();
@@ -119,31 +121,26 @@ export default function Navbar({ variant }: NavbarProps) {
 
   return (
     <nav
-      className={`fixed z-50 w-full transition-all duration-500 ${
-        isHome && isScrolled && !menuOpen ? "top-3 px-4 md:px-8" : "top-0"
+      className={`nav-entrance fixed z-50 w-full transition-all duration-500 ${
+        (isHome || isAbout) && isScrolled && !menuOpen ? "top-3 px-4 md:px-8" : "top-0"
       } ${
-        isHome
+        isHome || isAbout
           ? menuOpen
-            ? "bg-background text-foreground"
+            ? "bg-[#f0ebe6] text-[#4f4742]"
             : isScrolled
-              ? "text-foreground"
-              : isDark
-                ? "bg-gradient-to-b from-black/70 via-black/25 to-transparent text-white"
-                : "border-b border-border/60 bg-background/78 text-foreground backdrop-blur-xl"
-          : isAbout
-            ? menuOpen
-              ? "bg-[#f6f1eb] text-[#403a34]"
-              : "border-b border-[#403a34]/15 bg-[#f6f1eb]/90 text-[#403a34] backdrop-blur-md"
-            : "bg-background/80 backdrop-blur-md"
+              ? "text-[#4f4742]"
+              : "bg-[#f0ebe6] text-[#4f4742]"
+          : "bg-background/80 backdrop-blur-md text-foreground"
       }`}
     >
       <Container
-        className={`flex items-center justify-between transition-all duration-500 ${
-          isHome && isScrolled && !menuOpen
-            ? "rounded-[2rem] border border-border/75 bg-background/88 px-5 py-3 shadow-[0_16px_50px_rgba(30,25,18,0.14)] backdrop-blur-2xl md:px-8 lg:px-10"
+        className={`relative flex items-center transition-all duration-500 ${
+          (isHome || isAbout) && isScrolled && !menuOpen
+            ? "rounded-[2rem] border border-[#4f4742]/15 bg-[#f0ebe6]/92 px-5 py-3 shadow-[0_16px_50px_rgba(79,71,66,0.12)] backdrop-blur-2xl md:px-8 lg:px-10"
             : "px-6 py-5 md:px-10 lg:px-14 xl:px-20"
         }`}
       >
+        {/* ── Brand (centered on desktop) ── */}
         <Link
           to="/"
           onClick={(e) => {
@@ -154,18 +151,20 @@ export default function Navbar({ variant }: NavbarProps) {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
           }}
-          className={`group flex items-center gap-3.5 cursor-pointer ${isAbout ? "text-[#403a34]" : "text-foreground"}`}
+          className={`nav-entrance__brand group flex items-center gap-3.5 cursor-pointer md:absolute md:left-1/2 md:-translate-x-1/2 ${
+            isHome || isAbout ? "text-[#4f4742]" : "text-foreground"
+          }`}
           aria-label="AUTEM — Volver al inicio"
         >
           <span
-            className={`flex size-12 items-center justify-center rounded-full border transition duration-500 ${
-              isAbout
-                ? "border-[#403a34]/30 bg-[#403a34]/[0.05] group-hover:border-[#403a34]"
+            className={`flex size-11 items-center justify-center rounded-full border transition duration-500 ${
+              isHome || isAbout
+                ? "border-[#c5a059]/35 bg-[#c5a059]/[0.07] group-hover:border-[#c5a059]/60 group-hover:bg-[#c5a059]/[0.13]"
                 : "border-accent/30 bg-accent/[0.06] group-hover:border-accent/65 group-hover:bg-accent/[0.12]"
             }`}
           >
             <AutemBrandIcon
-              size={33}
+              size={31}
               className="transition-transform duration-500 group-hover:scale-105"
             />
           </span>
@@ -173,98 +172,126 @@ export default function Navbar({ variant }: NavbarProps) {
             AUTEM
           </span>
         </Link>
-        <div className="hidden gap-5 text-[10px] font-medium uppercase tracking-[0.18em] md:flex lg:gap-8 lg:text-xs lg:tracking-[0.2em]">
+
+        {/* ── Desktop nav links ── */}
+        <div className="nav-entrance__links hidden gap-5 text-[10px] font-medium uppercase tracking-[0.18em] md:flex lg:gap-8 lg:text-[11px] lg:tracking-[0.2em]">
           {navItems.map((item) => {
             const isActive = isAbout ? item.id === "nosotros" : activeSection === item.id;
-            return (
+            return item.page ? (
+              <Link
+                key={item.id}
+                to="/nosotros"
+                onClick={(e) => {
+                  if (isAbout) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+                className={`relative whitespace-nowrap py-1 transition-all duration-300 ${
+                  isActive
+                    ? "font-semibold text-[#4f4742]"
+                    : "opacity-70 hover:opacity-100 text-[#4f4742]"
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] rounded-full bg-[#4f4742]" />
+                )}
+              </Link>
+            ) : (
               <a
                 key={item.id}
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item.id, item.page)}
                 className={`relative whitespace-nowrap py-1 transition-all duration-300 ${
                   isActive
-                    ? isAbout
-                      ? "text-[#403a34] font-bold tracking-[0.22em]"
-                      : "text-accent font-bold tracking-[0.25em]"
-                    : isAbout
-                      ? "text-[#403a34]/75 hover:text-[#403a34]"
-                      : "hover:text-accent opacity-85 hover:opacity-100"
+                    ? "font-semibold text-[#c5a059]"
+                    : isHome || isAbout
+                      ? "opacity-70 hover:opacity-100 text-[#4f4742] hover:text-[#4f4742]"
+                      : "opacity-80 hover:opacity-100 text-foreground hover:text-accent"
                 }`}
               >
                 {item.label}
                 {isActive && (
-                  <span
-                    className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full ${
-                      isAbout
-                        ? "bg-[#c5a059]"
-                        : "bg-accent animate-pulse shadow-[0_0_8px_rgba(197,160,89,0.8)]"
-                    }`}
-                  />
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] rounded-full bg-[#c5a059]" />
                 )}
               </a>
             );
           })}
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsDark(!isDark)}
-            aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
-            className={`hidden size-8 items-center justify-center rounded-full border text-xs transition-all md:flex ${
-              isAbout
-                ? "border-[#403a34]/25 text-[#403a34] hover:bg-[#403a34]/10"
-                : isHome && isDark
-                  ? "border-white/20 hover:bg-white/10"
-                  : "border-border hover:bg-muted"
-            } ${isDark ? "theme-toggle-spin" : ""}`}
-          >
-            {isDark ? "\u2600\uFE0F" : "\uD83C\uDF19"}
-          </button>
+
+        {/* ── Actions ── */}
+        <div className="nav-entrance__actions ml-auto flex items-center gap-4">
+          {!isHome && !isAbout && (
+            <button
+              onClick={() => setIsDark(!isDark)}
+              aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+              className="hidden size-8 items-center justify-center rounded-full border text-xs transition-all md:flex border-border hover:bg-muted"
+            >
+              {isDark ? "☀️" : "🌙"}
+            </button>
+          )}
           {isHome ? (
             <a
               href="#contacto"
               onClick={(e) => handleNavClick(e, "contacto")}
-              className={`hidden rounded-full border px-4 py-2 text-[9px] uppercase tracking-widest transition-all lg:px-6 lg:text-[10px] md:inline-block ${isDark ? "border-white/20 hover:bg-white hover:text-primary" : "border-accent/60 hover:bg-accent hover:text-accent-foreground"}`}
+              className="hidden rounded-full border border-[#4f4742] bg-[#4f4742] text-[#f0ebe6] px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] transition-all duration-300 hover:bg-[#403a34] hover:border-[#403a34] hover:shadow-md md:inline-block"
             >
-              Invertir
+              CONTÁCTANOS
             </a>
           ) : isAbout ? (
             <a
               href="#contacto-nosotros"
-              className="hidden rounded-full border border-[#403a34] bg-transparent px-5 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[#403a34] transition-all hover:bg-[#403a34] hover:text-[#f6f1eb] md:inline-block"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById("contacto-nosotros");
+                if (el) {
+                  const bodyRect = document.body.getBoundingClientRect().top;
+                  const elementRect = el.getBoundingClientRect().top;
+                  window.scrollTo({
+                    top: elementRect - bodyRect - 80,
+                    behavior: "smooth",
+                  });
+                }
+              }}
+              className="hidden rounded-full border border-[#4f4742] bg-[#4f4742] text-[#f0ebe6] px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] transition-all duration-300 hover:bg-[#403a34] hover:border-[#403a34] hover:shadow-md md:inline-block"
             >
-              Invertir
+              CONTÁCTANOS
             </a>
           ) : (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden border border-primary/20 px-4 py-2 text-[9px] uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground lg:px-6 lg:text-[10px] md:inline-block"
+              className="hidden rounded-full border border-accent/40 bg-accent/10 text-[#403a34] px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] transition-all duration-300 hover:bg-accent hover:border-accent hover:text-white hover:shadow-md md:inline-block"
             >
               Agendar visita
             </a>
           )}
 
+          {/* Hamburger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
             className={`flex size-10 flex-col items-center justify-center gap-[5px] md:hidden ${
               menuOpen ? "hamburger-open" : ""
             }`}
           >
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen ? "bg-foreground" : isDark ? "bg-white" : "bg-[#403a34]"
+                menuOpen ? "bg-[#4f4742]" : isHome || isAbout ? "bg-[#4f4742]" : "bg-foreground"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen ? "bg-foreground" : isDark ? "bg-white" : "bg-[#403a34]"
+                menuOpen ? "bg-[#4f4742]" : isHome || isAbout ? "bg-[#4f4742]" : "bg-foreground"
               }`}
             />
             <span
               className={`hamburger-line block h-0.5 w-6 transition-all ${
-                menuOpen ? "bg-foreground" : isDark ? "bg-white" : "bg-[#403a34]"
+                menuOpen ? "bg-[#4f4742]" : isHome || isAbout ? "bg-[#4f4742]" : "bg-foreground"
               }`}
             />
           </button>
@@ -274,38 +301,57 @@ export default function Navbar({ variant }: NavbarProps) {
       {menuOpen && (
         <div
           ref={menuRef}
-          className="menu-enter fixed inset-0 z-50 flex h-screen w-screen flex-col bg-background p-6 md:hidden overflow-y-auto"
+          id="mobile-navigation"
+          className="menu-enter fixed inset-0 z-50 flex h-screen w-screen flex-col bg-[#f0ebe6] p-6 md:hidden overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="Menú de navegación"
         >
-          <div className="flex items-center justify-between border-b border-border pb-4">
+          <div className="flex items-center justify-between border-b border-[#4f4742]/20 pb-4">
             <Link
               to="/"
               onClick={() => {
                 setMenuOpen(false);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="flex items-center gap-2 cursor-pointer"
+              className="flex items-center gap-2.5 cursor-pointer"
             >
               <AutemBrandIcon className="size-8" />
-              <span className="font-serif text-lg font-bold tracking-wider text-foreground">
+              <span className="font-sans text-lg font-semibold tracking-[0.2em] text-[#4f4742]">
                 AUTEM
               </span>
             </Link>
             <button
               onClick={() => setMenuOpen(false)}
-              className="flex size-10 items-center justify-center rounded-full border border-border text-foreground hover:bg-muted"
+              className="flex size-10 items-center justify-center rounded-full border border-[#4f4742]/25 text-[#4f4742] hover:bg-[#4f4742]/10 transition"
               aria-label="Cerrar menú"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
           <div className="flex flex-1 flex-col items-center justify-center gap-8 py-12">
             {navItems.map((item) => {
-              const isActive = activeSection === item.id;
-              return (
+              const isActive = isAbout ? item.id === "nosotros" : activeSection === item.id;
+              return item.page ? (
+                <Link
+                  key={item.id}
+                  to="/nosotros"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (isAbout) {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                  }}
+                  className={`font-sans text-[1.55rem] font-light tracking-[-0.02em] transition-colors ${
+                    isActive
+                      ? "text-[#4f4742] font-semibold"
+                      : "text-[#4f4742]/65 hover:text-[#4f4742]"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ) : (
                 <a
                   key={item.id}
                   href={item.href}
@@ -313,10 +359,10 @@ export default function Navbar({ variant }: NavbarProps) {
                     setMenuOpen(false);
                     handleNavClick(e, item.id, item.page);
                   }}
-                  className={`font-serif text-3xl transition-colors ${
+                  className={`font-sans text-[1.55rem] font-light tracking-[-0.02em] transition-colors ${
                     isActive
-                      ? "text-accent font-bold not-italic underline decoration-accent underline-offset-8"
-                      : "text-foreground hover:text-accent font-normal italic"
+                      ? "text-[#c5a059] font-semibold"
+                      : "text-[#4f4742]/65 hover:text-[#4f4742]"
                   }`}
                 >
                   {item.label}
@@ -330,9 +376,23 @@ export default function Navbar({ variant }: NavbarProps) {
                   setMenuOpen(false);
                   handleNavClick(e, "contacto");
                 }}
-                className="mt-4 border-2 border-accent px-10 py-4 text-xs font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-all rounded-full shadow-lg shadow-accent/10"
+                className="mt-6 rounded-full bg-[#4f4742] text-[#f0ebe6] px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] hover:bg-[#403a34] transition-all duration-300 shadow-lg"
               >
-                Invertir
+                CONTACTO
+              </a>
+            ) : isAbout ? (
+              <a
+                href="#contacto-nosotros"
+                onClick={() => {
+                  setMenuOpen(false);
+                  const el = document.getElementById("contacto-nosotros");
+                  if (el) {
+                    window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" });
+                  }
+                }}
+                className="mt-6 rounded-full bg-[#4f4742] text-[#f0ebe6] px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] hover:bg-[#403a34] transition-all duration-300 shadow-lg"
+              >
+                CONTACTO
               </a>
             ) : (
               <a
@@ -340,17 +400,19 @@ export default function Navbar({ variant }: NavbarProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMenuOpen(false)}
-                className="mt-4 border-2 border-accent px-10 py-4 text-xs font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-all rounded-full shadow-lg shadow-accent/10"
+                className="mt-6 rounded-full border-2 border-[#c5a059] bg-[#c5a059]/10 px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#4f4742] hover:bg-[#c5a059] hover:text-white transition-all duration-300 shadow-md"
               >
                 Agendar visita
               </a>
             )}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="mt-2 flex items-center gap-2 rounded-full border border-border bg-muted/50 px-5 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
-            >
-              {isDark ? "☀️ Modo claro" : "🌙 Modo oscuro"}
-            </button>
+            {!isHome && !isAbout && (
+              <button
+                onClick={() => setIsDark(!isDark)}
+                className="theme-toggle-mobile mt-3 flex items-center gap-2 rounded-full border border-[#4f4742]/20 bg-[#4f4742]/06 px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-[#4f4742]/70 hover:text-[#4f4742] transition"
+              >
+                {isDark ? "☀️ Modo claro" : "🌙 Modo oscuro"}
+              </button>
+            )}
           </div>
         </div>
       )}

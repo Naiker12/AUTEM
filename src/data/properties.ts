@@ -69,8 +69,8 @@ export const properties: Property[] = [
     type: "terreno",
     tags: ["3D Tour"],
     image: `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
-    lat: 10.4008,
-    lng: -75.5532,
+    lat: 10.436829,
+    lng: -75.356179,
     description:
       "Parcelación campestre de 343 lotes con vías internas, naturaleza protegida y amenidades.",
     longDescription:
@@ -104,8 +104,8 @@ export function getPropertyBySlug(slug: string): Property | undefined {
     (p) =>
       p.slug === slug ||
       p.id === slug ||
-      (slug === "residencia-azure" && (p.slug === "lotes-360" || p.id === "lotes-360")) ||
-      (slug === "lotes-360" && (p.slug === "residencia-azure" || p.id === "residencia-azure")),
+      ((slug === "villa-paraiso" || slug === "lotes-360" || slug === "residencia-azure") &&
+        (p.slug === "villa-paraiso" || p.slug === "lotes-360" || p.id === "lotes-360")),
   );
 }
 
@@ -114,8 +114,8 @@ export function getPropertyById(id: string): Property | undefined {
     (p) =>
       p.id === id ||
       p.slug === id ||
-      (id === "residencia-azure" && (p.id === "lotes-360" || p.slug === "lotes-360")) ||
-      (id === "lotes-360" && (p.id === "residencia-azure" || p.slug === "residencia-azure")),
+      ((id === "villa-paraiso" || id === "lotes-360" || id === "residencia-azure") &&
+        (p.slug === "villa-paraiso" || p.slug === "lotes-360" || p.id === "lotes-360")),
   );
 }
 

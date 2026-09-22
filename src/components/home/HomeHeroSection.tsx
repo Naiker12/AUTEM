@@ -1,80 +1,84 @@
+import { ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
-import { Mouse } from "lucide-react";
-import Container from "@/components/layout/Container";
 import { useScrollFrame } from "@/hooks/useScrollFrame";
 
 interface HomeHeroSectionProps {
   visible: boolean;
 }
 
+/** Opening composition aligned with the supplied Framer reference. */
 export default function HomeHeroSection({ visible }: HomeHeroSectionProps) {
-  const sectionRef = useRef<HTMLElement>(null);
+  const sceneRef = useRef<HTMLElement>(null);
+  useScrollFrame(() => {
+    const el = sceneRef.current;
+    if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const progress = reduced
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            1,
+            -el.getBoundingClientRect().top / Math.max(1, el.offsetHeight - window.innerHeight),
+          ),
+        );
+    el.style.setProperty("--gallery-progress", String(progress));
+  });
   const entranceClass = visible ? "home-entrance" : "opacity-0";
   const heroScene = `${import.meta.env.BASE_URL}images/autem-hero-approved-scene-v2.png`;
-  const terrainReveal = `${import.meta.env.BASE_URL}projects/villa-paraiso/masterplan-clean.svg`;
-  const masterplan = `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`;
-
-  useScrollFrame(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const bounds = section.getBoundingClientRect();
-    const scrollDistance = Math.max(section.offsetHeight - window.innerHeight, 1);
-    const progress = Math.min(1, Math.max(0, -bounds.top / scrollDistance));
-    section.style.setProperty("--hero-scroll-progress", progress.toFixed(4));
-    section.style.setProperty("--hero-scroll-opacity", "1");
-    section.style.setProperty("--hero-scroll-y", `${(progress * -20).toFixed(2)}px`);
-    section.style.setProperty("--hero-scroll-scale", "1");
-  });
 
   return (
-    <section
-      ref={sectionRef}
-      id="top"
-      className="autem-scroll-hero relative h-[340svh] bg-[#f6f1eb] text-foreground"
-    >
-      <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        {/* Base Layer: Founder in Atelier */}
+    <section ref={sceneRef} id="top" className="editorial-hero text-white">
+      <div className="editorial-hero__stage">
         <img
-          src={heroScene}
-          alt="Presentación de AUTEM: visión, territorio y proyectos"
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="editorial-hero__side editorial-hero__side--left"
+          src={`${import.meta.env.BASE_URL}images/carousel-sunset-terrace.jpg`}
+          alt="Terraza integrada al paisaje"
         />
-
-        {/* Middle Layer: Curved Landscape Reveal */}
-        <div className="autem-scroll-hero__terrain-wrapper absolute inset-0 h-full w-full pointer-events-none">
+        <img
+          className="editorial-hero__side editorial-hero__side--right"
+          src={`${import.meta.env.BASE_URL}images/carousel-modern-lounge.jpg`}
+          alt="Interior de arquitectura contemporánea"
+        />
+        <div className="editorial-hero__frame relative overflow-hidden rounded-[12px] bg-[#4f4742]">
           <img
-            src={terrainReveal}
-            alt="Plano maestro de Villa Paraíso"
-            aria-hidden="true"
+            src={heroScene}
+            alt="Director de AUTEM junto al masterplan de Villa Paraíso"
+            fetchPriority="high"
             decoding="async"
-            className="autem-scroll-hero__terrain absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-cover object-center"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-black/10" />
+
+          <div className="editorial-hero__content relative flex h-full flex-col justify-end p-6 sm:p-8 md:p-10 lg:p-10">
+            <div className="grid items-end gap-8 border-b border-white/70 pb-7 md:grid-cols-12 md:gap-10 md:pb-7">
+              <h1 className={`${entranceClass} editorial-hero__title md:col-span-7`}>
+                Arquitectura que transforma el territorio.
+              </h1>
+
+              <div className={`${entranceClass} max-w-[29rem] md:col-span-5 md:justify-self-end`}>
+                <p className="text-[14px] leading-[1.45] tracking-[-0.025em] text-white sm:text-[15px]">
+                  Diseñamos proyectos inmobiliarios y arquitectónicos que conectan el paisaje, la
+                  inversión y la forma de habitar.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <a
+                    href="#proyectos"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#f0ebe6] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.05em] text-[#4f4742] transition hover:bg-white"
+                  >
+                    Ver proyectos <ArrowUpRight size={14} />
+                  </a>
+                  <a
+                    href="#contacto"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#4f4742]/85 px-5 py-3 text-[11px] font-medium uppercase tracking-[0.05em] text-white backdrop-blur-sm transition hover:bg-[#4f4742]"
+                  >
+                    Agendar consulta <ArrowUpRight size={14} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Top Layer: Architectural Masterplan Line-art */}
-        <img
-          src={masterplan}
-          alt="Vista aérea del masterplan de Villa Paraíso"
-          decoding="async"
-          className="autem-scroll-hero__masterplan absolute inset-0 h-full w-full object-cover object-[center_35%]"
-        />
-
-        {/* Elegant Scroll Cue for Desktop & Mobile */}
-        <Container className="home-hero-scroll-stage relative h-[100svh] px-6 pb-8 pt-24 md:min-h-[720px] md:px-10 md:pt-24 lg:px-14 xl:px-20 pointer-events-none">
-          <a
-            href="#proyectos"
-            className={`${entranceClass} home-entrance--scroll home-hero-scroll-cue pointer-events-auto absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-[#403a34]/20 bg-[#f6f1eb]/90 px-4 py-2 text-[8.5px] font-bold uppercase tracking-[0.22em] text-[#403a34] shadow-md backdrop-blur-md transition-all hover:bg-[#f6f1eb] hover:border-[#403a34]/40 md:border-0 md:bg-transparent md:shadow-none md:backdrop-blur-none md:text-muted-foreground md:px-0 md:py-0 md:gap-4 md:tracking-[0.28em]`}
-          >
-            <span className="home-scroll-line hidden md:block h-8 w-px bg-gradient-to-b from-accent to-transparent" />
-            <Mouse
-              size={16}
-              className="home-scroll-mouse text-[#403a34] md:text-foreground shrink-0"
-            />
-            <span>Desliza para descubrir</span>
-          </a>
-        </Container>
       </div>
     </section>
   );

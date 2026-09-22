@@ -258,7 +258,7 @@ export function ProjectViewControlPanelContent({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold text-foreground dark:text-stone-200 leading-tight">
-                    Oscurecer fotografía
+                    Oscurecer plano
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground dark:text-stone-400">
                     Ajusta el contraste de fondo del masterplan.

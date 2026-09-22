@@ -1,254 +1,131 @@
-import { useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
-import { ArrowUp, Instagram, Linkedin, Youtube, MapPin, Phone, Mail } from "lucide-react";
-import { ZONAS } from "@/data/properties";
-import Container from "@/components/layout/Container";
+import { ArrowUpRight } from "lucide-react";
 
 export default function PiePagina() {
-  const footerRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const footer = footerRef.current;
-    if (!footer) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) {
-      footer.classList.add("footer-editorial--visible");
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        footer.classList.add("footer-editorial--visible");
-        observer.unobserve(footer);
-      },
-      { threshold: 0.08, rootMargin: "0px 0px -4% 0px" },
-    );
-    observer.observe(footer);
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const marqueeText = "AUTEM · ARQUITECTURA Y TERRITORIO · ";
 
   return (
-    <footer
-      ref={footerRef}
-      className="footer-editorial relative overflow-hidden bg-[#f6f1eb] text-[#403a34] border-t border-[#403a34]/15 py-14 md:py-24 dark:bg-[#151413] dark:text-white/70 dark:border-white/10 transition-colors duration-300"
-    >
-      <div className="footer-top-line pointer-events-none absolute inset-x-[6%] top-0 h-px origin-center bg-gradient-to-r from-transparent via-[#403a34]/30 to-transparent dark:via-accent/70" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.06] dark:opacity-[0.12] [background-image:linear-gradient(rgba(64,58,52,.15)_1px,transparent_1px),linear-gradient(90deg,rgba(64,58,52,.15)_1px,transparent_1px)] dark:[background-image:linear-gradient(rgba(216,177,95,.12)_1px,transparent_1px),linear-gradient(90deg,rgba(216,177,95,.12)_1px,transparent_1px)] [background-size:88px_88px] [mask-image:linear-gradient(to_bottom,black,transparent_78%)]" />
-      <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-[#c5a059]/[0.05] dark:bg-accent/10 blur-[110px]" />
-      <div className="pointer-events-none absolute -right-32 top-4 size-[440px] rounded-full border border-[#403a34]/10 dark:border-accent/10" />
-
-      <Container className="px-6 md:px-8">
-        {/* Fila Principal de Navegación */}
-        <div className="grid grid-cols-1 gap-10 border-b border-[#403a34]/15 pb-12 dark:border-white/10 lg:grid-cols-12 lg:gap-8 lg:pb-16">
-          {/* Columna 1: Marca & Descripción (4 Cols) */}
-          <div className="footer-reveal footer-reveal--1 flex flex-col justify-between space-y-7 lg:col-span-4">
-            <div>
-              <Link to="/" className="group flex items-center gap-3">
-                <AutemBrandIcon
-                  size={40}
-                  className="footer-brand-mark transition-transform group-hover:scale-105"
-                />
-                <span className="font-serif text-[1.75rem] font-semibold tracking-[0.08em] text-[#403a34] dark:text-white">
-                  AUTEM
-                </span>
-              </Link>
-
-              <p className="mt-5 max-w-sm text-[13px] font-light leading-6 text-[#555555] dark:text-white/55">
-                Desarrollo arquitectónico y territorial de vanguardia en el Caribe colombiano.
-                Planimetría interactiva, visualización 3D y parcelaciones campestres en Santa Rosa
-                de Lima, Villanueva y Turbaco.
-              </p>
-            </div>
-
-            {/* Datos de contacto directo */}
-            <div className="space-y-2.5 text-[12px] text-[#555555] dark:text-white/52">
-              <div className="flex items-center gap-2">
-                <MapPin size={14} className="text-[#c5a059] shrink-0" />
-                <span>Cartagena de Indias & Turbaco · Bolívar, Colombia</span>
-              </div>
-              <a
-                href="https://wa.me/573007200894"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-fit items-center gap-2 transition-colors hover:text-[#403a34] dark:hover:text-accent"
-              >
-                <Phone size={14} className="text-[#c5a059] shrink-0" />
-                <span>+57 (300) 720-0894</span>
-              </a>
-              <a
-                href="mailto:contacto@autem.com.co"
-                className="flex w-fit items-center gap-2 transition-colors hover:text-[#403a34] dark:hover:text-accent"
-              >
-                <Mail size={14} className="text-[#c5a059] shrink-0" />
-                <span>contacto@autem.com.co</span>
-              </a>
-            </div>
+    <footer className="bg-[#ded5c9] text-[#4f4742] pt-20 md:pt-28 border-t border-[#4f4742]/15 relative overflow-hidden">
+      <div className="w-[93%] max-w-[1360px] mx-auto">
+        {/* Top Headline & CTA */}
+        <div className="pb-16 md:pb-20 border-b border-[#4f4742]/15 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+          <div className="max-w-2xl">
+            <h2 className="text-[clamp(28px,3.8vw,48px)] font-medium leading-[1.12] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
+              ABIERTOS A PROYECTOS Y COLABORACIONES QUE TRANSFORMAN ESPACIOS.
+            </h2>
           </div>
 
-          {/* Columna 2: Navegación (2 Cols) */}
-          <div className="footer-reveal footer-reveal--2 space-y-4 lg:col-span-2">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#403a34] dark:text-accent md:text-[10px] md:tracking-[0.25em]">
-              Navegación
-            </h3>
-            <ul className="space-y-2 text-[13px] leading-5 text-[#555555] dark:text-white/68">
+          <a
+            href={`${import.meta.env.BASE_URL}#contacto`}
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#4f4742] text-[#f0ebe6] text-[12px] font-medium uppercase tracking-[0.14em] hover:bg-black transition-colors w-fit shrink-0"
+          >
+            <span>HABLEMOS</span>
+            <ArrowUpRight size={15} />
+          </a>
+        </div>
+
+        {/* Links Grid */}
+        <div className="py-14 border-b border-[#4f4742]/15 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-10 text-[12px] tracking-[0.1em] uppercase">
+          {/* Navigation */}
+          <div className="space-y-3">
+            <ul className="space-y-2.5 text-[#4f4742]/85">
+              <li>
+                <Link to="/" className="hover:text-black transition-colors">
+                  INICIO
+                </Link>
+              </li>
+              <li>
+                <Link to="/nosotros" className="hover:text-black transition-colors">
+                  NOSOTROS
+                </Link>
+              </li>
+              <li>
+                <a
+                  href={`${import.meta.env.BASE_URL}#servicios`}
+                  className="hover:text-black transition-colors"
+                >
+                  SERVICIOS
+                </a>
+              </li>
               <li>
                 <a
                   href={`${import.meta.env.BASE_URL}#proyectos`}
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                  className="hover:text-black transition-colors"
                 >
-                  Proyectos Seleccionados
+                  PROYECTOS
                 </a>
-              </li>
-              <li>
-                <Link
-                  to="/proyecto/$slug"
-                  params={{ slug: "lotes-360" }}
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
-                >
-                  Plano Maestro Interactivo
-                </Link>
               </li>
               <li>
                 <a
-                  href={`${import.meta.env.BASE_URL}#proceso`}
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                  href={`${import.meta.env.BASE_URL}#design-process`}
+                  className="hover:text-black transition-colors"
                 >
-                  Metodología de Proyecto
+                  PROCESO
                 </a>
-              </li>
-              <li>
-                <Link
-                  to="/nosotros"
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
-                >
-                  Sobre el Estudio
-                </Link>
               </li>
               <li>
                 <a
                   href={`${import.meta.env.BASE_URL}#contacto`}
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
+                  className="hover:text-black transition-colors"
                 >
-                  Contacto & Asesoría
+                  CONTACTO
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Columna 3: Proyectos & Territorio (3 Cols) */}
-          <div className="footer-reveal footer-reveal--3 space-y-4 lg:col-span-3">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#403a34] dark:text-accent md:text-[10px] md:tracking-[0.25em]">
-              Proyectos & Territorio
-            </h3>
-            <ul className="space-y-3 text-[13px] leading-5 text-[#555555] dark:text-white/68">
+          {/* Legal */}
+          <div className="space-y-3">
+            <ul className="space-y-2.5 text-[#4f4742]/85">
               <li>
-                <Link
-                  to="/proyecto/$slug"
-                  params={{ slug: "lotes-360" }}
-                  className="group flex flex-col transition-colors hover:text-[#403a34] dark:hover:text-accent"
-                >
-                  <span className="font-medium text-[#403a34] dark:text-white">Villa Paraíso</span>
-                  <span className="text-[11px] text-[#777777] dark:text-white/50">
-                    Parcelación Campestre · 343 lotes · Santa Rosa - Villanueva
-                  </span>
+                <Link to="/politica-privacidad" className="hover:text-black transition-colors">
+                  POLÍTICA DE PRIVACIDAD
                 </Link>
-              </li>
-              <li className="pt-1 text-[11px] text-[#888888] dark:text-white/40">
-                Corredores bioclimáticos y naturaleza protegida en Bolívar, Colombia.
               </li>
             </ul>
           </div>
 
-          {/* Columna 4: Legal & Documentación Técnica (3 Cols) */}
-          <div className="footer-reveal footer-reveal--4 space-y-4 lg:col-span-3">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#403a34] dark:text-accent md:text-[10px] md:tracking-[0.25em]">
-              Información legal & técnica
-            </h3>
-            <ul className="space-y-2 text-[13px] leading-5 text-[#555555] dark:text-white/52">
-              <li>
-                <Link
-                  to="/politica-privacidad"
-                  className="hover:text-[#403a34] dark:hover:text-accent transition-colors"
-                >
-                  Política de Privacidad
-                </Link>
-              </li>
-              <li>Planimetría CAD topográfica y licencias disponibles a solicitud.</li>
-              <li>Asesoría directa para reserva, titulación y adquisición de lotes.</li>
-            </ul>
+          {/* Project Direct Access */}
+          <div className="space-y-2">
+            <span className="block text-[10px] text-[#4f4742]/60">PROYECTO DESTACADO</span>
+            <Link
+              to="/proyecto/$slug"
+              params={{ slug: "villa-paraiso" }}
+              className="group block text-[13px] font-medium text-[#4f4742] hover:underline"
+            >
+              VILLA PARAÍSO 3D
+            </Link>
+            <p className="text-[11px] text-[#57504b] normal-case tracking-normal">
+              343 lotes campestres en Santa Rosa · Villanueva con plano maestro interactivo.
+            </p>
           </div>
         </div>
 
-        {/* Fila Inferior: Copyright, Redes Sociales & Botón Volver Arriba */}
-        <div className="footer-reveal footer-reveal--5 mt-8 flex flex-col items-center justify-between gap-6 text-[10px] uppercase tracking-[0.14em] text-[#555555] dark:text-white/42 md:flex-row">
-          <p>
-            © {new Date().getFullYear()} AUTEM Estudio. Arquitectura & Territorio. Todos los
-            derechos reservados.
-          </p>
-
-          <div className="flex items-center gap-3 sm:gap-6" aria-label="Canales sociales">
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:bg-[#403a34]/[0.06] hover:text-[#403a34] dark:hover:bg-white/[0.08] dark:hover:text-[#c5a059]"
-              aria-label="Visitar Instagram de AUTEM"
-            >
-              <Instagram
-                size={14}
-                className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]"
-              />
-              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">
-                Instagram
-              </span>
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:bg-[#403a34]/[0.06] hover:text-[#403a34] dark:hover:bg-white/[0.08] dark:hover:text-[#c5a059]"
-              aria-label="Visitar LinkedIn de AUTEM"
-            >
-              <Linkedin
-                size={14}
-                className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]"
-              />
-              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">
-                LinkedIn
-              </span>
-            </a>
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:bg-[#403a34]/[0.06] hover:text-[#403a34] dark:hover:bg-white/[0.08] dark:hover:text-[#c5a059]"
-              aria-label="Visitar YouTube de AUTEM"
-            >
-              <Youtube
-                size={14}
-                className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5 group-hover:text-[#c5a059]"
-              />
-              <span className="transition-all duration-300 group-hover:tracking-[0.18em]">
-                YouTube
-              </span>
-            </a>
-          </div>
-
-          {/* Botón Volver Arriba */}
-          <button
-            onClick={scrollToTop}
-            className="flex items-center gap-2 rounded-full border border-[#403a34]/20 bg-transparent px-4 py-2 text-[#403a34] transition-all hover:bg-[#403a34] hover:text-[#f6f1eb] dark:border-white/10 dark:bg-white/[0.045] dark:text-white/60 dark:hover:border-accent dark:hover:bg-accent/10 dark:hover:text-accent"
-          >
-            <span>Volver arriba</span>
-            <ArrowUp size={12} />
-          </button>
+        {/* Copyright Bar */}
+        <div className="py-6 flex items-center justify-between text-[11px] text-[#57504b] uppercase tracking-[0.08em]">
+          <p>© 2026 AUTEM Studio. Todos los derechos reservados.</p>
+          <a href={`${import.meta.env.BASE_URL}#contacto`} className="hover:underline">
+            Cartagena & Turbaco · Bolívar
+          </a>
         </div>
-      </Container>
+      </div>
+
+      {/* Giant Running Marquee Header */}
+      <div className="w-full border-t border-[#4f4742]/15 bg-[#ded5c9] py-6 overflow-hidden select-none">
+        <div className="animate-framer-marquee flex items-center whitespace-nowrap text-[clamp(3.5rem,8vw,96px)] font-black uppercase tracking-[-0.04em] text-[#4f4742]/20 font-sans leading-none">
+          <span>{marqueeText.repeat(6)}</span>
+        </div>
+      </div>
+
+      {/* Bottom Panoramic Photo */}
+      <div className="w-full h-[220px] sm:h-[320px] lg:h-[420px] overflow-hidden">
+        <img
+          src={`${import.meta.env.BASE_URL}projects/lotes-360/lot-l07-entorno-verde.png`}
+          alt="Visualización conceptual del paisaje de Villa Paraíso"
+          className="w-full h-full object-cover object-center"
+          loading="lazy"
+        />
+      </div>
     </footer>
   );
 }

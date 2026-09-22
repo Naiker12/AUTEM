@@ -18,14 +18,21 @@ function ProjectsPage() {
             Consulta el estado, disponibilidad y publicación de cada proyecto.
           </p>
         </div>
-        <Button className="rounded-full bg-accent text-accent-foreground">
+        <Button
+          disabled
+          title="Requiere conectar almacenamiento y autenticación"
+          className="rounded-full bg-accent text-accent-foreground"
+        >
           <Plus className="size-4" /> Nuevo proyecto
         </Button>
       </section>
       <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle className="font-serif text-2xl">Todos los proyectos</CardTitle>
-          <CardDescription>Datos locales de demostración para el frontend.</CardDescription>
+          <CardDescription>
+            Catálogo configurado en el sitio. La disponibilidad comercial debe confirmarse con
+            AUTEM.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ProjectTable />

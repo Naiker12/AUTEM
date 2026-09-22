@@ -20,7 +20,7 @@ export const Route = createFileRoute("/nosotros")({
 
 function Nosotros() {
   return (
-    <div className="min-h-screen bg-[#f6f1eb] font-sans text-[#403a34] selection:bg-[#403a34] selection:text-[#f6f1eb]">
+    <div className="min-h-screen font-sans bg-[#f0ebe6] text-[#4f4742] selection:bg-[#4f4742]/15">
       <Navbar variant="about" />
       <main id="main-content">
         <NosotrosPage />

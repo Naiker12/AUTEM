@@ -143,22 +143,28 @@ function Index() {
     return () => document.removeEventListener("mouseleave", handleMouseLeave);
   }, [showLoader]);
 
-  // Section fade-in observer
+  // Observe cards individually: tall sections must not reveal everything at once.
   useEffect(() => {
+    if (!hideModel || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("fade-in-up");
+            (entry.target as HTMLElement).dataset.motion = "visible";
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1 },
+      { threshold: 0.08, rootMargin: "0px 0px -24px 0px" },
     );
-    document.querySelectorAll("[data-animate]").forEach((el) => observer.observe(el));
+    const elements = document.querySelectorAll<HTMLElement>("[data-motion-card]");
+    elements.forEach((el, index) => {
+      el.dataset.motion = "pending";
+      el.style.setProperty("--reveal-delay", `${(index % 3) * 70}ms`);
+      observer.observe(el);
+    });
     return () => observer.disconnect();
-  }, [showLoader]);
+  }, [hideModel]);
 
   return (
     <div className="home-page min-h-screen font-sans text-foreground selection:bg-accent/30">

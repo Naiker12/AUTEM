@@ -23,7 +23,7 @@ import {
 const data = {
   user: {
     name: "Equipo AUTEM",
-    email: "administracion@autem.co",
+    email: "Panel local · sin sesión autenticada",
     avatar: "",
   },
   teams: [{ name: "AUTEM", plan: "Administración" }],
@@ -33,13 +33,9 @@ const data = {
       title: "Proyectos",
       url: "/admin/proyectos",
       icon: MapPinned,
-      items: [
-        { title: "Todos los proyectos", url: "/admin/proyectos" },
-        { title: "Nuevo proyecto", url: "/admin/proyectos/nuevo" },
-      ],
+      items: [{ title: "Todos los proyectos", url: "/admin/proyectos" }],
     },
-    { title: "Clientes", url: "#clientes", icon: Users },
-    { title: "Contenido y medios", url: "#contenido", icon: FileImage },
+    { title: "Contenido y medios", url: "/admin#contenido", icon: FileImage },
     {
       title: "Configuración",
       url: "/admin/configuracion",
@@ -53,10 +49,7 @@ const data = {
       ],
     },
   ],
-  projects: [
-    { name: "Campos del Sol", url: "/admin/proyectos", icon: MapPinned },
-    { name: "Lotes 360°", url: "/admin/proyectos", icon: ClipboardList },
-  ],
+  projects: [{ name: "Villa Paraíso", url: "/admin/proyectos", icon: MapPinned }],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

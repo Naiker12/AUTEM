@@ -3,6 +3,7 @@ import {
   Minus,
   Plus,
   RotateCcw,
+  RotateCw,
   Shrink,
   Sparkles,
   CheckCircle2,
@@ -13,8 +14,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Lot } from "@/data/lots";
 import { formatLotArea, formatLotPrice } from "@/data/lots";
 import layersData from "@/data/villa-paraiso-layers.json";
+import type { ProjectViewSettings } from "./types";
 
 interface MasterplanSvgViewerProps {
+  settings?: ProjectViewSettings;
   lots: Lot[];
   filteredLots?: Lot[];
   isFilterActive?: boolean;
@@ -41,6 +44,7 @@ const LOTS_CENTER_X = 1347;
 const LOTS_CENTER_Y = 1106;
 
 export default function MasterplanSvgViewer({
+  settings,
   lots,
   filteredLots,
   isFilterActive = false,
@@ -82,6 +86,19 @@ export default function MasterplanSvgViewer({
   const lastHandledFilterRef = useRef<number>(0);
 
   const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [rotationOpen, setRotationOpen] = useState(false);
+  const rotationRef = useRef(0);
+  rotationRef.current = rotation;
+  const rotatePoint = (x: number, y: number) => {
+    const angle = (rotationRef.current * Math.PI) / 180;
+    const dx = x - SVG_WIDTH / 2;
+    const dy = y - SVG_HEIGHT / 2;
+    return [
+      SVG_WIDTH / 2 + dx * Math.cos(angle) - dy * Math.sin(angle),
+      SVG_HEIGHT / 2 + dx * Math.sin(angle) + dy * Math.cos(angle),
+    ];
+  };
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const isDraggingRef = useRef(false);
@@ -257,6 +274,7 @@ export default function MasterplanSvgViewer({
   }, [initialScaleMultiplier, isDesktopSidebarOpen, isRightPanelOpen]);
 
   const reset = useCallback(() => {
+    setRotation(0);
     const { scale: initialScale, offset: initialOffset } = calculateFitTransform();
     setScale(initialScale);
     setOffset(initialOffset);
@@ -346,7 +364,7 @@ export default function MasterplanSvgViewer({
     if (focusRequest === lastHandledFocusRef.current) return;
     lastHandledFocusRef.current = focusRequest;
 
-    const [cx, cy] = selectedLot.centroid;
+    const [cx, cy] = rotatePoint(...selectedLot.centroid);
     const isDesktop = containerSize.width >= 1024;
     // Escala balanceada: zoom cercano (3.4 en desktop, 2.6 en móvil) para ver el lote en primer plano
     const targetScale = isDesktop ? 3.4 : 2.6;
@@ -424,10 +442,20 @@ export default function MasterplanSvgViewer({
     maxX = Math.min(SVG_WIDTH, maxX + pad);
     maxY = Math.min(SVG_HEIGHT, maxY + pad);
 
-    const boxWidth = Math.max(180, maxX - minX);
-    const boxHeight = Math.max(180, maxY - minY);
-    const boxCenterX = (minX + maxX) / 2;
-    const boxCenterY = (minY + maxY) / 2;
+    const corners = [
+      rotatePoint(minX, minY),
+      rotatePoint(maxX, minY),
+      rotatePoint(maxX, maxY),
+      rotatePoint(minX, maxY),
+    ];
+    const rotatedMinX = Math.min(...corners.map((p) => p[0]));
+    const rotatedMaxX = Math.max(...corners.map((p) => p[0]));
+    const rotatedMinY = Math.min(...corners.map((p) => p[1]));
+    const rotatedMaxY = Math.max(...corners.map((p) => p[1]));
+    const boxWidth = Math.max(180, rotatedMaxX - rotatedMinX);
+    const boxHeight = Math.max(180, rotatedMaxY - rotatedMinY);
+    const boxCenterX = (rotatedMinX + rotatedMaxX) / 2;
+    const boxCenterY = (rotatedMinY + rotatedMaxY) / 2;
 
     const isDesktop = containerSize.width >= 1024;
     const sidebarWidth = isDesktop && isDesktopSidebarOpen ? 360 : 0;
@@ -708,7 +736,7 @@ export default function MasterplanSvgViewer({
           ? "bg-transparent"
           : isDark
             ? "bg-[#11100f] bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:28px_28px]"
-            : "bg-[#f7f4ed]"
+            : "bg-[var(--background)]"
       }`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -734,71 +762,158 @@ export default function MasterplanSvgViewer({
           className="pointer-events-auto"
         >
           {/* Capas 1, 2 y 3: Linderos, Zonas Verdes y Red Vial (Memorizadas para rendimiento nativo) */}
-          {staticBackgroundElements}
+          <g transform={`rotate(${rotation} ${SVG_WIDTH / 2} ${SVG_HEIGHT / 2})`}>
+            <g style={{ filter: `brightness(${1 - (settings?.mapShade ?? 0) / 100})` }}>
+              {staticBackgroundElements}
+            </g>
 
-          {/* Capa 4: Rótulos de Manzanas */}
-          <g id="svg-manzanas" className="pointer-events-none">
-            {layersData.manzanas.map((m, i) => (
-              <text
-                key={`mz-${i}`}
-                x={m.x}
-                y={m.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={isDark ? "#c5a059" : "#78716c"}
-                opacity={isDark ? (scale < 1 ? 0.7 : 0.4) : scale < 1 ? 0.55 : 0.28}
-                fontSize={scale < 1 ? 32 : 24}
-                fontWeight={900}
-                fontFamily="system-ui, -apple-system, sans-serif"
-                className="transition-colors duration-500"
-              >
-                {m.name}
-              </text>
-            ))}
-          </g>
+            {/* Capa 4: Rótulos de Manzanas */}
+            <g id="svg-manzanas" className="pointer-events-none">
+              {layersData.manzanas.map((m, i) => (
+                <text
+                  key={`mz-${i}`}
+                  x={m.x}
+                  y={m.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={isDark ? "#c5a059" : "#78716c"}
+                  opacity={isDark ? (scale < 1 ? 0.7 : 0.4) : scale < 1 ? 0.55 : 0.28}
+                  fontSize={scale < 1 ? 32 : 24}
+                  fontWeight={900}
+                  fontFamily="system-ui, -apple-system, sans-serif"
+                  className="transition-colors duration-500"
+                >
+                  {m.name}
+                </text>
+              ))}
+            </g>
 
-          {/* Capa 5: Polígonos interactivos de cada Lote */}
-          <g id="svg-lots">
-            {lots.map((lot) => {
-              if (!lot.pathD) return null;
-              const isSelected = lot.id === selectedLotId;
-              const isHovered = lot.id === hoveredLotId;
-              const isReserved = lot.status === "Reservado";
-              const isSold = lot.status === "Vendido";
-              const isLastUnits = lot.status === "Últimas unidades";
-              const isMatch =
-                !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
+            {/* Capa 5: Polígonos interactivos de cada Lote */}
+            <g id="svg-lots">
+              {lots.map((lot) => {
+                if (!lot.pathD) return null;
+                const isSelected = lot.id === selectedLotId;
+                const isHovered = lot.id === hoveredLotId;
+                const isReserved = lot.status === "Reservado";
+                const isSold = lot.status === "Vendido";
+                const isLastUnits = lot.status === "Últimas unidades";
+                const isMatch =
+                  !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
 
-              // Si hay filtro activo y el lote NO coincide con el filtro:
-              // SE DEBEN VER TODOS LOS LOTES con total claridad pero sin color comercial
-              if (isFilterActive && !isMatch) {
+                // Si hay filtro activo y el lote NO coincide con el filtro:
+                // SE DEBEN VER TODOS LOS LOTES con total claridad pero sin color comercial
+                if (isFilterActive && !isMatch) {
+                  return (
+                    <path
+                      key={lot.id}
+                      id={`lot-${lot.id}`}
+                      d={lot.pathD}
+                      fill={
+                        isDark
+                          ? isHovered
+                            ? "#26221d"
+                            : "#171513"
+                          : isHovered
+                            ? "#f1f5f9"
+                            : "#ffffff"
+                      }
+                      stroke={
+                        isDark
+                          ? isHovered
+                            ? "#4a3f33"
+                            : "#2d2720"
+                          : isHovered
+                            ? "#475569"
+                            : "#cbd5e1"
+                      }
+                      strokeWidth={isHovered ? 1.8 : 1.15}
+                      opacity={1}
+                      style={{
+                        transition: "fill 0.15s ease, stroke 0.15s ease",
+                        cursor: "pointer",
+                      }}
+                      onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}
+                      onPointerLeave={handleLotPointerLeave}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectLotSafe(lot.id);
+                      }}
+                    />
+                  );
+                }
+
+                // Estilos por estado según especificación:
+                // - Vendido: ROJO
+                // - Disponible: VERDE CLARO
+                // - Reservado: NARANJA
+                // - Seleccionado: AZUL CIELO
+                let fill = isDark
+                  ? isHovered
+                    ? "#1b5232"
+                    : "#0f331f"
+                  : isHovered
+                    ? "#bbf7d0"
+                    : "#dcfce7";
+                let stroke = isDark ? "#22c55e" : "#16a34a";
+                let strokeWidth = isFilterActive ? 2.2 : 1.5;
+
+                if (isSold) {
+                  fill = isDark
+                    ? isHovered
+                      ? "#54191e"
+                      : "#361114"
+                    : isHovered
+                      ? "#fca5a5"
+                      : "#fee2e2";
+                  stroke = isDark ? "#ef4444" : "#dc2626";
+                  strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
+                } else if (isReserved) {
+                  fill = isDark
+                    ? isHovered
+                      ? "#5c2e0e"
+                      : "#381c08"
+                    : isHovered
+                      ? "#fdba74"
+                      : "#ffedd5";
+                  stroke = isDark ? "#f97316" : "#ea580c";
+                  strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
+                } else if (isLastUnits) {
+                  fill = isDark
+                    ? isHovered
+                      ? "#543f0c"
+                      : "#332707"
+                    : isHovered
+                      ? "#fde047"
+                      : "#fef9c3";
+                  stroke = isDark ? "#eab308" : "#ca8a04";
+                  strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
+                } else if (isHovered) {
+                  fill = isDark ? "#1e603b" : "#bbf7d0";
+                  stroke = isDark ? "#4ade80" : "#15803d";
+                  strokeWidth = 2.8;
+                }
+
+                if (isSelected) {
+                  fill = isDark ? "#0284c7" : "#7dd3fc";
+                  stroke = isDark ? "#38bdf8" : "#0284c7";
+                  strokeWidth = 3.6;
+                }
+
                 return (
                   <path
                     key={lot.id}
                     id={`lot-${lot.id}`}
                     d={lot.pathD}
-                    fill={
-                      isDark
-                        ? isHovered
-                          ? "#26221d"
-                          : "#171513"
-                        : isHovered
-                          ? "#f1f5f9"
-                          : "#ffffff"
+                    fill={fill}
+                    stroke={stroke}
+                    strokeWidth={
+                      settings?.showLotBoundaries === false && !isSelected ? 0 : strokeWidth
                     }
-                    stroke={
-                      isDark
-                        ? isHovered
-                          ? "#4a3f33"
-                          : "#2d2720"
-                        : isHovered
-                          ? "#475569"
-                          : "#cbd5e1"
+                    fillOpacity={
+                      isSelected ? Math.max(0.1, (settings?.selectionOpacity ?? 100) / 100) : 1
                     }
-                    strokeWidth={isHovered ? 1.8 : 1.15}
-                    opacity={1}
                     style={{
-                      transition: "fill 0.15s ease, stroke 0.15s ease",
+                      transition: "fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease",
                       cursor: "pointer",
                     }}
                     onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}
@@ -809,164 +924,90 @@ export default function MasterplanSvgViewer({
                     }}
                   />
                 );
-              }
+              })}
+            </g>
 
-              // Estilos por estado según especificación:
-              // - Vendido: ROJO
-              // - Disponible: VERDE CLARO
-              // - Reservado: NARANJA
-              // - Seleccionado: AZUL CIELO
-              let fill = isDark
-                ? isHovered
-                  ? "#1b5232"
-                  : "#0f331f"
-                : isHovered
-                  ? "#bbf7d0"
-                  : "#dcfce7";
-              let stroke = isDark ? "#22c55e" : "#16a34a";
-              let strokeWidth = isFilterActive ? 2.2 : 1.5;
+            {/* Capa 6: Números de Lote en sus Centroides Matemáticos Exactos */}
+            <g
+              id="svg-labels"
+              className="pointer-events-none"
+              display={settings?.showLotLabels === false ? "none" : undefined}
+            >
+              {lots.map((lot) => {
+                if (!lot.centroid || lot.isReserve) return null;
+                const [cx, cy] = lot.centroid;
+                const isSelected = lot.id === selectedLotId;
+                const isHovered = lot.id === hoveredLotId;
+                const isReserved = lot.status === "Reservado";
+                const isSold = lot.status === "Vendido";
+                const isLastUnits = lot.status === "Últimas unidades";
+                const isMatch =
+                  !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
+                const isFaded = isFilterActive && !isMatch;
 
-              if (isSold) {
-                fill = isDark
-                  ? isHovered
-                    ? "#54191e"
-                    : "#361114"
-                  : isHovered
-                    ? "#fca5a5"
-                    : "#fee2e2";
-                stroke = isDark ? "#ef4444" : "#dc2626";
-                strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
-              } else if (isReserved) {
-                fill = isDark
-                  ? isHovered
-                    ? "#5c2e0e"
-                    : "#381c08"
-                  : isHovered
-                    ? "#fdba74"
-                    : "#ffedd5";
-                stroke = isDark ? "#f97316" : "#ea580c";
-                strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
-              } else if (isLastUnits) {
-                fill = isDark
-                  ? isHovered
-                    ? "#543f0c"
-                    : "#332707"
-                  : isHovered
-                    ? "#fde047"
-                    : "#fef9c3";
-                stroke = isDark ? "#eab308" : "#ca8a04";
-                strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
-              } else if (isHovered) {
-                fill = isDark ? "#1e603b" : "#bbf7d0";
-                stroke = isDark ? "#4ade80" : "#15803d";
-                strokeWidth = 2.8;
-              }
+                const label = lot.lotNumber ?? lot.id.replace("L-", "");
 
-              if (isSelected) {
-                fill = isDark ? "#0284c7" : "#7dd3fc";
-                stroke = isDark ? "#38bdf8" : "#0284c7";
-                strokeWidth = 3.6;
-              }
+                if (isSelected) {
+                  const markerR = scale < 0.28 ? 18 : 15;
+                  const markerFontSize = scale < 0.28 ? 12 : 11;
+                  return (
+                    <g key={`marker-selected-${lot.id}`} transform={`translate(${cx}, ${cy})`}>
+                      <circle r={markerR} fill="#0284c7" stroke="#ffffff" strokeWidth={2.2} />
+                      <text
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill="#ffffff"
+                        fontSize={markerFontSize}
+                        fontWeight={800}
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {label}
+                      </text>
+                    </g>
+                  );
+                }
 
-              return (
-                <path
-                  key={lot.id}
-                  id={`lot-${lot.id}`}
-                  d={lot.pathD}
-                  fill={fill}
-                  stroke={stroke}
-                  strokeWidth={strokeWidth}
-                  style={{
-                    transition: "fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease",
-                    cursor: "pointer",
-                  }}
-                  onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}
-                  onPointerLeave={handleLotPointerLeave}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectLotSafe(lot.id);
-                  }}
-                />
-              );
-            })}
-          </g>
+                const fontSize = isHovered
+                  ? baseLabelFontSize + 2.5
+                  : isFaded
+                    ? Math.max(9, baseLabelFontSize - 1.5)
+                    : baseLabelFontSize;
 
-          {/* Capa 6: Números de Lote en sus Centroides Matemáticos Exactos */}
-          <g id="svg-labels" className="pointer-events-none">
-            {lots.map((lot) => {
-              if (!lot.centroid || lot.isReserve) return null;
-              const [cx, cy] = lot.centroid;
-              const isSelected = lot.id === selectedLotId;
-              const isHovered = lot.id === hoveredLotId;
-              const isReserved = lot.status === "Reservado";
-              const isSold = lot.status === "Vendido";
-              const isLastUnits = lot.status === "Últimas unidades";
-              const isMatch =
-                !isFilterActive || (filteredLotIds ? filteredLotIds.has(lot.id) : true);
-              const isFaded = isFilterActive && !isMatch;
-
-              const label = lot.lotNumber ?? lot.id.replace("L-", "");
-
-              if (isSelected) {
-                const markerR = scale < 0.28 ? 18 : 15;
-                const markerFontSize = scale < 0.28 ? 12 : 11;
                 return (
-                  <g key={`marker-selected-${lot.id}`} transform={`translate(${cx}, ${cy})`}>
-                    <circle r={markerR} fill="#0284c7" stroke="#ffffff" strokeWidth={2.2} />
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fill="#ffffff"
-                      fontSize={markerFontSize}
-                      fontWeight={800}
-                      fontFamily="system-ui, -apple-system, sans-serif"
-                    >
-                      {label}
-                    </text>
-                  </g>
+                  <text
+                    key={`label-${lot.id}`}
+                    x={cx}
+                    y={cy}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill={
+                      isDark
+                        ? isHovered
+                          ? "#ffffff"
+                          : isFaded
+                            ? "#78716c"
+                            : isSold
+                              ? "#fca5a5"
+                              : isReserved
+                                ? "#fed7aa"
+                                : isLastUnits
+                                  ? "#fef08a"
+                                  : "#e2fbe8"
+                        : isHovered
+                          ? "#0f172a"
+                          : isFaded
+                            ? "#64748b"
+                            : "#1e293b"
+                    }
+                    fontSize={fontSize}
+                    fontWeight={isHovered ? 800 : isFaded ? 600 : 700}
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    {label}
+                  </text>
                 );
-              }
-
-              const fontSize = isHovered
-                ? baseLabelFontSize + 2.5
-                : isFaded
-                  ? Math.max(9, baseLabelFontSize - 1.5)
-                  : baseLabelFontSize;
-
-              return (
-                <text
-                  key={`label-${lot.id}`}
-                  x={cx}
-                  y={cy}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill={
-                    isDark
-                      ? isHovered
-                        ? "#ffffff"
-                        : isFaded
-                          ? "#78716c"
-                          : isSold
-                            ? "#fca5a5"
-                            : isReserved
-                              ? "#fed7aa"
-                              : isLastUnits
-                                ? "#fef08a"
-                                : "#e2fbe8"
-                      : isHovered
-                        ? "#0f172a"
-                        : isFaded
-                          ? "#64748b"
-                          : "#1e293b"
-                  }
-                  fontSize={fontSize}
-                  fontWeight={isHovered ? 800 : isFaded ? 600 : 700}
-                  fontFamily="system-ui, -apple-system, sans-serif"
-                >
-                  {label}
-                </text>
-              );
-            })}
+              })}
+            </g>
           </g>
         </g>
       </svg>
@@ -1047,6 +1088,7 @@ export default function MasterplanSvgViewer({
 
       {/* Botones de Control Flotantes Integrados (Brújula + Zoom + Reset + Pantalla Completa) */}
       <div
+        style={{ display: settings?.showMapControls === false ? "none" : undefined }}
         className={`no-drag absolute ${
           isRightPanelOpen ? "right-3 md:right-[356px]" : "right-3 lg:right-4"
         } top-1/2 -translate-y-1/2 lg:top-[92px] lg:translate-y-0 flex flex-col items-center gap-2 z-30 select-none transition-[right] duration-300 ease-out`}
@@ -1055,6 +1097,40 @@ export default function MasterplanSvgViewer({
         onTouchStart={(e) => e.stopPropagation()}
       >
         {/* Barra de Controles de Zoom */}
+        {rotationOpen && (
+          <div className="absolute right-12 top-0 w-52 rounded-xl border border-border bg-background p-4 text-foreground shadow-lg">
+            <label className="flex justify-between text-xs" htmlFor="masterplan-rotation">
+              Girar plano <span>{rotation}°</span>
+            </label>
+            <input
+              id="masterplan-rotation"
+              aria-label="Ángulo del plano"
+              type="range"
+              min="0"
+              max="360"
+              step="1"
+              value={rotation}
+              onChange={(event) => setRotation(Number(event.target.value))}
+              className="mt-4 w-full accent-current"
+            />
+            <div className="mt-3 flex justify-between gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setRotation((value) => (value + 90) % 360)}
+                className="rounded border border-border px-2 py-1"
+              >
+                +90°
+              </button>
+              <button
+                type="button"
+                onClick={() => setRotation(0)}
+                className="rounded border border-border px-2 py-1"
+              >
+                Volver a 0°
+              </button>
+            </div>
+          </div>
+        )}
         <div
           className={`flex flex-col items-center gap-1 rounded-full p-1 lg:p-1.5 shadow-2xl backdrop-blur-xl transition-colors ${
             isDark
@@ -1087,6 +1163,16 @@ export default function MasterplanSvgViewer({
             <Minus className="size-3.5 lg:size-4" />
           </button>
           <div className="h-px w-4 lg:w-5 bg-border/60" />
+          <button
+            type="button"
+            aria-label="Girar plano"
+            title="Girar plano 360°"
+            aria-expanded={rotationOpen}
+            onClick={() => setRotationOpen((value) => !value)}
+            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full hover:bg-muted"
+          >
+            <RotateCw className="size-4" />
+          </button>
           <button
             type="button"
             onClick={(e) => {

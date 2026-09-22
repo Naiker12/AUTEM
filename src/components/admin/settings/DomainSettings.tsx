@@ -19,11 +19,11 @@ export function DomainSettings() {
       <CardContent className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="main-domain">Dominio principal</Label>
-          <Input id="main-domain" defaultValue="autem.co" />
+          <Input id="main-domain" placeholder="Dominio pendiente de confirmar" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="project-url">Formato de proyectos</Label>
-          <Input id="project-url" defaultValue="autem.co/proyecto/slug" />
+          <Input id="project-url" defaultValue="/proyecto/slug" />
         </div>
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="seo-title">Título predeterminado</Label>

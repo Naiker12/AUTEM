@@ -24,11 +24,11 @@ export function IntegrationSettings() {
                 <p className="text-xs text-muted-foreground">Canal principal de contacto.</p>
               </div>
             </div>
-            <Switch defaultChecked />
+            <Switch />
           </div>
           <div className="mt-4 space-y-2">
             <Label htmlFor="whatsapp-number">Número de WhatsApp</Label>
-            <Input id="whatsapp-number" defaultValue="573000000000" />
+            <Input id="whatsapp-number" defaultValue="573007200894" />
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-border/70 p-4">
