@@ -300,6 +300,8 @@ function ProjectView() {
         projectName={property.name}
         projectLocation={property.location}
         onFinish={finishIntro}
+        variant={slug === "villa-paraiso" ? "dark-compact" : "default"}
+        minDuration={slug === "villa-paraiso" ? 350 : 650}
       />
 
       {/* Header fijo e intacto al 100% de ancho de la pantalla, sin encogerse ni moverse */}

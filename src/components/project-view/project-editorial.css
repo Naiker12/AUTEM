@@ -89,6 +89,23 @@
   background: currentColor;
   animation: project-line-enter 650ms ease both;
 }
+.project-intro--dark-compact {
+  gap: 10px;
+  background: #000;
+  color: #f0ebe6;
+  transition-duration: 180ms;
+}
+.project-intro--dark-compact h2 {
+  font-size: clamp(26px, 4vw, 48px);
+}
+.project-intro--dark-compact p {
+  font-size: 10px;
+}
+.project-intro--dark-compact .project-intro__line {
+  width: 56px;
+  margin: 4px auto;
+  animation-duration: 350ms;
+}
 @keyframes project-view-enter {
   from {
     opacity: 0.25;

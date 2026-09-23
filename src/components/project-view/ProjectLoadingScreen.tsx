@@ -4,6 +4,7 @@ interface ProjectLoadingScreenProps {
   projectLocation?: string;
   onFinish?: () => void;
   minDuration?: number;
+  variant?: "default" | "dark-compact";
 }
 /** Brand entrance, not simulated network progress. */
 export default function ProjectLoadingScreen({
@@ -11,6 +12,7 @@ export default function ProjectLoadingScreen({
   projectLocation,
   onFinish,
   minDuration = 650,
+  variant = "default",
 }: ProjectLoadingScreenProps) {
   const [visible, setVisible] = useState(true);
   const [leaving, setLeaving] = useState(false);
@@ -29,7 +31,11 @@ export default function ProjectLoadingScreen({
   }, [minDuration, onFinish]);
   if (!visible) return null;
   return (
-    <div className="project-intro" data-leaving={leaving} aria-hidden="true">
+    <div
+      className={`project-intro${variant === "dark-compact" ? " project-intro--dark-compact" : ""}`}
+      data-leaving={leaving}
+      aria-hidden="true"
+    >
       <p>AUTEM · Arquitectura y territorio</p>
       <h2>{projectName}</h2>
       <span className="project-intro__line" />
