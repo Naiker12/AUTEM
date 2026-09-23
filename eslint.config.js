@@ -6,7 +6,9 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  // Generated previews and build artifacts are not application source code.
+  // Keeping them out of lint prevents a temporary preview from breaking CI.
+  { ignores: ["dist", ".output", ".vinxi", "tmp"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
