@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import type { Lot } from "@/data/lots";
 import { villaParaisoNavigation } from "@/data/villa-paraiso-navigation";
+import masterplanLayers from "@/data/villa-paraiso-layers.json";
 import { Button } from "@/components/ui/button";
+import { createPlanRoadRouter } from "@/features/terrain-navigation/plan-road-routing";
 import { findRenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
 import { createLotRouteDestination } from "@/features/terrain-navigation/lot-destinations";
 import MasterplanSvgViewer from "./MasterplanSvgViewer";
@@ -159,6 +161,10 @@ export default function TerrainRouteView({
   const hasReliableLocation = accuracy !== null && accuracy <= 75;
   const isOutsideProject = hasReliableLocation && distance !== null && distance > 750;
   const usesReferenceOrigin = !hasReliableLocation || isOutsideProject;
+  const roadRouter = useMemo(
+    () => createPlanRoadRouter([...masterplanLayers.roads, ...masterplanLayers.calzadas]),
+    [],
+  );
   const validatedRoute = useMemo(() => {
     if (!destination) return null;
     const destinationNode = createLotRouteDestination(destination);
@@ -170,55 +176,56 @@ export default function TerrainRouteView({
       "walking",
     );
   }, [destination]);
+  const referenceRoadRoute = useMemo(() => {
+    if (!destination?.centroid || validatedRoute) return null;
+    return roadRouter.findRoute(
+      { x: DEMO_START[0], y: DEMO_START[1] },
+      { x: destination.centroid[0], y: destination.centroid[1] },
+    );
+  }, [destination, roadRouter, validatedRoute]);
   const overlay = useMemo(() => {
     if (!destination?.centroid) return null;
-    const [endX, endY] = validatedRoute
-      ? [validatedRoute.destination.point.x, validatedRoute.destination.point.y]
-      : destination.centroid;
-    const [startX, startY] = DEMO_START;
-    const controlX = Math.min(startX + 180, endX - 100);
-    const controlY = Math.max(900, (startY + endY) / 2);
-    const routePaths = validatedRoute?.svgPaths;
+    const routePaths =
+      validatedRoute?.svgPaths ?? (referenceRoadRoute ? [referenceRoadRoute.svgPath] : null);
+    const start = validatedRoute?.origin.point ?? referenceRoadRoute?.points[0];
+    const end = validatedRoute?.destination.point ??
+      referenceRoadRoute?.points.at(-1) ?? {
+        x: destination.centroid[0],
+        y: destination.centroid[1],
+      };
     return (
       <g
         className="pointer-events-none"
         aria-label={
-          routePaths
+          validatedRoute
             ? "Ruta interna validada"
-            : "Ruta de demostración pendiente de validación en obra"
+            : referenceRoadRoute
+              ? "Ruta de referencia sobre vías del plano"
+              : "No hay una ruta conectada por vías del plano"
         }
       >
-        {routePaths ? (
-          routePaths.map((path, index) => (
-            <g key={`${path}-${index}`}>
-              <path d={path} fill="none" stroke="#ffffff" strokeWidth="18" opacity="0.9" />
-              <path d={path} fill="none" stroke="#1677ff" strokeWidth="10" strokeLinecap="round" />
-            </g>
-          ))
-        ) : (
-          <>
-            <path
-              d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="18"
-              opacity="0.9"
-            />
-            <path
-              d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
-              fill="none"
-              stroke="#1677ff"
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray="22 15"
-            />
-          </>
-        )}
-        <g transform={`translate(${startX} ${startY})`}>
-          <circle r="28" fill="#1677ff" stroke="#ffffff" strokeWidth="8" />
-          <circle r="8" fill="#ffffff" />
-        </g>
-        <g transform={`translate(${endX} ${endY})`}>
+        {routePaths
+          ? routePaths.map((path, index) => (
+              <g key={`${path}-${index}`}>
+                <path d={path} fill="none" stroke="#ffffff" strokeWidth="18" opacity="0.9" />
+                <path
+                  d={path}
+                  fill="none"
+                  stroke="#1677ff"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={validatedRoute ? undefined : "22 15"}
+                />
+              </g>
+            ))
+          : null}
+        {start ? (
+          <g transform={`translate(${start.x} ${start.y})`}>
+            <circle r="28" fill="#1677ff" stroke="#ffffff" strokeWidth="8" />
+            <circle r="8" fill="#ffffff" />
+          </g>
+        ) : null}
+        <g transform={`translate(${end.x} ${end.y})`}>
           <circle r="25" fill="#1c2c1e" stroke="#ffffff" strokeWidth="7" />
           <path
             d="M 0 -13 C -10 -13 -15 -5 -15 3 C -15 13 0 24 0 24 C 0 24 15 13 15 3 C 15 -5 10 -13 0 -13 Z"
@@ -228,7 +235,7 @@ export default function TerrainRouteView({
         </g>
       </g>
     );
-  }, [destination, validatedRoute]);
+  }, [destination, referenceRoadRoute, validatedRoute]);
 
   const distanceCopy =
     distance === null || !hasReliableLocation
@@ -477,7 +484,9 @@ export default function TerrainRouteView({
           <span>
             {validatedRoute
               ? "Ruta interna validada: verifica siempre la señalización en obra."
-              : "Ruta ilustrativa: verifica siempre la señalización en obra."}
+              : referenceRoadRoute
+                ? "Ruta de referencia por vías del plano: verifica siempre la señalización en obra."
+                : "No existe una conexión continua por vías para este destino todavía."}
           </span>
         </div>
         <div className="mt-3 flex items-center gap-2 text-[10px] font-medium text-muted-foreground lg:hidden">
