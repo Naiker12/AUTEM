@@ -768,6 +768,8 @@ export default function MasterplanSvgViewer({
       {/* Lienzo SVG con pan & zoom sincronizado en <g> (sin viewBox para coincidencia directa de píxeles) */}
       <svg
         className="h-full w-full pointer-events-none"
+        viewBox={`0 0 ${Math.max(1, containerSize.width)} ${Math.max(1, containerSize.height)}`}
+        preserveAspectRatio="none"
         style={{
           overflow: "visible",
         }}
