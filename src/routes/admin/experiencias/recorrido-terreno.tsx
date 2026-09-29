@@ -173,6 +173,7 @@ function TerrainSurveyPage() {
     () => ({
       project: "Villa Paraíso",
       purpose: "Calibración GPS a SVG; borrador local no publicado",
+      status: transform ? "ready_for_technical_review" : "incomplete_requires_field_gps",
       sourceCad: villaParaisoNavigationSurvey.source,
       points,
       calibration: transform,
@@ -182,7 +183,28 @@ function TerrainSurveyPage() {
 
   const copyDraft = async () => {
     await navigator.clipboard.writeText(JSON.stringify(draft, null, 2));
-    setMessage("Borrador copiado. Envíalo al equipo técnico para validación.");
+    setMessage(
+      transform
+        ? "Calibración copiada. Envíala al equipo técnico para validación."
+        : "Borrador incompleto copiado. Podrás añadir las capturas GPS en obra después.",
+    );
+  };
+
+  const clearGpsCapture = (id: string) => {
+    save(
+      points.map((point) =>
+        point.id === id
+          ? {
+              ...point,
+              latitude: undefined,
+              longitude: undefined,
+              accuracy: undefined,
+              capturedAt: undefined,
+            }
+          : point,
+      ),
+    );
+    setMessage("Captura GPS eliminada del borrador.");
   };
 
   return (
@@ -216,6 +238,16 @@ function TerrainSurveyPage() {
         <Metric label="Puntos SVG marcados" value={`${completedSvg}/4`} />
         <Metric label="Estado" value={transform ? "Calibrado" : "Pendiente"} />
       </section>
+
+      <Alert className="mt-6 max-w-5xl border-sky-200 bg-sky-50 text-sky-950">
+        <MapPin className="size-4" />
+        <AlertTitle>Puedes avanzar desde cualquier lugar</AlertTitle>
+        <AlertDescription>
+          Marca los cuatro puntos sobre el plano y copia un borrador ahora. Las capturas GPS solo se
+          completan cuando alguien esté físicamente en Villa Paraíso; sin ellas no se genera la
+          calibración final.
+        </AlertDescription>
+      </Alert>
 
       {completedGps === points.length && !hasSeparatedGpsPoints && (
         <Alert className="mt-6 max-w-5xl border-amber-200 bg-amber-50 text-amber-950">
@@ -345,6 +377,15 @@ function TerrainSurveyPage() {
                   ? `${point.latitude.toFixed(6)}, ${point.longitude?.toFixed(6)} · precisión ±${point.accuracy} m`
                   : "GPS pendiente de captura"}
               </div>
+              {point.latitude !== undefined && (
+                <button
+                  type="button"
+                  onClick={() => clearGpsCapture(point.id)}
+                  className="text-xs font-medium text-muted-foreground underline underline-offset-4"
+                >
+                  Quitar esta captura GPS
+                </button>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -397,9 +438,9 @@ function TerrainSurveyPage() {
       </section>
 
       <section className="mt-6 flex max-w-5xl flex-wrap gap-3">
-        <Button type="button" disabled={!transform} onClick={copyDraft}>
+        <Button type="button" disabled={completedSvg === 0} onClick={copyDraft}>
           <ClipboardCopy className="mr-2 size-4" />
-          Copiar borrador de calibración
+          {transform ? "Copiar calibración" : "Copiar borrador incompleto"}
         </Button>
         <Button
           type="button"
