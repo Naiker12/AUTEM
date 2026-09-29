@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { villaParaisoNavigationSurvey } from "@/data/villa-paraiso-navigation-survey";
+import masterplanLayers from "@/data/villa-paraiso-layers.json";
 import MasterplanSvgViewer from "@/components/project-view/MasterplanSvgViewer";
 import { fitAffineTransform } from "@/features/terrain-navigation/coordinate-transform";
 
@@ -28,6 +29,8 @@ type SurveyPoint = {
 };
 
 const STORAGE_KEY = "autem:villa-paraiso:terrain-survey:v1";
+const SVG_WIDTH = masterplanLayers.dimensions.width;
+const SVG_HEIGHT = masterplanLayers.dimensions.height;
 const initialPoints: SurveyPoint[] = [
   {
     id: "main-entrance",
@@ -53,6 +56,36 @@ const initialPoints: SurveyPoint[] = [
   },
 ];
 
+function hasValidSvgPoint(point: SurveyPoint) {
+  const x = Number(point.svgX);
+  const y = Number(point.svgY);
+  return (
+    Number.isFinite(x) &&
+    Number.isFinite(y) &&
+    x >= 0 &&
+    x <= SVG_WIDTH &&
+    y >= 0 &&
+    y <= SVG_HEIGHT
+  );
+}
+
+function distanceBetweenCaptures(first: SurveyPoint, second: SurveyPoint) {
+  if (
+    first.latitude === undefined ||
+    first.longitude === undefined ||
+    second.latitude === undefined ||
+    second.longitude === undefined
+  )
+    return 0;
+  const latitudeScale = 111_320;
+  const longitudeScale =
+    latitudeScale * Math.cos(((first.latitude + second.latitude) / 2) * (Math.PI / 180));
+  return Math.hypot(
+    (first.latitude - second.latitude) * latitudeScale,
+    (first.longitude - second.longitude) * longitudeScale,
+  );
+}
+
 function TerrainSurveyPage() {
   const [points, setPoints] = useState<SurveyPoint[]>(initialPoints);
   const [message, setMessage] = useState("");
@@ -71,12 +104,12 @@ function TerrainSurveyPage() {
   }, []);
 
   const completedGps = points.filter((point) => point.latitude !== undefined).length;
-  const completedSvg = points.filter((point) => point.svgX && point.svgY).length;
+  const completedSvg = points.filter(hasValidSvgPoint).length;
+  const hasSeparatedGpsPoints = points.every((point, index) =>
+    points.slice(index + 1).every((nextPoint) => distanceBetweenCaptures(point, nextPoint) >= 8),
+  );
   const canCalibrate =
-    completedGps === points.length &&
-    points.every(
-      (point) => Number.isFinite(Number(point.svgX)) && Number.isFinite(Number(point.svgY)),
-    );
+    completedGps === points.length && completedSvg === points.length && hasSeparatedGpsPoints;
   const transform = useMemo(
     () =>
       canCalibrate
@@ -184,6 +217,28 @@ function TerrainSurveyPage() {
         <Metric label="Estado" value={transform ? "Calibrado" : "Pendiente"} />
       </section>
 
+      {completedGps === points.length && !hasSeparatedGpsPoints && (
+        <Alert className="mt-6 max-w-5xl border-amber-200 bg-amber-50 text-amber-950">
+          <MapPin className="size-4" />
+          <AlertTitle>Las capturas GPS están demasiado cerca</AlertTitle>
+          <AlertDescription>
+            Debes ir físicamente a la portería, un cruce, un hito y un punto lejano. Deja al menos 8
+            m entre cada captura.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {completedSvg < points.length && (
+        <Alert className="mt-6 max-w-5xl border-sky-200 bg-sky-50 text-sky-950">
+          <MapPin className="size-4" />
+          <AlertTitle>Faltan marcas en el plano</AlertTitle>
+          <AlertDescription>
+            Selecciona cada punto en su tarjeta, vuelve al mapa y toca exactamente el mismo lugar.
+            Valores válidos: X 0–{SVG_WIDTH}, Y 0–{SVG_HEIGHT}.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {transform && (
         <Alert
           className={`mt-6 max-w-5xl ${transform.rmsError > 35 ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
@@ -200,7 +255,7 @@ function TerrainSurveyPage() {
         </Alert>
       )}
 
-      <Card className="mt-6 max-w-5xl overflow-hidden rounded-2xl">
+      <Card id="terrain-calibration-map" className="mt-6 max-w-5xl overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">Marca el punto sobre el plano</CardTitle>
           <CardDescription>
@@ -222,7 +277,7 @@ function TerrainSurveyPage() {
                   {points.map((point, index) => {
                     const x = Number(point.svgX);
                     const y = Number(point.svgY);
-                    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+                    if (!hasValidSvgPoint(point)) return null;
                     const isActive = point.id === activePlanPointId;
                     return (
                       <g key={point.id} transform={`translate(${x} ${y})`}>
@@ -256,7 +311,11 @@ function TerrainSurveyPage() {
                 save(
                   points.map((point) =>
                     point.id === activePlanPointId
-                      ? { ...point, svgX: Math.round(x).toString(), svgY: Math.round(y).toString() }
+                      ? {
+                          ...point,
+                          svgX: Math.round(Math.max(0, Math.min(SVG_WIDTH, x))).toString(),
+                          svgY: Math.round(Math.max(0, Math.min(SVG_HEIGHT, y))).toString(),
+                        }
                       : point,
                   ),
                 );
@@ -273,9 +332,10 @@ function TerrainSurveyPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between gap-3 text-base">
                 <span>{point.label}</span>
-                {point.latitude !== undefined && (
-                  <CheckCircle2 className="size-4 text-emerald-600" />
-                )}
+                <span className="text-[10px] font-medium text-muted-foreground">
+                  GPS {point.latitude !== undefined ? "listo" : "pendiente"} · Plano{" "}
+                  {hasValidSvgPoint(point) ? "listo" : "pendiente"}
+                </span>
               </CardTitle>
               <CardDescription>{point.hint}</CardDescription>
             </CardHeader>
@@ -299,9 +359,15 @@ function TerrainSurveyPage() {
                 type="button"
                 variant={activePlanPointId === point.id ? "secondary" : "outline"}
                 className="w-full"
-                onClick={() => setActivePlanPointId(point.id)}
+                onClick={() => {
+                  setActivePlanPointId(point.id);
+                  setMessage(`Ahora toca ${point.label} en el plano.`);
+                  document
+                    .getElementById("terrain-calibration-map")
+                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
               >
-                <MapPin className="mr-2 size-4" /> Marcar este punto en el plano
+                <MapPin className="mr-2 size-4" /> Seleccionar y marcar en el plano
               </Button>
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs font-medium">
