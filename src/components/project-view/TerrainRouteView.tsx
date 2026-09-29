@@ -13,9 +13,7 @@ import {
 } from "lucide-react";
 import type { Lot } from "@/data/lots";
 import { villaParaisoNavigation } from "@/data/villa-paraiso-navigation";
-import masterplanLayers from "@/data/villa-paraiso-layers.json";
 import { Button } from "@/components/ui/button";
-import { createPlanRoadRouter } from "@/features/terrain-navigation/plan-road-routing";
 import { findRenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
 import { createLotRouteDestination } from "@/features/terrain-navigation/lot-destinations";
 import MasterplanSvgViewer from "./MasterplanSvgViewer";
@@ -24,7 +22,6 @@ import type { ProjectViewSettings } from "./types";
 type LocationState = "idle" | "requesting" | "ready" | "low_accuracy" | "denied" | "unavailable";
 
 const PROJECT_ANCHOR = { lat: 10.436829, lng: -75.356179 };
-const DEMO_START: [number, number] = [1050, 2150];
 
 function distanceInMeters(lat: number, lng: number) {
   const rad = Math.PI / 180;
@@ -161,10 +158,6 @@ export default function TerrainRouteView({
   const hasReliableLocation = accuracy !== null && accuracy <= 75;
   const isOutsideProject = hasReliableLocation && distance !== null && distance > 750;
   const usesReferenceOrigin = !hasReliableLocation || isOutsideProject;
-  const roadRouter = useMemo(
-    () => createPlanRoadRouter([...masterplanLayers.roads, ...masterplanLayers.calzadas]),
-    [],
-  );
   const validatedRoute = useMemo(() => {
     if (!destination) return null;
     const destinationNode = createLotRouteDestination(destination);
@@ -176,32 +169,21 @@ export default function TerrainRouteView({
       "walking",
     );
   }, [destination]);
-  const referenceRoadRoute = useMemo(() => {
-    if (!destination?.centroid || validatedRoute) return null;
-    return roadRouter.findRoute(
-      { x: DEMO_START[0], y: DEMO_START[1] },
-      { x: destination.centroid[0], y: destination.centroid[1] },
-    );
-  }, [destination, roadRouter, validatedRoute]);
   const overlay = useMemo(() => {
     if (!destination?.centroid) return null;
-    const routePaths =
-      validatedRoute?.svgPaths ?? (referenceRoadRoute ? [referenceRoadRoute.svgPath] : null);
-    const start = validatedRoute?.origin.point ?? referenceRoadRoute?.points[0];
-    const end = validatedRoute?.destination.point ??
-      referenceRoadRoute?.points.at(-1) ?? {
-        x: destination.centroid[0],
-        y: destination.centroid[1],
-      };
+    const routePaths = validatedRoute?.svgPaths;
+    const start = validatedRoute?.origin.point;
+    const end = validatedRoute?.destination.point ?? {
+      x: destination.centroid[0],
+      y: destination.centroid[1],
+    };
     return (
       <g
         className="pointer-events-none"
         aria-label={
           validatedRoute
             ? "Ruta interna validada"
-            : referenceRoadRoute
-              ? "Ruta de referencia sobre vías del plano"
-              : "No hay una ruta conectada por vías del plano"
+            : "La ruta interna aún necesita una red vial validada"
         }
       >
         {routePaths
@@ -235,7 +217,7 @@ export default function TerrainRouteView({
         </g>
       </g>
     );
-  }, [destination, referenceRoadRoute, validatedRoute]);
+  }, [destination, validatedRoute]);
 
   const distanceCopy =
     distance === null || !hasReliableLocation
@@ -484,9 +466,7 @@ export default function TerrainRouteView({
           <span>
             {validatedRoute
               ? "Ruta interna validada: verifica siempre la señalización en obra."
-              : referenceRoadRoute
-                ? "Ruta de referencia por vías del plano: verifica siempre la señalización en obra."
-                : "No existe una conexión continua por vías para este destino todavía."}
+              : "Ruta no disponible todavía: falta cargar la red vial validada del proyecto."}
           </span>
         </div>
         <div className="mt-3 flex items-center gap-2 text-[10px] font-medium text-muted-foreground lg:hidden">
