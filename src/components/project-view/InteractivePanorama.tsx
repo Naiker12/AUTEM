@@ -3,11 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
-const PANORAMA_URL = `${import.meta.env.BASE_URL}projects/lotes-360/masterplan-panorama-360.jpg`;
-
 type PanoramaControls = { reset: () => void; zoom: (delta: number) => void };
 
-export default function InteractivePanorama() {
+export default function InteractivePanorama({ sourceUrl }: { sourceUrl: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<PanoramaControls | null>(null);
   const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
@@ -60,9 +58,9 @@ export default function InteractivePanorama() {
       zoom: (delta) => setFov(camera.fov + delta),
     };
 
-    if (PANORAMA_URL.endsWith(".hdr")) {
+    if (sourceUrl.endsWith(".hdr")) {
       new RGBELoader().load(
-        PANORAMA_URL,
+        sourceUrl,
         (loaded) => {
           if (disposed) return loaded.dispose();
           loaded.mapping = THREE.EquirectangularReflectionMapping;
@@ -76,7 +74,7 @@ export default function InteractivePanorama() {
       );
     } else {
       new THREE.TextureLoader().load(
-        PANORAMA_URL,
+        sourceUrl,
         (loaded) => {
           if (disposed) return loaded.dispose();
           loaded.mapping = THREE.EquirectangularReflectionMapping;
@@ -141,7 +139,7 @@ export default function InteractivePanorama() {
       material.dispose();
       container.replaceChildren();
     };
-  }, []);
+  }, [sourceUrl]);
 
   const fullscreen = () => containerRef.current?.requestFullscreen?.();
 

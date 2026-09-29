@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useScrollFrame } from "@/hooks/useScrollFrame";
 import { AnimatedHeading, Reveal } from "./EditorialMotion";
-import { properties } from "@/data/properties";
+import { usePublishedProjects } from "@/lib/public-projects";
+import { usePublicSiteMedia } from "@/lib/site-repository";
 import "./editorial.css";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Search, Box as CubeIcon, Lightbulb, Check } from "lucide-react";
@@ -9,6 +10,9 @@ import { WHATSAPP_BASE_URL } from "@/data/constants";
 
 // 1. INTRO / ABOUT SECTION (Left Image, Center Heading & Subtext, Right Image + Ticker)
 function IntroAboutSection() {
+  const { projects } = usePublishedProjects();
+  const { byPlacement } = usePublicSiteMedia();
+  const villaParaiso = projects.find((project) => project.slug === "villa-paraiso") ?? projects[0];
   const tickerItems = [
     "ARQUITECTURA CON PROPÓSITO",
     "VISUALIZACIÓN INMERSIVA",
@@ -29,7 +33,7 @@ function IntroAboutSection() {
           <div className="lg:col-span-3 flex justify-center lg:justify-start order-2 lg:order-1">
             <div className="w-full max-w-[340px] h-[360px] sm:h-[440px] lg:h-[493px] rounded-[8px] overflow-hidden shadow-sm">
               <img
-                src={`${import.meta.env.BASE_URL}images/autem-proceso-territorio.png`}
+                src={byPlacement("image-process-territory")}
                 alt="Ilustración conceptual de planos y modelo del terreno"
                 className="w-full h-full object-cover object-center"
                 loading="lazy"
@@ -52,7 +56,7 @@ function IntroAboutSection() {
           <div className="lg:col-span-3 flex justify-center lg:justify-end order-3">
             <div className="w-full max-w-[340px] h-[360px] sm:h-[440px] lg:h-[493px] rounded-[8px] overflow-hidden shadow-sm">
               <img
-                src={`${import.meta.env.BASE_URL}projects/lotes-360/lot-l07-entorno-verde.png`}
+                src={villaParaiso?.image ?? ""}
                 alt="Visualización conceptual del entorno verde de Villa Paraíso"
                 className="w-full h-full object-cover object-center"
                 loading="lazy"
@@ -82,7 +86,7 @@ function IntroAboutSection() {
 
 // 2. FEATURED PROJECTS SECTION (Staggered 3-Card Layout)
 function FeaturedProjectsSection() {
-  const projects = properties;
+  const { projects } = usePublishedProjects();
 
   return (
     <section
@@ -149,7 +153,7 @@ function FeaturedProjectsSection() {
         <div className="mt-14 text-center">
           <Link
             to="/proyecto/$slug"
-            params={{ slug: properties[0].slug }}
+            params={{ slug: projects[0]?.slug ?? "villa-paraiso" }}
             className="inline-block text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-[#4f4742] underline underline-offset-8 hover:text-black transition-colors"
           >
             EXPLORAR VILLA PARAÍSO
@@ -163,6 +167,15 @@ function FeaturedProjectsSection() {
 // 3. OUR SERVICES SECTION (6 Detailed Services with Hover State)
 function OurServicesSection() {
   const [activeHover, setActiveHover] = useState<number | null>(null);
+  const { byPlacement } = usePublicSiteMedia();
+  const serviceMedia = [
+    "image-process-territory",
+    "image-carousel-modern-lounge",
+    "image-provencal-oak-detail",
+    "image-villa-paraiso-aerial",
+    "image-territory-masterplan",
+    "image-process-territory",
+  ];
 
   const services = [
     {
@@ -229,7 +242,7 @@ function OurServicesSection() {
             >
               <img
                 className="service-preview"
-                src={`${import.meta.env.BASE_URL}images/${["autem-proceso-territorio.png", "carousel-modern-lounge.jpg", "provencal-oak-detail.jpg", "autem-villa-paraiso-aerial-v2.png", "territory-masterplan-nature.jpg", "autem-proceso-territorio.png"][idx]}`}
+                src={byPlacement(serviceMedia[idx])}
                 alt=""
                 loading="lazy"
               />
@@ -335,6 +348,7 @@ function ProjectExpertiseSection() {
 
 // 5. CLEAR DESIGN PROCESS SECTION (4 Cards with Icons & Photos)
 function ClearDesignProcessSection() {
+  const { byPlacement } = usePublicSiteMedia();
   const steps = [
     {
       num: "01",
@@ -342,7 +356,7 @@ function ClearDesignProcessSection() {
       title: "ENTENDER EL TERRENO",
       desc: "Revisamos objetivos, contexto y planos disponibles para definir el punto de partida.",
       result: "Resultado: necesidades y criterios de diseño.",
-      img: `${import.meta.env.BASE_URL}images/territory-masterplan-nature.jpg`,
+      img: byPlacement("image-territory-masterplan"),
       icon: Search,
     },
     {
@@ -351,7 +365,7 @@ function ClearDesignProcessSection() {
       title: "ORGANIZAR EL ESPACIO",
       desc: "Estudiamos distribución, accesos y recorridos para comparar alternativas contigo.",
       result: "Resultado: esquema de implantación y distribución.",
-      img: `${import.meta.env.BASE_URL}projects/villa-paraiso/masterplan-clean.svg`,
+      img: byPlacement("image-territory-masterplan"),
       icon: CubeIcon,
     },
     {
@@ -360,7 +374,7 @@ function ClearDesignProcessSection() {
       title: "VISUALIZAR LA PROPUESTA",
       desc: "Pasamos del plano al modelo para revisar volúmenes y la relación con el paisaje.",
       result: "Resultado: visualización del proyecto antes de construir.",
-      img: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+      img: byPlacement("image-villa-paraiso-aerial"),
       icon: Lightbulb,
     },
     {
@@ -369,7 +383,7 @@ function ClearDesignProcessSection() {
       title: "DEFINIR LOS SIGUIENTES PASOS",
       desc: "Revisamos la propuesta y organizamos la documentación y el acompañamiento acordados.",
       result: "Resultado: entregables y alcance de la siguiente etapa.",
-      img: `${import.meta.env.BASE_URL}images/autem-proceso-territorio.png`,
+      img: byPlacement("image-process-territory"),
       icon: Check,
     },
   ];
@@ -445,22 +459,25 @@ function ClearDesignProcessSection() {
 
 // Recursos del proyecto: sin opiniones ni retratos de muestra.
 function ProjectResourcesSection() {
+  const { projects } = usePublishedProjects();
+  const villaParaiso = projects.find((project) => project.slug === "villa-paraiso") ?? projects[0];
+  const gallery = villaParaiso?.images ?? [];
   const resources = [
     {
       title: "Plano urbanístico",
-      image: "projects/villa-paraiso/masterplan-clean.svg",
+      image: villaParaiso?.floorPlanImage ?? "",
       text: "Consulta la organización del proyecto y localiza sus lotes en el plano.",
       status: "Exploración del proyecto",
     },
     {
       title: "Imágenes de la propuesta",
-      image: "projects/lotes-360/acceso-render.png",
+      image: gallery[0] ?? "",
       text: "Comprende la intención de diseño del acceso y su relación con el entorno. Las imágenes son representaciones, no fotografías de obra terminada.",
       status: "Visualización conceptual",
     },
     {
       title: "Entorno y paisaje",
-      image: "projects/lotes-360/lot-l12-quebrada.png",
+      image: gallery[1] ?? "",
       text: "Revisa las referencias visuales del paisaje y plantea tus preguntas sobre el lote que te interesa.",
       status: "Referencia visual",
     },
@@ -483,7 +500,7 @@ function ProjectResourcesSection() {
               <article>
                 <div className="h-72 overflow-hidden rounded-lg bg-[#ddd5c9]">
                   <img
-                    src={`${import.meta.env.BASE_URL}${resource.image}`}
+                    src={resource.image}
                     alt={resource.title}
                     loading="lazy"
                     className="w-full h-full object-cover"
@@ -499,7 +516,7 @@ function ProjectResourcesSection() {
         <div className="mt-10 text-center">
           <Link
             to="/proyecto/$slug"
-            params={{ slug: properties[0].slug }}
+            params={{ slug: villaParaiso?.slug ?? "villa-paraiso" }}
             className="inline-flex rounded-full bg-[#4f4742] text-white px-6 py-3 text-sm"
           >
             Explorar Villa Paraíso <ArrowUpRight className="ml-2" size={18} />

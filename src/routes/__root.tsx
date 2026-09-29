@@ -6,6 +6,11 @@ import appCss from "../styles.css?url";
 import ScrollProgress from "../components/ScrollProgress";
 import PageTransition from "../components/PageTransition";
 import { Toaster } from "@/components/ui/sonner";
+import { publicSiteMediaUrl } from "@/lib/site-repository";
+
+const socialImage = publicSiteMediaUrl(
+  "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",
+);
 
 function NotFoundComponent() {
   return (
@@ -102,12 +107,12 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       {
         property: "og:image",
-        content: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+        content: socialImage,
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:image",
-        content: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+        content: socialImage,
       },
     ],
     links: [

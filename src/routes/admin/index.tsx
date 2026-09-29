@@ -35,14 +35,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { properties } from "@/data/properties";
+import { usePublishedProjects } from "@/lib/public-projects";
 
 export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
 
 const publicSections = 12;
 const settingsModules = 5;
-const catalogImages = properties.reduce((sum, property) => sum + (property.images?.length ?? 1), 0);
-
 const coverageData = [
   { area: "Contenido", modules: 9 },
   { area: "Proyectos", modules: 3 },
@@ -55,18 +53,6 @@ const totalModules = coverageData.reduce((sum, item) => sum + item.modules, 0);
 const chartConfig = {
   modules: { label: "Módulos", color: "var(--accent)" },
 } satisfies ChartConfig;
-
-const resourceData = [
-  {
-    key: "sections",
-    label: "Secciones públicas",
-    value: publicSections,
-    fill: "var(--color-sections)",
-  },
-  { key: "projects", label: "Proyectos", value: properties.length, fill: "var(--color-projects)" },
-  { key: "media", label: "Medios", value: catalogImages, fill: "var(--color-media)" },
-  { key: "settings", label: "Ajustes", value: settingsModules, fill: "var(--color-settings)" },
-];
 
 const resourceChartConfig = {
   sections: { label: "Secciones públicas", color: "var(--accent)" },
@@ -114,34 +100,46 @@ const moduleRows = [
   },
 ];
 
-const metrics = [
-  {
-    title: "Proyectos configurados",
-    value: properties.length,
-    description: "Proyectos presentes en el catálogo.",
-    icon: FolderKanban,
-  },
-  {
-    title: "Secciones públicas",
-    value: publicSections,
-    description: "Áreas mapeadas en el sitio actual.",
-    icon: LayoutPanelTop,
-  },
-  {
-    title: "Medios del catálogo",
-    value: catalogImages,
-    description: "Imágenes asociadas a los proyectos.",
-    icon: ImageIcon,
-  },
-  {
-    title: "Ajustes disponibles",
-    value: settingsModules,
-    description: "Módulos actuales del panel.",
-    icon: Settings2,
-  },
-];
-
 function AdminDashboard() {
+  const { projects } = usePublishedProjects();
+  const catalogImages = projects.reduce((sum, project) => sum + (project.images?.length ?? 1), 0);
+  const resourceData = [
+    {
+      key: "sections",
+      label: "Secciones públicas",
+      value: publicSections,
+      fill: "var(--color-sections)",
+    },
+    { key: "projects", label: "Proyectos", value: projects.length, fill: "var(--color-projects)" },
+    { key: "media", label: "Medios", value: catalogImages, fill: "var(--color-media)" },
+    { key: "settings", label: "Ajustes", value: settingsModules, fill: "var(--color-settings)" },
+  ];
+  const metrics = [
+    {
+      title: "Proyectos configurados",
+      value: projects.length,
+      description: "Proyectos publicados en la base de datos.",
+      icon: FolderKanban,
+    },
+    {
+      title: "Secciones públicas",
+      value: publicSections,
+      description: "Áreas mapeadas en el sitio actual.",
+      icon: LayoutPanelTop,
+    },
+    {
+      title: "Medios del catálogo",
+      value: catalogImages,
+      description: "Imágenes asociadas a los proyectos.",
+      icon: ImageIcon,
+    },
+    {
+      title: "Ajustes disponibles",
+      value: settingsModules,
+      description: "Módulos actuales del panel.",
+      icon: Settings2,
+    },
+  ];
   return (
     <div className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
       <div className="flex flex-col gap-8">

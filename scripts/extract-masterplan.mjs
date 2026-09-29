@@ -3,8 +3,6 @@ import path from "node:path";
 import readline from "node:readline";
 
 const DXF_PATH = path.resolve("cad/VILLA PARAISO_05092026_CAMPO.dxf");
-const OUTPUT_SVG = path.resolve("public/projects/villa-paraiso/masterplan-clean.svg");
-const OUTPUT_JSON = path.resolve("src/data/villa-paraiso-geometry.json");
 
 // Algoritmo Ray Casting para punto en polígono
 function pointInPolygon(pt, vs) {
@@ -376,9 +374,6 @@ async function extract() {
     };
   });
 
-  fs.writeFileSync(OUTPUT_JSON, JSON.stringify(lotsJsonData, null, 2), "utf8");
-  console.log(`JSON guardado en: ${OUTPUT_JSON}`);
-
   const linderoPaths = linderoPolylines.map((p) => pointsToPath(p.points, true));
   const greenPaths = greenPolylines.map((p) => pointsToPath(p.points, true));
   const viaPaths = viaPolylines.map((p) => pointsToPath(p.points, p.closed));
@@ -550,10 +545,7 @@ async function extract() {
   fs.writeFileSync(OUTPUT_LAYERS, JSON.stringify(layersData, null, 2), "utf8");
   console.log(`Capas de fondo guardadas en: ${OUTPUT_LAYERS}`);
 
-  fs.writeFileSync(OUTPUT_SVG, svgContent, "utf8");
-  const stats = fs.statSync(OUTPUT_SVG);
-  console.log(`SVG exportado con éxito en: ${OUTPUT_SVG}`);
-  console.log(`Tamaño del archivo SVG: ${(stats.size / 1024).toFixed(1)} KB`);
+  void svgContent;
 }
 
 extract().catch((err) => {

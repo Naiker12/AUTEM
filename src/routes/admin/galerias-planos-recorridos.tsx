@@ -11,7 +11,7 @@ import {
   Search,
   Upload,
 } from "lucide-react";
-import { type ChangeEvent, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -53,6 +53,13 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import {
+  listManagedProjects,
+  listProjectMedia,
+  type ProjectMediaRecord,
+  uploadProjectMedia,
+} from "@/lib/project-repository";
 
 export const Route = createFileRoute("/admin/galerias-planos-recorridos")({
   component: MediaLibraryPage,
@@ -69,57 +76,30 @@ type MediaAsset = {
   fileType: string;
 };
 
-const BASE = import.meta.env.BASE_URL ?? "/";
-const baseAssets: MediaAsset[] = [
-  {
-    id: "aerial",
-    name: "Vista aérea principal",
-    kind: "Imagen",
-    source: `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
-    published: true,
-    description: "Portada del proyecto",
-    fileType: "PNG",
-  },
-  {
-    id: "access",
-    name: "Acceso al proyecto",
-    kind: "Imagen",
-    source: `${BASE}projects/lotes-360/acceso-render.png`,
-    published: true,
-    description: "Galería pública",
-    fileType: "PNG",
-  },
-  {
-    id: "green",
-    name: "Entorno verde",
-    kind: "Imagen",
-    source: `${BASE}projects/lotes-360/lot-l07-entorno-verde.png`,
-    published: true,
-    description: "Galería pública",
-    fileType: "PNG",
-  },
-  {
-    id: "masterplan",
-    name: "Plano urbanístico",
-    kind: "Plano",
-    source: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
-    published: true,
-    description: "Masterplan interactivo",
-    fileType: "SVG",
-  },
-  {
-    id: "panorama",
-    name: "Recorrido panorámico",
-    kind: "Recorrido",
-    source: `${BASE}projects/lotes-360/masterplan-panorama-360.jpg`,
-    published: true,
-    description: "Visor 360°",
-    fileType: "Panorama",
-  },
-];
+const kindByMediaType: Record<ProjectMediaRecord["media_type"], AssetKind> = {
+  cover: "Imagen",
+  gallery: "Imagen",
+  masterplan: "Plano",
+  document: "Plano",
+  tour: "Recorrido",
+};
+
+function asAsset(item: ProjectMediaRecord): MediaAsset {
+  return {
+    id: item.id,
+    name: item.title || item.storage_path.split("/").pop() || "Recurso sin título",
+    kind: kindByMediaType[item.media_type],
+    source: item.url || "",
+    published: item.is_public,
+    description: item.media_type === "cover" ? "Portada del proyecto" : item.media_type,
+    fileType: item.mime_type?.split("/").pop()?.toUpperCase() || "Archivo",
+  };
+}
 
 function MediaLibraryPage() {
-  const [assets, setAssets] = useState(baseAssets);
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [libraryError, setLibraryError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<"todos" | AssetKind>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -129,7 +109,30 @@ function MediaLibraryPage() {
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState("");
   const [title, setTitle] = useState("");
-  const [tourUrl, setTourUrl] = useState("");
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const access = await getCurrentAdminAccess();
+        if (!access) throw new Error("Inicia sesión para administrar los recursos.");
+        const projects = await listManagedProjects(access.organizationId);
+        const project = projects.find((item) => item.slug === "villa-paraiso") ?? projects[0];
+        if (!project) throw new Error("No hay un proyecto disponible para administrar.");
+        const media = await listProjectMedia(project.id);
+        if (!active) return;
+        setProjectId(project.id);
+        setAssets(media.map(asAsset));
+      } catch (error) {
+        if (active)
+          setLibraryError(
+            error instanceof Error ? error.message : "No fue posible cargar los recursos.",
+          );
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
   const filteredAssets = useMemo(
     () =>
       assets.filter(
@@ -155,7 +158,6 @@ function MediaLibraryPage() {
     setFile(null);
     setFilePreview("");
     setTitle("");
-    setTourUrl("");
     setProgress(0);
     setLoading(false);
   };
@@ -170,38 +172,23 @@ function MediaLibraryPage() {
     setFilePreview(selected.type.startsWith("image/") ? URL.createObjectURL(selected) : "");
     if (!title) setTitle(selected.name.replace(/\.[^/.]+$/, ""));
   };
-  const submit = () => {
-    if (uploadKind === "Recorrido" ? !title.trim() || !tourUrl.trim() : !file || !title.trim())
-      return;
+  const submit = async () => {
+    if (!file || !title.trim() || !projectId) return;
     setLoading(true);
-    setProgress(12);
-    const interval = window.setInterval(() => setProgress((value) => Math.min(value + 17, 90)), 90);
-    window.setTimeout(() => {
-      window.clearInterval(interval);
+    setProgress(20);
+    try {
+      const mediaType =
+        uploadKind === "Imagen" ? "gallery" : uploadKind === "Plano" ? "document" : "tour";
+      await uploadProjectMedia(projectId, file, mediaType, assets.length + 1);
+      const refreshed = await listProjectMedia(projectId);
+      setAssets(refreshed.map(asAsset));
       setProgress(100);
-      setAssets((current) => [
-        {
-          id: `session-${Date.now()}`,
-          name: title.trim(),
-          kind: uploadKind,
-          source:
-            uploadKind === "Recorrido"
-              ? `${BASE}projects/lotes-360/masterplan-panorama-360.jpg`
-              : filePreview || `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
-          published: false,
-          description:
-            uploadKind === "Recorrido" ? tourUrl.trim() : "Recurso pendiente de publicación",
-          fileType:
-            uploadKind === "Plano"
-              ? "Documento"
-              : uploadKind === "Recorrido"
-                ? "Enlace externo"
-                : (file?.type.split("/")[1]?.toUpperCase() ?? "Archivo"),
-        },
-        ...current,
-      ]);
-      window.setTimeout(() => closeDialog(false), 320);
-    }, 650);
+      closeDialog(false);
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : "No fue posible cargar el recurso.");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
@@ -227,6 +214,12 @@ function MediaLibraryPage() {
         <MediaMetric icon={Map} label="Planos" value={metrics.plans} />
         <MediaMetric icon={Play} label="Recorridos" value={metrics.tours} />
       </section>
+      {libraryError && (
+        <Alert className="mt-6" variant="destructive">
+          <AlertTitle>No fue posible completar la operación</AlertTitle>
+          <AlertDescription>{libraryError}</AlertDescription>
+        </Alert>
+      )}
       <Card className="mt-6 rounded-2xl">
         <CardHeader className="gap-5">
           <div>
@@ -279,11 +272,9 @@ function MediaLibraryPage() {
         file={file}
         filePreview={filePreview}
         title={title}
-        tourUrl={tourUrl}
         onKind={setUploadKind}
         onFile={onFile}
         onTitle={setTitle}
-        onTourUrl={setTourUrl}
         onSubmit={submit}
       />
     </main>
@@ -368,11 +359,9 @@ type UploadProps = {
   file: File | null;
   filePreview: string;
   title: string;
-  tourUrl: string;
   onKind: (kind: AssetKind) => void;
   onFile: (event: ChangeEvent<HTMLInputElement>) => void;
   onTitle: (value: string) => void;
-  onTourUrl: (value: string) => void;
   onSubmit: () => void;
 };
 function MediaUploadDialog({
@@ -384,15 +373,12 @@ function MediaUploadDialog({
   file,
   filePreview,
   title,
-  tourUrl,
   onKind,
   onFile,
   onTitle,
-  onTourUrl,
   onSubmit,
 }: UploadProps) {
-  const ready =
-    uploadKind === "Recorrido" ? !!title.trim() && !!tourUrl.trim() : !!title.trim() && !!file;
+  const ready = !!title.trim() && !!file;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100svh-2rem)] max-w-2xl gap-0 overflow-hidden p-0">
@@ -446,41 +432,23 @@ function MediaUploadDialog({
               />
             </TabsContent>
             <TabsContent value="Recorrido">
-              <FieldSet className="mt-4">
-                <FieldLegend>Enlace de recorrido</FieldLegend>
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="tour-title">Nombre del recorrido</FieldLabel>
-                    <Input
-                      id="tour-title"
-                      value={title}
-                      onChange={(event) => onTitle(event.target.value)}
-                      placeholder="Tour 360° del masterplan"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="tour-url">Enlace del visor</FieldLabel>
-                    <Input
-                      id="tour-url"
-                      type="url"
-                      value={tourUrl}
-                      onChange={(event) => onTourUrl(event.target.value)}
-                      placeholder="https://"
-                    />
-                    <FieldDescription>
-                      Usa el enlace público del proveedor del recorrido (360°, 3D o video).
-                    </FieldDescription>
-                  </Field>
-                </FieldGroup>
-              </FieldSet>
+              <UploadFields
+                kind="Recorrido"
+                file={file}
+                filePreview={filePreview}
+                title={title}
+                loading={loading}
+                progress={progress}
+                onFile={onFile}
+                onTitle={onTitle}
+              />
             </TabsContent>
           </Tabs>
           <Alert>
             <CheckCircle2 />
             <AlertTitle>Publicación controlada</AlertTitle>
             <AlertDescription>
-              La carga se previsualiza en esta sesión. Al conectar almacenamiento, el recurso deberá
-              procesarse y aprobarse antes de salir en el sitio público.
+              El archivo se carga al bucket del proyecto y se registra en la base de datos.
             </AlertDescription>
           </Alert>
           <DialogFooter className="gap-3 border-t pt-5 sm:space-x-0">
@@ -489,7 +457,7 @@ function MediaUploadDialog({
             </Button>
             <Button type="submit" disabled={!ready || loading}>
               {loading ? <Spinner data-icon="inline-start" /> : <Upload data-icon="inline-start" />}
-              {loading ? "Preparando recurso" : "Añadir a biblioteca"}
+              {loading ? "Subiendo recurso" : "Añadir a biblioteca"}
             </Button>
           </DialogFooter>
         </form>
@@ -517,9 +485,16 @@ function UploadFields({
   onTitle: (value: string) => void;
 }) {
   const isPlan = kind === "Plano";
+  const isTour = kind === "Recorrido";
   return (
     <FieldSet className="mt-4">
-      <FieldLegend>{isPlan ? "Plano o documento técnico" : "Imagen de galería"}</FieldLegend>
+      <FieldLegend>
+        {isPlan
+          ? "Plano o documento técnico"
+          : isTour
+            ? "Imagen panorámica o recorrido"
+            : "Imagen de galería"}
+      </FieldLegend>
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="media-title">Nombre visible</FieldLabel>
@@ -527,14 +502,20 @@ function UploadFields({
             id="media-title"
             value={title}
             onChange={(event) => onTitle(event.target.value)}
-            placeholder={isPlan ? "Plano de implantación" : "Vista exterior al atardecer"}
+            placeholder={
+              isTour
+                ? "Recorrido 360° del proyecto"
+                : isPlan
+                  ? "Plano de implantación"
+                  : "Vista exterior al atardecer"
+            }
           />
         </Field>
         <Field>
           <Input
             id="media-file"
             type="file"
-            accept={isPlan ? "image/*,.pdf" : "image/*"}
+            accept={isPlan ? "image/*,.pdf,.svg" : "image/*"}
             onChange={onFile}
             className="sr-only"
           />
@@ -549,7 +530,11 @@ function UploadFields({
               {loading ? "Preparando vista previa" : "Arrastra o selecciona un archivo"}
             </span>
             <span className="text-xs font-normal text-muted-foreground">
-              {isPlan ? "PDF, SVG, PNG o JPG" : "JPG, PNG o WEBP"}
+              {isPlan
+                ? "PDF, SVG, PNG o JPG"
+                : isTour
+                  ? "JPG, PNG o WEBP panorámico"
+                  : "JPG, PNG o WEBP"}
             </span>
             {loading && <Progress value={progress} className="max-w-56" />}
           </FieldLabel>

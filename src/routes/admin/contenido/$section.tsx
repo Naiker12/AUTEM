@@ -26,6 +26,11 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { publicProjectMediaUrl } from "@/lib/project-repository";
+import { publicSiteMediaUrl } from "@/lib/site-repository";
+
+const siteImage = (fileName: string) =>
+  publicSiteMediaUrl(`00000000-0000-0000-0000-000000000001/images/${fileName}`);
 
 export const Route = createFileRoute("/admin/contenido/$section")({
   component: ContentSectionPage,
@@ -60,7 +65,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Presentación",
     publicLabel: "Introducción",
     description: "El bloque que introduce el enfoque y la propuesta de valor de AUTEM.",
-    image: `${import.meta.env.BASE_URL}images/autem-proceso-territorio.png`,
+    image: siteImage("autem-proceso-territorio.png"),
     imageAlt: "Ilustración territorial de AUTEM",
     eyebrow: "Nuestra visión",
     heading: "Diseñamos espacios atemporales con propósito.",
@@ -71,7 +76,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Servicios",
     publicLabel: "Servicios",
     description: "La propuesta de servicios que se muestra en la página principal.",
-    image: `${import.meta.env.BASE_URL}images/carousel-modern-lounge.jpg`,
+    image: siteImage("carousel-modern-lounge.jpg"),
     imageAlt: "Interior contemporáneo",
     eyebrow: "Soluciones integrales",
     heading: "Desde el concepto hasta la entrega.",
@@ -82,7 +87,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Áreas de trabajo",
     publicLabel: "Especialidades",
     description: "Los ámbitos de diseño y desarrollo que la marca comunica públicamente.",
-    image: `${import.meta.env.BASE_URL}images/carousel-forest-pavilion.jpg`,
+    image: siteImage("carousel-forest-pavilion.jpg"),
     imageAlt: "Pabellón en el paisaje",
     eyebrow: "Especialidades",
     heading: "Diseño residencial, comercial y territorial.",
@@ -93,7 +98,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Proceso",
     publicLabel: "Metodología",
     description: "La sección que explica cómo AUTEM acompaña cada proyecto.",
-    image: `${import.meta.env.BASE_URL}images/autem-proceso-territorio.png`,
+    image: siteImage("autem-proceso-territorio.png"),
     imageAlt: "Proceso de diseño territorial",
     eyebrow: "Metodología",
     heading: "Un proceso claro para avanzar con confianza.",
@@ -105,7 +110,10 @@ const sections: Record<SectionKey, SectionDefinition> = {
     publicLabel: "Recursos",
     description:
       "Documentos, planos, visualizaciones y materiales que apoyan la decisión comercial.",
-    image: `${import.meta.env.BASE_URL}projects/lotes-360/masterplan-panorama-360.jpg`,
+    image:
+      publicProjectMediaUrl(
+        "00000000-0000-0000-0000-000000000101/tour/masterplan-panorama-360.jpg",
+      ) ?? "",
     imageAlt: "Masterplan de Villa Paraíso",
     eyebrow: "Información para decidir",
     heading: "Explora cada proyecto con más detalle.",
@@ -116,7 +124,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Contacto",
     publicLabel: "Contacto",
     description: "La invitación principal a iniciar una conversación con el equipo AUTEM.",
-    image: `${import.meta.env.BASE_URL}images/carousel-sunset-terrace.jpg`,
+    image: siteImage("carousel-sunset-terrace.jpg"),
     imageAlt: "Terraza al atardecer",
     eyebrow: "Hablemos de tu proyecto",
     heading: "Conversemos sobre el próximo paso.",
@@ -127,7 +135,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Nosotros",
     publicLabel: "Estudio",
     description: "La historia, perspectiva y equipo que representan a AUTEM.",
-    image: `${import.meta.env.BASE_URL}images/provencal-architecture-stone.jpg`,
+    image: siteImage("provencal-architecture-stone.jpg"),
     imageAlt: "Arquitectura en piedra",
     eyebrow: "AUTEM",
     heading: "Arquitectura que escucha el lugar.",
@@ -138,7 +146,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Navegación y pie",
     publicLabel: "Navegación",
     description: "Los mensajes de cierre, enlaces globales y accesos persistentes del sitio.",
-    image: `${import.meta.env.BASE_URL}images/provencal-oak-detail.jpg`,
+    image: siteImage("provencal-oak-detail.jpg"),
     imageAlt: "Detalle de material natural",
     eyebrow: "Siempre cerca",
     heading: "Información clara en cada recorrido.",
@@ -149,7 +157,7 @@ const sections: Record<SectionKey, SectionDefinition> = {
     title: "Privacidad",
     publicLabel: "Confianza y transparencia",
     description: "La información legal y el mensaje de manejo responsable de datos personales.",
-    image: `${import.meta.env.BASE_URL}images/territory-masterplan-nature.jpg`,
+    image: siteImage("territory-masterplan-nature.jpg"),
     imageAlt: "Territorio y naturaleza",
     eyebrow: "Tus datos protegidos",
     heading: "Una relación basada en confianza.",

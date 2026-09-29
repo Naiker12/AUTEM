@@ -27,6 +27,7 @@ export interface Property {
   floorPlanPdf?: string;
   floorPlanImage?: string;
   lotViewImage?: string;
+  tourImage?: string;
   images?: string[];
 }
 
@@ -68,7 +69,7 @@ export const properties: Property[] = [
     bathrooms: 0,
     type: "terreno",
     tags: ["3D Tour"],
-    image: `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
+    image: "",
     lat: 10.436829,
     lng: -75.356179,
     description:
@@ -85,17 +86,10 @@ export const properties: Property[] = [
     ],
     floorPlan: "Parcelación campestre · 343 lotes",
     year: 2026,
-    floorPlanImage: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
-    lotViewImage: `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
+    floorPlanImage: undefined,
+    lotViewImage: undefined,
     floorPlanPdf: undefined,
-    images: [
-      `${BASE}images/autem-villa-paraiso-aerial-v2.png`,
-      `${BASE}projects/lotes-360/acceso-render.png`,
-      `${BASE}projects/lotes-360/lot-l07-entorno-verde.png`,
-      `${BASE}projects/lotes-360/lot-l12-quebrada.png`,
-      `${BASE}projects/lotes-360/lot-l18-zona-social.png`,
-      `${BASE}projects/villa-paraiso/masterplan-clean.svg`,
-    ],
+    images: [],
   },
 ];
 

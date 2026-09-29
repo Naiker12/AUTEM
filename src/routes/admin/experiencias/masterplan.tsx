@@ -37,7 +37,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { PANORAMA_360 } from "@/data/lots";
+import { publicProjectMediaUrl } from "@/lib/project-repository";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/experiencias/masterplan")({
@@ -74,7 +74,10 @@ const initialScenes: Scene[] = [
     description: "Escena de entrada para ubicar al visitante en Villa Paraíso.",
     enabled: true,
     hasMedia: true,
-    sourceUrl: PANORAMA_360.image,
+    sourceUrl:
+      publicProjectMediaUrl(
+        "00000000-0000-0000-0000-000000000101/tour/masterplan-panorama-360.jpg",
+      ) ?? "",
     hotspotCount: 4,
   },
   {
@@ -377,7 +380,11 @@ function MasterplanExperiencePage() {
           <CardContent className="p-4 sm:p-6">
             <div className="relative isolate aspect-[16/9] overflow-hidden rounded-xl bg-foreground">
               <img
-                src={PANORAMA_360.image}
+                src={
+                  publicProjectMediaUrl(
+                    "00000000-0000-0000-0000-000000000101/tour/masterplan-panorama-360.jpg",
+                  ) ?? ""
+                }
                 alt="Panorámica aérea de Villa Paraíso"
                 className="size-full object-cover opacity-90"
               />

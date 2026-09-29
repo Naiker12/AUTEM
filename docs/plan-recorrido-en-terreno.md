@@ -30,7 +30,7 @@
 | --------------------------------------- | ------------------- | ------------------------------------------------------------------------ |
 | React 19 + TypeScript + TanStack Router | Disponible          | Pantalla, estado, rutas y separación por componentes.                    |
 | `MasterplanSvgViewer`                   | Disponible          | Se reutiliza como plano principal; no se crea un mapa desde cero.        |
-| `villa-paraiso-geometry.json`           | Disponible          | Ya contiene los 343 lotes, centroides y contornos SVG.                   |
+| Tabla `lots` de Supabase                | Disponible          | Fuente publicada de los 343 lotes, centroides y contornos SVG.           |
 | `villa-paraiso-layers.json`             | Disponible          | Ya contiene vías, calzadas, senderos y áreas verdes visuales.            |
 | DWG/DXF de Villa Paraíso                | Disponible          | Fuente para validar o dibujar la red navegable de vías.                  |
 | Leaflet                                 | Disponible          | Mapa exterior y contexto geográfico; no reemplaza el plano SVG interior. |

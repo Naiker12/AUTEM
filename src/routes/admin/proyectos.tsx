@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CheckCircle2,
+  CloudUpload,
+  ExternalLink,
   FileText,
   ImageIcon,
+  Loader2,
   MapPin,
   Pencil,
   Plus,
+  RefreshCw,
   Search,
+  Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 
@@ -53,20 +59,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
-import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import {
   createManagedProject,
+  deleteProjectMedia,
   listManagedProjects,
+  listProjectMedia,
   publicProjectMediaUrl,
   updateManagedProject,
+  uploadProjectMedia,
   type ManagedProjectRecord,
+  type ProjectMediaRecord,
 } from "@/lib/project-repository";
 
 export const Route = createFileRoute("/admin/proyectos")({ component: ProjectsPage });
 
 type ProjectStatus = "Publicado" | "Borrador";
+
 type ManagedProject = {
   id: string;
   slug: string;
@@ -77,7 +87,9 @@ type ManagedProject = {
   galleryCount: number;
   lotCount: number;
   status: ProjectStatus;
+  raw: ManagedProjectRecord;
 };
+
 type ProjectDraft = {
   name: string;
   slug: string;
@@ -88,7 +100,7 @@ type ProjectDraft = {
   description: string;
   tourUrl: string;
 };
-type MediaPreview = { name: string; type: string; preview?: string };
+
 const emptyDraft: ProjectDraft = {
   name: "",
   slug: "",
@@ -99,6 +111,7 @@ const emptyDraft: ProjectDraft = {
   description: "",
   tourUrl: "",
 };
+
 const humanizeType = (type: PropertyType) =>
   PROPERTY_TYPES.find((item) => item.value === type)?.label ?? type;
 
@@ -110,9 +123,10 @@ function mapProjectRecord(record: ManagedProjectRecord): ManagedProject {
     location: record.location,
     type: record.property_type,
     image: publicProjectMediaUrl(record.cover_path) ?? "",
-    galleryCount: 0,
-    lotCount: 0,
+    galleryCount: record.gallery_count ?? 0,
+    lotCount: record.lot_count ?? 0,
     status: record.status === "published" ? "Publicado" : "Borrador",
+    raw: record,
   };
 }
 
@@ -126,13 +140,18 @@ function ProjectsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ManagedProject | null>(null);
   const [draft, setDraft] = useState<ProjectDraft>(emptyDraft);
-  const [coverPreview, setCoverPreview] = useState("");
-  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
-  const [masterplanFiles, setMasterplanFiles] = useState<MediaPreview[]>([]);
-  const [documentFiles, setDocumentFiles] = useState<MediaPreview[]>([]);
-  const [mediaLoading, setMediaLoading] = useState<string | null>(null);
-  const [mediaProgress, setMediaProgress] = useState(0);
+
+  // Archivos reales y medios en Supabase
+  const [existingMedia, setExistingMedia] = useState<ProjectMediaRecord[]>([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>("");
+  const [pendingGalleryFiles, setPendingGalleryFiles] = useState<File[]>([]);
+  const [pendingMasterplanFile, setPendingMasterplanFile] = useState<File | null>(null);
+  const [pendingDocumentFiles, setPendingDocumentFiles] = useState<File[]>([]);
+
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -158,6 +177,7 @@ function ProjectsPage() {
       isActive = false;
     };
   }, []);
+
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es-CO");
     return projects.filter(
@@ -169,70 +189,72 @@ function ProjectsPage() {
           )),
     );
   }, [projects, query, status]);
+
   const updateDraft = <Key extends keyof ProjectDraft>(key: Key, value: ProjectDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
+
   const openNewProject = () => {
     setEditingProject(null);
     setDraft(emptyDraft);
+    setCoverFile(null);
     setCoverPreview("");
-    setGalleryPreviews([]);
-    setMasterplanFiles([]);
-    setDocumentFiles([]);
+    setPendingGalleryFiles([]);
+    setPendingMasterplanFile(null);
+    setPendingDocumentFiles([]);
+    setExistingMedia([]);
     setDialogOpen(true);
   };
-  const openEditProject = (project: ManagedProject) => {
+
+  const openEditProject = async (project: ManagedProject) => {
     setEditingProject(project);
     setDraft({
-      ...emptyDraft,
       name: project.name,
       slug: project.slug,
       type: project.type,
       location: project.location,
+      price: project.raw.price_label ?? "",
+      area: project.raw.area_label ?? "",
+      description: project.raw.description ?? "",
+      tourUrl: project.raw.tour_url ?? "",
     });
+    setCoverFile(null);
     setCoverPreview(project.image);
-    setGalleryPreviews([]);
-    setMasterplanFiles([]);
-    setDocumentFiles([]);
+    setPendingGalleryFiles([]);
+    setPendingMasterplanFile(null);
+    setPendingDocumentFiles([]);
+    setExistingMedia([]);
     setDialogOpen(true);
+
+    setLoadingMedia(true);
+    try {
+      const media = await listProjectMedia(project.id);
+      setExistingMedia(media);
+    } catch (error) {
+      console.warn("No fue posible cargar los medios existentes del proyecto:", error);
+    } finally {
+      setLoadingMedia(false);
+    }
   };
-  const createPreviews = (
-    event: ChangeEvent<HTMLInputElement>,
-    target: "cover" | "gallery" | "masterplan" | "documents",
-  ) => processMediaFiles(Array.from(event.target.files ?? []), target);
-  const processMediaFiles = (
-    files: File[],
-    target: "cover" | "gallery" | "masterplan" | "documents",
-  ) => {
-    if (!files.length) return;
-    setMediaLoading(target);
-    setMediaProgress(12);
-    const progressTimer = window.setInterval(() => {
-      setMediaProgress((current) => Math.min(current + 18, 88));
-    }, 90);
-    window.setTimeout(() => {
-      const previews = files.map((file) => URL.createObjectURL(file));
-      if (target === "cover") setCoverPreview(previews[0] ?? "");
-      else if (target === "gallery") setGalleryPreviews(previews);
-      else {
-        const media = files.map((file) => ({
-          name: file.name,
-          type: file.type,
-          preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-        }));
-        if (target === "masterplan") setMasterplanFiles(media);
-        else setDocumentFiles(media);
+
+  const handleDeleteExistingMedia = async (item: ProjectMediaRecord) => {
+    if (!editingProject) return;
+    try {
+      await deleteProjectMedia(item.id, item.storage_path, editingProject.id, item.media_type);
+      setExistingMedia((prev) => prev.filter((m) => m.id !== item.id));
+      if (item.media_type === "cover") {
+        setCoverPreview("");
       }
-      window.clearInterval(progressTimer);
-      setMediaProgress(100);
-      window.setTimeout(() => {
-        setMediaLoading(null);
-        setMediaProgress(0);
-      }, 280);
-    }, 620);
+    } catch (error) {
+      setDataError(
+        error instanceof Error ? error.message : "No fue posible eliminar el archivo multimedia.",
+      );
+    }
   };
+
   const saveProject = async () => {
     if (!draft.name.trim() || !draft.location.trim() || !organizationId) return;
     setIsSaving(true);
+    setSaveStatus("Guardando información base…");
     setDataError(null);
     try {
       const input = {
@@ -247,22 +269,63 @@ function ProjectsPage() {
         description: draft.description,
         tourUrl: draft.tourUrl,
       };
+
       const saved = editingProject
         ? await updateManagedProject(editingProject.id, input)
         : await createManagedProject(organizationId, input);
-      const project = mapProjectRecord(saved);
-      setProjects((current) =>
-        editingProject
-          ? current.map((item) => (item.id === project.id ? project : item))
-          : [project, ...current],
-      );
+
+      // 1. Subida de portada a Supabase Storage
+      if (coverFile) {
+        setSaveStatus("Subiendo portada a Supabase Storage…");
+        await uploadProjectMedia(saved.id, coverFile, "cover", 0);
+      }
+
+      // 2. Subida de galería
+      if (pendingGalleryFiles.length > 0) {
+        const existingGalleryCount = existingMedia.filter((m) => m.media_type === "gallery").length;
+        for (let i = 0; i < pendingGalleryFiles.length; i++) {
+          setSaveStatus(`Subiendo imagen ${i + 1} de ${pendingGalleryFiles.length} a la galería…`);
+          await uploadProjectMedia(
+            saved.id,
+            pendingGalleryFiles[i],
+            "gallery",
+            existingGalleryCount + i,
+          );
+        }
+      }
+
+      // 3. Subida de plano urbanístico / masterplan
+      if (pendingMasterplanFile) {
+        setSaveStatus("Subiendo plano urbanístico a Supabase Storage…");
+        await uploadProjectMedia(saved.id, pendingMasterplanFile, "masterplan", 0);
+      }
+
+      // 4. Subida de documentos
+      if (pendingDocumentFiles.length > 0) {
+        const existingDocCount = existingMedia.filter((m) => m.media_type === "document").length;
+        for (let i = 0; i < pendingDocumentFiles.length; i++) {
+          setSaveStatus(`Subiendo documento ${i + 1} de ${pendingDocumentFiles.length}…`);
+          await uploadProjectMedia(
+            saved.id,
+            pendingDocumentFiles[i],
+            "document",
+            existingDocCount + i,
+          );
+        }
+      }
+
+      // Recargar lista actualizada
+      const records = await listManagedProjects(organizationId);
+      setProjects(records.map(mapProjectRecord));
       setDialogOpen(false);
     } catch (error) {
       setDataError(error instanceof Error ? error.message : "No fue posible guardar el proyecto.");
     } finally {
       setIsSaving(false);
+      setSaveStatus(null);
     }
   };
+
   return (
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
       <section className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -275,20 +338,28 @@ function ProjectsPage() {
             </p>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Gestiona lo que se publica y los recursos visuales de cada desarrollo.
+            Gestiona los desarrollos y los recursos multimedia almacenados en Supabase Storage.
           </p>
         </div>
         <Button className="shrink-0 rounded-full" onClick={openNewProject}>
           <Plus data-icon="inline-start" /> Nuevo proyecto
         </Button>
       </section>
+
+      {dataError && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertTitle>Ocurrió un error</AlertTitle>
+          <AlertDescription>{dataError}</AlertDescription>
+        </Alert>
+      )}
+
       <Card className="mt-7 rounded-2xl">
         <CardHeader className="gap-5">
           <div className="flex flex-col gap-1">
             <CardTitle className="font-serif text-2xl">Catálogo de proyectos</CardTitle>
             <CardDescription>
-              Cada proyecto reúne su ficha, portada, galería, plano urbanístico y experiencia
-              digital.
+              Cada proyecto reúne su ficha técnica, portada, galería, plano urbanístico y
+              experiencia digital con persistencia en Supabase.
             </CardDescription>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -298,58 +369,73 @@ function ProjectsPage() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="pl-9"
-                placeholder="Buscar por proyecto, ubicación o identificador"
-                aria-label="Buscar proyectos"
+                placeholder="Buscar por nombre, ubicación o slug…"
               />
             </div>
-            <Select
-              value={status}
-              onValueChange={(value) => setStatus(value as "todos" | ProjectStatus)}
-            >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por estado">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="todos">Todos los estados</SelectItem>
-                  <SelectItem value="Publicado">Publicado</SelectItem>
-                  <SelectItem value="Borrador">Borrador</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-48">
+              <Select
+                value={status}
+                onValueChange={(value) => setStatus(value as "todos" | ProjectStatus)}
+              >
+                <SelectTrigger aria-label="Filtrar por estado">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="todos">Todos los estados</SelectItem>
+                    <SelectItem value="Publicado">Publicado</SelectItem>
+                    <SelectItem value="Borrador">Borrador</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {dataState === "loading" ? (
-            <div className="flex min-h-40 items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Spinner className="size-4" /> Cargando proyectos…
+            <div className="flex items-center justify-center py-16">
+              <Spinner className="size-8 text-accent" />
             </div>
-          ) : dataState === "error" ? (
-            <Alert variant="destructive">
-              <AlertTitle>No se pudo conectar el catálogo</AlertTitle>
-              <AlertDescription>{dataError}</AlertDescription>
-            </Alert>
           ) : (
             <ProjectCatalog projects={filteredProjects} onEdit={openEditProject} />
           )}
         </CardContent>
       </Card>
+
       <ProjectDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         draft={draft}
         editingProject={editingProject}
+        existingMedia={existingMedia}
+        loadingMedia={loadingMedia}
         coverPreview={coverPreview}
-        galleryPreviews={galleryPreviews}
-        masterplanFiles={masterplanFiles}
-        documentFiles={documentFiles}
-        mediaLoading={mediaLoading}
-        mediaProgress={mediaProgress}
+        pendingGalleryFiles={pendingGalleryFiles}
+        pendingMasterplanFile={pendingMasterplanFile}
+        pendingDocumentFiles={pendingDocumentFiles}
         onDraftChange={updateDraft}
-        onSelectMedia={createPreviews}
-        onDropMedia={processMediaFiles}
+        onSelectCover={(file) => {
+          setCoverFile(file);
+          setCoverPreview(URL.createObjectURL(file));
+        }}
+        onRemoveCover={() => {
+          setCoverFile(null);
+          setCoverPreview(editingProject?.image ?? "");
+        }}
+        onAddGalleryFiles={(files) => setPendingGalleryFiles((prev) => [...prev, ...files])}
+        onRemovePendingGalleryFile={(index) =>
+          setPendingGalleryFiles((prev) => prev.filter((_, i) => i !== index))
+        }
+        onSelectMasterplan={(file) => setPendingMasterplanFile(file)}
+        onRemovePendingMasterplan={() => setPendingMasterplanFile(null)}
+        onAddDocumentFiles={(files) => setPendingDocumentFiles((prev) => [...prev, ...files])}
+        onRemovePendingDocumentFile={(index) =>
+          setPendingDocumentFiles((prev) => prev.filter((_, i) => i !== index))
+        }
+        onDeleteExistingMedia={handleDeleteExistingMedia}
         onSave={saveProject}
         isSaving={isSaving}
+        saveStatus={saveStatus}
       />
     </main>
   );
@@ -376,7 +462,7 @@ function ProjectCatalog({
         <TableRow>
           <TableHead>Proyecto</TableHead>
           <TableHead className="hidden lg:table-cell">Ubicación</TableHead>
-          <TableHead className="hidden md:table-cell">Recursos</TableHead>
+          <TableHead className="hidden md:table-cell">Referencia</TableHead>
           <TableHead>Estado</TableHead>
           <TableHead className="w-12">
             <span className="sr-only">Acciones</span>
@@ -388,13 +474,28 @@ function ProjectCatalog({
           <TableRow key={project.id}>
             <TableCell>
               <div className="flex min-w-64 items-center gap-3">
-                <img src={project.image} alt="" className="size-12 rounded-lg object-cover" />
+                {project.image ? (
+                  <img
+                    src={project.image}
+                    alt=""
+                    className="size-12 rounded-lg border object-cover shadow-sm"
+                  />
+                ) : (
+                  <div className="flex size-12 items-center justify-center rounded-lg border bg-muted/40 text-muted-foreground">
+                    <ImageIcon className="size-5" />
+                  </div>
+                )}
                 <div className="flex min-w-0 flex-col gap-1">
                   <p className="truncate font-medium text-foreground">{project.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {humanizeType(project.type)} · {project.slug}
+                    {humanizeType(project.type)} ·{" "}
+                    {project.lotCount > 0 ? `${project.lotCount} lotes` : "Sin lotes"} ·{" "}
+                    {project.galleryCount > 0 ? `${project.galleryCount} fotos` : "Sin fotos"}
                   </p>
-                  <p className="text-xs text-muted-foreground lg:hidden">{project.location}</p>
+                  <p className="text-xs text-muted-foreground lg:hidden">
+                    {project.location} ·{" "}
+                    {project.lotCount > 0 ? `${project.lotCount} lotes` : "Sin lotes"}
+                  </p>
                 </div>
               </div>
             </TableCell>
@@ -405,9 +506,11 @@ function ProjectCatalog({
               </span>
             </TableCell>
             <TableCell className="hidden md:table-cell">
-              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                <span>{project.galleryCount} imágenes en galería</span>
-                <span>{project.lotCount} lotes configurados</span>
+              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {project.raw.price_label || "Sin precio asignado"}
+                </span>
+                <span>{project.raw.area_label || "Área por definir"}</span>
               </div>
             </TableCell>
             <TableCell>
@@ -432,30 +535,29 @@ function ProjectCatalog({
   );
 }
 
-type MediaSelectorProps = {
+type MediaDropzoneProps = {
   id: string;
   accept: string;
   multiple?: boolean;
   title: string;
   description: string;
-  loading: boolean;
-  progress: number;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onDropFiles: (files: File[]) => void;
+  onFilesSelected: (files: File[]) => void;
 };
 
-function MediaSelector({
+function MediaDropzone({
   id,
   accept,
   multiple,
   title,
   description,
-  loading,
-  progress,
-  onChange,
-  onDropFiles,
-}: MediaSelectorProps) {
+  onFilesSelected,
+}: MediaDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    onFilesSelected(Array.from(files));
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -464,7 +566,10 @@ function MediaSelector({
         type="file"
         accept={accept}
         multiple={multiple}
-        onChange={onChange}
+        onChange={(event) => {
+          handleFiles(event.target.files);
+          event.target.value = "";
+        }}
         className="sr-only"
       />
       <FieldLabel
@@ -478,76 +583,26 @@ function MediaSelector({
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          onDropFiles(Array.from(event.dataTransfer.files));
+          handleFiles(event.dataTransfer.files);
         }}
         className={cn(
-          "group flex min-h-36 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/30 px-5 py-4 text-center transition-colors hover:border-accent hover:bg-accent/5",
+          "group flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/20 px-5 py-4 text-center transition-colors hover:border-accent hover:bg-accent/5",
           isDragging && "border-accent bg-accent/10",
         )}
       >
-        <span className="admin-upload-mark flex size-12 items-center justify-center rounded-full border bg-background shadow-sm">
-          {loading ? <Spinner className="size-5 text-accent" /> : <AutemBrandIcon size={28} />}
+        <span className="flex size-11 items-center justify-center rounded-full border bg-background shadow-sm">
+          <AutemBrandIcon size={24} />
         </span>
-        <span className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-foreground">
-            {loading ? "Preparando vista previa" : title}
-          </span>
-          <span className="max-w-72 text-xs font-normal leading-5 text-muted-foreground">
-            {loading
-              ? "Procesando el archivo seleccionado…"
-              : `${description} Arrastra o selecciona.`}
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground">{title}</span>
+          <span className="max-w-72 text-xs font-normal leading-4 text-muted-foreground">
+            {description} Arrastra o selecciona.
           </span>
         </span>
-        {loading ? (
-          <Progress value={progress} className="mt-1 max-w-56" />
-        ) : (
-          <span className="text-xs font-medium text-accent">
-            Seleccionar {multiple ? "archivos" : "archivo"}
-          </span>
-        )}
+        <span className="text-xs font-medium text-accent">
+          Seleccionar {multiple ? "archivos" : "archivo"}
+        </span>
       </FieldLabel>
-    </div>
-  );
-}
-
-function FilePreviews({ files }: { files: MediaPreview[] }) {
-  if (!files.length) return null;
-
-  return (
-    <div className="mt-2 grid gap-2">
-      {files.map((file) => (
-        <div
-          key={`${file.name}-${file.type}`}
-          className="flex items-center gap-3 rounded-lg border bg-muted/30 p-2"
-        >
-          {file.preview ? (
-            <img
-              src={file.preview}
-              alt={`Vista previa de ${file.name}`}
-              className="size-12 rounded-md object-cover"
-            />
-          ) : (
-            <div className="flex size-12 items-center justify-center rounded-md bg-background text-muted-foreground">
-              <FileText className="size-5" />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {file.type === "application/pdf"
-                ? "Documento PDF"
-                : file.type.startsWith("image/")
-                  ? "Imagen de plano"
-                  : "Documento seleccionado"}
-            </p>
-          </div>
-          {file.preview ? (
-            <ImageIcon className="size-4 text-muted-foreground" />
-          ) : (
-            <Badge variant="outline">PDF</Badge>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
@@ -557,39 +612,58 @@ type ProjectDialogProps = {
   onOpenChange: (open: boolean) => void;
   draft: ProjectDraft;
   editingProject: ManagedProject | null;
+  existingMedia: ProjectMediaRecord[];
+  loadingMedia: boolean;
   coverPreview: string;
-  galleryPreviews: string[];
-  masterplanFiles: MediaPreview[];
-  documentFiles: MediaPreview[];
-  mediaLoading: string | null;
-  mediaProgress: number;
+  pendingGalleryFiles: File[];
+  pendingMasterplanFile: File | null;
+  pendingDocumentFiles: File[];
   onDraftChange: <Key extends keyof ProjectDraft>(key: Key, value: ProjectDraft[Key]) => void;
-  onSelectMedia: (
-    event: ChangeEvent<HTMLInputElement>,
-    target: "cover" | "gallery" | "masterplan" | "documents",
-  ) => void;
-  onDropMedia: (files: File[], target: "cover" | "gallery" | "masterplan" | "documents") => void;
+  onSelectCover: (file: File) => void;
+  onRemoveCover: () => void;
+  onAddGalleryFiles: (files: File[]) => void;
+  onRemovePendingGalleryFile: (index: number) => void;
+  onSelectMasterplan: (file: File) => void;
+  onRemovePendingMasterplan: () => void;
+  onAddDocumentFiles: (files: File[]) => void;
+  onRemovePendingDocumentFile: (index: number) => void;
+  onDeleteExistingMedia: (item: ProjectMediaRecord) => void;
   onSave: () => void;
   isSaving: boolean;
+  saveStatus: string | null;
 };
+
 function ProjectDialog({
   open,
   onOpenChange,
   draft,
   editingProject,
+  existingMedia,
+  loadingMedia,
   coverPreview,
-  galleryPreviews,
-  masterplanFiles,
-  documentFiles,
-  mediaLoading,
-  mediaProgress,
+  pendingGalleryFiles,
+  pendingMasterplanFile,
+  pendingDocumentFiles,
   onDraftChange,
-  onSelectMedia,
-  onDropMedia,
+  onSelectCover,
+  onRemoveCover,
+  onAddGalleryFiles,
+  onRemovePendingGalleryFile,
+  onSelectMasterplan,
+  onRemovePendingMasterplan,
+  onAddDocumentFiles,
+  onRemovePendingDocumentFile,
+  onDeleteExistingMedia,
   onSave,
   isSaving,
+  saveStatus,
 }: ProjectDialogProps) {
   const isIncomplete = !draft.name.trim() || !draft.location.trim();
+
+  const existingGallery = existingMedia.filter((m) => m.media_type === "gallery");
+  const existingMasterplan = existingMedia.find((m) => m.media_type === "masterplan");
+  const existingDocuments = existingMedia.filter((m) => m.media_type === "document");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100svh-2rem)] max-w-4xl gap-0 overflow-hidden p-0">
@@ -598,10 +672,11 @@ function ProjectDialog({
             {editingProject ? `Editar ${editingProject.name}` : "Nuevo proyecto"}
           </DialogTitle>
           <DialogDescription>
-            Completa la ficha y organiza los recursos que verán los visitantes en la experiencia
-            pública.
+            Configura la ficha y sube los recursos visuales que se almacenan directamente en
+            Supabase Storage.
           </DialogDescription>
         </DialogHeader>
+
         <form
           className="flex max-h-[calc(100svh-14rem)] flex-col gap-5 overflow-y-auto px-6 py-5"
           onSubmit={(event) => {
@@ -615,6 +690,7 @@ function ProjectDialog({
               <TabsTrigger value="medios">Medios y galería</TabsTrigger>
               <TabsTrigger value="experiencia">Experiencia</TabsTrigger>
             </TabsList>
+
             <TabsContent value="informacion">
               <FieldSet>
                 <FieldLegend>Ficha del proyecto</FieldLegend>
@@ -629,7 +705,7 @@ function ProjectDialog({
                     />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="project-slug">Identificador URL</FieldLabel>
+                    <FieldLabel htmlFor="project-slug">Identificador URL (slug)</FieldLabel>
                     <Input
                       id="project-slug"
                       value={draft.slug}
@@ -637,7 +713,7 @@ function ProjectDialog({
                       placeholder="villa-paraiso"
                     />
                     <FieldDescription>
-                      Se usará en la dirección pública del proyecto.
+                      Identificador único en minúsculas y guiones.
                     </FieldDescription>
                   </Field>
                   <Field>
@@ -699,95 +775,338 @@ function ProjectDialog({
                 </FieldGroup>
               </FieldSet>
             </TabsContent>
+
             <TabsContent value="medios">
               <FieldSet>
-                <FieldLegend>Portada, galería y planos</FieldLegend>
-                <Alert>
-                  <Upload />
-                  <AlertTitle>Previsualización local</AlertTitle>
+                <FieldLegend>Portada, galería y planos (Supabase Storage)</FieldLegend>
+                <Alert className="border-accent/30 bg-accent/5">
+                  <CloudUpload className="size-4 text-accent" />
+                  <AlertTitle>Almacenamiento persistente en Supabase</AlertTitle>
                   <AlertDescription>
-                    Los archivos se ven en esta sesión; se guardarán permanentemente cuando se
-                    conecte el almacenamiento.
+                    Los archivos se suben al bucket <code>project-media</code> y se vinculan
+                    permanentemente al proyecto.
                   </AlertDescription>
                 </Alert>
-                <FieldGroup className="grid gap-5 md:grid-cols-2">
-                  <Field>
-                    <MediaSelector
-                      id="project-cover"
-                      accept="image/*"
-                      title="Imagen de portada"
-                      description="Usa una imagen horizontal de alta calidad para el catálogo y la ficha pública."
-                      loading={mediaLoading === "cover"}
-                      progress={mediaLoading === "cover" ? mediaProgress : 0}
-                      onChange={(event) => onSelectMedia(event, "cover")}
-                      onDropFiles={(files) => onDropMedia(files, "cover")}
-                    />
-                    {coverPreview && (
-                      <img
-                        src={coverPreview}
-                        alt="Previsualización de portada"
-                        className="mt-2 aspect-video rounded-lg object-cover"
+
+                {loadingMedia && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Spinner className="size-4 text-accent" /> Cargando archivos existentes del
+                    proyecto…
+                  </div>
+                )}
+
+                <FieldGroup className="grid gap-6 md:grid-cols-2">
+                  {/* Portada */}
+                  <Field className="flex flex-col gap-2">
+                    <FieldLabel>Imagen de portada</FieldLabel>
+                    {coverPreview ? (
+                      <div className="relative overflow-hidden rounded-xl border bg-muted">
+                        <img
+                          src={coverPreview}
+                          alt="Vista previa de portada"
+                          className="aspect-video w-full object-cover"
+                        />
+                        <div className="absolute right-2 top-2 flex gap-1">
+                          <label
+                            htmlFor="project-cover-replace"
+                            className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-background/90 px-2.5 text-xs font-medium shadow-md hover:bg-background"
+                            title="Reemplazar portada"
+                          >
+                            <RefreshCw className="size-3" /> Reemplazar
+                            <input
+                              id="project-cover-replace"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) onSelectCover(f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="rounded-full shadow-md"
+                            onClick={onRemoveCover}
+                            title="Eliminar portada"
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <MediaDropzone
+                        id="project-cover"
+                        accept="image/*"
+                        title="Portada principal"
+                        description="Usa una imagen horizontal nítida. Arrastra o selecciona."
+                        onFilesSelected={(files) => files[0] && onSelectCover(files[0])}
                       />
                     )}
                   </Field>
-                  <Field>
-                    <MediaSelector
-                      id="project-gallery"
-                      accept="image/*"
+
+                  {/* Galería */}
+                  <Field className="flex flex-col gap-2">
+                    <FieldLabel>Galería del proyecto</FieldLabel>
+
+                    {/* Existentes en Supabase */}
+                    {existingGallery.length > 0 && (
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Imágenes guardadas ({existingGallery.length})
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {existingGallery.map((item) => (
+                            <div
+                              key={item.id}
+                              className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                            >
+                              <img
+                                src={item.url || ""}
+                                alt={item.title || "Foto galería"}
+                                className="size-full object-cover"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100"
+                                onClick={() => onDeleteExistingMedia(item)}
+                                title="Eliminar de Supabase"
+                              >
+                                <Trash2 className="size-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pendientes por subir */}
+                    {pendingGalleryFiles.length > 0 && (
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-xs font-medium text-accent">
+                          Pendientes por guardar ({pendingGalleryFiles.length})
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {pendingGalleryFiles.map((file, index) => (
+                            <div
+                              key={`${file.name}-${index}`}
+                              className="group relative aspect-square overflow-hidden rounded-lg border border-accent/40 bg-accent/5"
+                            >
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt=""
+                                className="size-full object-cover"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1 bg-background/80"
+                                onClick={() => onRemovePendingGalleryFile(index)}
+                              >
+                                <X className="size-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Agregar más fotos – siempre visible al final */}
+                    {existingGallery.length > 0 || pendingGalleryFiles.length > 0 ? (
+                      <label
+                        htmlFor="project-gallery-more"
+                        className="inline-flex cursor-pointer items-center gap-2 self-start rounded-full border border-dashed px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+                      >
+                        <Plus className="size-3.5" /> Agregar más fotos
+                        <input
+                          id="project-gallery-more"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="sr-only"
+                          onChange={(e) => {
+                            if (e.target.files) onAddGalleryFiles(Array.from(e.target.files));
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    ) : (
+                      <MediaDropzone
+                        id="project-gallery"
+                        accept="image/*"
+                        multiple
+                        title="Fotos y renders"
+                        description="Agrega vistas aéreas, renders y avances."
+                        onFilesSelected={onAddGalleryFiles}
+                      />
+                    )}
+                  </Field>
+
+                  {/* Plano / Masterplan */}
+                  <Field className="flex flex-col gap-2">
+                    <FieldLabel>Plano urbanístico (Masterplan)</FieldLabel>
+
+                    {pendingMasterplanFile ? (
+                      <div className="flex items-center justify-between rounded-lg border border-accent/40 bg-accent/5 p-2 text-xs">
+                        <span className="flex items-center gap-2 truncate font-medium text-accent">
+                          <Upload className="size-4" />
+                          <span className="truncate">{pendingMasterplanFile.name} (pendiente)</span>
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={onRemovePendingMasterplan}
+                        >
+                          <X className="size-3" />
+                        </Button>
+                      </div>
+                    ) : existingMasterplan ? (
+                      <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-2 text-xs">
+                        <span className="flex items-center gap-2 truncate font-medium">
+                          <FileText className="size-4 text-accent" />
+                          <span className="truncate">
+                            {existingMasterplan.title || "Plano guardado"}
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {existingMasterplan.url && (
+                            <a
+                              href={existingMasterplan.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex size-7 items-center justify-center rounded-md hover:bg-muted"
+                              title="Ver plano"
+                            >
+                              <ExternalLink className="size-3.5 text-muted-foreground" />
+                            </a>
+                          )}
+                          <label
+                            htmlFor="project-masterplan-replace"
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-muted"
+                            title="Reemplazar plano"
+                          >
+                            <RefreshCw className="size-3.5 text-muted-foreground" />
+                            <input
+                              id="project-masterplan-replace"
+                              type="file"
+                              accept="image/*,.pdf,.svg"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) onSelectMasterplan(f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDeleteExistingMedia(existingMasterplan)}
+                            title="Eliminar plano de Supabase"
+                          >
+                            <Trash2 className="size-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <MediaDropzone
+                        id="project-masterplan"
+                        accept="image/*,.pdf,.svg"
+                        title="Plano general"
+                        description="SVG, imagen o PDF del urbanismo."
+                        onFilesSelected={(files) => files[0] && onSelectMasterplan(files[0])}
+                      />
+                    )}
+                  </Field>
+
+                  {/* Documentos */}
+                  <Field className="flex flex-col gap-2">
+                    <FieldLabel>Documentos descargables</FieldLabel>
+                    <MediaDropzone
+                      id="project-documents"
+                      accept=".pdf,image/*"
                       multiple
-                      title="Galería del proyecto"
-                      description="Selecciona renders, fotografías de avance, zonas comunes y detalles."
-                      loading={mediaLoading === "gallery"}
-                      progress={mediaLoading === "gallery" ? mediaProgress : 0}
-                      onChange={(event) => onSelectMedia(event, "gallery")}
-                      onDropFiles={(files) => onDropMedia(files, "gallery")}
+                      title="Brochure o documentos"
+                      description="Fichas comerciales y anexos PDF."
+                      onFilesSelected={onAddDocumentFiles}
                     />
-                    {galleryPreviews.length > 0 && (
-                      <div className="mt-2 grid grid-cols-3 gap-2">
-                        {galleryPreviews.map((image, index) => (
-                          <img
-                            key={image}
-                            src={image}
-                            alt={`Imagen de galería ${index + 1}`}
-                            className="aspect-square rounded-md object-cover"
-                          />
+
+                    {/* Existentes */}
+                    {existingDocuments.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        {existingDocuments.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="flex items-center justify-between rounded-lg border bg-muted/30 p-2 text-xs"
+                          >
+                            <span className="flex items-center gap-2 truncate font-medium">
+                              <FileText className="size-3.5 text-muted-foreground" />
+                              <span className="truncate">{doc.title || "Documento"}</span>
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {doc.url && (
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex size-6 items-center justify-center rounded hover:bg-muted"
+                                >
+                                  <ExternalLink className="size-3 text-muted-foreground" />
+                                </a>
+                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onDeleteExistingMedia(doc)}
+                              >
+                                <Trash2 className="size-3 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pendientes */}
+                    {pendingDocumentFiles.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        {pendingDocumentFiles.map((doc, idx) => (
+                          <div
+                            key={`${doc.name}-${idx}`}
+                            className="flex items-center justify-between rounded-lg border border-accent/40 bg-accent/5 p-2 text-xs"
+                          >
+                            <span className="truncate font-medium text-accent">
+                              {doc.name} (pendiente)
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onRemovePendingDocumentFile(idx)}
+                            >
+                              <X className="size-3" />
+                            </Button>
+                          </div>
                         ))}
                       </div>
                     )}
                   </Field>
-                  <Field>
-                    <MediaSelector
-                      id="project-masterplan"
-                      accept="image/*,.pdf"
-                      title="Plano urbanístico o masterplan"
-                      description="Admite imagen o PDF para la vista de Plano Urbanístico."
-                      loading={mediaLoading === "masterplan"}
-                      progress={mediaLoading === "masterplan" ? mediaProgress : 0}
-                      onChange={(event) => onSelectMedia(event, "masterplan")}
-                      onDropFiles={(files) => onDropMedia(files, "masterplan")}
-                    />
-                    <FilePreviews files={masterplanFiles} />
-                  </Field>
-                  <Field>
-                    <MediaSelector
-                      id="project-floorplan"
-                      accept="image/*,.pdf"
-                      multiple
-                      title="Planos y documentos"
-                      description="Planos de tipologías, fichas comerciales y documentos descargables."
-                      loading={mediaLoading === "documents"}
-                      progress={mediaLoading === "documents" ? mediaProgress : 0}
-                      onChange={(event) => onSelectMedia(event, "documents")}
-                      onDropFiles={(files) => onDropMedia(files, "documents")}
-                    />
-                    <FilePreviews files={documentFiles} />
-                  </Field>
                 </FieldGroup>
               </FieldSet>
             </TabsContent>
+
             <TabsContent value="experiencia">
               <FieldSet>
-                <FieldLegend>Recorridos y disponibilidad</FieldLegend>
+                <FieldLegend>Recorridos y enlaces 3D</FieldLegend>
                 <FieldGroup>
                   <Field>
                     <FieldLabel htmlFor="project-tour">Enlace de recorrido 3D o 360°</FieldLabel>
@@ -799,29 +1118,55 @@ function ProjectDialog({
                       placeholder="https://"
                     />
                     <FieldDescription>
-                      Opcional. Se habilitará al conectar el visor o proveedor de recorridos.
+                      Introduce el enlace a Matterport, visor 360° o experiencia interactiva.
                     </FieldDescription>
                   </Field>
                 </FieldGroup>
                 <Alert>
                   <CheckCircle2 />
-                  <AlertTitle>Qué podrás administrar al conectar datos</AlertTitle>
+                  <AlertTitle>Conexión a Supabase activa</AlertTitle>
                   <AlertDescription>
-                    Inventario de lotes y unidades, disponibilidad, planos, publicaciones, galería,
-                    experiencias 3D y solicitudes comerciales.
+                    La ficha y los archivos multimedia asociados quedan disponibles tanto en la
+                    administración como en el catálogo y vistas públicas del proyecto.
                   </AlertDescription>
                 </Alert>
               </FieldSet>
             </TabsContent>
           </Tabs>
-          <DialogFooter className="mt-1 gap-3 border-t pt-5 sm:space-x-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isIncomplete || isSaving}>
-              <CheckCircle2 data-icon="inline-start" />{" "}
-              {isSaving ? "Guardando…" : editingProject ? "Guardar cambios" : "Crear borrador"}
-            </Button>
+
+          <DialogFooter className="mt-1 flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between sm:space-x-0">
+            {saveStatus ? (
+              <span className="flex items-center gap-2 text-xs text-accent">
+                <Loader2 className="size-3.5 animate-spin" />
+                {saveStatus}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                Los cambios se guardan directamente en Supabase.
+              </span>
+            )}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSaving}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isIncomplete || isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 data-icon="inline-start" className="animate-spin" /> Guardando…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 data-icon="inline-start" />{" "}
+                    {editingProject ? "Guardar cambios" : "Crear proyecto"}
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

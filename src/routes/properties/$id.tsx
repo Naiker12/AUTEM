@@ -4,18 +4,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useContactForm } from "@/hooks/useContactForm";
 import { Download, Map } from "lucide-react";
-import { properties, getPropertyById } from "@/data/properties";
+import { usePublishedProject } from "@/lib/public-projects";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { contactSchema, type ContactFormData } from "@/lib/validation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MagneticButton from "@/components/MagneticButton";
 import { ProjectGallery, ProjectFloorPlan, ProjectMap } from "@/components/projects";
+import { publicSiteMediaUrl } from "@/lib/site-repository";
+
+const socialImage = publicSiteMediaUrl(
+  "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",
+);
 
 export const Route = createFileRoute("/properties/$id")({
   component: PropertyDetail,
   head: ({ params }) => {
-    const prop = getPropertyById(params.id);
     return {
       links: [
         {
@@ -25,17 +29,15 @@ export const Route = createFileRoute("/properties/$id")({
       ],
       meta: [
         {
-          title: prop ? `${prop.name} | AUTEM` : "Propiedad | AUTEM",
+          title: "Propiedad | AUTEM",
         },
         {
           property: "og:image",
-          content:
-            prop?.image || `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+          content: socialImage,
         },
         {
           name: "twitter:image",
-          content:
-            prop?.image || `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+          content: socialImage,
         },
       ],
       scripts: [
@@ -44,18 +46,13 @@ export const Route = createFileRoute("/properties/$id")({
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "RealEstateListing",
-            name: prop?.name || "Propiedad",
-            description: prop?.description || "",
+            name: "Propiedad",
+            description: "",
             url: `https://autem.es/properties/${params.id}`,
-            image: prop?.image || "",
+            image: socialImage,
             offers: {
               "@type": "Offer",
-              price:
-                prop?.price
-                  .replace("Desde ", "")
-                  .replace("$", "")
-                  .replace("M USD", "000000")
-                  .replace("K USD", "000") || "0",
+              price: "0",
               priceCurrency: "USD",
             },
           }),
@@ -67,7 +64,7 @@ export const Route = createFileRoute("/properties/$id")({
 
 function PropertyDetail() {
   const { id } = Route.useParams();
-  const property = getPropertyById(id);
+  const { project: property, loading: isProjectLoading } = usePublishedProject(id);
   const [mortgageAmount, setMortgageAmount] = useState(500000);
   const [mortgageYears, setMortgageYears] = useState(25);
   const [mortgageRate, setMortgageRate] = useState(3.5);
@@ -79,6 +76,10 @@ function PropertyDetail() {
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
   });
+
+  if (!property && isProjectLoading) {
+    return <div className="min-h-screen bg-background" aria-label="Cargando propiedad" />;
+  }
 
   if (!property) {
     return (

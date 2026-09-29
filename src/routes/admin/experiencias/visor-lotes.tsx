@@ -32,8 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatLotArea, formatLotPrice, getLotsByProject, type Lot } from "@/data/lots";
+import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
 import { cn } from "@/lib/utils";
+import { publicProjectMediaUrl } from "@/lib/project-repository";
 
 export const Route = createFileRoute("/admin/experiencias/visor-lotes")({
   component: LotViewerExperiencePage,
@@ -44,10 +46,11 @@ const PROJECT_SLUG = "villa-paraiso";
 const LOTS_PER_PAGE = 10;
 
 function LotViewerExperiencePage() {
-  const lots = useMemo(() => getLotsByProject(PROJECT_SLUG), []);
+  const { project } = usePublishedProject(PROJECT_SLUG);
+  const { lots } = usePublishedLots(project?.id, PROJECT_SLUG);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("Todos");
-  const [selectedLotId, setSelectedLotId] = useState(lots[0]?.id ?? "");
+  const [selectedLotId, setSelectedLotId] = useState("");
   const [showPrice, setShowPrice] = useState(true);
   const [showArea, setShowArea] = useState(true);
   const [showStatus, setShowStatus] = useState(true);
@@ -68,6 +71,10 @@ function LotViewerExperiencePage() {
   useEffect(() => {
     setPage(1);
   }, [query, status]);
+
+  useEffect(() => {
+    if (!selectedLotId && lots[0]) setSelectedLotId(lots[0].id);
+  }, [lots, selectedLotId]);
 
   const selectedLot = lots.find((lot) => lot.id === selectedLotId) ?? filteredLots[0] ?? lots[0];
   const availableLots = lots.filter(
@@ -407,7 +414,11 @@ function LotLocationPreview({ lot }: { lot: Lot }) {
         aria-label={`Ubicación del lote ${lot.id}`}
       >
         <image
-          href="/projects/villa-paraiso/masterplan-clean.svg"
+          href={
+            publicProjectMediaUrl(
+              "00000000-0000-0000-0000-000000000101/masterplan/masterplan-clean.svg",
+            ) ?? ""
+          }
           x="0"
           y="0"
           width="2400"

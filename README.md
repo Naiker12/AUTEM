@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img src="./public/images/autem-hero-approved-scene-v2.png" alt="AUTEM Landing Page Hero" width="100%" />
+  <img src="https://oxdsivweabiglxwtxxqf.supabase.co/storage/v1/object/public/site-media/00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png" alt="AUTEM Landing Page Hero" width="100%" />
 </p>
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black&style=flat-square)](https://react.dev/)

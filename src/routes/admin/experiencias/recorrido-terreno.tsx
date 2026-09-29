@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { lots } from "@/data/lots";
+import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
 import { villaParaisoNavigationSurvey } from "@/data/villa-paraiso-navigation-survey";
 import masterplanLayers from "@/data/villa-paraiso-layers.json";
 import MasterplanSvgViewer from "@/components/project-view/MasterplanSvgViewer";
@@ -63,6 +63,8 @@ const initialPoints: SurveyPoint[] = [
 ];
 
 function TerrainSurveyPage() {
+  const { project } = usePublishedProject("villa-paraiso");
+  const { lots } = usePublishedLots(project?.id, "villa-paraiso");
   const [points, setPoints] = useState<SurveyPoint[]>(initialPoints);
   const [message, setMessage] = useState("");
   const [capturingId, setCapturingId] = useState<string | null>(null);

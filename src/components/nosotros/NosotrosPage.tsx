@@ -1,5 +1,6 @@
 import { ArrowUpRight, MoveRight } from "lucide-react";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
+import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/site-repository";
 import "@/components/home/editorial.css";
 
 const pillars = [
@@ -59,28 +60,28 @@ const categoryDisciplines = [
     number: "01",
     title: "Arquitectura & Interiores",
     meta: "Espacio / Uso / Identidad",
-    image: `${import.meta.env.BASE_URL}images/provencal-architecture-stone.jpg`,
+    mediaKey: "image-provencal-architecture",
     text: "Diseño arquitectónico para residencias campestres, equipamientos, interiores y remodelaciones de alto nivel.",
   },
   {
     number: "02",
     title: "Urbanismo & Loteos",
     meta: "Territorio / Comunidad / Paisaje",
-    image: `${import.meta.env.BASE_URL}images/autem-villa-paraiso-aerial-v2.png`,
+    mediaKey: "image-villa-paraiso-aerial",
     text: "Parcelaciones, condominios campestres, vías de acceso, espacios públicos y paisajismo sostenible.",
   },
   {
     number: "03",
     title: "Topografía & SIG",
     meta: "Datos / Relieve / Precisión",
-    image: `${import.meta.env.BASE_URL}images/autem-proceso-territorio.png`,
+    mediaKey: "image-process-territory",
     text: "Modelos digitales del terreno, curvas de nivel, cartografía satelital y análisis de capas territoriales.",
   },
   {
     number: "04",
     title: "Desarrollo & Modelo 3D",
     meta: "Concepto / Viabilidad / Proyecto",
-    image: `${import.meta.env.BASE_URL}images/carousel-forest-pavilion.jpg`,
+    mediaKey: "image-carousel-forest-pavilion",
     text: "Un proceso integral: estudio de viabilidad, arquitectura, presupuestos rigurosos y supervisión técnica.",
   },
 ];
@@ -139,8 +140,11 @@ const tickerItems = [
 ];
 
 export function NosotrosPage() {
+  const { byPlacement } = usePublicSiteMedia();
   const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, me gustaría conversar sobre un proyecto.")}`;
-  const heroScene = `${import.meta.env.BASE_URL}images/autem-hero-approved-scene-v2.png`;
+  const heroScene = publicSiteMediaUrl(
+    "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",
+  );
 
   return (
     <div className="bg-[#f0ebe6] text-[#4f4742] font-sans antialiased selection:bg-[#4f4742]/15 selection:text-[#4f4742]">
@@ -276,7 +280,9 @@ export function NosotrosPage() {
             <div className="lg:col-span-7">
               <div className="rounded-[8px] overflow-hidden shadow-sm border border-[#4f4742]/15 bg-[#ded5c9]/30">
                 <img
-                  src={`${import.meta.env.BASE_URL}images/provencal-architecture-stone.jpg`}
+                  src={publicSiteMediaUrl(
+                    "00000000-0000-0000-0000-000000000001/images/provencal-architecture-stone.jpg",
+                  )}
                   alt="Arquitectura AUTEM en piedra cálida y madera noble"
                   className="w-full h-[360px] sm:h-[460px] object-cover object-center"
                   loading="lazy"
@@ -362,7 +368,7 @@ export function NosotrosPage() {
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#e8e0d5]">
                   <img
-                    src={cat.image}
+                    src={byPlacement(cat.mediaKey)}
                     alt={cat.title}
                     className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     loading="lazy"

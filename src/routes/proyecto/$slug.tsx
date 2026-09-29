@@ -1,15 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Orbit, PanelLeftOpen, Route as RouteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet } from "@/components/ui/sheet";
-import { getPropertyBySlug } from "@/data/properties";
-import { getLotsByProject, formatLotPrice, formatLotArea } from "@/data/lots";
+import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
+import { formatLotPrice, formatLotArea } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import "@/components/project-view/project-editorial.css";
 import {
-  InteractivePanorama,
   MasterplanSvgViewer,
   LotSelectionPanel,
   ModeSwitcher,
@@ -24,17 +23,18 @@ import {
   type ViewMode,
 } from "@/components/project-view";
 
+const InteractivePanorama = lazy(() => import("@/components/project-view/InteractivePanorama"));
+
 export const Route = createFileRoute("/proyecto/$slug")({
   head: ({ params }) => {
-    const prop = getPropertyBySlug(params.slug);
     return {
       meta: [
         {
-          title: prop ? `${prop.name} | AUTEM` : "Proyecto | AUTEM",
+          title: "Proyecto | AUTEM",
         },
         {
           property: "og:title",
-          content: prop ? `${prop.name} | AUTEM` : "Proyecto | AUTEM",
+          content: "Proyecto | AUTEM",
         },
       ],
     };
@@ -44,8 +44,11 @@ export const Route = createFileRoute("/proyecto/$slug")({
 
 function ProjectView() {
   const { slug } = Route.useParams();
-  const property = getPropertyBySlug(slug);
-  const projectLots = useMemo(() => getLotsByProject(slug), [slug]);
+  const { project: property, loading: isProjectLoading } = usePublishedProject(slug);
+  const { lots: projectLots, loading: areLotsLoading } = usePublishedLots(
+    property?.id,
+    property?.slug ?? slug,
+  );
   const [mode, setMode] = useState<ViewMode>("lot");
   const [introReady, setIntroReady] = useState(false);
   const finishIntro = useCallback(() => setIntroReady(true), []);
@@ -270,6 +273,10 @@ function ProjectView() {
     setIsLotPanelVisible(true);
   };
 
+  if (!property && isProjectLoading) {
+    return <div className="min-h-screen bg-background" aria-label="Cargando proyecto" />;
+  }
+
   if (!property) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6 text-center text-foreground">
@@ -281,6 +288,12 @@ function ProjectView() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  if (areLotsLoading) {
+    return (
+      <div className="min-h-screen bg-background" aria-label="Cargando inventario del proyecto" />
     );
   }
 
@@ -478,37 +491,49 @@ function ProjectView() {
             )}
           </div>
         ) : mode === "tour" ? (
-          <div className="relative flex h-full w-full items-center justify-center bg-black/75">
-            <img
-              src={property.image}
-              alt={property.name}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
-            />
-            <div className="relative z-20 mx-4 max-w-md rounded-[24px] border border-border bg-background/95 p-8 text-center shadow-2xl backdrop-blur-2xl">
-              <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-                <RouteIcon size={30} />
-              </span>
-              <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
-                Próximamente
-              </Badge>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
-                Tour 360° en creación
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes
-                explorar todos los lotes en el Plano Urbanístico.
-              </p>
-              <Button
-                type="button"
-                onClick={() => setMode("lot")}
-                className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                Ver Plano Urbanístico
-              </Button>
+          property.tourImage ? (
+            <Suspense
+              fallback={
+                <div className="grid h-full place-items-center bg-black text-sm text-white/70">
+                  Cargando recorrido 360°…
+                </div>
+              }
+            >
+              <InteractivePanorama sourceUrl={property.tourImage} />
+            </Suspense>
+          ) : (
+            <div className="relative flex h-full w-full items-center justify-center bg-black/75">
+              <img
+                src={property.image}
+                alt={property.name}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
+              />
+              <div className="relative z-20 mx-4 max-w-md rounded-[24px] border border-border bg-background/95 p-8 text-center shadow-2xl backdrop-blur-2xl">
+                <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
+                  <RouteIcon size={30} />
+                </span>
+                <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
+                  Próximamente
+                </Badge>
+                <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
+                  Tour 360° en creación
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes
+                  explorar todos los lotes en el Plano Urbanístico.
+                </p>
+                <Button
+                  type="button"
+                  onClick={() => setMode("lot")}
+                  className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  Ver Plano Urbanístico
+                </Button>
+              </div>
             </div>
-          </div>
+          )
         ) : mode === "perspective" ? (
           <div className="relative flex h-full w-full items-center justify-center bg-black/80">
             <img

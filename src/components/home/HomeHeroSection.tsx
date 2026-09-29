@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
 import { useScrollFrame } from "@/hooks/useScrollFrame";
+import { publicSiteMediaUrl } from "@/lib/site-repository";
 
 interface HomeHeroSectionProps {
   visible: boolean;
@@ -25,19 +26,25 @@ export default function HomeHeroSection({ visible }: HomeHeroSectionProps) {
     el.style.setProperty("--gallery-progress", String(progress));
   });
   const entranceClass = visible ? "home-entrance" : "opacity-0";
-  const heroScene = `${import.meta.env.BASE_URL}images/autem-hero-approved-scene-v2.png`;
+  const heroScene = publicSiteMediaUrl(
+    "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",
+  );
 
   return (
     <section ref={sceneRef} id="top" className="editorial-hero text-white">
       <div className="editorial-hero__stage">
         <img
           className="editorial-hero__side editorial-hero__side--left"
-          src={`${import.meta.env.BASE_URL}images/carousel-sunset-terrace.jpg`}
+          src={publicSiteMediaUrl(
+            "00000000-0000-0000-0000-000000000001/images/carousel-sunset-terrace.jpg",
+          )}
           alt="Terraza integrada al paisaje"
         />
         <img
           className="editorial-hero__side editorial-hero__side--right"
-          src={`${import.meta.env.BASE_URL}images/carousel-modern-lounge.jpg`}
+          src={publicSiteMediaUrl(
+            "00000000-0000-0000-0000-000000000001/images/carousel-modern-lounge.jpg",
+          )}
           alt="Interior de arquitectura contemporánea"
         />
         <div className="editorial-hero__frame relative overflow-hidden rounded-[12px] bg-[#4f4742]">

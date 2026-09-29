@@ -2,7 +2,7 @@
 
 Se reemplazaron las cuatro imágenes de mobiliario del proceso por territorio, plano de implantación del proyecto, visualización aérea y una nueva escena conceptual de trabajo. Cada etapa explica la actividad y el resultado esperado. Los seis servicios incluyen una secuencia de trabajo visible también en móvil.
 
-Imagen nueva: `public/images/autem-proceso-territorio.png`. Generada con la herramienta integrada de imágenes, no con API/CLI. Es una ilustración conceptual, no evidencia de instalaciones, equipos u obras reales de AUTEM.
+Imagen nueva: almacenada en Supabase Storage (`site-media/.../autem-proceso-territorio.png`). Generada con la herramienta integrada de imágenes, no con API/CLI. Es una ilustración conceptual, no evidencia de instalaciones, equipos u obras reales de AUTEM.
 
 ## Prompt final
 

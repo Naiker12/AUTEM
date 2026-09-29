@@ -1,8 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
+import { usePublishedProjects } from "@/lib/public-projects";
 
 export default function PiePagina() {
   const marqueeText = "AUTEM · ARQUITECTURA Y TERRITORIO · ";
+  const { projects } = usePublishedProjects();
+  const featuredProject =
+    projects.find((project) => project.slug === "villa-paraiso") ?? projects[0];
 
   return (
     <footer className="bg-[#ded5c9] text-[#4f4742] pt-20 md:pt-28 border-t border-[#4f4742]/15 relative overflow-hidden">
@@ -93,7 +97,7 @@ export default function PiePagina() {
               params={{ slug: "villa-paraiso" }}
               className="group block text-[13px] font-medium text-[#4f4742] hover:underline"
             >
-              VILLA PARAÍSO 3D
+              {featuredProject?.name ?? "VILLA PARAÍSO 3D"}
             </Link>
             <p className="text-[11px] text-[#57504b] normal-case tracking-normal">
               343 lotes campestres en Santa Rosa · Villanueva con plano maestro interactivo.
@@ -120,7 +124,7 @@ export default function PiePagina() {
       {/* Bottom Panoramic Photo */}
       <div className="w-full h-[220px] sm:h-[320px] lg:h-[420px] overflow-hidden">
         <img
-          src={`${import.meta.env.BASE_URL}projects/lotes-360/lot-l07-entorno-verde.png`}
+          src={featuredProject?.image ?? ""}
           alt="Visualización conceptual del paisaje de Villa Paraíso"
           className="w-full h-full object-cover object-center"
           loading="lazy"

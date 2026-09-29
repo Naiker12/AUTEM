@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Map, MapPinned, Search, UserRound } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { formatLotArea, formatLotPrice, lots, type LotStatus } from "@/data/lots";
+import { formatLotArea, formatLotPrice, type Lot, type LotStatus } from "@/data/lots";
+import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { requireSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,21 +43,46 @@ import {
 
 export const Route = createFileRoute("/admin/lotes-unidades")({ component: LotsAndUnitsPage });
 
-type InventoryLot = (typeof lots)[number] & {
+type InventoryLot = Lot & {
   buyer: string;
   advisor: string;
   reservationEndsAt?: string;
   updatedAt: string;
 };
 
+type DatabaseLot = {
+  external_id: string;
+  lot_number: number | null;
+  manzana: string | null;
+  status: keyof typeof databaseLotStatus;
+  price_cop: number | null;
+  area_m2: number | null;
+  centroid: [number, number] | null;
+  geometry: { pathD?: string } | null;
+  metadata: { isReserve?: boolean } | null;
+  updated_at: string | null;
+};
+
 const PAGE_SIZE = 12;
-const commercialInventory: InventoryLot[] = lots.map((lot) => ({
-  ...lot,
-  buyer: "",
-  advisor: "",
-  reservationEndsAt: lot.status === "Reservado" ? "Pendiente de confirmar" : undefined,
-  updatedAt: "Inventario inicial",
-}));
+const databaseLotStatus: Record<
+  "available" | "reserved" | "sold" | "last_units" | "hidden",
+  LotStatus
+> = {
+  available: "Disponible",
+  reserved: "Reservado",
+  sold: "Vendido",
+  last_units: "Últimas unidades",
+  hidden: "Por confirmar",
+};
+
+const uiLotStatus: Record<LotStatus, "available" | "reserved" | "sold" | "last_units" | "hidden"> =
+  {
+    Disponible: "available",
+    "Últimas unidades": "last_units",
+    Reservado: "reserved",
+    Vendido: "sold",
+    "Por confirmar": "hidden",
+  };
 
 const statusLabels: Record<LotStatus, string> = {
   Disponible: "Disponible",
@@ -66,13 +93,79 @@ const statusLabels: Record<LotStatus, string> = {
 };
 
 function LotsAndUnitsPage() {
-  const [inventory, setInventory] = useState(commercialInventory);
+  const [inventory, setInventory] = useState<InventoryLot[]>([]);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [masterplanUrl, setMasterplanUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | LotStatus>("todos");
   const [blockFilter, setBlockFilter] = useState("todos");
   const [page, setPage] = useState(1);
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const selectedLot = inventory.find((lot) => lot.id === selectedLotId) ?? null;
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const access = await getCurrentAdminAccess();
+        if (!access) throw new Error("Inicia sesión para consultar el inventario.");
+        const client = requireSupabase();
+        const { data: project, error: projectError } = await client
+          .from("projects")
+          .select("id, slug, masterplan_path")
+          .eq("organization_id", access.organizationId)
+          .eq("slug", "villa-paraiso")
+          .maybeSingle();
+        if (projectError) throw projectError;
+        if (!project) throw new Error("No se encontró Villa Paraíso en la base de datos.");
+        const { data, error } = await client
+          .from("lots")
+          .select(
+            "external_id, lot_number, manzana, status, price_cop, area_m2, centroid, geometry, metadata, updated_at",
+          )
+          .eq("project_id", project.id)
+          .order("lot_number");
+        if (error) throw error;
+        if (!active) return;
+        setProjectId(project.id);
+        setMasterplanUrl(
+          project.masterplan_path
+            ? client.storage.from("project-media").getPublicUrl(project.masterplan_path).data
+                .publicUrl
+            : null,
+        );
+        setInventory(
+          ((data ?? []) as DatabaseLot[]).map((lot) => ({
+            id: lot.external_id,
+            projectSlug: project.slug,
+            area: Number(lot.area_m2 ?? 0),
+            price: Number(lot.price_cop ?? 0),
+            status: databaseLotStatus[lot.status as keyof typeof databaseLotStatus],
+            detail: `${lot.manzana ? `Manzana ${lot.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${lot.metadata?.isReserve ? "Zona de reserva" : "Vía interna"}`,
+            terrainPosition: [0, 0] as [number, number],
+            centroid: lot.centroid ?? undefined,
+            manzana: lot.manzana ?? undefined,
+            lotNumber: lot.lot_number ?? undefined,
+            pathD: lot.geometry?.pathD,
+            isReserve: Boolean(lot.metadata?.isReserve),
+            buyer: "",
+            advisor: "",
+            reservationEndsAt: lot.status === "reserved" ? "Pendiente de confirmar" : undefined,
+            updatedAt: lot.updated_at
+              ? new Date(lot.updated_at).toLocaleDateString("es-CO")
+              : "Sin fecha",
+          })),
+        );
+      } catch (error) {
+        if (active)
+          setLoadError(error instanceof Error ? error.message : "No fue posible cargar los lotes.");
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const blocks = useMemo(
     () => [...new Set(inventory.map((lot) => lot.manzana).filter(Boolean))],
@@ -113,6 +206,12 @@ function LotsAndUnitsPage() {
         lot.id === lotId ? { ...lot, ...updates, updatedAt: "Actualizado en esta sesión" } : lot,
       ),
     );
+    if (!projectId || !updates.status) return;
+    void requireSupabase()
+      .from("lots")
+      .update({ status: uiLotStatus[updates.status] })
+      .eq("project_id", projectId)
+      .eq("external_id", lotId);
   }
 
   function resetPage() {
@@ -138,6 +237,11 @@ function LotsAndUnitsPage() {
           </p>
         </div>
       </section>
+      {loadError && (
+        <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {loadError}
+        </p>
+      )}
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <InventoryMetric
@@ -234,10 +338,11 @@ function LotsAndUnitsPage() {
             />
           </CardContent>
         </Card>
-        <MasterplanCard selectedLot={selectedLot} />
+        <MasterplanCard selectedLot={selectedLot} masterplanUrl={masterplanUrl} />
       </section>
       <LotDetailSheet
         lot={selectedLot}
+        masterplanUrl={masterplanUrl}
         onOpenChange={(open) => !open && setSelectedLotId(null)}
         onChangeLot={changeLot}
       />
@@ -399,7 +504,13 @@ function LotPagination({
   );
 }
 
-function MasterplanCard({ selectedLot }: { selectedLot: InventoryLot | null }) {
+function MasterplanCard({
+  selectedLot,
+  masterplanUrl,
+}: {
+  selectedLot: InventoryLot | null;
+  masterplanUrl: string | null;
+}) {
   return (
     <Card className="h-fit rounded-2xl">
       <CardHeader>
@@ -411,7 +522,7 @@ function MasterplanCard({ selectedLot }: { selectedLot: InventoryLot | null }) {
       <CardContent className="flex flex-col gap-4">
         {selectedLot ? (
           <>
-            <LotPlanPreview lot={selectedLot} />
+            <LotPlanPreview lot={selectedLot} masterplanUrl={masterplanUrl} />
             <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -438,11 +549,13 @@ function MasterplanCard({ selectedLot }: { selectedLot: InventoryLot | null }) {
         ) : (
           <>
             <div className="overflow-hidden rounded-xl border bg-muted">
-              <img
-                src="/projects/villa-paraiso/masterplan-clean.svg"
-                alt="Plano urbanístico de Villa Paraíso"
-                className="aspect-square w-full object-cover"
-              />
+              {masterplanUrl && (
+                <img
+                  src={masterplanUrl}
+                  alt="Plano urbanístico de Villa Paraíso"
+                  className="aspect-square w-full object-cover"
+                />
+              )}
             </div>
             <div className="flex flex-col gap-2 rounded-xl border border-dashed p-4">
               <Map className="size-5 text-accent" />
@@ -458,7 +571,13 @@ function MasterplanCard({ selectedLot }: { selectedLot: InventoryLot | null }) {
   );
 }
 
-function LotPlanPreview({ lot }: { lot: InventoryLot }) {
+function LotPlanPreview({
+  lot,
+  masterplanUrl,
+}: {
+  lot: InventoryLot;
+  masterplanUrl: string | null;
+}) {
   const [cx, cy] = lot.centroid ?? [1200, 1162];
   const scope = 480;
   const viewBox = `${Math.max(0, cx - scope / 2)} ${Math.max(0, cy - scope / 2)} ${scope} ${scope}`;
@@ -470,14 +589,16 @@ function LotPlanPreview({ lot }: { lot: InventoryLot }) {
         role="img"
         aria-label={`Detalle del lote ${lot.id} en el plano urbanístico`}
       >
-        <image
-          href="/projects/villa-paraiso/masterplan-clean.svg"
-          x="0"
-          y="0"
-          width="2400"
-          height="2324"
-          preserveAspectRatio="xMidYMid slice"
-        />
+        {masterplanUrl && (
+          <image
+            href={masterplanUrl}
+            x="0"
+            y="0"
+            width="2400"
+            height="2324"
+            preserveAspectRatio="xMidYMid slice"
+          />
+        )}
         <path
           d={lot.pathD}
           fill="var(--accent)"
@@ -496,10 +617,12 @@ function LotPlanPreview({ lot }: { lot: InventoryLot }) {
 
 function LotDetailSheet({
   lot,
+  masterplanUrl,
   onOpenChange,
   onChangeLot,
 }: {
   lot: InventoryLot | null;
+  masterplanUrl: string | null;
   onOpenChange: (open: boolean) => void;
   onChangeLot: (id: string, updates: Partial<InventoryLot>) => void;
 }) {
@@ -546,7 +669,7 @@ function LotDetailSheet({
               lote.
             </p>
           </div>
-          <LotPlanPreview lot={lot} />
+          <LotPlanPreview lot={lot} masterplanUrl={masterplanUrl} />
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="lot-buyer">Comprador o interesado</FieldLabel>

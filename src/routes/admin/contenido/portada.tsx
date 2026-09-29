@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { publicSiteMediaUrl } from "@/lib/site-repository";
 
 export const Route = createFileRoute("/admin/contenido/portada")({ component: CoverPage });
 
@@ -39,7 +40,9 @@ const defaultCover = {
   visible: true,
 };
 
-const defaultImage = `${import.meta.env.BASE_URL}images/autem-hero-approved-scene-v2.png`;
+const defaultImage = publicSiteMediaUrl(
+  "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",
+);
 
 function CoverPage() {
   const [cover, setCover] = useState(defaultCover);
