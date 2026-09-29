@@ -9,10 +9,9 @@ import {
   Search,
   Upload,
 } from "lucide-react";
-import { type ChangeEvent, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 
-import { getLotsByProject } from "@/data/lots";
-import { PROPERTY_TYPES, properties, type PropertyType } from "@/data/properties";
+import { PROPERTY_TYPES, type PropertyType } from "@/data/properties";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +55,14 @@ import { cn } from "@/lib/utils";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import {
+  createManagedProject,
+  listManagedProjects,
+  publicProjectMediaUrl,
+  updateManagedProject,
+  type ManagedProjectRecord,
+} from "@/lib/project-repository";
 
 export const Route = createFileRoute("/admin/proyectos")({ component: ProjectsPage });
 
@@ -92,22 +99,28 @@ const emptyDraft: ProjectDraft = {
   description: "",
   tourUrl: "",
 };
-const catalogProjects: ManagedProject[] = properties.map((project) => ({
-  id: project.id,
-  slug: project.slug,
-  name: project.name,
-  location: project.location,
-  type: project.type,
-  image: project.image,
-  galleryCount: project.images?.length ?? 0,
-  lotCount: getLotsByProject(project.slug).length,
-  status: "Publicado",
-}));
 const humanizeType = (type: PropertyType) =>
   PROPERTY_TYPES.find((item) => item.value === type)?.label ?? type;
 
+function mapProjectRecord(record: ManagedProjectRecord): ManagedProject {
+  return {
+    id: record.id,
+    slug: record.slug,
+    name: record.name,
+    location: record.location,
+    type: record.property_type,
+    image: publicProjectMediaUrl(record.cover_path) ?? "",
+    galleryCount: 0,
+    lotCount: 0,
+    status: record.status === "published" ? "Publicado" : "Borrador",
+  };
+}
+
 function ProjectsPage() {
-  const [projects, setProjects] = useState(catalogProjects);
+  const [projects, setProjects] = useState<ManagedProject[]>([]);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [dataState, setDataState] = useState<"loading" | "ready" | "error">("loading");
+  const [dataError, setDataError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"todos" | ProjectStatus>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -119,6 +132,32 @@ function ProjectsPage() {
   const [documentFiles, setDocumentFiles] = useState<MediaPreview[]>([]);
   const [mediaLoading, setMediaLoading] = useState<string | null>(null);
   const [mediaProgress, setMediaProgress] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadProjects = async () => {
+      try {
+        const access = await getCurrentAdminAccess();
+        if (!access) throw new Error("Tu sesión no tiene acceso a la organización.");
+        const records = await listManagedProjects(access.organizationId);
+        if (!isActive) return;
+        setOrganizationId(access.organizationId);
+        setProjects(records.map(mapProjectRecord));
+        setDataState("ready");
+      } catch (error) {
+        if (!isActive) return;
+        setDataState("error");
+        setDataError(
+          error instanceof Error ? error.message : "No fue posible cargar los proyectos.",
+        );
+      }
+    };
+    void loadProjects();
+    return () => {
+      isActive = false;
+    };
+  }, []);
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es-CO");
     return projects.filter(
@@ -191,30 +230,38 @@ function ProjectsPage() {
       }, 280);
     }, 620);
   };
-  const saveProject = () => {
-    if (!draft.name.trim() || !draft.location.trim()) return;
-    const project: ManagedProject = {
-      id: editingProject?.id ?? `session-${Date.now()}`,
-      slug:
-        draft.slug.trim() ||
-        draft.name
-          .trim()
-          .toLocaleLowerCase("es-CO")
-          .replaceAll(/[^a-z0-9]+/g, "-"),
-      name: draft.name.trim(),
-      location: draft.location.trim(),
-      type: draft.type,
-      image: coverPreview || editingProject?.image || "/images/autem-villa-paraiso-aerial-v2.png",
-      galleryCount: galleryPreviews.length || editingProject?.galleryCount || 0,
-      lotCount: editingProject?.lotCount ?? 0,
-      status: editingProject?.status ?? "Borrador",
-    };
-    setProjects((current) =>
-      editingProject
-        ? current.map((item) => (item.id === editingProject.id ? project : item))
-        : [project, ...current],
-    );
-    setDialogOpen(false);
+  const saveProject = async () => {
+    if (!draft.name.trim() || !draft.location.trim() || !organizationId) return;
+    setIsSaving(true);
+    setDataError(null);
+    try {
+      const input = {
+        slug: draft.slug,
+        name: draft.name,
+        propertyType: draft.type,
+        location: draft.location,
+        status:
+          editingProject?.status === "Publicado" ? ("published" as const) : ("draft" as const),
+        priceLabel: draft.price,
+        areaLabel: draft.area,
+        description: draft.description,
+        tourUrl: draft.tourUrl,
+      };
+      const saved = editingProject
+        ? await updateManagedProject(editingProject.id, input)
+        : await createManagedProject(organizationId, input);
+      const project = mapProjectRecord(saved);
+      setProjects((current) =>
+        editingProject
+          ? current.map((item) => (item.id === project.id ? project : item))
+          : [project, ...current],
+      );
+      setDialogOpen(false);
+    } catch (error) {
+      setDataError(error instanceof Error ? error.message : "No fue posible guardar el proyecto.");
+    } finally {
+      setIsSaving(false);
+    }
   };
   return (
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
@@ -273,7 +320,18 @@ function ProjectsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <ProjectCatalog projects={filteredProjects} onEdit={openEditProject} />
+          {dataState === "loading" ? (
+            <div className="flex min-h-40 items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Spinner className="size-4" /> Cargando proyectos…
+            </div>
+          ) : dataState === "error" ? (
+            <Alert variant="destructive">
+              <AlertTitle>No se pudo conectar el catálogo</AlertTitle>
+              <AlertDescription>{dataError}</AlertDescription>
+            </Alert>
+          ) : (
+            <ProjectCatalog projects={filteredProjects} onEdit={openEditProject} />
+          )}
         </CardContent>
       </Card>
       <ProjectDialog
@@ -291,6 +349,7 @@ function ProjectsPage() {
         onSelectMedia={createPreviews}
         onDropMedia={processMediaFiles}
         onSave={saveProject}
+        isSaving={isSaving}
       />
     </main>
   );
@@ -511,6 +570,7 @@ type ProjectDialogProps = {
   ) => void;
   onDropMedia: (files: File[], target: "cover" | "gallery" | "masterplan" | "documents") => void;
   onSave: () => void;
+  isSaving: boolean;
 };
 function ProjectDialog({
   open,
@@ -527,6 +587,7 @@ function ProjectDialog({
   onSelectMedia,
   onDropMedia,
   onSave,
+  isSaving,
 }: ProjectDialogProps) {
   const isIncomplete = !draft.name.trim() || !draft.location.trim();
   return (
@@ -757,9 +818,9 @@ function ProjectDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isIncomplete}>
+            <Button type="submit" disabled={isIncomplete || isSaving}>
               <CheckCircle2 data-icon="inline-start" />{" "}
-              {editingProject ? "Guardar cambios" : "Crear borrador"}
+              {isSaving ? "Guardando…" : editingProject ? "Guardar cambios" : "Crear borrador"}
             </Button>
           </DialogFooter>
         </form>
