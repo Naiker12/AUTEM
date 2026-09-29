@@ -12,7 +12,10 @@ import {
   X,
 } from "lucide-react";
 import type { Lot } from "@/data/lots";
+import { villaParaisoNavigation } from "@/data/villa-paraiso-navigation";
 import { Button } from "@/components/ui/button";
+import { findRenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
+import { createLotRouteDestination } from "@/features/terrain-navigation/lot-destinations";
 import MasterplanSvgViewer from "./MasterplanSvgViewer";
 import type { ProjectViewSettings } from "./types";
 
@@ -156,32 +159,61 @@ export default function TerrainRouteView({
   const hasReliableLocation = accuracy !== null && accuracy <= 75;
   const isOutsideProject = hasReliableLocation && distance !== null && distance > 750;
   const usesReferenceOrigin = !hasReliableLocation || isOutsideProject;
+  const validatedRoute = useMemo(() => {
+    if (!destination) return null;
+    const destinationNode = createLotRouteDestination(destination);
+    if (!destinationNode) return null;
+    return findRenderableInternalRoute(
+      villaParaisoNavigation,
+      "main-entrance",
+      destinationNode.id,
+      "walking",
+    );
+  }, [destination]);
   const overlay = useMemo(() => {
     if (!destination?.centroid) return null;
-    const [endX, endY] = destination.centroid;
+    const [endX, endY] = validatedRoute
+      ? [validatedRoute.destination.point.x, validatedRoute.destination.point.y]
+      : destination.centroid;
     const [startX, startY] = DEMO_START;
     const controlX = Math.min(startX + 180, endX - 100);
     const controlY = Math.max(900, (startY + endY) / 2);
+    const routePaths = validatedRoute?.svgPaths;
     return (
       <g
         className="pointer-events-none"
-        aria-label="Ruta de demostración pendiente de validación en obra"
+        aria-label={
+          routePaths
+            ? "Ruta interna validada"
+            : "Ruta de demostración pendiente de validación en obra"
+        }
       >
-        <path
-          d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="18"
-          opacity="0.9"
-        />
-        <path
-          d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
-          fill="none"
-          stroke="#1677ff"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray="22 15"
-        />
+        {routePaths ? (
+          routePaths.map((path, index) => (
+            <g key={`${path}-${index}`}>
+              <path d={path} fill="none" stroke="#ffffff" strokeWidth="18" opacity="0.9" />
+              <path d={path} fill="none" stroke="#1677ff" strokeWidth="10" strokeLinecap="round" />
+            </g>
+          ))
+        ) : (
+          <>
+            <path
+              d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="18"
+              opacity="0.9"
+            />
+            <path
+              d={`M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`}
+              fill="none"
+              stroke="#1677ff"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray="22 15"
+            />
+          </>
+        )}
         <g transform={`translate(${startX} ${startY})`}>
           <circle r="28" fill="#1677ff" stroke="#ffffff" strokeWidth="8" />
           <circle r="8" fill="#ffffff" />
@@ -196,7 +228,7 @@ export default function TerrainRouteView({
         </g>
       </g>
     );
-  }, [destination]);
+  }, [destination, validatedRoute]);
 
   const distanceCopy =
     distance === null || !hasReliableLocation
@@ -442,7 +474,11 @@ export default function TerrainRouteView({
         ) : null}
         <div className="mt-3 flex gap-2 border-t border-border/70 pt-3 text-[10px] leading-relaxed text-muted-foreground">
           <AlertTriangle className="size-3.5 shrink-0 text-amber-600" />
-          <span>Ruta ilustrativa: verifica siempre la señalización en obra.</span>
+          <span>
+            {validatedRoute
+              ? "Ruta interna validada: verifica siempre la señalización en obra."
+              : "Ruta ilustrativa: verifica siempre la señalización en obra."}
+          </span>
         </div>
         <div className="mt-3 flex items-center gap-2 text-[10px] font-medium text-muted-foreground lg:hidden">
           <ShieldCheck className="size-3.5 text-emerald-600" /> GPS no se guarda ni se envía en esta

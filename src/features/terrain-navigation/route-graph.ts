@@ -105,3 +105,33 @@ export function findInternalRoute(
 
   return { nodeIds: [], edgeIds: [], distanceMeters: 0, status: "no_route" };
 }
+
+export interface RenderableInternalRoute {
+  result: RouteResult;
+  origin: NavigationNode;
+  destination: NavigationNode;
+  svgPaths: string[];
+}
+
+/**
+ * Returns a route only when every selected road segment has a matching SVG path.
+ * This prevents a valid graph record from falling back to a straight line through lots.
+ */
+export function findRenderableInternalRoute(
+  graph: NavigationGraph,
+  originId: string,
+  destinationId: string,
+  mode: TravelMode,
+): RenderableInternalRoute | null {
+  const result = findInternalRoute(graph, originId, destinationId, mode);
+  if (result.status !== "found" || result.edgeIds.length === 0) return null;
+
+  const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const edgesById = new Map(graph.edges.map((edge) => [edge.id, edge]));
+  const origin = nodesById.get(originId);
+  const destination = nodesById.get(destinationId);
+  const svgPaths = result.edgeIds.map((edgeId) => edgesById.get(edgeId)?.svgPath);
+
+  if (!origin || !destination || svgPaths.some((path) => !path)) return null;
+  return { result, origin, destination, svgPaths: svgPaths as string[] };
+}
