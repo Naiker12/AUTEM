@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import ScrollProgress from "../components/ScrollProgress";
 import PageTransition from "../components/PageTransition";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -179,6 +180,7 @@ function RootComponent() {
       <PageTransition>
         <Outlet />
       </PageTransition>
+      <Toaster position="top-center" closeButton visibleToasts={3} />
     </QueryClientProvider>
   );
 }

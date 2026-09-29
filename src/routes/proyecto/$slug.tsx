@@ -19,6 +19,7 @@ import {
   ProjectViewControlPanelContent,
   ProjectHeader,
   ProjectLoadingScreen,
+  TerrainRouteView,
   type ProjectViewSettings,
   type ViewMode,
 } from "@/components/project-view";
@@ -288,6 +289,7 @@ function ProjectView() {
   const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
   const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
+  const canShowControlPanel = mode !== "terrain";
 
   return (
     <main
@@ -300,19 +302,21 @@ function ProjectView() {
         projectName={property.name}
         projectLocation={property.location}
         onFinish={finishIntro}
-        variant={slug === "villa-paraiso" ? "dark-compact" : "default"}
-        minDuration={slug === "villa-paraiso" ? 350 : 650}
+        variant={property.id === "lotes-360" ? "dark-compact" : "default"}
+        minDuration={property.id === "lotes-360" ? 2000 : 650}
       />
 
       {/* Header fijo e intacto al 100% de ancho de la pantalla, sin encogerse ni moverse */}
       <ProjectHeader
         propertyName={property.name}
-        onOpenInfo={() => setIsPanelOpen((prev) => !prev)}
+        onOpenInfo={() => {
+          if (canShowControlPanel) setIsPanelOpen((prev) => !prev);
+        }}
         contactUrl={contactUrl}
         activeMode={mode}
         onModeChange={setMode}
         showViewSwitcher={viewSettings.showViewSwitcher}
-        isPanelOpen={isPanelOpen}
+        isPanelOpen={canShowControlPanel && isPanelOpen}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
       />
@@ -549,6 +553,22 @@ function ProjectView() {
               </Button>
             </div>
           </div>
+        ) : mode === "terrain" ? (
+          <>
+            <TerrainRouteView
+              lots={projectLots}
+              selectedLot={selectedLot}
+              onSelectLot={selectLot}
+              settings={viewSettings}
+              isDark={isDark}
+              isRightPanelOpen={false}
+            />
+            {viewSettings.showViewSwitcher && (
+              <div className="absolute left-2.5 top-16 z-30 sm:left-3 sm:top-[72px] lg:hidden">
+                <ModeSwitcher activeMode={mode} onChange={setMode} compact />
+              </div>
+            )}
+          </>
         ) : (
           <div className="relative h-full w-full bg-black/20">
             <img
@@ -569,7 +589,7 @@ function ProjectView() {
           </>
         )}
 
-        {viewSettings.showViewSwitcher && mode !== "lot" && (
+        {viewSettings.showViewSwitcher && mode !== "lot" && mode !== "terrain" && (
           <div className="lg:hidden">
             <ModeSwitcher activeMode={mode} onChange={setMode} />
           </div>
@@ -692,7 +712,9 @@ function ProjectView() {
       {/* Panel lateral flotante en PC (estrictamente por debajo del header, sin moverlo ni achicarlo) */}
       <aside
         className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[340px] flex-col p-3 transition-transform duration-300 ease-out md:flex ${
-          isPanelOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
+          canShowControlPanel && isPanelOpen
+            ? "translate-x-0"
+            : "translate-x-full pointer-events-none"
         }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border dark:border-white/10 bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] dark:shadow-[20px_20px_70px_rgba(0,0,0,.5)] backdrop-blur-2xl">
@@ -713,7 +735,7 @@ function ProjectView() {
 
       {/* Modal Sheet en móvil (solo para celulares pequeños < 768px) */}
       <div className="md:hidden">
-        <Sheet open={isPanelOpen && isMobile} onOpenChange={setIsPanelOpen}>
+        <Sheet open={canShowControlPanel && isPanelOpen && isMobile} onOpenChange={setIsPanelOpen}>
           <ProjectViewControlPanel
             property={property}
             settings={viewSettings}

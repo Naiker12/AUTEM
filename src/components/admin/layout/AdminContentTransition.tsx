@@ -23,7 +23,7 @@ export function AdminContentTransition({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1">
-      <div key={pathname} className="admin-view-enter w-full flex-1">
+      <div key={pathname} className="admin-density admin-view-enter w-full flex-1">
         {children}
       </div>
 

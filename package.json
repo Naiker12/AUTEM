@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
+    "navigation:extract": "node scripts/extract-villa-paraiso-navigation.mjs \"cad/VILLA PARAISO_05092026_CAMPO.dxf\" cad/villa-paraiso-navigation-candidates.json",
     "images:home": "node scripts/optimize-home-images.mjs",
     "images:project": "node scripts/optimize-project-images.mjs"
   },
@@ -43,6 +44,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@supabase/supabase-js": "^2.117.2",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-router": "^1.170.16",

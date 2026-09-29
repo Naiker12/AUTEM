@@ -19,16 +19,20 @@ export default function ProjectLoadingScreen({
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const duration = reduced ? 0 : minDuration;
+    const exitDuration = variant === "dark-compact" ? 520 : 300;
     const fadeTimer = window.setTimeout(() => {
       setLeaving(true);
       onFinish?.();
     }, duration);
-    const removeTimer = window.setTimeout(() => setVisible(false), duration + (reduced ? 0 : 300));
+    const removeTimer = window.setTimeout(
+      () => setVisible(false),
+      duration + (reduced ? 0 : exitDuration),
+    );
     return () => {
       window.clearTimeout(fadeTimer);
       window.clearTimeout(removeTimer);
     };
-  }, [minDuration, onFinish]);
+  }, [minDuration, onFinish, variant]);
   if (!visible) return null;
   return (
     <div
@@ -36,10 +40,12 @@ export default function ProjectLoadingScreen({
       data-leaving={leaving}
       aria-hidden="true"
     >
-      <p>AUTEM · Arquitectura y territorio</p>
-      <h2>{projectName}</h2>
-      <span className="project-intro__line" />
-      {projectLocation && <p>{projectLocation}</p>}
+      <div className="project-intro__content">
+        <p className="project-intro__eyebrow">AUTEM · Arquitectura y territorio</p>
+        <h2>{projectName}</h2>
+        <span className="project-intro__line" />
+        {projectLocation && <p className="project-intro__location">{projectLocation}</p>}
+      </div>
     </div>
   );
 }

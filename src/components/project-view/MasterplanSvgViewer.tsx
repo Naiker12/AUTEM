@@ -10,7 +10,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Lot } from "@/data/lots";
 import { formatLotArea, formatLotPrice } from "@/data/lots";
 import layersData from "@/data/villa-paraiso-layers.json";
@@ -34,6 +34,10 @@ interface MasterplanSvgViewerProps {
   isDark?: boolean;
   isRightPanelOpen?: boolean;
   disableWheelZoom?: boolean;
+  /** SVG content rendered over the plan and kept in sync with pan, zoom and rotation. */
+  overlay?: ReactNode;
+  /** Internal tooling can capture an exact coordinate over the plan without selecting a lot. */
+  onPlanPointSelect?: (point: { x: number; y: number }) => void;
 }
 
 const MIN_SCALE = 0.15;
@@ -59,6 +63,8 @@ export default function MasterplanSvgViewer({
   transparentCanvas = false,
   isDark: propIsDark,
   disableWheelZoom = false,
+  overlay,
+  onPlanPointSelect,
 }: MasterplanSvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -690,6 +696,21 @@ export default function MasterplanSvgViewer({
       if (!isDragConfirmedRef.current && pointerDownLotRef.current) {
         handleSelectLotSafe(pointerDownLotRef.current);
       }
+      if (!isDragConfirmedRef.current && !pointerDownLotRef.current && onPlanPointSelect) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (rect) {
+          const { scale: currentScale, offset: currentOffset } = transformRef.current;
+          const rawX = (event.clientX - rect.left - currentOffset.x) / currentScale;
+          const rawY = (event.clientY - rect.top - currentOffset.y) / currentScale;
+          const angle = (-rotationRef.current * Math.PI) / 180;
+          const dx = rawX - SVG_WIDTH / 2;
+          const dy = rawY - SVG_HEIGHT / 2;
+          onPlanPointSelect({
+            x: SVG_WIDTH / 2 + dx * Math.cos(angle) - dy * Math.sin(angle),
+            y: SVG_HEIGHT / 2 + dx * Math.sin(angle) + dy * Math.cos(angle),
+          });
+        }
+      }
     } else if (pointersMapRef.current.size === 1) {
       // Pasar a arrastre con el dedo restante
       const remaining = Array.from(pointersMapRef.current.values())[0];
@@ -1008,6 +1029,7 @@ export default function MasterplanSvgViewer({
                 );
               })}
             </g>
+            {overlay}
           </g>
         </g>
       </svg>

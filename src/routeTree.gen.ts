@@ -9,20 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root"
+import { Route as RecuperarAccesoRouteImport } from "./routes/recuperar-acceso"
 import { Route as PoliticaPrivacidadRouteImport } from "./routes/politica-privacidad"
 import { Route as NosotrosRouteImport } from "./routes/nosotros"
 import { Route as LoginAdminRouteImport } from "./routes/login-admin"
 import { Route as CatalogoRouteImport } from "./routes/catalogo"
 import { Route as AdminRouteImport } from "./routes/admin"
+import { Route as ActualizarContrasenaRouteImport } from "./routes/actualizar-contrasena"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as AdminIndexRouteImport } from "./routes/admin/index"
 import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
 import { Route as PropertiesIdRouteImport } from "./routes/properties/$id"
 import { Route as AdminProyectosRouteImport } from "./routes/admin/proyectos"
+import { Route as AdminPerfilRouteImport } from "./routes/admin/perfil"
 import { Route as AdminLotesUnidadesRouteImport } from "./routes/admin/lotes-unidades"
 import { Route as AdminGaleriasPlanosRecorridosRouteImport } from "./routes/admin/galerias-planos-recorridos"
+import { Route as AdminEquipoAccesosRouteImport } from "./routes/admin/equipo-accesos"
 import { Route as AdminConfiguracionRouteImport } from "./routes/admin/configuracion"
 import { Route as AdminConfiguracionIndexRouteImport } from "./routes/admin/configuracion/index"
+import { Route as AdminExperienciasVisorLotesRouteImport } from "./routes/admin/experiencias/visor-lotes"
+import { Route as AdminExperienciasRecorridoTerrenoRouteImport } from "./routes/admin/experiencias/recorrido-terreno"
+import { Route as AdminExperienciasMasterplanRouteImport } from "./routes/admin/experiencias/masterplan"
 import { Route as AdminContenidoPortadaRouteImport } from "./routes/admin/contenido/portada"
 import { Route as AdminContenidoSectionRouteImport } from "./routes/admin/contenido/$section"
 import { Route as AdminConfiguracionNotificacionesRouteImport } from "./routes/admin/configuracion/notificaciones"
@@ -31,6 +38,11 @@ import { Route as AdminConfiguracionGeneralRouteImport } from "./routes/admin/co
 import { Route as AdminConfiguracionDominiosRouteImport } from "./routes/admin/configuracion/dominios"
 import { Route as AdminConfiguracionAparienciaRouteImport } from "./routes/admin/configuracion/apariencia"
 
+const RecuperarAccesoRoute = RecuperarAccesoRouteImport.update({
+  id: "/recuperar-acceso",
+  path: "/recuperar-acceso",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PoliticaPrivacidadRoute = PoliticaPrivacidadRouteImport.update({
   id: "/politica-privacidad",
   path: "/politica-privacidad",
@@ -54,6 +66,11 @@ const CatalogoRoute = CatalogoRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: "/admin",
   path: "/admin",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActualizarContrasenaRoute = ActualizarContrasenaRouteImport.update({
+  id: "/actualizar-contrasena",
+  path: "/actualizar-contrasena",
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -81,6 +98,11 @@ const AdminProyectosRoute = AdminProyectosRouteImport.update({
   path: "/proyectos",
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPerfilRoute = AdminPerfilRouteImport.update({
+  id: "/perfil",
+  path: "/perfil",
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLotesUnidadesRoute = AdminLotesUnidadesRouteImport.update({
   id: "/lotes-unidades",
   path: "/lotes-unidades",
@@ -92,6 +114,11 @@ const AdminGaleriasPlanosRecorridosRoute =
     path: "/galerias-planos-recorridos",
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminEquipoAccesosRoute = AdminEquipoAccesosRouteImport.update({
+  id: "/equipo-accesos",
+  path: "/equipo-accesos",
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
   id: "/configuracion",
   path: "/configuracion",
@@ -102,6 +129,24 @@ const AdminConfiguracionIndexRoute = AdminConfiguracionIndexRouteImport.update({
   path: "/",
   getParentRoute: () => AdminConfiguracionRoute,
 } as any)
+const AdminExperienciasVisorLotesRoute =
+  AdminExperienciasVisorLotesRouteImport.update({
+    id: "/experiencias/visor-lotes",
+    path: "/experiencias/visor-lotes",
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminExperienciasRecorridoTerrenoRoute =
+  AdminExperienciasRecorridoTerrenoRouteImport.update({
+    id: "/experiencias/recorrido-terreno",
+    path: "/experiencias/recorrido-terreno",
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminExperienciasMasterplanRoute =
+  AdminExperienciasMasterplanRouteImport.update({
+    id: "/experiencias/masterplan",
+    path: "/experiencias/masterplan",
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminContenidoPortadaRoute = AdminContenidoPortadaRouteImport.update({
   id: "/contenido/portada",
   path: "/contenido/portada",
@@ -145,14 +190,18 @@ const AdminConfiguracionAparienciaRoute =
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
+  "/actualizar-contrasena": typeof ActualizarContrasenaRoute
   "/admin": typeof AdminRouteWithChildren
   "/catalogo": typeof CatalogoRoute
   "/login-admin": typeof LoginAdminRoute
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
+  "/recuperar-acceso": typeof RecuperarAccesoRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
+  "/admin/equipo-accesos": typeof AdminEquipoAccesosRoute
   "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
+  "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
@@ -164,16 +213,23 @@ export interface FileRoutesByFullPath {
   "/admin/configuracion/notificaciones": typeof AdminConfiguracionNotificacionesRoute
   "/admin/contenido/$section": typeof AdminContenidoSectionRoute
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
+  "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
+  "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
+  "/admin/experiencias/visor-lotes": typeof AdminExperienciasVisorLotesRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/actualizar-contrasena": typeof ActualizarContrasenaRoute
   "/catalogo": typeof CatalogoRoute
   "/login-admin": typeof LoginAdminRoute
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
+  "/recuperar-acceso": typeof RecuperarAccesoRoute
+  "/admin/equipo-accesos": typeof AdminEquipoAccesosRoute
   "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
+  "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
@@ -185,19 +241,26 @@ export interface FileRoutesByTo {
   "/admin/configuracion/notificaciones": typeof AdminConfiguracionNotificacionesRoute
   "/admin/contenido/$section": typeof AdminContenidoSectionRoute
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
+  "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
+  "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
+  "/admin/experiencias/visor-lotes": typeof AdminExperienciasVisorLotesRoute
   "/admin/configuracion": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
+  "/actualizar-contrasena": typeof ActualizarContrasenaRoute
   "/admin": typeof AdminRouteWithChildren
   "/catalogo": typeof CatalogoRoute
   "/login-admin": typeof LoginAdminRoute
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
+  "/recuperar-acceso": typeof RecuperarAccesoRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
+  "/admin/equipo-accesos": typeof AdminEquipoAccesosRoute
   "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
+  "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
   "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
@@ -209,20 +272,27 @@ export interface FileRoutesById {
   "/admin/configuracion/notificaciones": typeof AdminConfiguracionNotificacionesRoute
   "/admin/contenido/$section": typeof AdminContenidoSectionRoute
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
+  "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
+  "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
+  "/admin/experiencias/visor-lotes": typeof AdminExperienciasVisorLotesRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | "/"
+    | "/actualizar-contrasena"
     | "/admin"
     | "/catalogo"
     | "/login-admin"
     | "/nosotros"
     | "/politica-privacidad"
+    | "/recuperar-acceso"
     | "/admin/configuracion"
+    | "/admin/equipo-accesos"
     | "/admin/galerias-planos-recorridos"
     | "/admin/lotes-unidades"
+    | "/admin/perfil"
     | "/admin/proyectos"
     | "/properties/$id"
     | "/proyecto/$slug"
@@ -234,16 +304,23 @@ export interface FileRouteTypes {
     | "/admin/configuracion/notificaciones"
     | "/admin/contenido/$section"
     | "/admin/contenido/portada"
+    | "/admin/experiencias/masterplan"
+    | "/admin/experiencias/recorrido-terreno"
+    | "/admin/experiencias/visor-lotes"
     | "/admin/configuracion/"
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
+    | "/actualizar-contrasena"
     | "/catalogo"
     | "/login-admin"
     | "/nosotros"
     | "/politica-privacidad"
+    | "/recuperar-acceso"
+    | "/admin/equipo-accesos"
     | "/admin/galerias-planos-recorridos"
     | "/admin/lotes-unidades"
+    | "/admin/perfil"
     | "/admin/proyectos"
     | "/properties/$id"
     | "/proyecto/$slug"
@@ -255,18 +332,25 @@ export interface FileRouteTypes {
     | "/admin/configuracion/notificaciones"
     | "/admin/contenido/$section"
     | "/admin/contenido/portada"
+    | "/admin/experiencias/masterplan"
+    | "/admin/experiencias/recorrido-terreno"
+    | "/admin/experiencias/visor-lotes"
     | "/admin/configuracion"
   id:
     | "__root__"
     | "/"
+    | "/actualizar-contrasena"
     | "/admin"
     | "/catalogo"
     | "/login-admin"
     | "/nosotros"
     | "/politica-privacidad"
+    | "/recuperar-acceso"
     | "/admin/configuracion"
+    | "/admin/equipo-accesos"
     | "/admin/galerias-planos-recorridos"
     | "/admin/lotes-unidades"
+    | "/admin/perfil"
     | "/admin/proyectos"
     | "/properties/$id"
     | "/proyecto/$slug"
@@ -278,22 +362,34 @@ export interface FileRouteTypes {
     | "/admin/configuracion/notificaciones"
     | "/admin/contenido/$section"
     | "/admin/contenido/portada"
+    | "/admin/experiencias/masterplan"
+    | "/admin/experiencias/recorrido-terreno"
+    | "/admin/experiencias/visor-lotes"
     | "/admin/configuracion/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActualizarContrasenaRoute: typeof ActualizarContrasenaRoute
   AdminRoute: typeof AdminRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
   LoginAdminRoute: typeof LoginAdminRoute
   NosotrosRoute: typeof NosotrosRoute
   PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
+  RecuperarAccesoRoute: typeof RecuperarAccesoRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   ProyectoSlugRoute: typeof ProyectoSlugRoute
 }
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
+    "/recuperar-acceso": {
+      id: "/recuperar-acceso"
+      path: "/recuperar-acceso"
+      fullPath: "/recuperar-acceso"
+      preLoaderRoute: typeof RecuperarAccesoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/politica-privacidad": {
       id: "/politica-privacidad"
       path: "/politica-privacidad"
@@ -327,6 +423,13 @@ declare module "@tanstack/react-router" {
       path: "/admin"
       fullPath: "/admin"
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/actualizar-contrasena": {
+      id: "/actualizar-contrasena"
+      path: "/actualizar-contrasena"
+      fullPath: "/actualizar-contrasena"
+      preLoaderRoute: typeof ActualizarContrasenaRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/": {
@@ -364,6 +467,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AdminProyectosRouteImport
       parentRoute: typeof AdminRoute
     }
+    "/admin/perfil": {
+      id: "/admin/perfil"
+      path: "/perfil"
+      fullPath: "/admin/perfil"
+      preLoaderRoute: typeof AdminPerfilRouteImport
+      parentRoute: typeof AdminRoute
+    }
     "/admin/lotes-unidades": {
       id: "/admin/lotes-unidades"
       path: "/lotes-unidades"
@@ -376,6 +486,13 @@ declare module "@tanstack/react-router" {
       path: "/galerias-planos-recorridos"
       fullPath: "/admin/galerias-planos-recorridos"
       preLoaderRoute: typeof AdminGaleriasPlanosRecorridosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    "/admin/equipo-accesos": {
+      id: "/admin/equipo-accesos"
+      path: "/equipo-accesos"
+      fullPath: "/admin/equipo-accesos"
+      preLoaderRoute: typeof AdminEquipoAccesosRouteImport
       parentRoute: typeof AdminRoute
     }
     "/admin/configuracion": {
@@ -391,6 +508,27 @@ declare module "@tanstack/react-router" {
       fullPath: "/admin/configuracion/"
       preLoaderRoute: typeof AdminConfiguracionIndexRouteImport
       parentRoute: typeof AdminConfiguracionRoute
+    }
+    "/admin/experiencias/visor-lotes": {
+      id: "/admin/experiencias/visor-lotes"
+      path: "/experiencias/visor-lotes"
+      fullPath: "/admin/experiencias/visor-lotes"
+      preLoaderRoute: typeof AdminExperienciasVisorLotesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    "/admin/experiencias/recorrido-terreno": {
+      id: "/admin/experiencias/recorrido-terreno"
+      path: "/experiencias/recorrido-terreno"
+      fullPath: "/admin/experiencias/recorrido-terreno"
+      preLoaderRoute: typeof AdminExperienciasRecorridoTerrenoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    "/admin/experiencias/masterplan": {
+      id: "/admin/experiencias/masterplan"
+      path: "/experiencias/masterplan"
+      fullPath: "/admin/experiencias/masterplan"
+      preLoaderRoute: typeof AdminExperienciasMasterplanRouteImport
+      parentRoute: typeof AdminRoute
     }
     "/admin/contenido/portada": {
       id: "/admin/contenido/portada"
@@ -467,33 +605,46 @@ const AdminConfiguracionRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminConfiguracionRoute: typeof AdminConfiguracionRouteWithChildren
+  AdminEquipoAccesosRoute: typeof AdminEquipoAccesosRoute
   AdminGaleriasPlanosRecorridosRoute: typeof AdminGaleriasPlanosRecorridosRoute
   AdminLotesUnidadesRoute: typeof AdminLotesUnidadesRoute
+  AdminPerfilRoute: typeof AdminPerfilRoute
   AdminProyectosRoute: typeof AdminProyectosRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContenidoSectionRoute: typeof AdminContenidoSectionRoute
   AdminContenidoPortadaRoute: typeof AdminContenidoPortadaRoute
+  AdminExperienciasMasterplanRoute: typeof AdminExperienciasMasterplanRoute
+  AdminExperienciasRecorridoTerrenoRoute: typeof AdminExperienciasRecorridoTerrenoRoute
+  AdminExperienciasVisorLotesRoute: typeof AdminExperienciasVisorLotesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminConfiguracionRoute: AdminConfiguracionRouteWithChildren,
+  AdminEquipoAccesosRoute: AdminEquipoAccesosRoute,
   AdminGaleriasPlanosRecorridosRoute: AdminGaleriasPlanosRecorridosRoute,
   AdminLotesUnidadesRoute: AdminLotesUnidadesRoute,
+  AdminPerfilRoute: AdminPerfilRoute,
   AdminProyectosRoute: AdminProyectosRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminContenidoSectionRoute: AdminContenidoSectionRoute,
   AdminContenidoPortadaRoute: AdminContenidoPortadaRoute,
+  AdminExperienciasMasterplanRoute: AdminExperienciasMasterplanRoute,
+  AdminExperienciasRecorridoTerrenoRoute:
+    AdminExperienciasRecorridoTerrenoRoute,
+  AdminExperienciasVisorLotesRoute: AdminExperienciasVisorLotesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActualizarContrasenaRoute: ActualizarContrasenaRoute,
   AdminRoute: AdminRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
   LoginAdminRoute: LoginAdminRoute,
   NosotrosRoute: NosotrosRoute,
   PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
+  RecuperarAccesoRoute: RecuperarAccesoRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   ProyectoSlugRoute: ProyectoSlugRoute,
 }

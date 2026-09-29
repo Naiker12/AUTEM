@@ -1,8 +1,11 @@
-import { Moon, Sun } from "lucide-react";
+import { LoaderCircle, LogOut, Moon, Sun } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { signOutFromAdmin } from "@/lib/admin-auth";
 import { AdminBreadcrumbs } from "./AdminBreadcrumbs";
 
 interface AdminHeaderProps {
@@ -11,6 +14,19 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ isDark, onThemeChange }: AdminHeaderProps) {
+  const navigate = useNavigate();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOutFromAdmin();
+      void navigate({ to: "/login-admin", replace: true });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border/80 bg-background/95 px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger className="text-foreground" />
@@ -27,6 +43,20 @@ export function AdminHeader({ isDark, onThemeChange }: AdminHeaderProps) {
         aria-label={isDark ? "Activar tema claro" : "Activar tema oscuro"}
       >
         {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full"
+        onClick={() => void handleSignOut()}
+        disabled={isSigningOut}
+        aria-label="Cerrar sesión"
+      >
+        {isSigningOut ? (
+          <LoaderCircle className="size-4 animate-spin" />
+        ) : (
+          <LogOut className="size-4" />
+        )}
       </Button>
     </header>
   );

@@ -1,6 +1,7 @@
 import { type FormEvent, useId, useState } from "react";
 import { ArrowLeft, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Button } from "@/components/ui/button";
@@ -8,21 +9,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface AdminLoginProps {
-  onSignIn: () => void;
+  onSignIn: (email: string, password: string) => Promise<void>;
 }
 
-/**
- * Presentational login gate. Credential validation will be added when the
- * administration API and authentication provider are connected.
- */
 export function AdminLogin({ onSignIn }: AdminLoginProps) {
   const emailId = useId();
   const passwordId = useId();
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSignIn();
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      await onSignIn(email.trim(), password);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No fue posible iniciar sesión.";
+      setErrorMessage(message);
+      toast.error("No fue posible iniciar sesión", { description: message });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -91,6 +103,9 @@ export function AdminLogin({ onSignIn }: AdminLoginProps) {
                 autoComplete="email"
                 placeholder="nombre@autem.co"
                 required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                disabled={isSubmitting}
                 className="h-11 rounded-2xl border-[#403a34]/20 bg-white/70 px-4 shadow-none placeholder:text-[#555555]/60 focus-visible:ring-[#c5a059]"
               />
             </div>
@@ -99,7 +114,12 @@ export function AdminLogin({ onSignIn }: AdminLoginProps) {
                 <Label htmlFor={passwordId} className="text-sm font-medium text-[#403a34]">
                   Contraseña
                 </Label>
-                <span className="text-xs text-[#555555]">Recuperación próximamente</span>
+                <Link
+                  to="/recuperar-acceso"
+                  className="text-xs text-[#555555] underline-offset-4 transition-colors hover:text-[#403a34] hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
               </div>
               <div className="relative">
                 <Input
@@ -109,11 +129,15 @@ export function AdminLogin({ onSignIn }: AdminLoginProps) {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={isSubmitting}
                   className="h-11 rounded-2xl border-[#403a34]/20 bg-white/70 px-4 pr-11 shadow-none placeholder:text-[#555555]/60 focus-visible:ring-[#c5a059]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
+                  disabled={isSubmitting}
                   className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#555555] transition-colors hover:text-[#403a34]"
                   aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
@@ -123,16 +147,20 @@ export function AdminLogin({ onSignIn }: AdminLoginProps) {
             </div>
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="h-11 w-full rounded-2xl bg-[#403a34] text-xs font-semibold uppercase tracking-[0.16em] text-[#f6f1eb] shadow-none hover:bg-[#27231f]"
             >
-              <LockKeyhole className="size-4" /> Ingresar al panel
+              <LockKeyhole className="size-4" />
+              {isSubmitting ? "Verificando acceso" : "Ingresar al panel"}
             </Button>
+            {errorMessage && (
+              <p className="text-sm leading-relaxed text-destructive">{errorMessage}</p>
+            )}
           </form>
         </div>
 
         <p className="mt-10 text-xs leading-relaxed text-[#555555]">
-          Acceso visual en desarrollo. La verificación de credenciales se habilitará al conectar el
-          servicio de autenticación.
+          Acceso protegido con Supabase Auth y permisos asignados por organización y proyecto.
         </p>
       </section>
     </main>

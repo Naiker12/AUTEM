@@ -1,6 +1,6 @@
-import { Images, MapPinned, Orbit, Route, type LucideIcon } from "lucide-react";
+import { Images, MapPinned, Navigation, Orbit, Route, type LucideIcon } from "lucide-react";
 
-export type ViewMode = "lot" | "perspective" | "tour" | "gallery";
+export type ViewMode = "lot" | "perspective" | "tour" | "terrain" | "gallery";
 
 export interface ProjectViewMode {
   id: ViewMode;
@@ -58,6 +58,13 @@ export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
     icon: Route,
     badge: "Próx.",
     available: false,
+  },
+  {
+    id: "terrain",
+    label: "Recorrido en terreno",
+    shortLabel: "Recorrido",
+    icon: Navigation,
+    available: true,
   },
   {
     id: "gallery",

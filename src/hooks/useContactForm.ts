@@ -1,4 +1,6 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
+
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 
 type ContactStatus = "idle" | "sending" | "sent" | "error";
@@ -29,8 +31,14 @@ export function useContactForm(defaultMessage?: string) {
         const url = buildWhatsAppUrl(fields);
         window.open(url, "_blank", "noopener,noreferrer");
         setStatus("sent");
+        toast.success("Mensaje preparado", {
+          description: "Continuamos la conversación por WhatsApp.",
+        });
       } catch {
         setStatus("error");
+        toast.error("No se pudo abrir WhatsApp", {
+          description: "Permite las ventanas emergentes e inténtalo de nuevo.",
+        });
       }
     },
     [buildWhatsAppUrl],

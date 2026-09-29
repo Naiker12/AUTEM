@@ -7,12 +7,14 @@ import {
   MapPinned,
   PanelTop,
   Settings,
+  UsersRound,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
+import { canAccessAdminPath, type OrganizationRole } from "@/lib/admin-auth";
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +26,7 @@ import {
 const data = {
   user: {
     name: "Equipo AUTEM",
-    email: "Panel local · sin sesión autenticada",
+    email: "Administración local",
     avatar: "",
   },
   teams: [{ name: "AUTEM", plan: "Administración" }],
@@ -60,11 +62,11 @@ const data = {
     },
     {
       title: "Experiencias del proyecto",
-      url: "/admin#contenido",
+      url: "/admin/experiencias/visor-lotes",
       icon: Boxes,
       items: [
-        { title: "Visor de lotes", disabled: true },
-        { title: "Masterplan interactivo", disabled: true },
+        { title: "Visor de lotes", url: "/admin/experiencias/visor-lotes" },
+        { title: "Masterplan interactivo", url: "/admin/experiencias/masterplan" },
         { title: "Tour panorámico y 3D", disabled: true },
       ],
     },
@@ -77,6 +79,11 @@ const data = {
         { title: "Catálogo", disabled: true },
         { title: "Detalle de propiedad", disabled: true },
       ],
+    },
+    {
+      title: "Equipo y accesos",
+      url: "/admin/equipo-accesos",
+      icon: UsersRound,
     },
     {
       title: "Configuración",
@@ -94,14 +101,24 @@ const data = {
   projects: [{ name: "Villa Paraíso", url: "/admin/proyectos", icon: MapPinned }],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  role,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { role: OrganizationRole }) {
+  const visibleNavItems = data.navMain
+    .map((item) => ({
+      ...item,
+      items: item.items?.filter((child) => !child.url || canAccessAdminPath(role, child.url)),
+    }))
+    .filter((item) => canAccessAdminPath(role, item.url) || item.items?.length);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={visibleNavItems} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>

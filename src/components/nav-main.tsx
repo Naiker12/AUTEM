@@ -41,12 +41,7 @@ export function NavMain({
           const isActive = item.url === pathname || hasActiveChild;
 
           return (
-            <Collapsible
-              key={item.title}
-              asChild
-              defaultOpen={item.isActive || hasActiveChild}
-              className="group/collapsible"
-            >
+            <Collapsible key={item.title} asChild defaultOpen={false} className="group/collapsible">
               <SidebarMenuItem>
                 {item.items?.length ? (
                   <CollapsibleTrigger asChild>
