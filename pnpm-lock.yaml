@@ -196,12 +196,15 @@ importers:
         specifier: ^3.24.2
         version: 3.25.76
     devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.5.8
+        version: 0.5.8
       '@eslint/js':
         specifier: ^9.32.0
         version: 9.39.5
       '@lovable.dev/vite-tanstack-config':
         specifier: ^2.7.6
-        version: 2.7.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@tailwindcss/vite@4.3.3(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@tanstack/react-start@1.168.28(crossws@0.4.10(srvx@0.11.22))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.2.0)(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@vitejs/plugin-react@5.2.0(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(nitro@3.0.260603-beta(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite-tsconfig-paths@6.1.1(supports-color@7.2.0)(typescript@5.9.3)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
+        version: 2.7.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@tailwindcss/vite@4.3.3(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@tanstack/react-start@1.168.28(crossws@0.4.10(srvx@0.11.22))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.2.0)(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@vitejs/plugin-react@5.2.0(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(nitro@3.0.260603-beta(@electric-sql/pglite@0.5.8)(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite-tsconfig-paths@6.1.1(supports-color@7.2.0)(typescript@5.9.3)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
       '@types/node':
         specifier: ^22.16.5
         version: 22.20.1
@@ -237,7 +240,7 @@ importers:
         version: 15.15.0
       nitro:
         specifier: 3.0.260603-beta
-        version: 3.0.260603-beta(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
+        version: 3.0.260603-beta(@electric-sql/pglite@0.5.8)(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
       prettier:
         specifier: ^3.7.3
         version: 3.9.5
@@ -355,6 +358,9 @@ packages:
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
+
+  '@electric-sql/pglite@0.5.8':
+    resolution: {integrity: sha512-n9tsbUOhwx2epK1V0ZG9Ar4SHWUju04dhmzZXiSBXwBoleOvIfals33NAaWgagQVAL4Rbvx/Ptsu3P+pA09f6Q==}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -3637,6 +3643,8 @@ snapshots:
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 
+  '@electric-sql/pglite@0.5.8': {}
+
   '@emnapi/core@1.11.1':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
@@ -3898,7 +3906,7 @@ snapshots:
     dependencies:
       vite: 8.1.5(@types/node@22.20.1)(jiti@2.7.0)
 
-  '@lovable.dev/vite-tanstack-config@2.7.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@tailwindcss/vite@4.3.3(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@tanstack/react-start@1.168.28(crossws@0.4.10(srvx@0.11.22))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.2.0)(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@vitejs/plugin-react@5.2.0(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(nitro@3.0.260603-beta(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite-tsconfig-paths@6.1.1(supports-color@7.2.0)(typescript@5.9.3)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))':
+  '@lovable.dev/vite-tanstack-config@2.7.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@tailwindcss/vite@4.3.3(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@tanstack/react-start@1.168.28(crossws@0.4.10(srvx@0.11.22))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.2.0)(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(@vitejs/plugin-react@5.2.0(supports-color@7.2.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(nitro@3.0.260603-beta(@electric-sql/pglite@0.5.8)(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite-tsconfig-paths@6.1.1(supports-color@7.2.0)(typescript@5.9.3)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))':
     dependencies:
       '@lovable.dev/vite-plugin-dev-server-bridge': 1.2.0(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
       '@lovable.dev/vite-plugin-hmr-gate': 1.1.4(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
@@ -3910,7 +3918,7 @@ snapshots:
       vite: 8.1.5(@types/node@22.20.1)(jiti@2.7.0)
       vite-tsconfig-paths: 6.1.1(supports-color@7.2.0)(typescript@5.9.3)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
     optionalDependencies:
-      nitro: 3.0.260603-beta(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
+      nitro: 3.0.260603-beta(@electric-sql/pglite@0.5.8)(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -5513,7 +5521,9 @@ snapshots:
 
   date-fns@4.4.0: {}
 
-  db0@0.3.4: {}
+  db0@0.3.4(@electric-sql/pglite@0.5.8):
+    optionalDependencies:
+      '@electric-sql/pglite': 0.5.8
 
   debug@4.4.3(supports-color@7.2.0):
     dependencies:
@@ -5929,11 +5939,11 @@ snapshots:
 
   nf3@0.3.22: {}
 
-  nitro@3.0.260603-beta(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)):
+  nitro@3.0.260603-beta(@electric-sql/pglite@0.5.8)(chokidar@5.0.0)(jiti@2.7.0)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.10(srvx@0.11.22)
-      db0: 0.3.4
+      db0: 0.3.4(@electric-sql/pglite@0.5.8)
       env-runner: 0.1.16
       h3: 2.0.1-rc.25(crossws@0.4.10(srvx@0.11.22))
       hookable: 6.1.1
@@ -5944,7 +5954,7 @@ snapshots:
       rolldown: 1.2.0
       srvx: 0.11.22
       unenv: 2.0.0-rc.24
-      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4)(ofetch@2.0.0-alpha.3)
+      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(@electric-sql/pglite@0.5.8))(ofetch@2.0.0-alpha.3)
     optionalDependencies:
       jiti: 2.7.0
       vite: 8.1.5(@types/node@22.20.1)(jiti@2.7.0)
@@ -6396,10 +6406,10 @@ snapshots:
       rolldown: 1.2.0
       vite: 8.1.5(@types/node@22.20.1)(jiti@2.7.0)
 
-  unstorage@2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4)(ofetch@2.0.0-alpha.3):
+  unstorage@2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(@electric-sql/pglite@0.5.8))(ofetch@2.0.0-alpha.3):
     optionalDependencies:
       chokidar: 5.0.0
-      db0: 0.3.4
+      db0: 0.3.4(@electric-sql/pglite@0.5.8)
       ofetch: 2.0.0-alpha.3
 
   update-browserslist-db@1.3.3(browserslist@4.29.2):

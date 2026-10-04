@@ -61,12 +61,27 @@ export function applyAffineTransform(point: SourcePoint, transform: AffineTransf
  */
 export function fitAffineTransform(controlPoints: ControlPoint[]): AffineTransform | null {
   if (controlPoints.length < 3) return null;
+  if (
+    controlPoints.some(
+      ({ source, target }) => ![source.x, source.y, target.x, target.y].every(Number.isFinite),
+    )
+  )
+    return null;
+  // Center and normalize GPS/CAD values before solving: absolute coordinates and
+  // small field offsets otherwise make the normal equations poorly conditioned.
+  const centerX =
+    controlPoints.reduce((sum, point) => sum + point.source.x, 0) / controlPoints.length;
+  const centerY =
+    controlPoints.reduce((sum, point) => sum + point.source.y, 0) / controlPoints.length;
+  const scaleX = Math.max(...controlPoints.map((point) => Math.abs(point.source.x - centerX)));
+  const scaleY = Math.max(...controlPoints.map((point) => Math.abs(point.source.y - centerY)));
+  if (!scaleX || !scaleY) return null;
   const normal = Array.from({ length: 3 }, () => [0, 0, 0]);
   const targetX = [0, 0, 0];
   const targetY = [0, 0, 0];
 
   for (const point of controlPoints) {
-    const row = [point.source.x, point.source.y, 1];
+    const row = [(point.source.x - centerX) / scaleX, (point.source.y - centerY) / scaleY, 1];
     for (let column = 0; column < 3; column += 1) {
       targetX[column] += row[column] * point.target.x;
       targetY[column] += row[column] * point.target.y;
@@ -78,12 +93,12 @@ export function fitAffineTransform(controlPoints: ControlPoint[]): AffineTransfo
   const yParameters = solveLinearSystem(normal, targetY);
   if (!xParameters || !yParameters) return null;
   const transform = {
-    a: xParameters[0],
-    b: xParameters[1],
-    c: xParameters[2],
-    d: yParameters[0],
-    e: yParameters[1],
-    f: yParameters[2],
+    a: xParameters[0] / scaleX,
+    b: xParameters[1] / scaleY,
+    c: xParameters[2] - (xParameters[0] / scaleX) * centerX - (xParameters[1] / scaleY) * centerY,
+    d: yParameters[0] / scaleX,
+    e: yParameters[1] / scaleY,
+    f: yParameters[2] - (yParameters[0] / scaleX) * centerX - (yParameters[1] / scaleY) * centerY,
     rmsError: 0,
     controlPointCount: controlPoints.length,
   };

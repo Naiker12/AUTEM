@@ -1,9 +1,11 @@
+import PanelResizeHandle, {
+  PANEL_DRAG_SENSITIVITY,
+} from "@/components/project-view/PanelResizeHandle";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Orbit, PanelLeftOpen, Route as RouteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sheet } from "@/components/ui/sheet";
 import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
 import { formatLotPrice, formatLotArea } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
@@ -11,10 +13,8 @@ import "@/components/project-view/project-editorial.css";
 import {
   MasterplanSvgViewer,
   LotSelectionPanel,
-  ModeSwitcher,
   DEFAULT_PROJECT_VIEW_SETTINGS,
   PROJECT_VIEW_MODES,
-  ProjectViewControlPanel,
   ProjectViewControlPanelContent,
   ProjectHeader,
   ProjectLoadingScreen,
@@ -54,7 +54,7 @@ function ProjectView() {
   const finishIntro = useCallback(() => setIntroReady(true), []);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(
-    () => typeof window === "undefined" || window.innerWidth >= 768,
+    () => typeof window === "undefined" || window.innerWidth >= 1024,
   );
   const [isLotPanelVisible, setIsLotPanelVisible] = useState(true);
   const [viewSettings, setViewSettings] = useState<ProjectViewSettings>(
@@ -67,7 +67,7 @@ function ProjectView() {
   const selectedLot = projectLots.find((lot) => lot.id === selectedLotId) ?? projectLots[0];
   const hasLots = projectLots.length > 0;
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 768,
+    () => typeof window !== "undefined" && window.innerWidth < 1024,
   );
 
   const [isDark, setIsDark] = useState(() => {
@@ -101,7 +101,7 @@ function ProjectView() {
   }, [isDark]);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -181,6 +181,7 @@ function ProjectView() {
   }, []);
 
   const [sheetPercent, setSheetPercent] = useState(48);
+  const [controlPanelPercent, setControlPanelPercent] = useState(48);
   const [isDraggingSheet, setIsDraggingSheet] = useState(false);
   const dragStartYRef = useRef(0);
   const dragStartPercentRef = useRef(48);
@@ -212,7 +213,7 @@ function ProjectView() {
 
     // Arrastrar hacia arriba (clientY disminuye) aumenta la altura del catálogo
     const deltaY = dragStartYRef.current - e.clientY;
-    const deltaPercent = (deltaY / totalHeight) * 100;
+    const deltaPercent = (deltaY / totalHeight) * 100 * PANEL_DRAG_SENSITIVITY;
     const nextPercent = Math.min(84, Math.max(34, dragStartPercentRef.current + deltaPercent));
     currentDragPercentRef.current = nextPercent;
 
@@ -225,7 +226,7 @@ function ProjectView() {
           mapWrapperRef.current.style.height = `${100 - currentDragPercentRef.current}%`;
         }
         if (sheetWrapperRef.current) {
-          sheetWrapperRef.current.style.height = `calc(${currentDragPercentRef.current}% - 30px)`;
+          sheetWrapperRef.current.style.height = `calc(${currentDragPercentRef.current}% - 32px)`;
         }
       });
     }
@@ -302,7 +303,22 @@ function ProjectView() {
   const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
   const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
-  const canShowControlPanel = mode !== "terrain";
+  const mobileControlOpen = isMobile && isPanelOpen;
+  const effectiveSheetPercent = mobileControlOpen ? controlPanelPercent : sheetPercent;
+  const controlPanel = (
+    <ProjectViewControlPanelContent
+      property={property}
+      settings={viewSettings}
+      onSettingsChange={updateViewSettings}
+      onResetSettings={resetViewSettings}
+      onClose={() => setIsPanelOpen(false)}
+      onSelectMode={(nextMode) => {
+        setMode(nextMode);
+        setIsPanelOpen(false);
+      }}
+      isMobile={isMobile}
+    />
+  );
 
   return (
     <main
@@ -323,18 +339,26 @@ function ProjectView() {
       <ProjectHeader
         propertyName={property.name}
         onOpenInfo={() => {
-          if (canShowControlPanel) setIsPanelOpen((prev) => !prev);
+          setIsPanelOpen((prev) => !prev);
         }}
         contactUrl={contactUrl}
         activeMode={mode}
         onModeChange={setMode}
         showViewSwitcher={viewSettings.showViewSwitcher}
-        isPanelOpen={canShowControlPanel && isPanelOpen}
+        isPanelOpen={isPanelOpen}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
       />
 
-      <div key={mode} className="project-view-stage relative h-full w-full">
+      <div
+        key={mode}
+        className="project-view-stage relative h-full w-full"
+        style={
+          mobileControlOpen && mode !== "lot" && mode !== "terrain"
+            ? { height: `${100 - controlPanelPercent}%` }
+            : undefined
+        }
+      >
         {mode === "lot" ? (
           <div
             ref={splitContainerRef}
@@ -344,8 +368,11 @@ function ProjectView() {
             <div
               ref={mapWrapperRef}
               style={{
-                height: `${100 - sheetPercent}%`,
-                transition: isDraggingSheet ? "none" : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+                height: `${100 - effectiveSheetPercent}%`,
+                transition:
+                  isDraggingSheet || mobileControlOpen
+                    ? "none"
+                    : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
               className="relative w-full min-h-[140px] lg:!h-full lg:absolute lg:inset-0"
             >
@@ -373,18 +400,16 @@ function ProjectView() {
                   }
                 }}
                 isDesktopSidebarOpen={isLotPanelVisible}
-                isRightPanelOpen={isPanelOpen}
+                isRightPanelOpen={!isMobile && isPanelOpen}
                 isDark={isDark}
               />
-              {viewSettings.showViewSwitcher && (
-                <div className="absolute top-2.5 left-2.5 z-20 lg:hidden">
-                  <ModeSwitcher activeMode={mode} onChange={setMode} compact />
-                </div>
-              )}
             </div>
 
             {/* Barra divisora táctil y dinámica para ajustar tamaño (solo móvil) */}
-            {hasLots && viewSettings.showLotCatalog && (
+            {mobileControlOpen && (
+              <PanelResizeHandle value={controlPanelPercent} onChange={setControlPanelPercent} />
+            )}
+            {hasLots && viewSettings.showLotCatalog && !mobileControlOpen && (
               <div
                 onPointerDown={handleSheetDragStart}
                 onPointerMove={handleSheetDragMove}
@@ -434,36 +459,40 @@ function ProjectView() {
             )}
 
             {/* Mitad inferior en móvil: Catálogo de lotes dinámico con altura mínima segura */}
-            {hasLots && viewSettings.showLotCatalog && (
+            {((hasLots && viewSettings.showLotCatalog) || mobileControlOpen) && (
               <div
                 ref={sheetWrapperRef}
                 style={{
-                  height: `calc(${sheetPercent}% - 32px)`,
+                  height: `calc(${effectiveSheetPercent}% - ${mobileControlOpen ? 40 : 32}px)`,
                   minHeight: "175px",
-                  transition: isDraggingSheet
-                    ? "none"
-                    : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+                  transition:
+                    isDraggingSheet || mobileControlOpen
+                      ? "none"
+                      : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
                 className="relative w-full overflow-hidden lg:hidden"
               >
-                <LotSelectionPanel
-                  lots={projectLots}
-                  filteredLots={filteredLots}
-                  status={filterStatus}
-                  onStatusChange={handleStatusChange}
-                  minArea={filterMinArea}
-                  onMinAreaChange={handleMinAreaChange}
-                  maxPrice={filterMaxPrice}
-                  onMaxPriceChange={handleMaxPriceChange}
-                  sort={filterSort}
-                  onSortChange={setFilterSort}
-                  onClearAdvanced={handleClearFilters}
-                  selectedId={selectedLot?.id ?? ""}
-                  onSelect={selectLot}
-                  onView3D={handleView3D}
-                  onHide={() => {}}
-                  isMobileSplit
-                />
+                {mobileControlOpen && controlPanel}
+                <div className={mobileControlOpen ? "hidden" : "h-full"}>
+                  <LotSelectionPanel
+                    lots={projectLots}
+                    filteredLots={filteredLots}
+                    status={filterStatus}
+                    onStatusChange={handleStatusChange}
+                    minArea={filterMinArea}
+                    onMinAreaChange={handleMinAreaChange}
+                    maxPrice={filterMaxPrice}
+                    onMaxPriceChange={handleMaxPriceChange}
+                    sort={filterSort}
+                    onSortChange={setFilterSort}
+                    onClearAdvanced={handleClearFilters}
+                    selectedId={selectedLot?.id ?? ""}
+                    onSelect={selectLot}
+                    onView3D={handleView3D}
+                    onHide={() => {}}
+                    isMobileSplit
+                  />
+                </div>
               </div>
             )}
 
@@ -587,12 +616,14 @@ function ProjectView() {
               settings={viewSettings}
               isDark={isDark}
               isRightPanelOpen={false}
+              projectId={property.id}
+              projectSlug={property.slug}
+              masterplanVersion={property.masterplanVersion}
+              projectAnchor={{ lat: property.lat, lng: property.lng }}
+              alternatePanel={mobileControlOpen ? controlPanel : undefined}
+              panelPercent={controlPanelPercent}
+              onPanelPercentChange={setControlPanelPercent}
             />
-            {viewSettings.showViewSwitcher && (
-              <div className="absolute left-2.5 top-16 z-30 sm:left-3 sm:top-[72px] lg:hidden">
-                <ModeSwitcher activeMode={mode} onChange={setMode} compact />
-              </div>
-            )}
           </>
         ) : (
           <div className="relative h-full w-full bg-black/20">
@@ -607,17 +638,11 @@ function ProjectView() {
           </div>
         )}
 
-        {mode === "gallery" && (
+        {mode === "gallery" && !mobileControlOpen && (
           <>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
           </>
-        )}
-
-        {viewSettings.showViewSwitcher && mode !== "lot" && mode !== "terrain" && (
-          <div className="lg:hidden">
-            <ModeSwitcher activeMode={mode} onChange={setMode} />
-          </div>
         )}
 
         {/* Botón flotante para restaurar Plano Urbanístico en móvil si está oculto */}
@@ -669,7 +694,7 @@ function ProjectView() {
             )}
           </div>
         )}
-        {mode === "gallery" && images.length > 1 && (
+        {mode === "gallery" && images.length > 1 && !mobileControlOpen && (
           <>
             <Button
               type="button"
@@ -696,7 +721,7 @@ function ProjectView() {
           </>
         )}
 
-        {mode === "gallery" && (
+        {mode === "gallery" && !mobileControlOpen && (
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:pb-5 lg:pl-[380px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
@@ -736,10 +761,8 @@ function ProjectView() {
 
       {/* Panel lateral flotante en PC (estrictamente por debajo del header, sin moverlo ni achicarlo) */}
       <aside
-        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[340px] flex-col p-3 transition-transform duration-300 ease-out md:flex ${
-          canShowControlPanel && isPanelOpen
-            ? "translate-x-0"
-            : "translate-x-full pointer-events-none"
+        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[340px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${
+          isPanelOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
         }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border dark:border-white/10 bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] dark:shadow-[20px_20px_70px_rgba(0,0,0,.5)] backdrop-blur-2xl">
@@ -758,23 +781,16 @@ function ProjectView() {
         </div>
       </aside>
 
-      {/* Modal Sheet en móvil (solo para celulares pequeños < 768px) */}
-      <div className="md:hidden">
-        <Sheet open={canShowControlPanel && isPanelOpen && isMobile} onOpenChange={setIsPanelOpen}>
-          <ProjectViewControlPanel
-            property={property}
-            settings={viewSettings}
-            onSettingsChange={updateViewSettings}
-            onResetSettings={resetViewSettings}
-            onClose={() => setIsPanelOpen(false)}
-            onSelectMode={(nextMode) => {
-              setMode(nextMode);
-              setIsPanelOpen(false);
-            }}
-            isMobile={true}
-          />
-        </Sheet>
-      </div>
+      {mobileControlOpen && mode !== "lot" && mode !== "terrain" && (
+        <section
+          aria-label="Configuración de la vista"
+          className="absolute inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-3xl border-t bg-card lg:hidden"
+          style={{ height: `${controlPanelPercent}%` }}
+        >
+          <PanelResizeHandle value={controlPanelPercent} onChange={setControlPanelPercent} />
+          <div className="min-h-0 flex-1">{controlPanel}</div>
+        </section>
+      )}
     </main>
   );
 }

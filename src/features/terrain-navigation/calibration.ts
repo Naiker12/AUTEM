@@ -17,8 +17,10 @@ export interface CalibrationBounds {
 
 export const MIN_CONTROL_POINT_DISTANCE_METERS = 25;
 export const MAX_GPS_ACCURACY_METERS = 20;
+export const MIN_CALIBRATION_POINTS = 4;
 
 export function hasValidSvgPoint(point: CalibrationPointInput, bounds: CalibrationBounds) {
+  if (!point.svgX.trim() || !point.svgY.trim()) return false;
   const x = Number(point.svgX);
   const y = Number(point.svgY);
   return (
@@ -36,6 +38,9 @@ export function hasUsableGpsCapture(point: CalibrationPointInput) {
     Number.isFinite(point.latitude) &&
     Number.isFinite(point.longitude) &&
     Number.isFinite(point.accuracy) &&
+    Math.abs(point.latitude ?? Infinity) <= 90 &&
+    Math.abs(point.longitude ?? Infinity) <= 180 &&
+    (point.accuracy ?? -1) >= 0 &&
     (point.accuracy ?? Number.POSITIVE_INFINITY) <= MAX_GPS_ACCURACY_METERS
   );
 }
@@ -91,6 +96,7 @@ export function evaluateCalibration(
       ),
   );
   const canCalculate =
+    points.length >= MIN_CALIBRATION_POINTS &&
     completedSvg === points.length &&
     completedGps === points.length &&
     hasAccurateGps &&

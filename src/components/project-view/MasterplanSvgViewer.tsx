@@ -24,6 +24,9 @@ interface MasterplanSvgViewerProps {
   filterRequest?: number;
   selectedLotId: string;
   focusRequest: number;
+  /** Width/height in SVG units to retain around a focused lot, for navigation context. */
+  focusContextSize?: number;
+  selectedLotTone?: "blue" | "gold";
   onSelectLot: (lotId: string) => void;
   isDesktopSidebarOpen?: boolean;
   onClearFilter?: () => void;
@@ -55,6 +58,8 @@ export default function MasterplanSvgViewer({
   filterRequest = 0,
   selectedLotId,
   focusRequest,
+  focusContextSize,
+  selectedLotTone = "blue",
   onSelectLot,
   isDesktopSidebarOpen = true,
   isRightPanelOpen = false,
@@ -89,6 +94,7 @@ export default function MasterplanSvgViewer({
   const isDragConfirmedRef = useRef(false);
   const lastSelectTimeRef = useRef<number>(0);
   const lastHandledFocusRef = useRef<number>(0);
+  const lastFocusSizeRef = useRef({ width: 0, height: 0 });
   const lastHandledFilterRef = useRef<number>(0);
 
   const [scale, setScale] = useState(1);
@@ -367,13 +373,30 @@ export default function MasterplanSvgViewer({
   // Centrado suave y zoom potente sobre el centroide del lote seleccionado
   useEffect(() => {
     if (!selectedLot?.centroid || containerSize.width === 0 || focusRequest === 0) return;
-    if (focusRequest === lastHandledFocusRef.current) return;
+    if (
+      focusRequest === lastHandledFocusRef.current &&
+      (!focusContextSize ||
+        (lastFocusSizeRef.current.width === containerSize.width &&
+          lastFocusSizeRef.current.height === containerSize.height))
+    )
+      return;
     lastHandledFocusRef.current = focusRequest;
+    lastFocusSizeRef.current = { width: containerSize.width, height: containerSize.height };
 
     const [cx, cy] = rotatePoint(...selectedLot.centroid);
     const isDesktop = containerSize.width >= 1024;
     // Escala balanceada: zoom cercano (3.4 en desktop, 2.6 en móvil) para ver el lote en primer plano
-    const targetScale = isDesktop ? 3.4 : 2.6;
+    const targetScale = focusContextSize
+      ? Math.max(
+          MIN_SCALE,
+          Math.min(
+            MAX_SCALE,
+            Math.min(containerSize.width, containerSize.height) / focusContextSize,
+          ),
+        )
+      : isDesktop
+        ? 3.4
+        : 2.6;
 
     // En escritorio, centrar en el área libre visible considerando los paneles laterales activos
     const targetCenterX = isDesktop
@@ -397,6 +420,7 @@ export default function MasterplanSvgViewer({
     }
   }, [
     focusRequest,
+    focusContextSize,
     selectedLot,
     containerSize.width,
     containerSize.height,
@@ -917,8 +941,8 @@ export default function MasterplanSvgViewer({
                 }
 
                 if (isSelected) {
-                  fill = isDark ? "#0284c7" : "#7dd3fc";
-                  stroke = isDark ? "#38bdf8" : "#0284c7";
+                  fill = selectedLotTone === "gold" ? "#f4d99c" : isDark ? "#0284c7" : "#7dd3fc";
+                  stroke = selectedLotTone === "gold" ? "#c5a059" : isDark ? "#38bdf8" : "#0284c7";
                   strokeWidth = 3.6;
                 }
 
@@ -975,7 +999,12 @@ export default function MasterplanSvgViewer({
                   const markerFontSize = scale < 0.28 ? 12 : 11;
                   return (
                     <g key={`marker-selected-${lot.id}`} transform={`translate(${cx}, ${cy})`}>
-                      <circle r={markerR} fill="#0284c7" stroke="#ffffff" strokeWidth={2.2} />
+                      <circle
+                        r={markerR}
+                        fill={selectedLotTone === "gold" ? "#c5a059" : "#0284c7"}
+                        stroke="#ffffff"
+                        strokeWidth={2.2}
+                      />
                       <text
                         textAnchor="middle"
                         dominantBaseline="central"

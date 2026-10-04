@@ -1,0 +1,30 @@
+{
+  "source": "VILLA PARAISO_05092026_CAMPO.dxf",
+  "status": "cad_reference_requires_field_confirmation",
+  "gpsReferenceSystem": null,
+  "cadUnits": "meters",
+  "matchedVertices": 2311,
+  "masterplanVersion": "sha256:b0ddf55b8dca261d02f81f93f08a6bc8f50908b3b1f096509ab9573e8537d843",
+  "transform": {
+    "a": 3.0054330531487263,
+    "b": -0.00001732031967262197,
+    "c": -2583313.5796809415,
+    "d": 0.0000053512973703210715,
+    "e": -3.0054477738607925,
+    "f": 4948975.025786634,
+    "rmsError": 0.04055166430516424,
+    "controlPointCount": 2311
+  },
+  "entranceAnnotation": {
+    "label": "ACCESO PRINCIPAL",
+    "cad": {
+      "x": 859894.9872612,
+      "y": 1645954.774992162
+    },
+    "svg": {
+      "x": 1014.7288079024293,
+      "y": 2148.5129646826535
+    }
+  },
+  "note": "Registro CAD→SVG; no es calibración GPS. La anotación puede estar desplazada respecto al acceso físico."
+}

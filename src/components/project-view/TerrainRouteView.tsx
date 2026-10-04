@@ -1,38 +1,32 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import PanelResizeHandle from "./PanelResizeHandle";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import {
-  AlertTriangle,
-  Check,
-  CircleDot,
+  ChevronDown,
+  ChevronUp,
+  Car,
   Crosshair,
+  Footprints,
+  Info,
   LocateFixed,
   MapPin,
   Navigation,
-  Search,
   ShieldCheck,
-  X,
 } from "lucide-react";
 import type { Lot } from "@/data/lots";
-import { villaParaisoNavigation } from "@/data/villa-paraiso-navigation";
+import { useTerrainNavigation } from "@/features/terrain-navigation/use-terrain-navigation";
 import { Button } from "@/components/ui/button";
-import { findRenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
-import { createLotRouteDestination } from "@/features/terrain-navigation/lot-destinations";
+
+import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  useTerrainLocation,
+  type ProjectAnchor,
+} from "@/features/terrain-navigation/use-terrain-location";
+import { cn } from "@/lib/utils";
 import MasterplanSvgViewer from "./MasterplanSvgViewer";
+import LotDestinationSearch from "./terrain/LotDestinationSearch";
+import TerrainRouteOverlay from "./terrain/TerrainRouteOverlay";
 import type { ProjectViewSettings } from "./types";
-
-type LocationState = "idle" | "requesting" | "ready" | "low_accuracy" | "denied" | "unavailable";
-
-const PROJECT_ANCHOR = { lat: 10.436829, lng: -75.356179 };
-
-function distanceInMeters(lat: number, lng: number) {
-  const rad = Math.PI / 180;
-  const earth = 6_371_000;
-  const dLat = (lat - PROJECT_ANCHOR.lat) * rad;
-  const dLng = (lng - PROJECT_ANCHOR.lng) * rad;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(PROJECT_ANCHOR.lat * rad) * Math.cos(lat * rad) * Math.sin(dLng / 2) ** 2;
-  return 2 * earth * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 interface TerrainRouteViewProps {
   lots: Lot[];
@@ -41,6 +35,13 @@ interface TerrainRouteViewProps {
   settings: ProjectViewSettings;
   isDark: boolean;
   isRightPanelOpen: boolean;
+  projectAnchor: ProjectAnchor;
+  projectId?: string;
+  projectSlug: string;
+  masterplanVersion?: string;
+  alternatePanel?: ReactNode;
+  panelPercent?: number;
+  onPanelPercentChange?: (value: number) => void;
 }
 
 export default function TerrainRouteView({
@@ -50,437 +51,277 @@ export default function TerrainRouteView({
   settings,
   isDark,
   isRightPanelOpen,
+  projectAnchor,
+  projectId,
+  projectSlug,
+  masterplanVersion,
+  alternatePanel,
+  panelPercent = 48,
+  onPanelPercentChange,
 }: TerrainRouteViewProps) {
-  const [locationState, setLocationState] = useState<LocationState>("idle");
-  const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [distance, setDistance] = useState<number | null>(null);
-  const [mobilePanelPercent, setMobilePanelPercent] = useState(56);
-  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
-  const [destinationQuery, setDestinationQuery] = useState("");
-  const [isDestinationPickerOpen, setIsDestinationPickerOpen] = useState(false);
-  const watchId = useRef<number | null>(null);
-  const dragStartY = useRef(0);
-  const dragStartPercent = useRef(56);
-  const pendingPanelPercent = useRef(56);
-  const panelResizeFrame = useRef<number | null>(null);
-  const destinationPickerRef = useRef<HTMLDivElement>(null);
-
-  const stopLocation = useCallback(() => {
-    if (watchId.current !== null && navigator.geolocation)
-      navigator.geolocation.clearWatch(watchId.current);
-    watchId.current = null;
-    setLocationState("idle");
-    setAccuracy(null);
-    setDistance(null);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (watchId.current !== null && navigator.geolocation)
-        navigator.geolocation.clearWatch(watchId.current);
-    },
-    [],
+  const [expanded, setExpanded] = useState(false);
+  const [detailsPercent, setDetailsPercent] = useState(50);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const location = useTerrainLocation(projectAnchor);
+  const destination = selectedLot?.centroid && !selectedLot.isReserve ? selectedLot : undefined;
+  const [travelMode, setTravelMode] = useState<"walking" | "driving">("walking");
+  const navigation = useTerrainNavigation(
+    projectId,
+    projectSlug,
+    masterplanVersion,
+    destination?.id,
+    travelMode,
+    location.position,
+    location.timestamp,
   );
-
-  useEffect(() => {
-    const stopWhenHidden = () => {
-      if (document.visibilityState === "hidden" && watchId.current !== null) stopLocation();
-    };
-    document.addEventListener("visibilitychange", stopWhenHidden);
-    return () => document.removeEventListener("visibilitychange", stopWhenHidden);
-  }, [stopLocation]);
-
-  useEffect(
-    () => () => {
-      if (panelResizeFrame.current !== null) cancelAnimationFrame(panelResizeFrame.current);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    const closeDestinationPicker = (event: PointerEvent) => {
-      if (!destinationPickerRef.current?.contains(event.target as Node)) {
-        setIsDestinationPickerOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", closeDestinationPicker);
-    return () => document.removeEventListener("pointerdown", closeDestinationPicker);
-  }, []);
-
-  const requestLocation = useCallback(() => {
-    if (!window.isSecureContext || !("geolocation" in navigator)) {
-      setLocationState("unavailable");
-      return;
-    }
-    if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
-    setLocationState("requesting");
-    watchId.current = navigator.geolocation.watchPosition(
-      (position) => {
-        const nextAccuracy = Math.round(position.coords.accuracy);
-        setAccuracy(nextAccuracy);
-        setDistance(
-          Math.round(distanceInMeters(position.coords.latitude, position.coords.longitude)),
-        );
-        setLocationState(nextAccuracy > 60 ? "low_accuracy" : "ready");
-      },
-      (error) => {
-        if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
-        watchId.current = null;
-        setLocationState(error.code === error.PERMISSION_DENIED ? "denied" : "unavailable");
-      },
-      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 15_000 },
-    );
-  }, []);
-
-  const destination = selectedLot?.centroid ? selectedLot : lots.find((lot) => lot.centroid);
-  const destinationLots = useMemo(
-    () => lots.filter((lot) => lot.centroid && !lot.isReserve),
-    [lots],
-  );
-  const destinationMatches = useMemo(() => {
-    const number = destinationQuery.replace(/\D/g, "");
-    if (!number) return [];
-    return destinationLots
-      .filter((lot) => String(lot.lotNumber ?? lot.id.replace("L-", "")).includes(number))
-      .slice(0, 6);
-  }, [destinationLots, destinationQuery]);
-
-  useEffect(() => {
-    if (destination)
-      setDestinationQuery(String(destination.lotNumber ?? destination.id.replace("L-", "")));
-  }, [destination]);
-
+  const validatedRoute = navigation.route;
   const selectDestination = (lot: Lot) => {
+    if (!lot.centroid || lot.isReserve) return;
     onSelectLot(lot);
-    setDestinationQuery(String(lot.lotNumber ?? lot.id.replace("L-", "")));
-    setIsDestinationPickerOpen(false);
+    setFocusRequest((value) => value + 1);
+    setExpanded(false);
   };
-  const hasReliableLocation = accuracy !== null && accuracy <= 75;
-  const isOutsideProject = hasReliableLocation && distance !== null && distance > 750;
-  const usesReferenceOrigin = !hasReliableLocation || isOutsideProject;
-  const validatedRoute = useMemo(() => {
-    if (!destination) return null;
-    const destinationNode = createLotRouteDestination(destination);
-    if (!destinationNode) return null;
-    return findRenderableInternalRoute(
-      villaParaisoNavigation,
-      "main-entrance",
-      destinationNode.id,
-      "walking",
-    );
-  }, [destination]);
-  const overlay = useMemo(() => {
-    if (!destination?.centroid) return null;
-    const routePaths = validatedRoute?.svgPaths;
-    const start = validatedRoute?.origin.point;
-    const end = validatedRoute?.destination.point ?? {
-      x: destination.centroid[0],
-      y: destination.centroid[1],
-    };
-    return (
-      <g
-        className="pointer-events-none"
-        aria-label={
-          validatedRoute
-            ? "Ruta interna validada"
-            : "La ruta interna aún necesita una red vial validada"
-        }
-      >
-        {routePaths
-          ? routePaths.map((path, index) => (
-              <g key={`${path}-${index}`}>
-                <path d={path} fill="none" stroke="#ffffff" strokeWidth="18" opacity="0.9" />
-                <path
-                  d={path}
-                  fill="none"
-                  stroke="#1677ff"
-                  strokeWidth="10"
-                  strokeLinecap="round"
-                  strokeDasharray={validatedRoute ? undefined : "22 15"}
-                />
-              </g>
-            ))
-          : null}
-        {start ? (
-          <g transform={`translate(${start.x} ${start.y})`}>
-            <circle r="28" fill="#1677ff" stroke="#ffffff" strokeWidth="8" />
-            <circle r="8" fill="#ffffff" />
-          </g>
-        ) : null}
-        <g transform={`translate(${end.x} ${end.y})`}>
-          <circle r="25" fill="#1c2c1e" stroke="#ffffff" strokeWidth="7" />
-          <path
-            d="M 0 -13 C -10 -13 -15 -5 -15 3 C -15 13 0 24 0 24 C 0 24 15 13 15 3 C 15 -5 10 -13 0 -13 Z"
-            fill="#c5a059"
-            transform="translate(0 -4) scale(.72)"
-          />
-        </g>
-      </g>
-    );
-  }, [destination, validatedRoute]);
-
-  const distanceCopy =
-    distance === null || !hasReliableLocation
-      ? null
-      : isOutsideProject
-        ? `Estás fuera del proyecto · a ${(distance / 1000).toFixed(1)} km de la referencia.`
-        : `Estás dentro o muy cerca del proyecto · a ${distance < 1000 ? `${distance} m` : `${(distance / 1000).toFixed(1)} km`} de la referencia.`;
-  const locationCopy = {
-    idle: "Tu ubicación permanece apagada.",
-    requesting: "Solicitando permiso de ubicación…",
-    ready: `GPS activo${accuracy ? ` · precisión aprox. ±${accuracy} m` : ""}.`,
-    low_accuracy: "No se pudo confirmar tu ubicación con precisión. Muévete a una zona despejada.",
-    denied: "No diste permiso. Puedes seguir revisando el plano.",
-    unavailable: "Este navegador no puede obtener ubicación. Usa HTTPS y GPS activo.",
-  }[locationState];
-
-  const handlePanelDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (window.innerWidth >= 1024) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragStartY.current = event.clientY;
-    dragStartPercent.current = mobilePanelPercent;
-    setIsDraggingPanel(true);
-  };
-
-  const handlePanelDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingPanel) return;
-    const height = window.innerHeight || 1;
-    const deltaPercent = ((dragStartY.current - event.clientY) / height) * 100;
-    pendingPanelPercent.current = Math.max(
-      34,
-      Math.min(70, dragStartPercent.current + deltaPercent),
-    );
-    if (panelResizeFrame.current !== null) return;
-    panelResizeFrame.current = requestAnimationFrame(() => {
-      panelResizeFrame.current = null;
-      setMobilePanelPercent(pendingPanelPercent.current);
-    });
-  };
-
-  const handlePanelDragEnd = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingPanel) return;
-    setIsDraggingPanel(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    if (panelResizeFrame.current !== null) {
-      cancelAnimationFrame(panelResizeFrame.current);
-      panelResizeFrame.current = null;
-      setMobilePanelPercent(pendingPanelPercent.current);
-    }
-  };
+  const locating = location.status === "requesting";
+  const tracking = location.status === "ready" || location.status === "low_accuracy";
+  const lotLabel = destination
+    ? `Lote ${destination.lotNumber ?? destination.id}`
+    : "Elige tu destino";
 
   return (
-    <div
-      style={{ "--terrain-panel-height": `${mobilePanelPercent}%` } as CSSProperties}
-      className="relative flex h-full w-full flex-col overflow-hidden bg-[#e8e3da] lg:block"
-    >
-      <div className="relative h-[calc(100%-var(--terrain-panel-height))] min-h-[160px] w-full lg:absolute lg:inset-0 lg:h-full">
-        <MasterplanSvgViewer
-          settings={settings}
-          lots={lots}
-          selectedLotId={destination?.id ?? ""}
-          focusRequest={0}
-          onSelectLot={(id) => {
-            const lot = lots.find(
-              (item) => item.id === id || item.id.replace("L-", "") === id.replace("L-", ""),
-            );
-            if (lot) onSelectLot(lot);
-          }}
-          isDesktopSidebarOpen={false}
-          isRightPanelOpen={isRightPanelOpen}
-          isDark={isDark}
-          overlay={overlay}
-        />
+    <div className="terrain-navigation relative flex h-full min-h-0 flex-col overflow-hidden bg-background pt-14 sm:pt-16 lg:pt-[72px]">
+      <div className="flex shrink-0 flex-col gap-2 border-b bg-background px-3 py-2 md:hidden">
+        <LotDestinationSearch lots={lots} destination={destination} onSelect={selectDestination} />
       </div>
-
-      <section className="relative z-30 h-[var(--terrain-panel-height)] w-full shrink-0 overflow-y-auto rounded-t-[28px] border-t border-white/80 bg-background/98 p-4 pb-5 shadow-[0_-18px_45px_rgba(35,31,25,.14)] backdrop-blur-xl lg:absolute lg:left-5 lg:top-[88px] lg:h-auto lg:w-[360px] lg:max-w-[380px] lg:rounded-[24px] lg:border lg:p-4 lg:pb-4 lg:shadow-[0_18px_55px_rgba(35,31,25,.18)]">
+      <div
+        className={cn(
+          "relative flex min-h-0 flex-1 flex-col",
+          alternatePanel ? "lg:flex-row" : "md:flex-row",
+        )}
+      >
         <div
-          className="-mx-4 -mt-4 mb-3 flex h-9 touch-none items-center border-b border-border/75 bg-muted/45 px-3 lg:hidden"
-          onPointerDown={handlePanelDragStart}
-          onPointerMove={handlePanelDragMove}
-          onPointerUp={handlePanelDragEnd}
-          onPointerCancel={handlePanelDragEnd}
-          aria-label="Arrastra para ajustar el tamaño del panel"
+          className="relative order-1 min-h-[120px] flex-1 md:order-2"
+          aria-label="Plano del proyecto"
         >
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setMobilePanelPercent(38);
+          <MasterplanSvgViewer
+            settings={settings}
+            lots={lots}
+            selectedLotId={destination?.id ?? ""}
+            focusRequest={focusRequest}
+            focusContextSize={800}
+            selectedLotTone="gold"
+            onSelectLot={(id) => {
+              const lot = lots.find((item) => item.id.replace("L-", "") === id.replace("L-", ""));
+              if (lot) selectDestination(lot);
             }}
-            className="min-w-0 flex-1 text-left text-[9px] font-semibold text-muted-foreground"
-          >
-            Más mapa
-          </button>
-          <div className="flex flex-1 cursor-ns-resize flex-col items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
-            <span className="h-1 w-7 rounded-full bg-muted-foreground/35" />
-            Recorrido ↑
-          </div>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setMobilePanelPercent(68);
-            }}
-            className="min-w-0 flex-1 text-right text-[9px] font-semibold text-muted-foreground"
-          >
-            Más detalles
-          </button>
-        </div>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
-              <span className="flex size-5 items-center justify-center rounded-full bg-accent/12">
-                <Navigation className="size-3" />
+            isDesktopSidebarOpen={false}
+            isRightPanelOpen={isRightPanelOpen}
+            isDark={isDark}
+            overlay={<TerrainRouteOverlay destination={destination} route={validatedRoute} />}
+          />
+          {destination && (
+            <div className="pointer-events-none absolute bottom-3 left-3 flex max-w-[calc(100%-5rem)] items-center gap-2 rounded-full border bg-background/95 px-3 py-2 text-xs shadow-sm">
+              <MapPin className="size-4 shrink-0 text-accent" />
+              <span className="truncate">
+                {lotLabel}
+                {destination.manzana ? ` · ${destination.manzana}` : ""}
               </span>
-              Navegación interna
             </div>
-            <h2 className="mt-1.5 text-[21px] font-bold tracking-tight">¿A dónde quieres ir?</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Elige un lote y prepara tu recorrido.
-            </p>
-          </div>
-          {locationState !== "idle" && (
-            <button
-              onClick={stopLocation}
-              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
-              aria-label="Detener ubicación"
-            >
-              <X className="size-4" />
-            </button>
           )}
         </div>
 
-        <div className="mt-3 rounded-2xl border border-border/80 bg-muted/35 px-3 py-2.5">
-          <div className="flex gap-3">
-            <div className="flex w-5 flex-col items-center pt-0.5">
-              <CircleDot className="size-4 text-[#1677ff]" />
-              <span className="my-1 h-5 border-l border-dashed border-border" />
-              <MapPin className="size-4 text-accent" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Origen
-              </p>
-              <p className="mt-0.5 text-sm font-semibold">
-                {usesReferenceOrigin ? "Acceso principal · referencia" : "Tu ubicación"}
-              </p>
-              <label
-                className="mt-3 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                htmlFor="terrain-destination"
-              >
-                Buscar destino
-              </label>
-              <div ref={destinationPickerRef} className="relative">
-                <Search className="pointer-events-none absolute left-0 top-3 size-4 text-muted-foreground" />
-                <input
-                  id="terrain-destination"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={destinationQuery}
-                  placeholder="Escribe el número del lote"
-                  onFocus={(event) => {
-                    event.currentTarget.select();
-                    setIsDestinationPickerOpen(true);
-                  }}
-                  onChange={(event) => {
-                    setDestinationQuery(event.target.value);
-                    setIsDestinationPickerOpen(true);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && destinationMatches[0]) {
-                      event.preventDefault();
-                      selectDestination(destinationMatches[0]);
-                    }
-                    if (event.key === "Escape") setIsDestinationPickerOpen(false);
-                  }}
-                  className="mt-1 h-9 w-full rounded-lg border border-transparent bg-transparent py-1 pl-6 pr-2 text-sm font-bold outline-none placeholder:text-xs placeholder:font-medium placeholder:text-muted-foreground focus:border-accent/30 focus:bg-background focus:text-accent"
-                />
-                {isDestinationPickerOpen && destinationQuery.replace(/\D/g, "") && (
-                  <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-border bg-background p-1 shadow-xl">
-                    {destinationMatches.length > 0 ? (
-                      destinationMatches.map((lot) => (
-                        <button
-                          key={lot.id}
-                          type="button"
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => selectDestination(lot)}
-                          className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs hover:bg-muted"
-                        >
-                          <span>
-                            <strong>Lote {lot.lotNumber}</strong>{" "}
-                            <span className="text-muted-foreground">· {lot.manzana}</span>
-                          </span>
-                          {destination?.id === lot.id && <Check className="size-3.5 text-accent" />}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="px-2.5 py-2 text-xs text-muted-foreground">
-                        No encontramos ese lote.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Destino actual · Lote {destination?.lotNumber ?? "—"}
-                {destination?.manzana ? ` · Manzana ${destination.manzana}` : ""}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={`mt-3 rounded-2xl border p-3 text-xs ${
-            isOutsideProject || locationState === "low_accuracy"
-              ? "border-amber-200 bg-amber-50/85 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/35 dark:text-amber-100"
-              : "border-sky-200/70 bg-sky-50/80 text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/35 dark:text-sky-100"
-          }`}
+        {alternatePanel && (
+          <section
+            aria-label="Configuración del recorrido"
+            className="order-2 flex shrink-0 flex-col overflow-hidden rounded-t-3xl border-t bg-card"
+            style={{ height: `${panelPercent}%` }}
+          >
+            {onPanelPercentChange && (
+              <PanelResizeHandle value={panelPercent} onChange={onPanelPercentChange} />
+            )}
+            <div className="min-h-0 flex-1">{alternatePanel}</div>
+          </section>
+        )}
+        <section
+          style={
+            {
+              "--terrain-panel-height": `${expanded ? detailsPercent : Math.min(detailsPercent, 50)}%`,
+            } as CSSProperties
+          }
+          aria-labelledby="terrain-title"
+          className={cn(
+            alternatePanel && "!hidden",
+            "terrain-panel-scroll relative order-2 flex shrink-0 flex-col gap-2 overflow-y-auto overscroll-contain rounded-t-3xl border-t bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-lg",
+            "md:order-1 md:h-full md:w-[300px] md:max-h-full md:gap-3 md:rounded-none md:border-r md:border-t-0 md:p-5 lg:w-[340px] lg:p-6",
+            "max-h-[var(--terrain-panel-height)]",
+          )}
         >
-          <div className="flex gap-2">
-            <LocateFixed
-              className={`mt-0.5 size-4 shrink-0 ${
-                isOutsideProject || locationState === "low_accuracy"
-                  ? "text-amber-600"
-                  : "text-sky-600"
-              }`}
+          <div className="md:hidden">
+            <PanelResizeHandle
+              label="Detalles del recorrido"
+              value={detailsPercent}
+              max={65}
+              onChange={(value) => {
+                setDetailsPercent(value);
+                setExpanded(value > 50);
+              }}
             />
-            <span>{locationCopy}</span>
           </div>
-          {distanceCopy && <p className="mt-1 pl-6 text-[11px] opacity-80">{distanceCopy}</p>}
-        </div>
-
-        {locationState === "idle" ? (
+          <div className="hidden flex-col gap-2 md:flex">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Navigation className="size-4 text-accent" /> Recorrido en terreno
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight">¿A dónde quieres ir?</h2>
+            <p className="text-sm text-muted-foreground">Busca por número o toca el plano.</p>
+            <div className="mt-2">
+              <LotDestinationSearch
+                lots={lots}
+                destination={destination}
+                onSelect={selectDestination}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+                <MapPin className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <h3 id="terrain-title" className="truncate text-lg font-semibold">
+                  {lotLabel}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {destination?.manzana ?? "Busca por número de lote"}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-11 shrink-0 rounded-xl md:hidden"
+              aria-label={expanded ? "Ocultar detalles" : "Ver detalles"}
+              aria-expanded={expanded}
+              aria-controls="terrain-details"
+              onClick={() => setExpanded((value) => !value)}
+            >
+              {expanded ? <ChevronDown /> : <ChevronUp />}
+            </Button>
+          </div>
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Footprints className="size-4 shrink-0" />
+            {validatedRoute ? navigation.message : "Explora tu lote"}
+          </p>
+          <ToggleGroup
+            type="single"
+            value={travelMode}
+            onValueChange={(value) => {
+              if (value === "walking" || value === "driving") setTravelMode(value);
+            }}
+            aria-label="Tipo de recorrido"
+            className="rounded-xl border bg-muted/40 p-1"
+          >
+            <ToggleGroupItem
+              value="walking"
+              className="h-11 flex-1 rounded-lg"
+              aria-label="Recorrido a pie"
+            >
+              <Footprints className="size-4" /> A pie
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="driving"
+              disabled={!navigation.available}
+              className="h-11 flex-1 rounded-lg"
+              aria-label="Recorrido en vehículo"
+              title="Pendiente de validar vías para vehículos"
+            >
+              <Car className="size-4" /> Vehículo
+            </ToggleGroupItem>
+          </ToggleGroup>
           <Button
             type="button"
-            onClick={requestLocation}
-            className="mt-3 h-11 w-full rounded-xl bg-[#1c2c1e] text-white shadow-lg shadow-[#1c2c1e]/15 hover:bg-[#304734]"
+            disabled={!destination}
+            className="h-11 w-full rounded-xl"
+            onClick={() => setFocusRequest((value) => value + 1)}
           >
-            <Crosshair className="mr-2 size-4" /> Activar mi ubicación
+            <LocateFixed data-icon="inline-start" /> Ver lote en el plano
           </Button>
-        ) : null}
-        <div className="mt-3 flex gap-2 border-t border-border/70 pt-3 text-[10px] leading-relaxed text-muted-foreground">
-          <AlertTriangle className="size-3.5 shrink-0 text-amber-600" />
-          <span>
-            {validatedRoute
-              ? "Ruta interna validada: verifica siempre la señalización en obra."
-              : "Ruta no disponible todavía: falta cargar la red vial validada del proyecto."}
-          </span>
-        </div>
-        <div className="mt-3 flex items-center gap-2 text-[10px] font-medium text-muted-foreground lg:hidden">
-          <ShieldCheck className="size-3.5 text-emerald-600" /> GPS no se guarda ni se envía en esta
-          fase
-        </div>
-      </section>
-
-      <div className="pointer-events-none absolute bottom-4 left-4 z-20 hidden items-center gap-2 rounded-full border border-white/60 bg-background/90 px-3 py-2 text-[10px] font-medium shadow-lg backdrop-blur lg:flex">
-        <ShieldCheck className="size-3.5 text-emerald-600" /> GPS no se guarda ni se envía en esta
-        fase
-      </div>
-      <div className="pointer-events-none absolute bottom-4 right-4 z-20 hidden items-center gap-1.5 rounded-full border border-white/60 bg-background/90 px-3 py-2 text-[10px] font-semibold shadow-lg backdrop-blur lg:flex">
-        <MapPin className="size-3.5 text-accent" /> Lote {destination?.lotNumber ?? "—"}
+          <div
+            id="terrain-details"
+            className={cn("flex-col gap-3 md:flex-1", expanded ? "flex" : "hidden md:flex")}
+          >
+            <Separator />
+            <p className="flex items-center gap-2 text-sm">
+              <Navigation className="size-4 shrink-0 text-accent" />{" "}
+              {navigation.fromGps ? "Desde mi ubicación" : "Desde el acceso principal"}
+            </p>
+            {!validatedRoute && (
+              <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                <Info className="mt-0.5 size-4 shrink-0" /> {navigation.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              {location.status !== "idle" && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="text-xs leading-relaxed text-muted-foreground"
+                >
+                  {navigation.available && location.status === "ready"
+                    ? navigation.message
+                    : location.message}
+                </p>
+              )}
+              {location.distance !== null && (
+                <p className="text-xs text-muted-foreground">
+                  A{" "}
+                  {location.distance < 1000
+                    ? `${location.distance} m`
+                    : `${(location.distance / 1000).toFixed(1)} km`}{" "}
+                  de la referencia · no es la distancia al lote.
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full rounded-xl"
+                disabled={locating}
+                onClick={tracking ? location.stop : location.request}
+              >
+                <Crosshair data-icon="inline-start" />{" "}
+                {locating
+                  ? "Obteniendo ubicación…"
+                  : tracking
+                    ? "Desactivar ubicación"
+                    : "Usar mi ubicación"}
+              </Button>
+              {locating && (
+                <Button type="button" variant="ghost" className="h-11" onClick={location.stop}>
+                  Cancelar
+                </Button>
+              )}
+            </div>
+            <details className="rounded-xl border px-3 py-2 text-xs text-muted-foreground">
+              <summary className="flex min-h-8 cursor-pointer items-center gap-2">
+                <Info className="size-4" /> Sobre el recorrido
+              </summary>
+              <div className="flex flex-col gap-2 pt-2 leading-relaxed">
+                <p>
+                  {validatedRoute
+                    ? "Sigue las vías indicadas y verifica la señalización en terreno."
+                    : "Puedes localizar tu lote. La ruta y su distancia requieren vías, accesos y calibración GPS validados."}
+                </p>
+                <p>
+                  {navigation.available
+                    ? "El GPS se ajusta a las vías aprobadas. La ruta se actualiza con cada posición precisa."
+                    : "El GPS consulta tu proximidad; posicionar el origen requiere una red y calibración publicadas."}
+                </p>
+              </div>
+            </details>
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="size-4 shrink-0" /> GPS privado · solo en este dispositivo
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );

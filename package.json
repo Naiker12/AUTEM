@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "navigation:extract": "node scripts/extract-villa-paraiso-navigation.mjs \"cad/VILLA PARAISO_05092026_CAMPO.dxf\" cad/villa-paraiso-navigation-candidates.json",
     "images:home": "node scripts/optimize-home-images.mjs",
-    "images:project": "node scripts/optimize-project-images.mjs"
+    "images:project": "node scripts/optimize-project-images.mjs",
+    "test:navigation": "node scripts/check-terrain-navigation.mjs && node scripts/check-navigation-pilot.mjs && node scripts/check-navigation-publication.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",
@@ -78,6 +79,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "^2.7.6",
     "@types/node": "^22.16.5",

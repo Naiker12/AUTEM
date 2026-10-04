@@ -31,20 +31,16 @@ interface SettingRowProps {
 
 function SettingRow({ title, description, checked, onCheckedChange }: SettingRowProps) {
   return (
-    <div className="flex items-center justify-between gap-2.5 rounded-xl border border-border/75 dark:border-white/10 bg-card/60 dark:bg-stone-900/60 px-3 py-2 transition-colors hover:border-accent/40 shadow-xs">
+    <div className="flex min-h-16 items-center justify-between gap-4 rounded-xl border bg-card px-3 py-3">
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-foreground dark:text-stone-200 leading-tight">
-          {title}
-        </p>
-        <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground dark:text-stone-400">
-          {description}
-        </p>
+        <p className="text-sm font-semibold leading-tight">{title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
       </div>
       <Switch
         checked={checked}
         onCheckedChange={onCheckedChange}
         aria-label={title}
-        className="shrink-0 scale-75"
+        className="shrink-0"
       />
     </div>
   );
@@ -62,62 +58,59 @@ export function ProjectViewControlPanelContent({
   isMobile = false,
 }: ProjectViewControlPanelProps) {
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa ${property.name}.`)}`;
-  const [activeTab, setActiveTab] = useState("project");
+  const [activeTab, setActiveTab] = useState(isMobile ? "interface" : "project");
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden text-foreground">
+    <div className="project-control-panel flex h-full min-h-0 w-full flex-col overflow-hidden bg-card text-foreground">
       {/* Cabecera compacta y estilizada */}
-      <div className="flex items-start justify-between border-b border-border/80 px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3">
         <div className="min-w-0 flex-1 pr-2">
-          <h3 className="font-serif text-base sm:text-[17px] font-medium tracking-tight text-foreground leading-snug">
+          <h3 className="text-lg font-semibold tracking-tight leading-snug">
             Configura tu experiencia
           </h3>
-          <p className="text-[10.5px] sm:text-[11px] text-muted-foreground leading-tight truncate">
-            Personaliza la visualización de {property.name}.
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            {isMobile
+              ? "Personaliza esta vista y vuelve a tu panel."
+              : `Personaliza ${property.name}.`}
           </p>
         </div>
         {onClose && (
-          <button
+          <Button
             type="button"
             onClick={onClose}
-            className="size-6 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0 cursor-pointer mt-0.5"
-            aria-label="Cerrar panel"
+            variant="ghost"
+            size="icon"
+            className="size-11 shrink-0 rounded-xl"
+            aria-label="Cerrar configuración y volver a la vista"
           >
-            <X size={14} />
-          </button>
+            <X />
+          </Button>
         )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 flex-1 flex-col">
-        <TabsList className="mx-3 mt-2.5 grid h-8 grid-cols-3 rounded-xl bg-muted/60 dark:bg-stone-900/90 dark:border dark:border-white/10 p-0.5">
-          <TabsTrigger
-            value="project"
-            className="gap-1 text-[10px] font-medium py-1 dark:text-stone-400 dark:hover:text-stone-200 dark:data-[state=active]:bg-stone-800 dark:data-[state=active]:text-[#c5a059] dark:data-[state=active]:shadow-xs"
-          >
+        <TabsList className="mx-3 mt-3 grid h-11 shrink-0 grid-cols-3 rounded-xl p-1">
+          <TabsTrigger value="project" className="h-full gap-2 rounded-lg text-xs">
             <FileText size={12} /> Proyecto
           </TabsTrigger>
-          <TabsTrigger
-            value="interface"
-            className="gap-1 text-[10px] font-medium py-1 dark:text-stone-400 dark:hover:text-stone-200 dark:data-[state=active]:bg-stone-800 dark:data-[state=active]:text-[#c5a059] dark:data-[state=active]:shadow-xs"
-          >
+          <TabsTrigger value="interface" className="h-full gap-2 rounded-lg text-xs">
             <Eye size={12} /> Interfaz
           </TabsTrigger>
-          <TabsTrigger
-            value="layers"
-            className="gap-1 text-[10px] font-medium py-1 dark:text-stone-400 dark:hover:text-stone-200 dark:data-[state=active]:bg-stone-800 dark:data-[state=active]:text-[#c5a059] dark:data-[state=active]:shadow-xs"
-          >
+          <TabsTrigger value="layers" className="h-full gap-2 rounded-lg text-xs">
             <Layers3 size={12} /> Capas
           </TabsTrigger>
         </TabsList>
 
         <ScrollArea className="min-h-0 flex-1 px-3 sm:px-3.5">
-          <TabsContent value="project" className="m-0 space-y-2.5 py-3 pr-1">
+          <TabsContent value="project" className="m-0 flex flex-col gap-3 py-3 pr-1">
             {/* Render aéreo real del masterplan */}
             <div className="relative overflow-hidden rounded-xl border border-border dark:border-white/10 shadow-xs">
               <img
                 src={property.image}
                 alt={`Vista real aérea de ${property.name}`}
-                className="aspect-[16/9] w-full object-cover transition-transform duration-500 hover:scale-105"
+                className={
+                  isMobile ? "h-28 w-full object-cover" : "aspect-[16/9] w-full object-cover"
+                }
               />
               <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/75 px-1.5 py-0.5 text-[8px] font-semibold text-white/95 backdrop-blur-md">
                 Masterplan Aéreo Real
@@ -193,8 +186,8 @@ export function ProjectViewControlPanelContent({
             </div>
           </TabsContent>
 
-          <TabsContent value="interface" className="m-0 space-y-2 py-3 pr-1">
-            <div className="mb-2">
+          <TabsContent value="interface" className="m-0 flex flex-col gap-3 py-3 pr-1">
+            <div className={isMobile ? "sr-only" : "mb-2"}>
               <h4 className="font-serif text-base">Elementos visibles</h4>
               <p className="text-[10px] text-muted-foreground">
                 Oculta o muestra paneles para mayor amplitud de visualización.
@@ -232,8 +225,8 @@ export function ProjectViewControlPanelContent({
             />
           </TabsContent>
 
-          <TabsContent value="layers" className="m-0 space-y-2 py-3 pr-1">
-            <div className="mb-2">
+          <TabsContent value="layers" className="m-0 flex flex-col gap-3 py-3 pr-1">
+            <div className={isMobile ? "sr-only" : "mb-2"}>
               <h4 className="font-serif text-base">Capas del masterplan</h4>
               <p className="text-[10px] text-muted-foreground">
                 Controla la información gráfica que se dibuja sobre el plano.
@@ -306,7 +299,21 @@ export function ProjectViewControlPanelContent({
       </Tabs>
 
       {/* Pie de acción fijado al fondo: siempre visible sin obligar a hacer scroll incómodo */}
-      {activeTab === "project" ? (
+      {isMobile ? (
+        <div className="grid shrink-0 grid-cols-2 gap-2 border-t bg-card px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-xl"
+            onClick={onResetSettings}
+          >
+            <RotateCcw /> Restaurar
+          </Button>
+          <Button type="button" className="h-11 rounded-xl" onClick={onClose}>
+            Volver a la vista
+          </Button>
+        </div>
+      ) : activeTab === "project" ? (
         <div className="border-t border-border dark:border-white/10 p-2.5 sm:px-3 sm:py-2.5 bg-background/90 backdrop-blur-xl">
           <Button
             asChild

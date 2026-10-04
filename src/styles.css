@@ -1,6 +1,34 @@
 @import "tailwindcss";
+
 @source "../src";
 @import "tw-animate-css";
+
+/* Navigation actions share the approved forest-green treatment in both themes. */
+.terrain-navigation {
+  --primary: #1c2c1e;
+  --primary-foreground: #ffffff;
+  --accent: #c5a059;
+  --accent-foreground: #1c2c1e;
+}
+
+.terrain-navigation section > *,
+.terrain-navigation section button {
+  flex-shrink: 0;
+}
+
+/* Retain wheel, touch and keyboard scrolling without a visible scrollbar. */
+.terrain-panel-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.terrain-panel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.terrain-navigation [aria-label="Tipo de recorrido"] [data-state="on"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
 
 @custom-variant dark (&:is(.dark *));
 

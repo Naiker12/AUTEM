@@ -12,10 +12,6 @@ interface TraversableEdge {
   to: string;
 }
 
-function estimatedRemainingDistance(from: NavigationNode, to: NavigationNode) {
-  return Math.hypot(from.point.x - to.point.x, from.point.y - to.point.y);
-}
-
 function reconstructRoute(
   cameFrom: Map<string, TraversableEdge>,
   originId: string,
@@ -82,7 +78,8 @@ export function findInternalRoute(
       const candidate = nodesById.get(candidateId);
       const distance = distances.get(candidateId) ?? Number.POSITIVE_INFINITY;
       if (!candidate) continue;
-      const estimate = distance + estimatedRemainingDistance(candidate, destination);
+      // Dijkstra: costs are meters; SVG units cannot be used as a metric heuristic.
+      const estimate = distance;
       if (estimate < smallestEstimate) {
         currentId = candidateId;
         smallestEstimate = estimate;

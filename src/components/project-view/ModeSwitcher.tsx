@@ -29,10 +29,10 @@ export default function ModeSwitcher({
               value={id}
               aria-label={label}
               title={badge ? `${label} (${badge})` : label}
-              className="relative group flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-0.5 h-8.5 min-w-[48px] text-muted-foreground transition hover:bg-muted hover:text-foreground dark:text-stone-400 dark:hover:text-stone-100 dark:hover:bg-white/5 data-[state=on]:bg-accent/15 data-[state=on]:text-accent dark:data-[state=on]:bg-[#c5a059]/20 dark:data-[state=on]:text-[#c5a059] dark:data-[state=on]:border dark:data-[state=on]:border-[#c5a059]/30"
+              className="relative group flex h-11 min-w-[52px] flex-col items-center justify-center gap-1 rounded-full px-2 py-1 text-muted-foreground transition hover:bg-muted hover:text-foreground data-[state=on]:bg-accent/15 data-[state=on]:text-accent"
             >
               <Icon size={13} strokeWidth={1.8} />
-              <span className="text-[7px] font-bold leading-none tracking-tight whitespace-nowrap">
+              <span className="text-[9px] font-semibold leading-none whitespace-nowrap">
                 {shortLabel ?? label}
               </span>
               {badge && (

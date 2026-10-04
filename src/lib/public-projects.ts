@@ -19,6 +19,7 @@ type PublicProjectRow = {
   features: string[] | null;
   cover_path: string | null;
   masterplan_path: string | null;
+  masterplan_version: string | null;
   tour_url: string | null;
   project_media?: PublicMediaRow[];
 };
@@ -77,6 +78,7 @@ function toProperty(row: PublicProjectRow): Property {
     features: row.features ?? [],
     floorPlan: row.area_label ?? "",
     year: new Date().getFullYear(),
+    masterplanVersion: row.masterplan_version ?? undefined,
     floorPlanImage: masterplan ?? undefined,
     lotViewImage: masterplan ?? undefined,
     tourImage: tour ?? undefined,

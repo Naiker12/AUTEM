@@ -1,3 +1,5 @@
+import cadReference from "@/data/villa-paraiso-cad-reference.json";
+import NavigationAdminPanel from "@/components/admin/NavigationAdminPanel";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, ClipboardCopy, Crosshair, MapPin, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -60,6 +62,20 @@ const initialPoints: SurveyPoint[] = [
     svgX: "",
     svgY: "",
   },
+  {
+    id: "check-1",
+    label: "Comprobación independiente 1",
+    hint: "Punto distinto de los controles, medido en terreno y marcado en el plano.",
+    svgX: "",
+    svgY: "",
+  },
+  {
+    id: "check-2",
+    label: "Comprobación independiente 2",
+    hint: "Otro punto separado al menos 10 m del primero y de los controles.",
+    svgX: "",
+    svgY: "",
+  },
 ];
 
 function TerrainSurveyPage() {
@@ -75,14 +91,21 @@ function TerrainSurveyPage() {
     if (!saved) return;
     try {
       const parsed = JSON.parse(saved) as SurveyPoint[];
-      if (Array.isArray(parsed) && parsed.length === initialPoints.length) setPoints(parsed);
+      if (Array.isArray(parsed))
+        setPoints(
+          initialPoints.map((point) => parsed.find((saved) => saved.id === point.id) ?? point),
+        );
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
 
   const calibration = useMemo(
-    () => evaluateCalibration(points, { width: SVG_WIDTH, height: SVG_HEIGHT }),
+    () =>
+      evaluateCalibration(
+        points.filter((point) => !point.id.startsWith("check-")),
+        { width: SVG_WIDTH, height: SVG_HEIGHT },
+      ),
     [points],
   );
   const { completedGps, completedSvg, hasAccurateGps, hasSeparatedGps, transform } = calibration;
@@ -181,8 +204,9 @@ function TerrainSurveyPage() {
           </p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl">Calibración de recorrido</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Captura cuatro puntos en obra y marca su posición equivalente en el plano SVG. Ninguna
-            ubicación se envía ni publica desde esta pantalla.
+            Captura cuatro controles y dos puntos independientes en obra y marca su posición
+            equivalente en el plano SVG. Las capturas siguen locales hasta que guardes
+            explícitamente una versión en Supabase.
           </p>
         </div>
         <Badge variant="outline">Borrador local</Badge>
@@ -214,7 +238,7 @@ function TerrainSurveyPage() {
         </AlertDescription>
       </Alert>
 
-      {completedGps === points.length && !hasSeparatedGps && (
+      {completedGps === 4 && !hasSeparatedGps && (
         <Alert className="mt-6 max-w-5xl border-amber-200 bg-amber-50 text-amber-950">
           <MapPin className="size-4" />
           <AlertTitle>Las capturas GPS están demasiado cerca</AlertTitle>
@@ -225,7 +249,7 @@ function TerrainSurveyPage() {
         </Alert>
       )}
 
-      {completedGps === points.length && !hasAccurateGps && (
+      {completedGps === 4 && !hasAccurateGps && (
         <Alert className="mt-6 max-w-5xl border-amber-200 bg-amber-50 text-amber-950">
           <MapPin className="size-4" />
           <AlertTitle>La precisión GPS aún no es suficiente</AlertTitle>
@@ -236,7 +260,7 @@ function TerrainSurveyPage() {
         </Alert>
       )}
 
-      {completedSvg < points.length && (
+      {completedSvg < 4 && (
         <Alert className="mt-6 max-w-5xl border-sky-200 bg-sky-50 text-sky-950">
           <MapPin className="size-4" />
           <AlertTitle>Faltan marcas en el plano</AlertTitle>
@@ -270,6 +294,12 @@ function TerrainSurveyPage() {
             Punto activo: {points.find((point) => point.id === activePlanPointId)?.label}. Toca una
             zona vacía del plano para registrar automáticamente su X/Y.
           </CardDescription>
+          <CardDescription>
+            Referencia CAD alineada automáticamente:{" "}
+            {cadReference.matchedVertices.toLocaleString("es-CO")} vértices. El marcador ámbar
+            indica la anotación del acceso; confirma su posición física antes de marcar un control
+            GPS.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="relative h-[340px] overflow-hidden rounded-xl border bg-muted/30">
@@ -294,6 +324,23 @@ function TerrainSurveyPage() {
                         />
                       ) : null,
                     )}
+                  </g>
+                  <g
+                    transform={`translate(${cadReference.entranceAnnotation.svg.x} ${cadReference.entranceAnnotation.svg.y})`}
+                    aria-label="Referencia CAD del acceso principal, pendiente de confirmar"
+                  >
+                    <circle r="27" fill="#d4a847" stroke="#fff" strokeWidth="5" />
+                    <text
+                      y="-42"
+                      textAnchor="middle"
+                      fontSize="22"
+                      fill="#523e18"
+                      stroke="#fff"
+                      strokeWidth="4"
+                      paintOrder="stroke"
+                    >
+                      Referencia CAD · acceso
+                    </text>
                   </g>
                   {points.map((point, index) => {
                     const x = Number(point.svgX);
@@ -447,6 +494,11 @@ function TerrainSurveyPage() {
           Limpiar borrador
         </Button>
       </section>
+      <NavigationAdminPanel
+        projectId={project?.id}
+        points={points}
+        lot45Id={lots.find((lot) => lot.lotNumber === 45)?.id}
+      />
       {message && (
         <p className="mt-4 text-sm text-muted-foreground" role="status">
           {message}

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Button } from "@/components/ui/button";
 import ModeSwitcher from "./ModeSwitcher";
-import type { ViewMode } from "./types";
+import MobileProjectMenu from "./MobileProjectMenu";
+import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
 
 interface ProjectHeaderProps {
   propertyName?: string;
@@ -42,6 +43,8 @@ export default function ProjectHeader({
   });
 
   const isDark = propIsDark !== undefined ? propIsDark : internalIsDark;
+  const activeView = PROJECT_VIEW_MODES.find((view) => view.id === activeMode);
+  const toggleTheme = onToggleTheme || (() => setInternalIsDark((value) => !value));
 
   useEffect(() => {
     if (propIsDark === undefined) {
@@ -59,12 +62,15 @@ export default function ProjectHeader({
           aria-label="Volver a AUTEM"
         >
           <AutemBrandIcon size={24} />
-          <div>
-            <strong className="block text-sm sm:text-base md:text-lg font-serif font-medium leading-none tracking-tight text-foreground">
+          <div className="min-w-0">
+            <strong className="block max-w-[180px] truncate text-sm sm:text-base md:text-lg font-serif font-medium leading-none tracking-tight text-foreground">
               {propertyName}
             </strong>
-            <span className="mt-1 block text-[7px] sm:text-[7.5px] uppercase tracking-[0.22em] text-muted-foreground">
+            <span className="mt-1 hidden text-[7px] sm:text-[7.5px] uppercase tracking-[0.22em] text-muted-foreground lg:block">
               AUTEM · Proyecto
+            </span>
+            <span className="mt-1 block text-[11px] text-muted-foreground lg:hidden">
+              {activeView?.shortLabel ?? activeView?.label}
             </span>
           </div>
         </Link>
@@ -74,7 +80,7 @@ export default function ProjectHeader({
           variant="ghost"
           size="sm"
           onClick={() => window.history.back()}
-          className="shrink-0 rounded-full text-foreground hover:bg-muted hover:text-foreground h-8 px-2 sm:px-3 text-xs"
+          className="hidden shrink-0 rounded-full h-8 px-2 sm:px-3 lg:inline-flex"
           aria-label="Volver atrás"
         >
           <ArrowLeft size={16} />
@@ -87,12 +93,23 @@ export default function ProjectHeader({
           </div>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="ml-auto lg:hidden">
+          <MobileProjectMenu
+            activeMode={activeMode}
+            onModeChange={onModeChange}
+            showViews={showViewSwitcher}
+            isDark={isDark}
+            onToggleTheme={toggleTheme}
+            onOpenInfo={onOpenInfo}
+            contactUrl={contactUrl}
+          />
+        </div>
+        <div className="ml-auto hidden shrink-0 items-center gap-1 sm:gap-2 lg:flex">
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            onClick={onToggleTheme || (() => setInternalIsDark((value) => !value))}
+            onClick={toggleTheme}
             className="rounded-full text-foreground hover:bg-muted hover:text-foreground"
           >
             {isDark ? <Moon className="text-accent" /> : <Sun className="text-accent" />}

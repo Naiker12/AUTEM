@@ -24,6 +24,7 @@ export interface Property {
   features: string[];
   floorPlan: string;
   year: number;
+  masterplanVersion?: string;
   floorPlanPdf?: string;
   floorPlanImage?: string;
   lotViewImage?: string;
