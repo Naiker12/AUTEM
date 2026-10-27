@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  Copy,
   Eye,
   FolderKanban,
   KeyRound,
@@ -163,6 +164,7 @@ export function TeamAccessPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<Role | null>(null);
   const [memberToResend, setMemberToResend] = useState<TeamMember | null>(null);
@@ -251,6 +253,12 @@ export function TeamAccessPage() {
       if (!access || access.role !== "superadmin") {
         throw new Error("Solo un superadministrador puede invitar personas.");
       }
+      if (role !== "superadmin" && selectedProjectIds.length === 0) {
+        toast.error("Selección de proyecto requerida", {
+          description: "Debes asignar al menos un proyecto para este rol.",
+        });
+        return;
+      }
       const projectIdsToSend = role === "superadmin" ? [] : selectedProjectIds;
       const { data, error } = await requireSupabase().functions.invoke("invite-user", {
         body: {
@@ -305,6 +313,7 @@ export function TeamAccessPage() {
       setDialogOpen(false);
       setInviteName("");
       setInviteEmail("");
+      setInvitePhone("");
       setInviteFeedback(
         `Invitación enviada a ${email}. La persona recibirá un correo para activar su acceso.`,
       );
@@ -316,7 +325,7 @@ export function TeamAccessPage() {
         p_entity_type: "team_member",
         p_entity_id: data?.userId ?? email,
         p_project_id: projectIdsToSend[0] ?? null,
-        p_details: { email, name, role, projectIds: projectIdsToSend },
+        p_details: { email, name, role, phone: invitePhone || null, projectIds: projectIdsToSend },
       });
     } catch (error) {
       const rawMessage = error instanceof Error ? error.message : "";
@@ -460,6 +469,16 @@ export function TeamAccessPage() {
     }
   }
 
+  function handleCopyInvite(member: TeamMember) {
+    const url = `${window.location.origin}/actualizar-contrasena`;
+    const projectsText = member.projects.length ? member.projects.join(", ") : "tus proyectos asignados";
+    const text = `Hola ${member.name}, te damos la bienvenida a AUTEM. Tu acceso al panel ha sido configurado para: ${projectsText}.\n\nPor favor ingresa a este enlace para definir tu contraseña y comenzar:\n${url}`;
+    void navigator.clipboard.writeText(text);
+    toast.success("Mensaje de invitación copiado", {
+      description: "Listo para compartir por WhatsApp o correo.",
+    });
+  }
+
   return (
     <main className="w-full p-4 sm:p-5 lg:p-6 2xl:p-8">
       <div className="flex flex-col gap-5">
@@ -515,6 +534,19 @@ export function TeamAccessPage() {
                             value={inviteEmail}
                             onChange={(event) => setInviteEmail(event.target.value)}
                           />
+                        </Field>
+                        <Field className="sm:col-span-2">
+                          <FieldLabel htmlFor="invite-phone">Teléfono / WhatsApp (opcional)</FieldLabel>
+                          <Input
+                            id="invite-phone"
+                            name="phone"
+                            placeholder="+57 300 123 4567"
+                            value={invitePhone}
+                            onChange={(event) => setInvitePhone(event.target.value)}
+                          />
+                          <FieldDescription>
+                            Permite vincular a esta persona como asesor de contacto en los lotes.
+                          </FieldDescription>
                         </Field>
                       </FieldGroup>
                     </FieldSet>
@@ -641,18 +673,32 @@ export function TeamAccessPage() {
                     </Card>
                   </div>
                 </div>
-                <DialogFooter className="border-t bg-background px-6 py-4">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={isInviting}>
-                    {isInviting ? (
-                      <LoaderCircle data-icon="inline-start" className="animate-spin" />
+                <DialogFooter className="flex-col sm:flex-row items-stretch sm:items-center justify-between border-t bg-background px-6 py-4 gap-3">
+                  <div className="text-xs text-muted-foreground">
+                    {role !== "superadmin" && selectedProjectIds.length === 0 ? (
+                      <span className="text-destructive font-medium">
+                        ⚠️ Debes seleccionar al menos un proyecto para este rol.
+                      </span>
                     ) : (
-                      <Plus data-icon="inline-start" />
+                      <span>La persona recibirá un enlace por correo para definir su contraseña.</span>
                     )}
-                    {isInviting ? "Enviando" : "Enviar invitación"}
-                  </Button>
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isInviting || (role !== "superadmin" && selectedProjectIds.length === 0)}
+                    >
+                      {isInviting ? (
+                        <LoaderCircle data-icon="inline-start" className="animate-spin" />
+                      ) : (
+                        <Plus data-icon="inline-start" />
+                      )}
+                      {isInviting ? "Enviando" : "Enviar invitación"}
+                    </Button>
+                  </div>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -771,6 +817,17 @@ export function TeamAccessPage() {
                             onClick={() => setMemberToResend(member)}
                           >
                             <RefreshCw data-icon="inline-start" /> Reenviar
+                          </Button>
+                        )}
+                        {memberInvitationStatus(member) !== "Activo" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Copiar mensaje de activación para WhatsApp o correo"
+                            aria-label={`Copiar mensaje de activación para ${member.name}`}
+                            onClick={() => handleCopyInvite(member)}
+                          >
+                            <Copy className="size-4" />
                           </Button>
                         )}
                         <Button

@@ -36,6 +36,7 @@ export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
 
   if (role === "editor") {
     return (
+      pathname.startsWith("/admin/proyectos") ||
       pathname.startsWith("/admin/contenido") ||
       pathname.startsWith("/admin/galerias-planos-recorridos") ||
       pathname.startsWith("/admin/experiencias")
