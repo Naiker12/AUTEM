@@ -101,10 +101,20 @@ const statusLabels: Record<LotStatus, string> = {
   "Por confirmar": "Por confirmar",
 };
 
+type ManagedProjectSummary = {
+  id: string;
+  slug: string;
+  name: string;
+  masterplan_path: string | null;
+};
+
 function LotsAndUnitsPage() {
   const [inventory, setInventory] = useState<InventoryLot[]>([]);
+  const [allowedProjects, setAllowedProjects] = useState<ManagedProjectSummary[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ManagedProjectSummary | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [masterplanUrl, setMasterplanUrl] = useState<string | null>(null);
+  const [isLoadingLots, setIsLoadingLots] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | LotStatus>("todos");
@@ -115,6 +125,65 @@ function LotsAndUnitsPage() {
   const [isSavingLot, setIsSavingLot] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
   const selectedLot = inventory.find((lot) => lot.id === selectedLotId) ?? null;
+
+  async function loadProjectLots(project: ManagedProjectSummary) {
+    setIsLoadingLots(true);
+    setLoadError(null);
+    setProjectId(project.id);
+    setSelectedProject(project);
+    setSelectedLotId(null);
+    setPage(1);
+
+    try {
+      const client = requireSupabase();
+      setMasterplanUrl(
+        project.masterplan_path
+          ? client.storage.from("project-media").getPublicUrl(project.masterplan_path).data
+              .publicUrl
+          : null,
+      );
+
+      const { data, error } = await client
+        .from("lots")
+        .select(
+          "external_id, lot_number, manzana, status, price_cop, area_m2, centroid, geometry, metadata, updated_at",
+        )
+        .eq("project_id", project.id)
+        .order("lot_number");
+
+      if (error) throw error;
+
+      setInventory(
+        ((data ?? []) as DatabaseLot[]).map((lot) => ({
+          id: lot.external_id,
+          projectSlug: project.slug,
+          area: Number(lot.area_m2 ?? 0),
+          price: Number(lot.price_cop ?? 0),
+          status: databaseLotStatus[lot.status as keyof typeof databaseLotStatus],
+          detail: `${lot.manzana ? `Manzana ${lot.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${lot.metadata?.isReserve ? "Zona de reserva" : "Vía interna"}`,
+          terrainPosition: [0, 0] as [number, number],
+          centroid: lot.centroid ?? undefined,
+          manzana: lot.manzana ?? undefined,
+          lotNumber: lot.lot_number ?? undefined,
+          pathD: lot.geometry?.pathD,
+          isReserve: Boolean(lot.metadata?.isReserve),
+          buyer: (lot.metadata?.buyer as string) || "",
+          advisor: (lot.metadata?.advisor as string) || "",
+          reservationEndsAt: lot.status === "reserved" ? "Pendiente de confirmar" : undefined,
+          updatedAt: lot.updated_at
+            ? new Date(lot.updated_at).toLocaleDateString("es-CO")
+            : "Sin fecha",
+          metadata: lot.metadata ?? undefined,
+        })),
+      );
+    } catch (error) {
+      setLoadError(
+        error instanceof Error ? error.message : "No fue posible cargar los lotes del proyecto.",
+      );
+    } finally {
+      setIsLoadingLots(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -137,58 +206,24 @@ function LotsAndUnitsPage() {
           projectQuery = projectQuery.in("id", access.assignedProjectIds);
         }
 
-        const { data: allowedProjects, error: projectError } = await projectQuery;
+        const { data: projs, error: projectError } = await projectQuery;
         if (projectError) throw projectError;
-        if (!allowedProjects || allowedProjects.length === 0) {
+        if (!projs || projs.length === 0) {
           throw new Error("No tienes ningún proyecto asignado para gestionar inventario.");
         }
-
-        // Seleccionar el proyecto autorizado (por defecto el primero asignado o Villa Paraíso si aplica)
-        const project =
-          allowedProjects.find((p) => p.slug === "villa-paraiso") || allowedProjects[0];
-
-        const { data, error } = await client
-          .from("lots")
-          .select(
-            "external_id, lot_number, manzana, status, price_cop, area_m2, centroid, geometry, metadata, updated_at",
-          )
-          .eq("project_id", project.id)
-          .order("lot_number");
-        if (error) throw error;
         if (!active) return;
-        setProjectId(project.id);
-        setMasterplanUrl(
-          project.masterplan_path
-            ? client.storage.from("project-media").getPublicUrl(project.masterplan_path).data
-                .publicUrl
-            : null,
-        );
-        setInventory(
-          ((data ?? []) as DatabaseLot[]).map((lot) => ({
-            id: lot.external_id,
-            projectSlug: project.slug,
-            area: Number(lot.area_m2 ?? 0),
-            price: Number(lot.price_cop ?? 0),
-            status: databaseLotStatus[lot.status as keyof typeof databaseLotStatus],
-            detail: `${lot.manzana ? `Manzana ${lot.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${lot.metadata?.isReserve ? "Zona de reserva" : "Vía interna"}`,
-            terrainPosition: [0, 0] as [number, number],
-            centroid: lot.centroid ?? undefined,
-            manzana: lot.manzana ?? undefined,
-            lotNumber: lot.lot_number ?? undefined,
-            pathD: lot.geometry?.pathD,
-            isReserve: Boolean(lot.metadata?.isReserve),
-            buyer: (lot.metadata?.buyer as string) || "",
-            advisor: (lot.metadata?.advisor as string) || "",
-            reservationEndsAt: lot.status === "reserved" ? "Pendiente de confirmar" : undefined,
-            updatedAt: lot.updated_at
-              ? new Date(lot.updated_at).toLocaleDateString("es-CO")
-              : "Sin fecha",
-            metadata: lot.metadata ?? undefined,
-          })),
-        );
+        setAllowedProjects(projs);
+
+        // Seleccionar el proyecto autorizado (por defecto Villa Paraíso si aplica o el primero asignado)
+        const initialProject =
+          projs.find((p) => p.slug === "villa-paraiso") || projs[0];
+
+        await loadProjectLots(initialProject);
       } catch (error) {
         if (active)
-          setLoadError(error instanceof Error ? error.message : "No fue posible cargar los lotes.");
+          setLoadError(
+            error instanceof Error ? error.message : "No fue posible conectar con los proyectos.",
+          );
       }
     })();
     return () => {
@@ -274,6 +309,23 @@ function LotsAndUnitsPage() {
         .eq("project_id", projectId)
         .eq("external_id", lotId);
     }
+
+    // Registrar evento en la auditoría para el Superadministrador
+    void client.rpc("record_audit_event", {
+      p_action: "update_lot",
+      p_entity_type: "lot",
+      p_entity_id: lotId,
+      p_project_id: projectId,
+      p_details: {
+        lot_id: lotId,
+        project_slug: selectedProject?.slug,
+        project_name: selectedProject?.name,
+        status: updates.status ?? targetLot?.status,
+        buyer: updates.buyer ?? targetLot?.buyer,
+        advisor: updates.advisor ?? targetLot?.advisor,
+        tipo: "cambio_rapido_comercial",
+      },
+    });
   }
 
   async function handleSaveLot(
@@ -294,6 +346,9 @@ function LotsAndUnitsPage() {
     try {
       const dbStatus = uiLotStatus[updates.status];
       const targetLot = inventory.find((l) => l.id === lotId);
+      const cuotaInicial = updates.price > 0 ? Math.round(updates.price * 0.20) : undefined;
+      const cuotas48 = updates.price > 0 ? Math.round((updates.price * 0.80) / 48) : undefined;
+
       const updatedMetadata: LotMetadata = {
         ...(targetLot?.metadata ?? {}),
         buyer: updates.buyer,
@@ -301,6 +356,8 @@ function LotsAndUnitsPage() {
         ubicacion: updates.ubicacion ?? (targetLot?.metadata?.ubicacion as string | undefined),
         descripcion_lindero:
           updates.descripcion_lindero ?? targetLot?.metadata?.descripcion_lindero,
+        ...(cuotaInicial ? { cuota_inicial_20: cuotaInicial } : {}),
+        ...(cuotas48 ? { cuotas_48: cuotas48 } : {}),
       };
 
       setInventory((prev) =>
@@ -349,6 +406,26 @@ function LotsAndUnitsPage() {
             .eq("project_id", projectId)
             .eq("external_id", lotId);
         }
+
+        // Registrar auditoría para el Superadministrador
+        void client.rpc("record_audit_event", {
+          p_action: "update_lot",
+          p_entity_type: "lot",
+          p_entity_id: lotId,
+          p_project_id: projectId,
+          p_details: {
+            lot_id: lotId,
+            project_slug: selectedProject?.slug,
+            project_name: selectedProject?.name,
+            manzana: updates.manzana,
+            area_m2: updates.area,
+            price_cop: updates.price,
+            status: updates.status,
+            buyer: updates.buyer || null,
+            advisor: updates.advisor || null,
+            ubicacion: updates.ubicacion || null,
+          },
+        });
       }
 
       setSaveFeedback(`Lote ${lotId} actualizado exitosamente.`);
@@ -371,7 +448,7 @@ function LotsAndUnitsPage() {
       <section className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex min-w-0 flex-col gap-2 border-l-2 border-accent pl-4">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Villa Paraíso · Inventario
+            {selectedProject ? `${selectedProject.name} · Inventario` : "Inventario de lotes"}
           </p>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <h1 className="font-serif text-3xl text-foreground sm:text-4xl">Lotes y unidades</h1>
@@ -384,6 +461,34 @@ function LotsAndUnitsPage() {
             plano urbanístico.
           </p>
         </div>
+
+        {allowedProjects.length > 1 && (
+          <div className="flex flex-col gap-1.5 sm:items-end">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Proyecto activo
+            </span>
+            <Select
+              value={selectedProject?.id}
+              onValueChange={(id) => {
+                const proj = allowedProjects.find((p) => p.id === id);
+                if (proj) void loadProjectLots(proj);
+              }}
+            >
+              <SelectTrigger className="w-[220px] font-medium bg-card">
+                <SelectValue placeholder="Seleccionar proyecto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {allowedProjects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </section>
       {loadError && (
         <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
@@ -1164,6 +1269,32 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 Visualización: {formatLotPrice(price)}
               </span>
             </div>
+
+            {price > 0 && (
+              <div className="sm:col-span-2 rounded-xl border border-accent/20 bg-accent/5 p-3.5">
+                <p className="text-xs uppercase tracking-wider font-semibold text-accent mb-2">
+                  Plan Financiero Estimado (20% inicial / 48 cuotas)
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block">Precio Total:</span>
+                    <span className="font-semibold text-foreground text-sm">{formatLotPrice(price)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block">Cuota Inicial (20%):</span>
+                    <span className="font-semibold text-foreground text-sm">
+                      {formatLotPrice(Math.round(price * 0.2))}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block">48 Cuotas mes (80%):</span>
+                    <span className="font-semibold text-foreground text-sm">
+                      {formatLotPrice(Math.round((price * 0.8) / 48))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label htmlFor="edit-ubicacion" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
