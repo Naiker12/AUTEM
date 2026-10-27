@@ -60,11 +60,12 @@ function ProjectView() {
   const [viewSettings, setViewSettings] = useState<ProjectViewSettings>(
     DEFAULT_PROJECT_VIEW_SETTINGS,
   );
-  const [selectedLotId, setSelectedLotId] = useState(
-    projectLots[1]?.id ?? projectLots[0]?.id ?? "",
-  );
+  const [selectedLotId, setSelectedLotId] = useState("");
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
-  const selectedLot = projectLots.find((lot) => lot.id === selectedLotId) ?? projectLots[0];
+  const selectedLot = useMemo(
+    () => (selectedLotId ? projectLots.find((lot) => lot.id === selectedLotId) ?? null : null),
+    [projectLots, selectedLotId],
+  );
   const hasLots = projectLots.length > 0;
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 1024,
@@ -249,10 +250,16 @@ function ProjectView() {
     setSheetPercent((prev) => (prev > 62 ? 42 : 76));
   }, []);
 
-  const selectLot = useCallback((lot: (typeof projectLots)[number]) => {
-    setSelectedLotId(lot.id);
-    setLotFocusRequest((request) => request + 1);
-  }, []);
+  const selectLot = useCallback(
+    (lot: (typeof projectLots)[number]) => {
+      setSelectedLotId(lot.id);
+      setLotFocusRequest((request) => request + 1);
+      if (!isMobile) {
+        setIsPanelOpen(true);
+      }
+    },
+    [isMobile],
+  );
 
   const handleView3D = useCallback(() => setMode("tour"), []);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
@@ -316,6 +323,8 @@ function ProjectView() {
         setIsPanelOpen(false);
       }}
       isMobile={isMobile}
+      selectedLot={selectedLot}
+      onClearSelectedLot={() => setSelectedLotId("")}
     />
   );
 
@@ -610,7 +619,7 @@ function ProjectView() {
           <>
             <TerrainRouteView
               lots={projectLots}
-              selectedLot={selectedLot}
+              selectedLot={selectedLot ?? projectLots[0]}
               onSelectLot={selectLot}
               settings={viewSettings}
               isDark={isDark}
@@ -773,6 +782,8 @@ function ProjectView() {
               setIsPanelOpen(false);
             }}
             isMobile={false}
+            selectedLot={selectedLot}
+            onClearSelectedLot={() => setSelectedLotId("")}
           />
         </div>
       </aside>
