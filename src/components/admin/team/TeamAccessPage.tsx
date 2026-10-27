@@ -59,7 +59,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { listManagedProjects } from "@/lib/project-repository";
 import { requireSupabase } from "@/lib/supabase";
 import {
   Table,
@@ -148,15 +150,14 @@ const teamSeed: TeamMember[] = [
   },
 ];
 
-const villaParaisoId = "00000000-0000-0000-0000-000000000101";
-
 export function TeamAccessPage() {
   const [members, setMembers] = useState(teamSeed);
+  const [availableProjects, setAvailableProjects] = useState<{ id: string; name: string }[]>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [memberToManage, setMemberToManage] = useState<TeamMember | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [role, setRole] = useState<Role>("editor");
-  const [hasVillaParaiso, setHasVillaParaiso] = useState(true);
   const [inviteFeedback, setInviteFeedback] = useState("");
   const [teamLoadError, setTeamLoadError] = useState("");
   const [isInviting, setIsInviting] = useState(false);
@@ -185,6 +186,19 @@ export function TeamAccessPage() {
         if (!access) return;
         setOrganizationId(access.organizationId);
         setCurrentRole(access.role);
+
+        // Cargar lista dinámica de proyectos de la organización
+        try {
+          const projs = await listManagedProjects(access.organizationId);
+          const projectList = projs.map((p) => ({ id: p.id, name: p.name }));
+          setAvailableProjects(projectList);
+          if (projectList.length > 0) {
+            setSelectedProjectIds((prev) => (prev.length === 0 ? [projectList[0].id] : prev));
+          }
+        } catch (projErr) {
+          console.warn("No fue posible cargar proyectos de la organización:", projErr);
+        }
+
         const { data, error } = await requireSupabase().functions.invoke("invite-user", {
           body: { action: "list", organizationId: access.organizationId },
         });
@@ -237,13 +251,14 @@ export function TeamAccessPage() {
       if (!access || access.role !== "superadmin") {
         throw new Error("Solo un superadministrador puede invitar personas.");
       }
+      const projectIdsToSend = role === "superadmin" ? [] : selectedProjectIds;
       const { data, error } = await requireSupabase().functions.invoke("invite-user", {
         body: {
           email,
           fullName: name,
           organizationId: access.organizationId,
           role,
-          projectIds: role === "superadmin" || !hasVillaParaiso ? [] : [villaParaisoId],
+          projectIds: projectIdsToSend,
         },
       });
       if (error) throw error;
@@ -261,6 +276,14 @@ export function TeamAccessPage() {
         );
         return;
       }
+
+      const assignedProjectNames =
+        role === "superadmin"
+          ? ["Todos los proyectos"]
+          : availableProjects
+              .filter((p) => selectedProjectIds.includes(p.id))
+              .map((p) => p.name);
+
       setMembers((current) => [
         ...current,
         {
@@ -268,12 +291,7 @@ export function TeamAccessPage() {
           name,
           email,
           role,
-          projects:
-            role === "superadmin"
-              ? ["Todos los proyectos"]
-              : hasVillaParaiso
-                ? ["Villa Paraíso"]
-                : [],
+          projects: assignedProjectNames.length > 0 ? assignedProjectNames : ["Sin proyectos asignados"],
           status: "Invitación pendiente",
           invitation: {
             sentAt: new Date().toISOString(),
@@ -291,6 +309,15 @@ export function TeamAccessPage() {
         `Invitación enviada a ${email}. La persona recibirá un correo para activar su acceso.`,
       );
       toast.success("Invitación enviada", { description: `Se envió a ${email}.` });
+
+      // Registrar auditoría de invitación
+      void requireSupabase().rpc("record_audit_event", {
+        p_action: "team:invite_member",
+        p_entity_type: "team_member",
+        p_entity_id: data?.userId ?? email,
+        p_project_id: projectIdsToSend[0] ?? null,
+        p_details: { email, name, role, projectIds: projectIdsToSend },
+      });
     } catch (error) {
       const rawMessage = error instanceof Error ? error.message : "";
       const message = rawMessage.includes("Edge Function")
@@ -329,6 +356,16 @@ export function TeamAccessPage() {
             : member,
         ),
       );
+
+      // Registrar auditoría de reenvío
+      void requireSupabase().rpc("record_audit_event", {
+        p_action: "team:resend_invite",
+        p_entity_type: "team_member",
+        p_entity_id: memberToResend.id,
+        p_project_id: null,
+        p_details: { memberEmail: memberToResend.email, memberName: memberToResend.name },
+      });
+
       toast.success("Invitación reenviada", {
         description: `Se envió un nuevo enlace a ${memberToResend.email}.`,
       });
@@ -342,36 +379,50 @@ export function TeamAccessPage() {
     }
   }
 
-  async function handleUpdatePermissions(member: TeamMember, nextRole: Role, hasProject: boolean) {
+  async function handleUpdatePermissions(member: TeamMember, nextRole: Role, nextProjectIds: string[]) {
     if (!organizationId) throw new Error("No fue posible identificar la organización.");
+    const projectIdsToSend = nextRole === "superadmin" ? [] : nextProjectIds;
     const { error } = await requireSupabase().functions.invoke("invite-user", {
       body: {
         action: "update",
         organizationId,
         userId: member.id,
         role: nextRole,
-        projectIds: nextRole === "superadmin" || !hasProject ? [] : [villaParaisoId],
+        projectIds: projectIdsToSend,
       },
     });
     if (error) throw error;
+
+    const assignedProjectNames =
+      nextRole === "superadmin"
+        ? ["Todos los proyectos"]
+        : availableProjects
+            .filter((p) => nextProjectIds.includes(p.id))
+            .map((p) => p.name);
+
     setMembers((current) =>
       current.map((item) =>
         item.id === member.id
           ? {
               ...item,
               role: nextRole,
-              projects:
-                nextRole === "superadmin"
-                  ? ["Todos los proyectos"]
-                  : hasProject
-                    ? ["Villa Paraíso"]
-                    : [],
+              projects: assignedProjectNames.length > 0 ? assignedProjectNames : [],
             }
           : item,
       ),
     );
     setSelectedMember(null);
     setMemberToManage(null);
+
+    // Registrar auditoría de actualización
+    void requireSupabase().rpc("record_audit_event", {
+      p_action: "team:update_permissions",
+      p_entity_type: "team_member",
+      p_entity_id: member.id,
+      p_project_id: projectIdsToSend[0] ?? null,
+      p_details: { memberEmail: member.email, newRole: nextRole, projectIds: projectIdsToSend },
+    });
+
     toast.success("Permisos actualizados", {
       description: `Se actualizó el acceso de ${member.name}.`,
     });
@@ -386,6 +437,16 @@ export function TeamAccessPage() {
       });
       if (error) throw error;
       setMembers((current) => current.filter((member) => member.id !== memberToRemove.id));
+
+      // Registrar auditoría de retiro de acceso
+      void requireSupabase().rpc("record_audit_event", {
+        p_action: "team:remove_access",
+        p_entity_type: "team_member",
+        p_entity_id: memberToRemove.id,
+        p_project_id: null,
+        p_details: { memberEmail: memberToRemove.email, memberName: memberToRemove.name },
+      });
+
       toast.success("Acceso retirado", {
         description: `${memberToRemove.name} ya no puede entrar al panel.`,
       });
@@ -489,26 +550,53 @@ export function TeamAccessPage() {
                           <RoleAccessSummary role={role} compact />
                         </Field>
                         <Field
-                          orientation="horizontal"
                           className="rounded-xl border p-4"
                           data-disabled={role === "superadmin" || undefined}
                         >
-                          <FieldContent>
-                            <FieldLabel htmlFor="villa-paraiso-access">
-                              Acceso a Villa Paraíso
-                            </FieldLabel>
-                            <FieldDescription>
-                              {role === "superadmin"
-                                ? "Los superadministradores tienen acceso a todos los proyectos."
-                                : `${selectedRoleAccess.description} Actívalo solo si debe trabajar en este proyecto.`}
-                            </FieldDescription>
-                          </FieldContent>
-                          <Switch
-                            id="villa-paraiso-access"
-                            checked={role === "superadmin" || hasVillaParaiso}
-                            disabled={role === "superadmin"}
-                            onCheckedChange={setHasVillaParaiso}
-                          />
+                          <FieldLabel>Proyectos asignados</FieldLabel>
+                          <FieldDescription>
+                            {role === "superadmin"
+                              ? "Los superadministradores tienen acceso a todos los proyectos de la organización."
+                              : `${selectedRoleAccess.description} Selecciona a cuáles proyectos podrá acceder.`}
+                          </FieldDescription>
+                          {role !== "superadmin" && (
+                            <div className="mt-3 flex flex-col gap-2">
+                              {availableProjects.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">
+                                  No hay proyectos registrados en la organización.
+                                </p>
+                              ) : (
+                                availableProjects.map((proj) => {
+                                  const isChecked = selectedProjectIds.includes(proj.id);
+                                  return (
+                                    <label
+                                      key={proj.id}
+                                      className="flex items-center justify-between rounded-lg border border-border/60 bg-background/50 p-3 hover:bg-muted/40 cursor-pointer transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2.5">
+                                        <Checkbox
+                                          checked={isChecked}
+                                          onCheckedChange={(checked) => {
+                                            if (checked) {
+                                              setSelectedProjectIds((prev) => [...prev, proj.id]);
+                                            } else {
+                                              setSelectedProjectIds((prev) =>
+                                                prev.filter((id) => id !== proj.id),
+                                              );
+                                            }
+                                          }}
+                                        />
+                                        <span className="text-sm font-medium">{proj.name}</span>
+                                      </div>
+                                      <Badge variant={isChecked ? "default" : "outline"} className="text-[10px]">
+                                        {isChecked ? "Asignado" : "Sin acceso"}
+                                      </Badge>
+                                    </label>
+                                  );
+                                })
+                              )}
+                            </div>
+                          )}
                         </Field>
                       </FieldGroup>
                     </FieldSet>
@@ -541,8 +629,11 @@ export function TeamAccessPage() {
                           <Badge variant="outline">
                             {role === "superadmin"
                               ? "Todos los proyectos"
-                              : hasVillaParaiso
-                                ? "Villa Paraíso"
+                              : selectedProjectIds.length > 0
+                                ? availableProjects
+                                    .filter((p) => selectedProjectIds.includes(p.id))
+                                    .map((p) => p.name)
+                                    .join(", ")
                                 : "Sin proyectos"}
                           </Badge>
                         </div>
@@ -733,6 +824,7 @@ export function TeamAccessPage() {
       />
       <MemberPermissionDialog
         member={memberToManage}
+        availableProjects={availableProjects}
         onOpenChange={(open) => !open && setMemberToManage(null)}
         onSave={handleUpdatePermissions}
       />
@@ -945,29 +1037,35 @@ function MemberProfileDialog({
 
 function MemberPermissionDialog({
   member,
+  availableProjects,
   onOpenChange,
   onSave,
 }: {
   member: TeamMember | null;
+  availableProjects: { id: string; name: string }[];
   onOpenChange: (open: boolean) => void;
-  onSave: (member: TeamMember, role: Role, hasProject: boolean) => Promise<void>;
+  onSave: (member: TeamMember, role: Role, projectIds: string[]) => Promise<void>;
 }) {
   const [role, setRole] = useState<Role>("editor");
-  const [hasProject, setHasProject] = useState(true);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!member) return;
     setRole(member.role);
-    setHasProject(member.projects.includes("Villa Paraíso"));
-  }, [member]);
+    // Identificar qué proyectos tiene asignados el miembro
+    const matchingIds = availableProjects
+      .filter((p) => member.projects.includes(p.name) || member.projects.includes(p.id))
+      .map((p) => p.id);
+    setSelectedProjectIds(matchingIds);
+  }, [member, availableProjects]);
 
   if (!member) return null;
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(member, role, hasProject);
+      await onSave(member, role, selectedProjectIds);
     } catch (error) {
       toast.error("No fue posible actualizar los permisos", {
         description: error instanceof Error ? error.message : "Inténtalo nuevamente.",
@@ -1008,14 +1106,47 @@ function MemberPermissionDialog({
             </Select>
           </Field>
           <RoleAccessSummary role={role} compact />
-          <Field orientation="horizontal" className="rounded-xl border p-4">
-            <FieldContent>
-              <FieldLabel htmlFor="member-villa-access">Acceso a Villa Paraíso</FieldLabel>
-              <FieldDescription>
-                Actívalo si esta persona debe trabajar dentro de este proyecto.
-              </FieldDescription>
-            </FieldContent>
-            <Switch id="member-villa-access" checked={hasProject} onCheckedChange={setHasProject} />
+          <Field className="rounded-xl border p-4">
+            <FieldLabel>Proyectos asignados</FieldLabel>
+            <FieldDescription>
+              Selecciona los proyectos en los que {member.name} tendrá permisos de administración o consulta.
+            </FieldDescription>
+            <div className="mt-3 flex flex-col gap-2">
+              {availableProjects.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No hay proyectos registrados en la organización.
+                </p>
+              ) : (
+                availableProjects.map((proj) => {
+                  const isChecked = selectedProjectIds.includes(proj.id);
+                  return (
+                    <label
+                      key={proj.id}
+                      className="flex items-center justify-between rounded-lg border border-border/60 bg-background/50 p-3 hover:bg-muted/40 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Checkbox
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedProjectIds((prev) => [...prev, proj.id]);
+                            } else {
+                              setSelectedProjectIds((prev) =>
+                                prev.filter((id) => id !== proj.id),
+                              );
+                            }
+                          }}
+                        />
+                        <span className="text-sm font-medium">{proj.name}</span>
+                      </div>
+                      <Badge variant={isChecked ? "default" : "outline"} className="text-[10px]">
+                        {isChecked ? "Asignado" : "Sin acceso"}
+                      </Badge>
+                    </label>
+                  );
+                })
+              )}
+            </div>
           </Field>
         </FieldSet>
         <DialogFooter>
