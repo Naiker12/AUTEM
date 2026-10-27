@@ -167,6 +167,8 @@ export function TeamAccessPage() {
   const [invitePhone, setInvitePhone] = useState("");
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<Role | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [memberToResend, setMemberToResend] = useState<TeamMember | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
   const [isResending, setIsResending] = useState(false);
@@ -188,6 +190,8 @@ export function TeamAccessPage() {
         if (!access) return;
         setOrganizationId(access.organizationId);
         setCurrentRole(access.role);
+        setCurrentUserId(access.user.id);
+        setCurrentUserEmail(access.user.email?.toLowerCase() ?? null);
 
         // Cargar lista dinámica de proyectos de la organización
         try {
@@ -390,6 +394,12 @@ export function TeamAccessPage() {
 
   async function handleUpdatePermissions(member: TeamMember, nextRole: Role, nextProjectIds: string[]) {
     if (!organizationId) throw new Error("No fue posible identificar la organización.");
+    if (isSelfMember(member, currentUserId, currentUserEmail)) {
+      toast.error("Operación no permitida", {
+        description: "No puedes modificar tus propios permisos ni alterar tu rol actual.",
+      });
+      return;
+    }
     const projectIdsToSend = nextRole === "superadmin" ? [] : nextProjectIds;
     const { error } = await requireSupabase().functions.invoke("invite-user", {
       body: {
@@ -439,6 +449,13 @@ export function TeamAccessPage() {
 
   async function handleRemoveAccess() {
     if (!memberToRemove || !organizationId) return;
+    if (isSelfMember(memberToRemove, currentUserId, currentUserEmail)) {
+      toast.error("Operación no permitida", {
+        description: "Por seguridad, no puedes retirar tu propio acceso ni eliminar tu cuenta.",
+      });
+      setMemberToRemove(null);
+      return;
+    }
     setIsRemoving(true);
     try {
       const { error } = await requireSupabase().functions.invoke("invite-user", {
@@ -769,102 +786,115 @@ export function TeamAccessPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-9">
-                          <AvatarFallback>
-                            {member.name
-                              .split(" ")
-                              .map((part) => part[0])
-                              .slice(0, 2)
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium">{member.name}</span>
-                          <span className="text-xs text-muted-foreground">{member.email}</span>
+                {members.map((member) => {
+                  const isSelf = isSelfMember(member, currentUserId, currentUserEmail);
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="size-9">
+                            <AvatarFallback>
+                              {member.name
+                                .split(" ")
+                                .map((part) => part[0])
+                                .slice(0, 2)
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium">{member.name}</span>
+                              {isSelf && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-accent/40 bg-accent/10 px-1.5 py-0 text-[10px] font-semibold text-accent"
+                                >
+                                  Tú
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">{member.email}</span>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={member.role === "superadmin" ? "default" : "secondary"}>
-                        {roleLabels[member.role]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {member.projects.length ? (
-                        member.projects.join(", ")
-                      ) : (
-                        <span className="text-muted-foreground">Sin proyectos asignados</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <InvitationBadge member={member} />
-                      {member.invitation && memberInvitationStatus(member) !== "Activo" && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {invitationTiming(member.invitation)}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        {canResendInvitation(member) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setMemberToResend(member)}
-                          >
-                            <RefreshCw data-icon="inline-start" /> Reenviar
-                          </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={member.role === "superadmin" ? "default" : "secondary"}>
+                          {roleLabels[member.role]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {member.projects.length ? (
+                          member.projects.join(", ")
+                        ) : (
+                          <span className="text-muted-foreground">Sin proyectos asignados</span>
                         )}
-                        {memberInvitationStatus(member) !== "Activo" && (
+                      </TableCell>
+                      <TableCell>
+                        <InvitationBadge member={member} />
+                        {member.invitation && memberInvitationStatus(member) !== "Activo" && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {invitationTiming(member.invitation)}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {canResendInvitation(member) && !isSelf && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMemberToResend(member)}
+                            >
+                              <RefreshCw data-icon="inline-start" /> Reenviar
+                            </Button>
+                          )}
+                          {memberInvitationStatus(member) !== "Activo" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Copiar mensaje de activación para WhatsApp o correo"
+                              aria-label={`Copiar mensaje de activación para ${member.name}`}
+                              onClick={() => handleCopyInvite(member)}
+                            >
+                              <Copy className="size-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Copiar mensaje de activación para WhatsApp o correo"
-                            aria-label={`Copiar mensaje de activación para ${member.name}`}
-                            onClick={() => handleCopyInvite(member)}
+                            title="Ver perfil"
+                            aria-label={`Ver perfil de ${member.name}`}
+                            onClick={() => setSelectedMember(member)}
                           >
-                            <Copy className="size-4" />
+                            <Eye />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Ver perfil"
-                          aria-label={`Ver perfil de ${member.name}`}
-                          onClick={() => setSelectedMember(member)}
-                        >
-                          <Eye />
-                        </Button>
-                        {canManageMember(currentRole, member) && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Editar permisos"
-                              aria-label={`Editar permisos de ${member.name}`}
-                              onClick={() => setMemberToManage(member)}
-                            >
-                              <Pencil />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Retirar acceso"
-                              aria-label={`Retirar acceso de ${member.name}`}
-                              onClick={() => setMemberToRemove(member)}
-                            >
-                              <Trash2 />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {canManageMember(currentRole, member, currentUserId, currentUserEmail) && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Editar permisos"
+                                aria-label={`Editar permisos de ${member.name}`}
+                                onClick={() => setMemberToManage(member)}
+                              >
+                                <Pencil />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Retirar acceso"
+                                aria-label={`Retirar acceso de ${member.name}`}
+                                onClick={() => setMemberToRemove(member)}
+                              >
+                                <Trash2 />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -872,9 +902,14 @@ export function TeamAccessPage() {
       </div>
       <MemberProfileDialog
         member={selectedMember}
+        isSelf={isSelfMember(selectedMember, currentUserId, currentUserEmail)}
         onOpenChange={(open) => !open && setSelectedMember(null)}
         onManage={() => {
           if (!selectedMember) return;
+          if (isSelfMember(selectedMember, currentUserId, currentUserEmail)) {
+            toast.error("No puedes modificar tus propios permisos.");
+            return;
+          }
           setMemberToManage(selectedMember);
           setSelectedMember(null);
         }}
@@ -959,7 +994,26 @@ function canResendInvitation(member: TeamMember) {
   return memberInvitationStatus(member) !== "Activo" && Boolean(member.invitation);
 }
 
-function canManageMember(currentRole: Role | null, member: TeamMember) {
+function isSelfMember(
+  member: TeamMember | null | undefined,
+  currentUserId?: string | null,
+  currentUserEmail?: string | null,
+): boolean {
+  if (!member) return false;
+  if (currentUserId && member.id && member.id === currentUserId) return true;
+  if (currentUserEmail && member.email && member.email.toLowerCase() === currentUserEmail.toLowerCase()) return true;
+  return false;
+}
+
+function canManageMember(
+  currentRole: Role | null,
+  member: TeamMember,
+  currentUserId?: string | null,
+  currentUserEmail?: string | null,
+) {
+  // Nadie puede eliminarse a sí mismo ni modificar sus propios permisos
+  if (isSelfMember(member, currentUserId, currentUserEmail)) return false;
+
   if (currentRole === "superadmin") return member.role !== "superadmin";
   return currentRole === "administrador" && ["editor", "comercial"].includes(member.role);
 }
@@ -1009,10 +1063,12 @@ function RoleAccessSummary({ role, compact = false }: { role: Role; compact?: bo
 
 function MemberProfileDialog({
   member,
+  isSelf = false,
   onOpenChange,
   onManage,
 }: {
   member: TeamMember | null;
+  isSelf?: boolean;
   onOpenChange: (open: boolean) => void;
   onManage: () => void;
 }) {
@@ -1039,7 +1095,17 @@ function MemberProfileDialog({
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <p className="truncate font-medium">{member.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate font-medium">{member.name}</p>
+                {isSelf && (
+                  <Badge
+                    variant="outline"
+                    className="border-accent/40 bg-accent/10 px-1.5 py-0 text-[10px] font-semibold text-accent"
+                  >
+                    Tú (Sesión activa)
+                  </Badge>
+                )}
+              </div>
               <p className="truncate text-sm text-muted-foreground">{member.email}</p>
             </div>
             <InvitationBadge member={member} />
@@ -1077,15 +1143,24 @@ function MemberProfileDialog({
             </p>
           </div>
         </div>
-        <DialogFooter>
-          {member.role !== "superadmin" && (
-            <Button type="button" onClick={onManage}>
-              Gestionar permisos
-            </Button>
+        <DialogFooter className="flex flex-col-reverse items-stretch justify-between gap-2 sm:flex-row sm:items-center">
+          {isSelf ? (
+            <p className="text-xs text-muted-foreground">
+              Esta es tu propia cuenta. Por seguridad, no es posible auto-retirar tu acceso ni cambiar tu rol desde aquí.
+            </p>
+          ) : (
+            <div />
           )}
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cerrar
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            {!isSelf && member.role !== "superadmin" && (
+              <Button type="button" onClick={onManage}>
+                Gestionar permisos
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cerrar
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
