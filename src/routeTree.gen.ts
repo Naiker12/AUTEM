@@ -26,6 +26,7 @@ import { Route as AdminLotesUnidadesRouteImport } from "./routes/admin/lotes-uni
 import { Route as AdminGaleriasPlanosRecorridosRouteImport } from "./routes/admin/galerias-planos-recorridos"
 import { Route as AdminEquipoAccesosRouteImport } from "./routes/admin/equipo-accesos"
 import { Route as AdminConfiguracionRouteImport } from "./routes/admin/configuracion"
+import { Route as AdminAuditoriaRouteImport } from "./routes/admin/auditoria"
 import { Route as AdminConfiguracionIndexRouteImport } from "./routes/admin/configuracion/index"
 import { Route as AdminExperienciasVisorLotesRouteImport } from "./routes/admin/experiencias/visor-lotes"
 import { Route as AdminExperienciasRecorridoTerrenoRouteImport } from "./routes/admin/experiencias/recorrido-terreno"
@@ -124,6 +125,11 @@ const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
   path: "/configuracion",
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAuditoriaRoute = AdminAuditoriaRouteImport.update({
+  id: "/auditoria",
+  path: "/auditoria",
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminConfiguracionIndexRoute = AdminConfiguracionIndexRouteImport.update({
   id: "/",
   path: "/",
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/recuperar-acceso": typeof RecuperarAccesoRoute
+  "/admin/auditoria": typeof AdminAuditoriaRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
   "/admin/equipo-accesos": typeof AdminEquipoAccesosRoute
   "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/recuperar-acceso": typeof RecuperarAccesoRoute
+  "/admin/auditoria": typeof AdminAuditoriaRoute
   "/admin/equipo-accesos": typeof AdminEquipoAccesosRoute
   "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   "/nosotros": typeof NosotrosRoute
   "/politica-privacidad": typeof PoliticaPrivacidadRoute
   "/recuperar-acceso": typeof RecuperarAccesoRoute
+  "/admin/auditoria": typeof AdminAuditoriaRoute
   "/admin/configuracion": typeof AdminConfiguracionRouteWithChildren
   "/admin/equipo-accesos": typeof AdminEquipoAccesosRoute
   "/admin/galerias-planos-recorridos": typeof AdminGaleriasPlanosRecorridosRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | "/nosotros"
     | "/politica-privacidad"
     | "/recuperar-acceso"
+    | "/admin/auditoria"
     | "/admin/configuracion"
     | "/admin/equipo-accesos"
     | "/admin/galerias-planos-recorridos"
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | "/nosotros"
     | "/politica-privacidad"
     | "/recuperar-acceso"
+    | "/admin/auditoria"
     | "/admin/equipo-accesos"
     | "/admin/galerias-planos-recorridos"
     | "/admin/lotes-unidades"
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | "/nosotros"
     | "/politica-privacidad"
     | "/recuperar-acceso"
+    | "/admin/auditoria"
     | "/admin/configuracion"
     | "/admin/equipo-accesos"
     | "/admin/galerias-planos-recorridos"
@@ -502,6 +514,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AdminConfiguracionRouteImport
       parentRoute: typeof AdminRoute
     }
+    "/admin/auditoria": {
+      id: "/admin/auditoria"
+      path: "/auditoria"
+      fullPath: "/admin/auditoria"
+      preLoaderRoute: typeof AdminAuditoriaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     "/admin/configuracion/": {
       id: "/admin/configuracion/"
       path: "/"
@@ -604,6 +623,7 @@ const AdminConfiguracionRouteWithChildren =
   AdminConfiguracionRoute._addFileChildren(AdminConfiguracionRouteChildren)
 
 interface AdminRouteChildren {
+  AdminAuditoriaRoute: typeof AdminAuditoriaRoute
   AdminConfiguracionRoute: typeof AdminConfiguracionRouteWithChildren
   AdminEquipoAccesosRoute: typeof AdminEquipoAccesosRoute
   AdminGaleriasPlanosRecorridosRoute: typeof AdminGaleriasPlanosRecorridosRoute
@@ -619,6 +639,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditoriaRoute: AdminAuditoriaRoute,
   AdminConfiguracionRoute: AdminConfiguracionRouteWithChildren,
   AdminEquipoAccesosRoute: AdminEquipoAccesosRoute,
   AdminGaleriasPlanosRecorridosRoute: AdminGaleriasPlanosRecorridosRoute,

@@ -1,6 +1,26 @@
 export type LotStatus =
   "Disponible" | "Últimas unidades" | "Reservado" | "Vendido" | "Por confirmar";
 
+export interface LotMetadata {
+  descripcion_lindero?: string;
+  ubicacion?: string;
+  color?: string;
+  valor_m2?: number;
+  prem2?: number;
+  precio_venta?: number;
+  precio_preventa?: number;
+  cuota_ini_20?: number;
+  cuotas_3_ini?: number;
+  cuotas_48?: number;
+  cuota_ini_pre_20?: number;
+  cuotas_3_ini_pre?: number;
+  cuotas_48_pre?: number;
+  isReserve?: boolean;
+  buyer?: string;
+  advisor?: string;
+  [key: string]: unknown;
+}
+
 export interface Lot {
   id: string;
   projectSlug: string;
@@ -19,6 +39,7 @@ export interface Lot {
   lotNumber?: number;
   pathD?: string;
   isReserve?: boolean;
+  metadata?: LotMetadata;
 }
 
 export function formatLotPrice(price: number): string {

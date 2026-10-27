@@ -133,6 +133,8 @@ function mapProjectRecord(record: ManagedProjectRecord): ManagedProject {
 function ProjectsPage() {
   const [projects, setProjects] = useState<ManagedProject[]>([]);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [assignedProjectIds, setAssignedProjectIds] = useState<string[]>([]);
   const [dataState, setDataState] = useState<"loading" | "ready" | "error">("loading");
   const [dataError, setDataError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -159,9 +161,12 @@ function ProjectsPage() {
       try {
         const access = await getCurrentAdminAccess();
         if (!access) throw new Error("Tu sesión no tiene acceso a la organización.");
-        const records = await listManagedProjects(access.organizationId);
+        const allowedIds = access.isSuperAdmin ? undefined : access.assignedProjectIds;
+        const records = await listManagedProjects(access.organizationId, allowedIds);
         if (!isActive) return;
         setOrganizationId(access.organizationId);
+        setIsSuperAdmin(access.isSuperAdmin);
+        setAssignedProjectIds(access.assignedProjectIds);
         setProjects(records.map(mapProjectRecord));
         setDataState("ready");
       } catch (error) {
@@ -315,7 +320,8 @@ function ProjectsPage() {
       }
 
       // Recargar lista actualizada
-      const records = await listManagedProjects(organizationId);
+      const allowedIds = isSuperAdmin ? undefined : assignedProjectIds;
+      const records = await listManagedProjects(organizationId, allowedIds);
       setProjects(records.map(mapProjectRecord));
       setDialogOpen(false);
     } catch (error) {
@@ -334,16 +340,20 @@ function ProjectsPage() {
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <h1 className="font-serif text-3xl text-foreground sm:text-4xl">Proyectos</h1>
             <p className="text-sm text-muted-foreground">
-              {projects.length} proyecto{projects.length === 1 ? "" : "s"} en el catálogo
+              {projects.length} proyecto{projects.length === 1 ? "" : "s"} disponible{projects.length === 1 ? "" : "s"}
             </p>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Gestiona los desarrollos y los recursos multimedia almacenados en Supabase Storage.
+            {isSuperAdmin
+              ? "Gestiona los desarrollos y los recursos multimedia almacenados en Supabase Storage."
+              : "Consulta y administra la información de los proyectos que tienes asignados."}
           </p>
         </div>
-        <Button className="shrink-0 rounded-full" onClick={openNewProject}>
-          <Plus data-icon="inline-start" /> Nuevo proyecto
-        </Button>
+        {isSuperAdmin && (
+          <Button className="shrink-0 rounded-full" onClick={openNewProject}>
+            <Plus data-icon="inline-start" /> Nuevo proyecto
+          </Button>
+        )}
       </section>
 
       {dataError && (

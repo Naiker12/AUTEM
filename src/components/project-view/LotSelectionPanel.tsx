@@ -302,7 +302,7 @@ const LotCardItem = memo(
 
         {/* Acciones de lote compactas */}
         <div
-          className={`absolute ${isMobile ? "right-1.5 gap-1" : "right-2 gap-1.5"} top-1/2 -translate-y-1/2 flex items-center`}
+          className={`absolute ${isMobile ? "right-1.5 gap-1" : "right-2 gap-1.5"} ${isSelected && (lot.metadata?.descripcion_lindero || lot.metadata?.cuota_inicial_20) ? "top-4" : "top-1/2 -translate-y-1/2"} flex items-center`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -337,6 +337,35 @@ const LotCardItem = memo(
             <Download size={isMobile ? 11 : 12.5} />
           </button>
         </div>
+
+        {/* Detalle expandido con linderos y financiación cuando el lote está seleccionado */}
+        {isSelected && (lot.metadata?.descripcion_lindero || lot.metadata?.cuota_inicial_20 || lot.metadata?.ubicacion) && (
+          <div className="border-t border-border/60 bg-muted/20 px-3 py-2 text-[10px] leading-relaxed text-muted-foreground animate-in fade-in duration-150">
+            {lot.metadata?.ubicacion && (
+              <div className="mb-1 flex items-center gap-1.5 font-medium text-accent">
+                <span>Ubicación:</span>
+                <span className="text-foreground">{lot.metadata.ubicacion}</span>
+              </div>
+            )}
+            {lot.metadata?.cuota_inicial_20 ? (
+              <div className="mb-1.5 grid grid-cols-2 gap-1 font-medium text-foreground/90">
+                <div>
+                  <span className="text-muted-foreground">Inicial (20%):</span> {formatLotPrice(lot.metadata.cuota_inicial_20)}
+                </div>
+                {lot.metadata?.cuotas_48 ? (
+                  <div>
+                    <span className="text-muted-foreground">48 cuotas:</span> {formatLotPrice(lot.metadata.cuotas_48)}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {lot.metadata?.descripcion_lindero && (
+              <p className="line-clamp-3 text-[9.5px] italic text-muted-foreground" title={lot.metadata.descripcion_lindero}>
+                {lot.metadata.descripcion_lindero}
+              </p>
+            )}
+          </div>
+        )}
       </article>
     );
   },
@@ -346,7 +375,8 @@ const LotCardItem = memo(
       prev.isSelected === next.isSelected &&
       prev.isMobile === next.isMobile &&
       prev.lot.status === next.lot.status &&
-      prev.lot.price === next.lot.price
+      prev.lot.price === next.lot.price &&
+      prev.lot.metadata === next.lot.metadata
     );
   },
 );

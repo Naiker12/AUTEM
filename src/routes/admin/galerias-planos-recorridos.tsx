@@ -115,9 +115,12 @@ function MediaLibraryPage() {
       try {
         const access = await getCurrentAdminAccess();
         if (!access) throw new Error("Inicia sesión para administrar los recursos.");
-        const projects = await listManagedProjects(access.organizationId);
+        const allowedIds = access.isSuperAdmin ? undefined : access.assignedProjectIds;
+        const projects = await listManagedProjects(access.organizationId, allowedIds);
+        if (!projects || projects.length === 0) {
+          throw new Error("No tienes proyectos asignados para administrar medios multimedia.");
+        }
         const project = projects.find((item) => item.slug === "villa-paraiso") ?? projects[0];
-        if (!project) throw new Error("No hay un proyecto disponible para administrar.");
         const media = await listProjectMedia(project.id);
         if (!active) return;
         setProjectId(project.id);

@@ -134,7 +134,7 @@ type PublicLotRow = {
   area_m2: number | null;
   centroid: [number, number] | null;
   geometry: { pathD?: string } | null;
-  metadata: { isReserve?: boolean } | null;
+  metadata: Record<string, unknown> | null;
 };
 
 const lotStatus: Record<PublicLotRow["status"], LotStatus> = {
@@ -180,6 +180,7 @@ export function usePublishedLots(projectId: string | undefined, projectSlug: str
             lotNumber: row.lot_number ?? undefined,
             pathD: row.geometry?.pathD,
             isReserve: Boolean(row.metadata?.isReserve),
+            metadata: row.metadata ?? undefined,
           })),
         );
       } catch {

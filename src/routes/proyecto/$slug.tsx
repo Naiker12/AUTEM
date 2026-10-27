@@ -302,7 +302,6 @@ function ProjectView() {
   const activeGalleryImage = images[galleryIndex] || property.image;
   const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
-  const modeLabel = PROJECT_VIEW_MODES.find((item) => item.id === mode)?.label;
   const mobileControlOpen = isMobile && isPanelOpen;
   const effectiveSheetPercent = mobileControlOpen ? controlPanelPercent : sheetPercent;
   const controlPanel = (
@@ -725,10 +724,7 @@ function ProjectView() {
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:pb-5 lg:pl-[380px]">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
-                <Badge className="border border-accent/40 bg-background/80 text-[9px] uppercase tracking-[0.18em] text-accent backdrop-blur-xl">
-                  {modeLabel}
-                </Badge>
-                <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
+                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
                   {property.name}
                 </h1>
                 <p className="mt-2 text-sm text-white/70">

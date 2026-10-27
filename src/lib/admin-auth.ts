@@ -8,16 +8,32 @@ export type AdminAccess = {
   user: User;
   role: OrganizationRole;
   organizationId: string;
+  assignedProjectIds: string[];
+  isSuperAdmin: boolean;
 };
 
 export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
   if (pathname === "/admin" || pathname === "/admin/" || pathname === "/admin/perfil") {
     return true;
   }
-  if (role === "superadmin") return true;
-  if (role === "administrador") {
-    return !pathname.startsWith("/admin/configuracion");
+  // Secciones EXCLUSIVAS de Superadmin: Usuarios/Equipo, Configuración y Auditoría
+  if (pathname.startsWith("/admin/equipo-accesos") || pathname.startsWith("/admin/configuracion") || pathname.startsWith("/admin/auditoria")) {
+    return role === "superadmin";
   }
+
+  if (role === "superadmin") return true;
+
+  if (role === "administrador") {
+    // Administrador de proyecto: gestiona contenido, catálogo, lotes, medios y experiencias de su proyecto
+    return (
+      pathname.startsWith("/admin/proyectos") ||
+      pathname.startsWith("/admin/lotes-unidades") ||
+      pathname.startsWith("/admin/galerias-planos-recorridos") ||
+      pathname.startsWith("/admin/contenido") ||
+      pathname.startsWith("/admin/experiencias")
+    );
+  }
+
   if (role === "editor") {
     return (
       pathname.startsWith("/admin/contenido") ||
@@ -25,6 +41,8 @@ export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
       pathname.startsWith("/admin/experiencias")
     );
   }
+
+  // Comercial: solo proyectos y lotes asignados
   return pathname.startsWith("/admin/proyectos") || pathname.startsWith("/admin/lotes-unidades");
 }
 
@@ -73,10 +91,32 @@ export async function getCurrentAdminAccess(): Promise<AdminAccess | null> {
     return null;
   }
 
+  const isSuperAdmin = membership.role === "superadmin";
+
+  // Cargar proyectos a los que el usuario tiene acceso explícito
+  let assignedProjectIds: string[] = [];
+  if (isSuperAdmin) {
+    // Superadmin tiene acceso a todos los proyectos de la organización
+    const { data: allProjects } = await client
+      .from("projects")
+      .select("id")
+      .eq("organization_id", membership.organization_id);
+    assignedProjectIds = (allProjects ?? []).map((p) => p.id);
+  } else {
+    // Usuario no superadmin: consultar exclusivamente sus membresías en project_members
+    const { data: projectMemberships } = await client
+      .from("project_members")
+      .select("project_id")
+      .eq("user_id", user.id);
+    assignedProjectIds = (projectMemberships ?? []).map((pm) => pm.project_id);
+  }
+
   return {
     user,
     role: membership.role as OrganizationRole,
     organizationId: membership.organization_id,
+    assignedProjectIds,
+    isSuperAdmin,
   };
 }
 

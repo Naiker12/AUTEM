@@ -90,12 +90,22 @@ function toProjectPayload(input: ProjectInput) {
   };
 }
 
-export async function listManagedProjects(organizationId: string): Promise<ManagedProjectRecord[]> {
-  const { data, error } = await requireSupabase()
+export async function listManagedProjects(
+  organizationId: string,
+  allowedProjectIds?: string[],
+): Promise<ManagedProjectRecord[]> {
+  let query = requireSupabase()
     .from("projects")
     .select("*, lots(count), project_media(id, media_type)")
     .eq("organization_id", organizationId)
     .order("updated_at", { ascending: false });
+
+  if (allowedProjectIds !== undefined) {
+    if (allowedProjectIds.length === 0) return [];
+    query = query.in("id", allowedProjectIds);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as ManagedProjectQueryRow[]).map((row) => ({
     ...row,
@@ -107,23 +117,47 @@ export async function listManagedProjects(organizationId: string): Promise<Manag
 }
 
 export async function createManagedProject(organizationId: string, input: ProjectInput) {
-  const { data, error } = await requireSupabase()
+  const client = requireSupabase();
+  const payload = toProjectPayload(input);
+  const { data, error } = await client
     .from("projects")
-    .insert({ organization_id: organizationId, ...toProjectPayload(input) })
+    .insert({ organization_id: organizationId, ...payload })
     .select()
     .single();
   if (error) throw error;
+
+  // Registrar auditoría
+  void client.rpc("record_audit_event", {
+    p_action: "create_project",
+    p_entity_type: "project",
+    p_entity_id: data.id,
+    p_project_id: data.id,
+    p_details: { name: data.name, slug: data.slug, status: data.status },
+  });
+
   return data as ManagedProjectRecord;
 }
 
 export async function updateManagedProject(projectId: string, input: ProjectInput) {
-  const { data, error } = await requireSupabase()
+  const client = requireSupabase();
+  const payload = toProjectPayload(input);
+  const { data, error } = await client
     .from("projects")
-    .update(toProjectPayload(input))
+    .update(payload)
     .eq("id", projectId)
     .select()
     .single();
   if (error) throw error;
+
+  // Registrar auditoría
+  void client.rpc("record_audit_event", {
+    p_action: "update_project",
+    p_entity_type: "project",
+    p_entity_id: projectId,
+    p_project_id: projectId,
+    p_details: { name: data.name, slug: data.slug, status: data.status },
+  });
+
   return data as ManagedProjectRecord;
 }
 
@@ -206,6 +240,16 @@ export async function uploadProjectMedia(
       .eq("id", projectId);
     if (projectError) throw projectError;
   }
+
+  // Registrar auditoría de subida de medio
+  void client.rpc("record_audit_event", {
+    p_action: "upload_media",
+    p_entity_type: "media",
+    p_entity_id: storagePath,
+    p_project_id: projectId,
+    p_details: { fileName: file.name, mediaType, sizeBytes: file.size },
+  });
+
   return { storagePath, url: publicProjectMediaUrl(storagePath) };
 }
 
@@ -223,6 +267,15 @@ export async function deleteProjectMedia(
 
   const { error: dbError } = await client.from("project_media").delete().eq("id", mediaId);
   if (dbError) throw dbError;
+
+  // Registrar auditoría de eliminación de medio
+  void client.rpc("record_audit_event", {
+    p_action: "delete_media",
+    p_entity_type: "media",
+    p_entity_id: mediaId,
+    p_project_id: projectId || null,
+    p_details: { storagePath, mediaType },
+  });
 
   if (projectId && (mediaType === "cover" || mediaType === "masterplan")) {
     const column = mediaType === "cover" ? "cover_path" : "masterplan_path";

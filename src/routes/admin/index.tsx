@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowUpRight,
   Boxes,
@@ -6,7 +6,10 @@ import {
   ImageIcon,
   LayoutPanelTop,
   Settings2,
+  ShieldAlert,
+  UsersRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Pie, PieChart, XAxis, YAxis } from "recharts";
 
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import { usePublishedProjects } from "@/lib/public-projects";
 
 export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
@@ -102,6 +106,18 @@ const moduleRows = [
 
 function AdminDashboard() {
   const { projects } = usePublishedProjects();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string>("administrador");
+
+  useEffect(() => {
+    void getCurrentAdminAccess().then((access) => {
+      if (access) {
+        setIsSuperAdmin(access.isSuperAdmin);
+        setUserRole(access.role);
+      }
+    });
+  }, []);
+
   const catalogImages = projects.reduce((sum, project) => sum + (project.images?.length ?? 1), 0);
   const resourceData = [
     {
@@ -118,7 +134,7 @@ function AdminDashboard() {
     {
       title: "Proyectos configurados",
       value: projects.length,
-      description: "Proyectos publicados en la base de datos.",
+      description: "Proyectos en la base de datos.",
       icon: FolderKanban,
     },
     {
@@ -146,11 +162,27 @@ function AdminDashboard() {
         <header className="flex flex-col gap-5 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex max-w-2xl flex-col gap-2">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              AUTEM · Administración
+              AUTEM · {isSuperAdmin ? "Superadministrador" : `Panel de ${userRole}`}
             </p>
             <h1 className="text-3xl font-medium text-foreground sm:text-4xl">Panel de control</h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {isSuperAdmin && (
+              <>
+                <Button asChild variant="outline" className="gap-2 border-accent/40">
+                  <Link to="/admin/auditoria">
+                    <ShieldAlert className="size-4 text-accent" />
+                    <span>Auditoría</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="gap-2">
+                  <Link to="/admin/equipo-accesos">
+                    <UsersRound className="size-4" />
+                    <span>Equipo</span>
+                  </Link>
+                </Button>
+              </>
+            )}
             <Button asChild variant="outline">
               <a href="/" target="_blank" rel="noreferrer">
                 Ver sitio <ArrowUpRight data-icon="inline-end" />
@@ -158,6 +190,34 @@ function AdminDashboard() {
             </Button>
           </div>
         </header>
+
+        {/* Tarjeta de bienvenida y accesos directos para usuarios asignados a proyectos */}
+        {!isSuperAdmin && (
+          <div className="rounded-2xl border border-accent/30 bg-accent/5 p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <span className="text-xs uppercase tracking-[0.16em] font-bold text-accent">
+                  Tu Espacio de Trabajo
+                </span>
+                <h2 className="font-serif text-2xl text-foreground mt-1">Gestión de tu Proyecto</h2>
+                <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                  Tienes acceso asignado para editar información, subir archivos y gestionar el inventario de lotes de tu desarrollo.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  <Link to="/admin/lotes-unidades">Lotes y Unidades</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/admin/galerias-planos-recorridos">Medios y Planos</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/admin/proyectos">Ficha del Proyecto</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <section
           className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4"

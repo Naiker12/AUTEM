@@ -1,15 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Map, MapPinned, Search, UserRound } from "lucide-react";
+import { CheckCircle2, Eye, Map, MapPinned, Pencil, Search, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { formatLotArea, formatLotPrice, type Lot, type LotStatus } from "@/data/lots";
+import { formatLotArea, formatLotPrice, type Lot, type LotMetadata, type LotStatus } from "@/data/lots";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Pagination,
   PaginationContent,
@@ -59,7 +68,7 @@ type DatabaseLot = {
   area_m2: number | null;
   centroid: [number, number] | null;
   geometry: { pathD?: string } | null;
-  metadata: { isReserve?: boolean } | null;
+  metadata: LotMetadata | null;
   updated_at: string | null;
 };
 
@@ -102,6 +111,9 @@ function LotsAndUnitsPage() {
   const [blockFilter, setBlockFilter] = useState("todos");
   const [page, setPage] = useState(1);
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
+  const [editingLot, setEditingLot] = useState<InventoryLot | null>(null);
+  const [isSavingLot, setIsSavingLot] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
   const selectedLot = inventory.find((lot) => lot.id === selectedLotId) ?? null;
 
   useEffect(() => {
@@ -111,14 +123,30 @@ function LotsAndUnitsPage() {
         const access = await getCurrentAdminAccess();
         if (!access) throw new Error("Inicia sesión para consultar el inventario.");
         const client = requireSupabase();
-        const { data: project, error: projectError } = await client
+
+        // Validar proyectos autorizados para el usuario
+        let projectQuery = client
           .from("projects")
-          .select("id, slug, masterplan_path")
-          .eq("organization_id", access.organizationId)
-          .eq("slug", "villa-paraiso")
-          .maybeSingle();
+          .select("id, slug, name, masterplan_path")
+          .eq("organization_id", access.organizationId);
+
+        if (!access.isSuperAdmin) {
+          if (!access.assignedProjectIds.length) {
+            throw new Error("No tienes proyectos asignados. Contacta al superadministrador.");
+          }
+          projectQuery = projectQuery.in("id", access.assignedProjectIds);
+        }
+
+        const { data: allowedProjects, error: projectError } = await projectQuery;
         if (projectError) throw projectError;
-        if (!project) throw new Error("No se encontró Villa Paraíso en la base de datos.");
+        if (!allowedProjects || allowedProjects.length === 0) {
+          throw new Error("No tienes ningún proyecto asignado para gestionar inventario.");
+        }
+
+        // Seleccionar el proyecto autorizado (por defecto el primero asignado o Villa Paraíso si aplica)
+        const project =
+          allowedProjects.find((p) => p.slug === "villa-paraiso") || allowedProjects[0];
+
         const { data, error } = await client
           .from("lots")
           .select(
@@ -149,12 +177,13 @@ function LotsAndUnitsPage() {
             lotNumber: lot.lot_number ?? undefined,
             pathD: lot.geometry?.pathD,
             isReserve: Boolean(lot.metadata?.isReserve),
-            buyer: "",
-            advisor: "",
+            buyer: (lot.metadata?.buyer as string) || "",
+            advisor: (lot.metadata?.advisor as string) || "",
             reservationEndsAt: lot.status === "reserved" ? "Pendiente de confirmar" : undefined,
             updatedAt: lot.updated_at
               ? new Date(lot.updated_at).toLocaleDateString("es-CO")
               : "Sin fecha",
+            metadata: lot.metadata ?? undefined,
           })),
         );
       } catch (error) {
@@ -200,18 +229,137 @@ function LotsAndUnitsPage() {
     [inventory],
   );
 
-  function changeLot(lotId: string, updates: Partial<InventoryLot>) {
+  async function changeLot(lotId: string, updates: Partial<InventoryLot>) {
     setInventory((current) =>
       current.map((lot) =>
         lot.id === lotId ? { ...lot, ...updates, updatedAt: "Actualizado en esta sesión" } : lot,
       ),
     );
-    if (!projectId || !updates.status) return;
-    void requireSupabase()
-      .from("lots")
-      .update({ status: uiLotStatus[updates.status] })
-      .eq("project_id", projectId)
-      .eq("external_id", lotId);
+    if (!projectId) return;
+    const client = requireSupabase();
+    const targetLot = inventory.find((l) => l.id === lotId);
+    const dbStatus = updates.status
+      ? uiLotStatus[updates.status]
+      : targetLot
+        ? uiLotStatus[targetLot.status]
+        : "available";
+    const updatedMetadata = {
+      ...(targetLot?.metadata ?? {}),
+      ...(updates.metadata ?? {}),
+      buyer: updates.buyer ?? targetLot?.buyer ?? "",
+      advisor: updates.advisor ?? targetLot?.advisor ?? "",
+    };
+
+    const payload = [
+      {
+        external_id: lotId,
+        area_m2: updates.area ?? targetLot?.area ?? 0,
+        price_cop: updates.price ?? targetLot?.price ?? 0,
+        manzana: updates.manzana ?? targetLot?.manzana ?? null,
+        status: dbStatus,
+        metadata: updatedMetadata,
+      },
+    ];
+
+    try {
+      await client.rpc("update_lot_data", { lot_data: payload });
+    } catch {
+      await client
+        .from("lots")
+        .update({
+          status: dbStatus,
+          metadata: updatedMetadata,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("project_id", projectId)
+        .eq("external_id", lotId);
+    }
+  }
+
+  async function handleSaveLot(
+    lotId: string,
+    updates: {
+      manzana: string;
+      area: number;
+      price: number;
+      status: LotStatus;
+      buyer: string;
+      advisor: string;
+      ubicacion?: string;
+      descripcion_lindero?: string;
+    },
+  ) {
+    setIsSavingLot(true);
+    setSaveFeedback(null);
+    try {
+      const dbStatus = uiLotStatus[updates.status];
+      const targetLot = inventory.find((l) => l.id === lotId);
+      const updatedMetadata: LotMetadata = {
+        ...(targetLot?.metadata ?? {}),
+        buyer: updates.buyer,
+        advisor: updates.advisor,
+        ubicacion: updates.ubicacion ?? (targetLot?.metadata?.ubicacion as string | undefined),
+        descripcion_lindero:
+          updates.descripcion_lindero ?? targetLot?.metadata?.descripcion_lindero,
+      };
+
+      setInventory((prev) =>
+        prev.map((l) =>
+          l.id === lotId
+            ? {
+                ...l,
+                manzana: updates.manzana,
+                area: updates.area,
+                price: updates.price,
+                status: updates.status,
+                buyer: updates.buyer,
+                advisor: updates.advisor,
+                detail: `${updates.manzana ? `Manzana ${updates.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${targetLot?.isReserve ? "Zona de reserva" : "Vía interna"}`,
+                metadata: updatedMetadata,
+                updatedAt: "Recién actualizado",
+              }
+            : l,
+        ),
+      );
+
+      if (projectId) {
+        const payload = [
+          {
+            external_id: lotId,
+            area_m2: updates.area,
+            price_cop: updates.price,
+            manzana: updates.manzana,
+            status: dbStatus,
+            metadata: updatedMetadata,
+          },
+        ];
+        const client = requireSupabase();
+        const { error: rpcErr } = await client.rpc("update_lot_data", { lot_data: payload });
+        if (rpcErr) {
+          await client
+            .from("lots")
+            .update({
+              manzana: updates.manzana,
+              area_m2: updates.area,
+              price_cop: updates.price,
+              status: dbStatus,
+              metadata: updatedMetadata,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("project_id", projectId)
+            .eq("external_id", lotId);
+        }
+      }
+
+      setSaveFeedback(`Lote ${lotId} actualizado exitosamente.`);
+      setTimeout(() => setSaveFeedback(null), 4000);
+      setEditingLot(null);
+    } catch (err) {
+      console.error("Error al guardar lote:", err);
+      alert("Hubo un error al guardar el lote.");
+    } finally {
+      setIsSavingLot(false);
+    }
   }
 
   function resetPage() {
@@ -242,6 +390,12 @@ function LotsAndUnitsPage() {
           {loadError}
         </p>
       )}
+      {saveFeedback && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3.5 text-sm font-medium text-emerald-800 dark:text-emerald-300">
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span>{saveFeedback}</span>
+        </div>
+      )}
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <InventoryMetric
@@ -267,7 +421,7 @@ function LotsAndUnitsPage() {
             <div className="flex flex-col gap-1">
               <CardTitle className="font-serif text-2xl">Inventario del proyecto</CardTitle>
               <CardDescription>
-                Selecciona un lote para consultar su ficha comercial y su ubicación en el plano.
+                Selecciona un lote para consultar su ficha comercial y su ubicación en el plano, o haz clic en el icono de lápiz para editar sus datos.
               </CardDescription>
             </div>
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_11rem_11rem]">
@@ -329,7 +483,11 @@ function LotsAndUnitsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <LotTable lots={pageLots} onSelect={setSelectedLotId} />
+            <LotTable
+              lots={pageLots}
+              onSelect={setSelectedLotId}
+              onEdit={(lot) => setEditingLot(lot)}
+            />
             <LotPagination
               page={currentPage}
               totalPages={totalPages}
@@ -345,6 +503,13 @@ function LotsAndUnitsPage() {
         masterplanUrl={masterplanUrl}
         onOpenChange={(open) => !open && setSelectedLotId(null)}
         onChangeLot={changeLot}
+        onEdit={(lot) => setEditingLot(lot)}
+      />
+      <EditLotDialog
+        editingLot={editingLot}
+        isSaving={isSavingLot}
+        onClose={() => setEditingLot(null)}
+        onSave={handleSaveLot}
       />
     </main>
   );
@@ -370,7 +535,15 @@ function InventoryMetric({
   );
 }
 
-function LotTable({ lots, onSelect }: { lots: InventoryLot[]; onSelect: (id: string) => void }) {
+function LotTable({
+  lots,
+  onSelect,
+  onEdit,
+}: {
+  lots: InventoryLot[];
+  onSelect: (id: string) => void;
+  onEdit: (lot: InventoryLot) => void;
+}) {
   return (
     <Table>
       <TableHeader>
@@ -381,14 +554,12 @@ function LotTable({ lots, onSelect }: { lots: InventoryLot[]; onSelect: (id: str
           <TableHead className="hidden lg:table-cell">Precio</TableHead>
           <TableHead>Estado</TableHead>
           <TableHead className="hidden xl:table-cell">Gestión comercial</TableHead>
-          <TableHead>
-            <span className="sr-only">Ver lote</span>
-          </TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {lots.map((lot) => (
-          <TableRow key={lot.id} className="cursor-pointer" onClick={() => onSelect(lot.id)}>
+          <TableRow key={lot.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onSelect(lot.id)}>
             <TableCell>
               <div className="flex flex-col gap-1">
                 <span className="font-medium text-foreground">{lot.id}</span>
@@ -408,17 +579,29 @@ function LotTable({ lots, onSelect }: { lots: InventoryLot[]; onSelect: (id: str
                   : "Sin gestión registrada"}
               </span>
             </TableCell>
-            <TableCell>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onSelect(lot.id);
-                }}
-              >
-                Ver
-              </Button>
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => onSelect(lot.id)}
+                  title="Ver en plano y ficha técnica"
+                >
+                  <Eye className="mr-1 size-3.5" />
+                  Ver
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-accent/40 bg-accent/10 px-2.5 text-xs font-medium text-accent hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onEdit(lot)}
+                  title={`Editar datos del ${lot.id}`}
+                >
+                  <Pencil className="mr-1 size-3.5" />
+                  Editar
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -620,14 +803,24 @@ function LotDetailSheet({
   masterplanUrl,
   onOpenChange,
   onChangeLot,
+  onEdit,
 }: {
   lot: InventoryLot | null;
   masterplanUrl: string | null;
   onOpenChange: (open: boolean) => void;
   onChangeLot: (id: string, updates: Partial<InventoryLot>) => void;
+  onEdit?: (lot: InventoryLot) => void;
 }) {
   const [buyer, setBuyer] = useState("");
   const [advisor, setAdvisor] = useState("");
+
+  useEffect(() => {
+    if (lot) {
+      setBuyer(lot.buyer || "");
+      setAdvisor(lot.advisor || "");
+    }
+  }, [lot]);
+
   if (!lot) return null;
   const reserve = () =>
     onChangeLot(lot.id, {
@@ -643,14 +836,32 @@ function LotDetailSheet({
       advisor: advisor.trim(),
       reservationEndsAt: undefined,
     });
+
+  const metadata = lot.metadata;
+
   return (
     <Sheet open={!!lot} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader>
-          <SheetTitle className="font-serif text-3xl">{lot.id}</SheetTitle>
-          <SheetDescription>
-            {lot.detail} · {lot.manzana ?? "Manzana por confirmar"}
-          </SheetDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <SheetTitle className="font-serif text-3xl">{lot.id}</SheetTitle>
+              <SheetDescription>
+                {lot.detail} · {lot.manzana ?? "Manzana por confirmar"}
+              </SheetDescription>
+            </div>
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-accent/40 bg-accent/10 font-medium text-accent hover:bg-accent hover:text-accent-foreground"
+                onClick={() => onEdit(lot)}
+              >
+                <Pencil className="size-3.5" />
+                Editar lote
+              </Button>
+            )}
+          </div>
         </SheetHeader>
         <div className="mt-6 flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-3">
@@ -659,17 +870,82 @@ function LotDetailSheet({
             <LotInfo label="Estado" value={statusLabels[lot.status]} />
             <LotInfo label="Actualización" value={lot.updatedAt} />
           </div>
-          <div className="rounded-xl border border-dashed p-4">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Medidas lineales
-            </p>
-            <p className="mt-1 text-sm font-medium text-foreground">Pendientes de cargar</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Frente, fondo y linderos se mostrarán aquí cuando se incorporen a la ficha técnica del
-              lote.
-            </p>
-          </div>
+
+          {/* Información Financiera y de Preventa si existe */}
+          {metadata && (metadata.precio_preventa || metadata.cuota_inicial_20) && (
+            <div className="rounded-xl border bg-muted/20 p-4">
+              <p className="text-xs uppercase tracking-[0.14em] font-semibold text-accent">
+                Plan comercial y financiamiento
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                {metadata.precio_preventa && (
+                  <div>
+                    <span className="text-muted-foreground">Precio Preventa:</span>
+                    <p className="font-semibold text-foreground text-sm">
+                      {formatLotPrice(metadata.precio_preventa)}
+                    </p>
+                  </div>
+                )}
+                {metadata.precio_venta && (
+                  <div>
+                    <span className="text-muted-foreground">Precio Regular:</span>
+                    <p className="font-semibold text-foreground text-sm">
+                      {formatLotPrice(metadata.precio_venta)}
+                    </p>
+                  </div>
+                )}
+                {metadata.cuota_inicial_20 && (
+                  <div>
+                    <span className="text-muted-foreground">Cuota inicial (20%):</span>
+                    <p className="font-semibold text-foreground">
+                      {formatLotPrice(metadata.cuota_inicial_20)}
+                    </p>
+                  </div>
+                )}
+                {metadata.cuotas_48 && (
+                  <div>
+                    <span className="text-muted-foreground">48 Cuotas mes:</span>
+                    <p className="font-semibold text-foreground">
+                      {formatLotPrice(metadata.cuotas_48)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Medidas lineales y linderos legales cargados */}
+          {metadata?.descripcion_lindero ? (
+            <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.14em] font-semibold text-accent">
+                  Linderos y especificaciones legales
+                </p>
+                {metadata.ubicacion && (
+                  <Badge variant="outline" className="text-[10px] border-accent/40 bg-accent/10 text-accent">
+                    {metadata.ubicacion}
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-2.5 text-xs leading-relaxed text-foreground whitespace-pre-line">
+                {metadata.descripcion_lindero}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed p-4">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                Medidas lineales
+              </p>
+              <p className="mt-1 text-sm font-medium text-foreground">Pendientes de cargar</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Frente, fondo y linderos se mostrarán aquí cuando se incorporen a la ficha técnica del
+                lote.
+              </p>
+            </div>
+          )}
+
           <LotPlanPreview lot={lot} masterplanUrl={masterplanUrl} />
+
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="lot-buyer">Comprador o interesado</FieldLabel>
@@ -677,10 +953,10 @@ function LotDetailSheet({
                 id="lot-buyer"
                 value={buyer}
                 onChange={(event) => setBuyer(event.target.value)}
-                placeholder={lot.buyer || "Registrar cuando exista autorización"}
+                placeholder={lot.buyer || "Nombre del cliente"}
               />
               <FieldDescription>
-                Dato local de demostración: no se conserva al recargar ni se publica.
+                Se guarda en la base de datos vinculado a la gestión comercial de este lote.
               </FieldDescription>
             </Field>
             <Field>
@@ -699,8 +975,8 @@ function LotDetailSheet({
               <p className="font-medium">Gestión comercial</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Reserva temporal predeterminada: 48 horas. Al conectar datos, cada cambio requerirá
-              usuario, fecha, motivo y registro de auditoría.
+              Reserva temporal predeterminada: 48 horas. Al cambiar el estado, se actualizará
+              directamente en la base de datos de Villa Paraíso.
             </p>
             {lot.reservationEndsAt && <p className="text-sm">Reserva: {lot.reservationEndsAt}</p>}
           </div>
@@ -740,3 +1016,224 @@ function LotInfo({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+interface EditLotDialogProps {
+  editingLot: InventoryLot | null;
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (
+    lotId: string,
+    updates: {
+      manzana: string;
+      area: number;
+      price: number;
+      status: LotStatus;
+      buyer: string;
+      advisor: string;
+      ubicacion?: string;
+      descripcion_lindero?: string;
+    },
+  ) => Promise<void>;
+}
+
+function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogProps) {
+  const [manzana, setManzana] = useState("");
+  const [area, setArea] = useState<number>(0);
+  const [price, setPrice] = useState<number>(0);
+  const [status, setStatus] = useState<LotStatus>("Disponible");
+  const [buyer, setBuyer] = useState("");
+  const [advisor, setAdvisor] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
+  const [descripcionLindero, setDescripcionLindero] = useState("");
+
+  useEffect(() => {
+    if (editingLot) {
+      setManzana(editingLot.manzana || "");
+      setArea(editingLot.area || 0);
+      setPrice(editingLot.price || 0);
+      setStatus(editingLot.status);
+      setBuyer(editingLot.buyer || "");
+      setAdvisor(editingLot.advisor || "");
+      setUbicacion(String(editingLot.metadata?.ubicacion || ""));
+      setDescripcionLindero(editingLot.metadata?.descripcion_lindero || "");
+    }
+  }, [editingLot]);
+
+  if (!editingLot) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSave(editingLot.id, {
+      manzana: manzana.trim(),
+      area: Number(area),
+      price: Number(price),
+      status,
+      buyer: buyer.trim(),
+      advisor: advisor.trim(),
+      ubicacion: ubicacion.trim() || undefined,
+      descripcion_lindero: descripcionLindero.trim() || undefined,
+    });
+  };
+
+  return (
+    <Dialog open={!!editingLot} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-accent/15 text-accent">
+              <Pencil className="size-5" />
+            </div>
+            <div>
+              <DialogTitle className="font-serif text-2xl">
+                Editar Lote {editingLot.id}
+              </DialogTitle>
+              <DialogDescription>
+                Modifica la información comercial, medidas y linderos que se actualizan directamente en la base de datos y en el plano interactivo.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="edit-manzana" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Manzana
+              </label>
+              <Input
+                id="edit-manzana"
+                value={manzana}
+                onChange={(e) => setManzana(e.target.value)}
+                placeholder="Ej. M1, M2"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="edit-status" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Estado Comercial
+              </label>
+              <Select value={status} onValueChange={(val) => setStatus(val as LotStatus)}>
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(statusLabels).map((label) => (
+                    <SelectItem key={label} value={label}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label htmlFor="edit-area" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Área (m²)
+              </label>
+              <Input
+                id="edit-area"
+                type="number"
+                step="0.01"
+                min="0"
+                value={area || ""}
+                onChange={(e) => setArea(parseFloat(e.target.value) || 0)}
+                placeholder="Ej. 132.50"
+                required
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Visualización: {formatLotArea(area)}
+              </span>
+            </div>
+
+            <div>
+              <label htmlFor="edit-price" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Precio (COP)
+              </label>
+              <Input
+                id="edit-price"
+                type="number"
+                step="1000"
+                min="0"
+                value={price || ""}
+                onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                placeholder="Ej. 45000000"
+                required
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Visualización: {formatLotPrice(price)}
+              </span>
+            </div>
+
+            <div>
+              <label htmlFor="edit-ubicacion" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Ubicación
+              </label>
+              <Input
+                id="edit-ubicacion"
+                value={ubicacion}
+                onChange={(e) => setUbicacion(e.target.value)}
+                placeholder="Ej. Esquina, Central"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="edit-buyer" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Comprador / Interesado
+              </label>
+              <Input
+                id="edit-buyer"
+                value={buyer}
+                onChange={(e) => setBuyer(e.target.value)}
+                placeholder="Nombre del cliente"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="edit-advisor" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Asesor Responsable
+              </label>
+              <Input
+                id="edit-advisor"
+                value={advisor}
+                onChange={(e) => setAdvisor(e.target.value)}
+                placeholder="Nombre del asesor"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="edit-linderos" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Linderos y Descripción Legal
+              </label>
+              <Textarea
+                id="edit-linderos"
+                rows={4}
+                value={descripcionLindero}
+                onChange={(e) => setDescripcionLindero(e.target.value)}
+                placeholder="Por el frente linda con... por la derecha... por la izquierda... por el fondo..."
+                className="font-mono text-xs"
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Este texto se muestra en la ficha técnica y legal de cada lote.
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6 gap-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-accent text-accent-foreground hover:bg-accent/90 font-medium"
+            >
+              {isSaving ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

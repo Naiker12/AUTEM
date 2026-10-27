@@ -62,7 +62,7 @@ function AdminRoute() {
   }
 
   return (
-    <AdminShell role={accessState.role}>
+    <AdminShell access={accessState}>
       <Outlet />
     </AdminShell>
   );

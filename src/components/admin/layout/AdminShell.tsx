@@ -4,9 +4,9 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AdminContentTransition } from "./AdminContentTransition";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
-import type { OrganizationRole } from "@/lib/admin-auth";
+import type { AdminAccess } from "@/lib/admin-auth";
 
-export function AdminShell({ children, role }: { children: ReactNode; role: OrganizationRole }) {
+export function AdminShell({ children, access }: { children: ReactNode; access: AdminAccess }) {
   const [isDark, setIsDark] = useState(() => localStorage.getItem("autem-theme") === "dark");
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export function AdminShell({ children, role }: { children: ReactNode; role: Orga
 
   return (
     <SidebarProvider>
-      <AdminSidebar role={role} />
+      <AdminSidebar access={access} />
       <SidebarInset className="bg-background">
         <AdminHeader isDark={isDark} onThemeChange={() => setIsDark((current) => !current)} />
         <AdminContentTransition>{children}</AdminContentTransition>
