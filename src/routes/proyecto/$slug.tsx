@@ -109,8 +109,8 @@ function ProjectView() {
   }, []);
 
   useEffect(() => {
-    setIsPanelOpen(!isMobile);
-  }, [isMobile]);
+    setIsPanelOpen(!isMobile && mode === "lot");
+  }, [isMobile, mode]);
 
   // Estados de filtrado sincronizados para el mapa interactivo y el catálogo
   const [filterStatus, setFilterStatus] = useState("Todos");
@@ -254,14 +254,21 @@ function ProjectView() {
     (lot: (typeof projectLots)[number]) => {
       setSelectedLotId(lot.id);
       setLotFocusRequest((request) => request + 1);
-      if (!isMobile) {
+      if (!isMobile && mode === "lot") {
         setIsPanelOpen(true);
       }
     },
-    [isMobile],
+    [isMobile, mode],
   );
 
-  const handleView3D = useCallback(() => setMode("tour"), []);
+  const handleModeChange = useCallback(
+    (nextMode: ViewMode) => {
+      setMode(nextMode);
+      setIsPanelOpen((prev) => (nextMode === "lot" ? prev || !isMobile : false));
+    },
+    [isMobile],
+  );
+  const handleView3D = useCallback(() => handleModeChange("tour"), [handleModeChange]);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
 
   const updateViewSettings = (changes: Partial<ProjectViewSettings>) => {
@@ -323,7 +330,7 @@ function ProjectView() {
         setIsPanelOpen(false);
       }}
       isMobile={isMobile}
-      selectedLot={selectedLot}
+      selectedLot={mode === "lot" ? selectedLot : null}
       onClearSelectedLot={() => setSelectedLotId("")}
     />
   );
@@ -351,7 +358,7 @@ function ProjectView() {
         }}
         contactUrl={contactUrl}
         activeMode={mode}
-        onModeChange={setMode}
+        onModeChange={handleModeChange}
         showViewSwitcher={viewSettings.showViewSwitcher}
         isPanelOpen={isPanelOpen}
         isDark={isDark}
@@ -563,7 +570,7 @@ function ProjectView() {
                 </p>
                 <Button
                   type="button"
-                  onClick={() => setMode("lot")}
+                  onClick={() => handleModeChange("lot")}
                   className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
                 >
                   Ver Plano Urbanístico
@@ -608,7 +615,7 @@ function ProjectView() {
               </div>
               <Button
                 type="button"
-                onClick={() => setMode("lot")}
+                onClick={() => handleModeChange("lot")}
                 className="mt-6 w-full rounded-xl bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
               >
                 Ver Plano Urbanístico
@@ -670,7 +677,7 @@ function ProjectView() {
           </div>
         )}
 
-        {hasLots && viewSettings.showLotCatalog && !isLotPanelVisible && (
+        {hasLots && mode === "lot" && viewSettings.showLotCatalog && !isLotPanelVisible && (
           <div className="absolute bottom-5 left-5 z-30 hidden items-center gap-2.5 lg:flex">
             <Button
               type="button"
@@ -711,7 +718,7 @@ function ProjectView() {
               onClick={() =>
                 setGalleryIndex((index) => (index - 1 + images.length) % images.length)
               }
-              className="absolute left-5 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground lg:left-[380px]"
+              className="absolute left-5 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground"
               aria-label="Imagen anterior"
             >
               <ChevronLeft />
@@ -730,7 +737,7 @@ function ProjectView() {
         )}
 
         {mode === "gallery" && !mobileControlOpen && (
-          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:pb-5 lg:pl-[380px]">
+          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:px-10 lg:pb-6">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
               <div>
                 <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
@@ -782,7 +789,7 @@ function ProjectView() {
               setIsPanelOpen(false);
             }}
             isMobile={false}
-            selectedLot={selectedLot}
+            selectedLot={mode === "lot" ? selectedLot : null}
             onClearSelectedLot={() => setSelectedLotId("")}
           />
         </div>

@@ -20,7 +20,7 @@ export default function ModeSwitcher({
         <ToggleGroup
           type="single"
           value={activeMode}
-          onValueChange={(value) => value && onChange(value as ViewMode)}
+          onValueChange={(value) => onChange((value || activeMode) as ViewMode)}
           className="flex gap-0.5 rounded-full border border-border/80 dark:border-white/10 bg-background/95 p-1 shadow-lg backdrop-blur-xl"
         >
           {PROJECT_VIEW_MODES.map(({ id, label, shortLabel, icon: Icon, badge }) => (
@@ -60,7 +60,7 @@ export default function ModeSwitcher({
       <ToggleGroup
         type="single"
         value={activeMode}
-        onValueChange={(value) => value && onChange(value as ViewMode)}
+        onValueChange={(value) => onChange((value || activeMode) as ViewMode)}
         className={`flex max-w-full gap-1 overflow-x-auto text-foreground ${inHeader ? "mx-auto w-fit" : "rounded-full border border-border/80 dark:border-white/10 bg-background/90 p-1.5 shadow-[0_16px_48px_rgba(0,0,0,.35)] backdrop-blur-2xl"}`}
       >
         {PROJECT_VIEW_MODES.map(({ id, label, icon: Icon, badge }) => (
