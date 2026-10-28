@@ -201,11 +201,16 @@ function AdminDashboard() {
                 </span>
                 <h2 className="font-serif text-2xl text-foreground mt-1">Gestión de tu Proyecto</h2>
                 <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-                  Tienes acceso asignado para editar información, subir archivos y gestionar el inventario de lotes de tu desarrollo.
+                  Tienes acceso asignado para editar información, subir archivos y gestionar el
+                  inventario de lotes de tu desarrollo.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                >
                   <Link to="/admin/lotes-unidades">Lotes y Unidades</Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">

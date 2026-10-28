@@ -56,7 +56,14 @@ interface AuditLogRow {
   created_at: string;
 }
 
-const actionLabels: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive"; icon: typeof Activity }> = {
+const actionLabels: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "outline" | "destructive";
+    icon: typeof Activity;
+  }
+> = {
   update_lot: { label: "Lote modificado", variant: "default", icon: Layers },
   create_project: { label: "Proyecto creado", variant: "secondary", icon: MapPinned },
   update_project: { label: "Proyecto actualizado", variant: "outline", icon: Pencil },
@@ -110,8 +117,8 @@ function AuditLogsPage() {
       const matchesQuery =
         !q ||
         (log.user_email?.toLowerCase().includes(q) ?? false) ||
-        (log.action.toLowerCase().includes(q)) ||
-        (log.entity_type.toLowerCase().includes(q)) ||
+        log.action.toLowerCase().includes(q) ||
+        log.entity_type.toLowerCase().includes(q) ||
         (log.entity_id?.toLowerCase().includes(q) ?? false) ||
         JSON.stringify(log.details).toLowerCase().includes(q);
       return matchesAction && matchesQuery;
@@ -135,13 +142,16 @@ function AuditLogsPage() {
             Seguridad & Monitoreo
           </p>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <h1 className="font-serif text-3xl text-foreground sm:text-4xl">Auditoría del Sistema</h1>
+            <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
+              Auditoría del Sistema
+            </h1>
             <p className="text-sm text-muted-foreground">
               Supervisión de cambios de usuarios y proyectos
             </p>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Registro cronológico inmutable de cada acción realizada por los usuarios en sus proyectos asignados (edición de lotes, subida de planos y modificaciones).
+            Registro cronológico inmutable de cada acción realizada por los usuarios en sus
+            proyectos asignados (edición de lotes, subida de planos y modificaciones).
           </p>
         </div>
         <Button
@@ -180,7 +190,9 @@ function AuditLogsPage() {
         </Card>
         <Card className="rounded-xl">
           <CardContent className="flex flex-col gap-1 p-5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Archivos y Medios</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              Archivos y Medios
+            </p>
             <p className="font-serif text-3xl text-foreground">{metrics.mediaUploaded}</p>
             <p className="text-xs text-muted-foreground">Planos, imágenes y documentos</p>
           </CardContent>
@@ -263,7 +275,11 @@ function AuditLogsPage() {
                         <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                           <div>{date.toLocaleDateString("es-CO")}</div>
                           <div className="font-mono text-[11px] opacity-75">
-                            {date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            {date.toLocaleTimeString("es-CO", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
                           </div>
                         </TableCell>
                         <TableCell>

@@ -292,9 +292,7 @@ export function TeamAccessPage() {
       const assignedProjectNames =
         role === "superadmin"
           ? ["Todos los proyectos"]
-          : availableProjects
-              .filter((p) => selectedProjectIds.includes(p.id))
-              .map((p) => p.name);
+          : availableProjects.filter((p) => selectedProjectIds.includes(p.id)).map((p) => p.name);
 
       setMembers((current) => [
         ...current,
@@ -303,7 +301,8 @@ export function TeamAccessPage() {
           name,
           email,
           role,
-          projects: assignedProjectNames.length > 0 ? assignedProjectNames : ["Sin proyectos asignados"],
+          projects:
+            assignedProjectNames.length > 0 ? assignedProjectNames : ["Sin proyectos asignados"],
           status: "Invitación pendiente",
           invitation: {
             sentAt: new Date().toISOString(),
@@ -392,7 +391,11 @@ export function TeamAccessPage() {
     }
   }
 
-  async function handleUpdatePermissions(member: TeamMember, nextRole: Role, nextProjectIds: string[]) {
+  async function handleUpdatePermissions(
+    member: TeamMember,
+    nextRole: Role,
+    nextProjectIds: string[],
+  ) {
     if (!organizationId) throw new Error("No fue posible identificar la organización.");
     if (isSelfMember(member, currentUserId, currentUserEmail)) {
       toast.error("Operación no permitida", {
@@ -415,9 +418,7 @@ export function TeamAccessPage() {
     const assignedProjectNames =
       nextRole === "superadmin"
         ? ["Todos los proyectos"]
-        : availableProjects
-            .filter((p) => nextProjectIds.includes(p.id))
-            .map((p) => p.name);
+        : availableProjects.filter((p) => nextProjectIds.includes(p.id)).map((p) => p.name);
 
     setMembers((current) =>
       current.map((item) =>
@@ -488,7 +489,9 @@ export function TeamAccessPage() {
 
   function handleCopyInvite(member: TeamMember) {
     const url = `${window.location.origin}/actualizar-contrasena`;
-    const projectsText = member.projects.length ? member.projects.join(", ") : "tus proyectos asignados";
+    const projectsText = member.projects.length
+      ? member.projects.join(", ")
+      : "tus proyectos asignados";
     const text = `Hola ${member.name}, te damos la bienvenida a AUTEM. Tu acceso al panel ha sido configurado para: ${projectsText}.\n\nPor favor ingresa a este enlace para definir tu contraseña y comenzar:\n${url}`;
     void navigator.clipboard.writeText(text);
     toast.success("Mensaje de invitación copiado", {
@@ -553,7 +556,9 @@ export function TeamAccessPage() {
                           />
                         </Field>
                         <Field className="sm:col-span-2">
-                          <FieldLabel htmlFor="invite-phone">Teléfono / WhatsApp (opcional)</FieldLabel>
+                          <FieldLabel htmlFor="invite-phone">
+                            Teléfono / WhatsApp (opcional)
+                          </FieldLabel>
                           <Input
                             id="invite-phone"
                             name="phone"
@@ -637,7 +642,10 @@ export function TeamAccessPage() {
                                         />
                                         <span className="text-sm font-medium">{proj.name}</span>
                                       </div>
-                                      <Badge variant={isChecked ? "default" : "outline"} className="text-[10px]">
+                                      <Badge
+                                        variant={isChecked ? "default" : "outline"}
+                                        className="text-[10px]"
+                                      >
                                         {isChecked ? "Asignado" : "Sin acceso"}
                                       </Badge>
                                     </label>
@@ -697,7 +705,9 @@ export function TeamAccessPage() {
                         ⚠️ Debes seleccionar al menos un proyecto para este rol.
                       </span>
                     ) : (
-                      <span>La persona recibirá un enlace por correo para definir su contraseña.</span>
+                      <span>
+                        La persona recibirá un enlace por correo para definir su contraseña.
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center justify-end gap-2">
@@ -706,7 +716,9 @@ export function TeamAccessPage() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isInviting || (role !== "superadmin" && selectedProjectIds.length === 0)}
+                      disabled={
+                        isInviting || (role !== "superadmin" && selectedProjectIds.length === 0)
+                      }
                     >
                       {isInviting ? (
                         <LoaderCircle data-icon="inline-start" className="animate-spin" />
@@ -868,7 +880,12 @@ export function TeamAccessPage() {
                           >
                             <Eye />
                           </Button>
-                          {canManageMember(currentRole, member, currentUserId, currentUserEmail) && (
+                          {canManageMember(
+                            currentRole,
+                            member,
+                            currentUserId,
+                            currentUserEmail,
+                          ) && (
                             <>
                               <Button
                                 variant="ghost"
@@ -1001,7 +1018,12 @@ function isSelfMember(
 ): boolean {
   if (!member) return false;
   if (currentUserId && member.id && member.id === currentUserId) return true;
-  if (currentUserEmail && member.email && member.email.toLowerCase() === currentUserEmail.toLowerCase()) return true;
+  if (
+    currentUserEmail &&
+    member.email &&
+    member.email.toLowerCase() === currentUserEmail.toLowerCase()
+  )
+    return true;
   return false;
 }
 
@@ -1146,7 +1168,8 @@ function MemberProfileDialog({
         <DialogFooter className="flex flex-col-reverse items-stretch justify-between gap-2 sm:flex-row sm:items-center">
           {isSelf ? (
             <p className="text-xs text-muted-foreground">
-              Esta es tu propia cuenta. Por seguridad, no es posible auto-retirar tu acceso ni cambiar tu rol desde aquí.
+              Esta es tu propia cuenta. Por seguridad, no es posible auto-retirar tu acceso ni
+              cambiar tu rol desde aquí.
             </p>
           ) : (
             <div />
@@ -1241,7 +1264,8 @@ function MemberPermissionDialog({
           <Field className="rounded-xl border p-4">
             <FieldLabel>Proyectos asignados</FieldLabel>
             <FieldDescription>
-              Selecciona los proyectos en los que {member.name} tendrá permisos de administración o consulta.
+              Selecciona los proyectos en los que {member.name} tendrá permisos de administración o
+              consulta.
             </FieldDescription>
             <div className="mt-3 flex flex-col gap-2">
               {availableProjects.length === 0 ? (
@@ -1263,9 +1287,7 @@ function MemberPermissionDialog({
                             if (checked) {
                               setSelectedProjectIds((prev) => [...prev, proj.id]);
                             } else {
-                              setSelectedProjectIds((prev) =>
-                                prev.filter((id) => id !== proj.id),
-                              );
+                              setSelectedProjectIds((prev) => prev.filter((id) => id !== proj.id));
                             }
                           }}
                         />

@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Eye, Map, MapPinned, Pencil, Search, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { formatLotArea, formatLotPrice, type Lot, type LotMetadata, type LotStatus } from "@/data/lots";
+import {
+  formatLotArea,
+  formatLotPrice,
+  type Lot,
+  type LotMetadata,
+  type LotStatus,
+} from "@/data/lots";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -215,8 +221,7 @@ function LotsAndUnitsPage() {
         setAllowedProjects(projs);
 
         // Seleccionar el proyecto autorizado (por defecto Villa Paraíso si aplica o el primero asignado)
-        const initialProject =
-          projs.find((p) => p.slug === "villa-paraiso") || projs[0];
+        const initialProject = projs.find((p) => p.slug === "villa-paraiso") || projs[0];
 
         await loadProjectLots(initialProject);
       } catch (error) {
@@ -346,8 +351,8 @@ function LotsAndUnitsPage() {
     try {
       const dbStatus = uiLotStatus[updates.status];
       const targetLot = inventory.find((l) => l.id === lotId);
-      const cuotaInicial = updates.price > 0 ? Math.round(updates.price * 0.20) : undefined;
-      const cuotas48 = updates.price > 0 ? Math.round((updates.price * 0.80) / 48) : undefined;
+      const cuotaInicial = updates.price > 0 ? Math.round(updates.price * 0.2) : undefined;
+      const cuotas48 = updates.price > 0 ? Math.round((updates.price * 0.8) / 48) : undefined;
 
       const updatedMetadata: LotMetadata = {
         ...(targetLot?.metadata ?? {}),
@@ -526,7 +531,8 @@ function LotsAndUnitsPage() {
             <div className="flex flex-col gap-1">
               <CardTitle className="font-serif text-2xl">Inventario del proyecto</CardTitle>
               <CardDescription>
-                Selecciona un lote para consultar su ficha comercial y su ubicación en el plano, o haz clic en el icono de lápiz para editar sus datos.
+                Selecciona un lote para consultar su ficha comercial y su ubicación en el plano, o
+                haz clic en el icono de lápiz para editar sus datos.
               </CardDescription>
             </div>
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_11rem_11rem]">
@@ -664,7 +670,11 @@ function LotTable({
       </TableHeader>
       <TableBody>
         {lots.map((lot) => (
-          <TableRow key={lot.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onSelect(lot.id)}>
+          <TableRow
+            key={lot.id}
+            className="cursor-pointer hover:bg-muted/40"
+            onClick={() => onSelect(lot.id)}
+          >
             <TableCell>
               <div className="flex flex-col gap-1">
                 <span className="font-medium text-foreground">{lot.id}</span>
@@ -685,7 +695,10 @@ function LotTable({
               </span>
             </TableCell>
             <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="flex items-center justify-end gap-1.5"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1030,7 +1043,10 @@ function LotDetailSheet({
                   Linderos y especificaciones legales
                 </p>
                 {metadata.ubicacion && (
-                  <Badge variant="outline" className="text-[10px] border-accent/40 bg-accent/10 text-accent">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-accent/40 bg-accent/10 text-accent"
+                  >
                     {metadata.ubicacion}
                   </Badge>
                 )}
@@ -1058,7 +1074,8 @@ function LotDetailSheet({
               </div>
               <p className="text-sm font-medium text-foreground">Pendientes de cargar</p>
               <p className="text-xs text-muted-foreground">
-                Frente, fondo y linderos se mostrarán aquí cuando se incorporen a la ficha técnica del lote.
+                Frente, fondo y linderos se mostrarán aquí cuando se incorporen a la ficha técnica
+                del lote.
               </p>
             </div>
           )}
@@ -1203,11 +1220,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
               <Pencil className="size-5" />
             </div>
             <div>
-              <DialogTitle className="font-serif text-2xl">
-                Editar Lote {editingLot.id}
-              </DialogTitle>
+              <DialogTitle className="font-serif text-2xl">Editar Lote {editingLot.id}</DialogTitle>
               <DialogDescription>
-                Modifica la información comercial, medidas y linderos que se actualizan directamente en la base de datos y en el plano interactivo.
+                Modifica la información comercial, medidas y linderos que se actualizan directamente
+                en la base de datos y en el plano interactivo.
               </DialogDescription>
             </div>
           </div>
@@ -1216,7 +1232,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="edit-manzana" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-manzana"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Manzana
               </label>
               <Input
@@ -1229,7 +1248,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             </div>
 
             <div>
-              <label htmlFor="edit-status" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-status"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Estado Comercial
               </label>
               <Select value={status} onValueChange={(val) => setStatus(val as LotStatus)}>
@@ -1247,7 +1269,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             </div>
 
             <div>
-              <label htmlFor="edit-area" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-area"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Área (m²)
               </label>
               <Input
@@ -1266,7 +1291,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             </div>
 
             <div>
-              <label htmlFor="edit-price" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-price"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Precio (COP)
               </label>
               <Input
@@ -1292,7 +1320,9 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                   <div>
                     <span className="text-muted-foreground block">Precio Total:</span>
-                    <span className="font-semibold text-foreground text-sm">{formatLotPrice(price)}</span>
+                    <span className="font-semibold text-foreground text-sm">
+                      {formatLotPrice(price)}
+                    </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block">Cuota Inicial (20%):</span>
@@ -1311,7 +1341,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             )}
 
             <div>
-              <label htmlFor="edit-ubicacion" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-ubicacion"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Ubicación
               </label>
               <Input
@@ -1323,7 +1356,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             </div>
 
             <div>
-              <label htmlFor="edit-buyer" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-buyer"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Comprador / Interesado
               </label>
               <Input
@@ -1335,7 +1371,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             </div>
 
             <div className="sm:col-span-2">
-              <label htmlFor="edit-advisor" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-advisor"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Asesor Responsable
               </label>
               <Input
@@ -1347,7 +1386,10 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             </div>
 
             <div className="sm:col-span-2">
-              <label htmlFor="edit-linderos" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              <label
+                htmlFor="edit-linderos"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
                 Linderos y Descripción Legal
               </label>
               <Textarea
@@ -1381,4 +1423,3 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
     </Dialog>
   );
 }
-

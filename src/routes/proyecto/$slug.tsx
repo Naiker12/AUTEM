@@ -63,7 +63,7 @@ function ProjectView() {
   const [selectedLotId, setSelectedLotId] = useState("");
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = useMemo(
-    () => (selectedLotId ? projectLots.find((lot) => lot.id === selectedLotId) ?? null : null),
+    () => (selectedLotId ? (projectLots.find((lot) => lot.id === selectedLotId) ?? null) : null),
     [projectLots, selectedLotId],
   );
   const hasLots = projectLots.length > 0;

@@ -92,7 +92,7 @@ export function ProjectViewControlPanelContent({
 
   // Si cambia el lote seleccionado, aseguramos que la pestaña activa sea "project" para ver su ficha
   useEffect(() => {
-    if (selectedLot) {
+    if (selectedLot?.id) {
       setActiveTab("project");
     }
   }, [selectedLot?.id]);
@@ -260,7 +260,9 @@ export function ProjectViewControlPanelContent({
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <h4 className="font-serif text-xl leading-none text-foreground">{property.name}</h4>
+                    <h4 className="font-serif text-xl leading-none text-foreground">
+                      {property.name}
+                    </h4>
                     <Badge
                       variant="outline"
                       className="border-accent/40 bg-accent/10 text-[8.5px] font-semibold text-accent uppercase py-0 px-1.5"

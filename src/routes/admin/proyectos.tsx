@@ -340,7 +340,8 @@ function ProjectsPage() {
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <h1 className="font-serif text-3xl text-foreground sm:text-4xl">Proyectos</h1>
             <p className="text-sm text-muted-foreground">
-              {projects.length} proyecto{projects.length === 1 ? "" : "s"} disponible{projects.length === 1 ? "" : "s"}
+              {projects.length} proyecto{projects.length === 1 ? "" : "s"} disponible
+              {projects.length === 1 ? "" : "s"}
             </p>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">

@@ -17,7 +17,11 @@ export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
     return true;
   }
   // Secciones EXCLUSIVAS de Superadmin: Usuarios/Equipo, Configuración y Auditoría
-  if (pathname.startsWith("/admin/equipo-accesos") || pathname.startsWith("/admin/configuracion") || pathname.startsWith("/admin/auditoria")) {
+  if (
+    pathname.startsWith("/admin/equipo-accesos") ||
+    pathname.startsWith("/admin/configuracion") ||
+    pathname.startsWith("/admin/auditoria")
+  ) {
     return role === "superadmin";
   }
 
