@@ -943,6 +943,11 @@ function LotDetailSheet({
     });
 
   const metadata = lot.metadata;
+  const initialPayment =
+    Number(metadata?.cuota_inicial_20) || (lot.price > 0 ? Math.round(lot.price * 0.2) : 0);
+  const monthlyPayment48 =
+    Number(metadata?.cuotas_48) || (lot.price > 0 ? Math.round((lot.price * 0.8) / 48) : 0);
+  const hasFinancialPlan = lot.price > 0 || Boolean(metadata?.precio_preventa);
 
   return (
     <Sheet open={!!lot} onOpenChange={onOpenChange}>
@@ -976,42 +981,40 @@ function LotDetailSheet({
             <LotInfo label="Actualización" value={lot.updatedAt} />
           </div>
 
-          {/* Información Financiera y de Preventa si existe */}
-          {metadata && Boolean(metadata.precio_preventa || metadata.cuota_inicial_20) && (
+          {/* Información Financiera y de Preventa */}
+          {hasFinancialPlan && (
             <div className="rounded-xl border bg-muted/20 p-4">
               <p className="text-xs uppercase tracking-[0.14em] font-semibold text-accent">
                 Plan comercial y financiamiento
               </p>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                {Boolean(metadata.precio_preventa) && (
+                {Boolean(metadata?.precio_preventa) && (
                   <div>
                     <span className="text-muted-foreground">Precio Preventa:</span>
                     <p className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(Number(metadata.precio_preventa))}
+                      {formatLotPrice(Number(metadata?.precio_preventa))}
                     </p>
                   </div>
                 )}
-                {Boolean(metadata.precio_venta) && (
-                  <div>
-                    <span className="text-muted-foreground">Precio Regular:</span>
-                    <p className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(Number(metadata.precio_venta))}
-                    </p>
-                  </div>
-                )}
-                {Boolean(metadata.cuota_inicial_20) && (
+                <div>
+                  <span className="text-muted-foreground">Precio Total:</span>
+                  <p className="font-semibold text-foreground text-sm">
+                    {formatLotPrice(lot.price)}
+                  </p>
+                </div>
+                {initialPayment > 0 && (
                   <div>
                     <span className="text-muted-foreground">Cuota inicial (20%):</span>
                     <p className="font-semibold text-foreground">
-                      {formatLotPrice(Number(metadata.cuota_inicial_20))}
+                      {formatLotPrice(initialPayment)}
                     </p>
                   </div>
                 )}
-                {Boolean(metadata.cuotas_48) && (
+                {monthlyPayment48 > 0 && (
                   <div>
-                    <span className="text-muted-foreground">48 Cuotas mes:</span>
+                    <span className="text-muted-foreground">48 Cuotas mes (80%):</span>
                     <p className="font-semibold text-foreground">
-                      {formatLotPrice(Number(metadata.cuotas_48))}
+                      {formatLotPrice(monthlyPayment48)}
                     </p>
                   </div>
                 )}
@@ -1037,14 +1040,25 @@ function LotDetailSheet({
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                Medidas lineales
-              </p>
-              <p className="mt-1 text-sm font-medium text-foreground">Pendientes de cargar</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Frente, fondo y linderos se mostrarán aquí cuando se incorporen a la ficha técnica del
-                lote.
+            <div className="rounded-xl border border-dashed p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+                  Medidas lineales y linderos
+                </p>
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-accent hover:text-accent font-medium px-2"
+                    onClick={() => onEdit(lot)}
+                  >
+                    <Pencil className="size-3 mr-1" /> Cargar linderos
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm font-medium text-foreground">Pendientes de cargar</p>
+              <p className="text-xs text-muted-foreground">
+                Frente, fondo y linderos se mostrarán aquí cuando se incorporen a la ficha técnica del lote.
               </p>
             </div>
           )}
