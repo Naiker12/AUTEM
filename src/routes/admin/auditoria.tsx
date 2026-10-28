@@ -1,13 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
-  Calendar,
-  CheckCircle2,
-  FileBox,
-  FileImage,
-  Filter,
-  History,
   Layers,
+  MailCheck,
   MapPinned,
   Pencil,
   RefreshCw,
@@ -15,9 +10,11 @@ import {
   ShieldAlert,
   Trash2,
   Upload,
-  User,
+  UserMinus,
+  UserPlus,
+  UserRoundCog,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -69,10 +65,79 @@ const actionLabels: Record<
   update_project: { label: "Proyecto actualizado", variant: "outline", icon: Pencil },
   upload_media: { label: "Medio multimedia subido", variant: "secondary", icon: Upload },
   delete_media: { label: "Medio eliminado", variant: "destructive", icon: Trash2 },
+  "team:invite_member": { label: "Invitación enviada", variant: "secondary", icon: UserPlus },
+  "team:update_member_access": {
+    label: "Acceso de usuario editado",
+    variant: "outline",
+    icon: UserRoundCog,
+  },
+  "team:remove_member": { label: "Acceso revocado", variant: "destructive", icon: UserMinus },
+  "team:resend_invitation": {
+    label: "Invitación reenviada",
+    variant: "outline",
+    icon: MailCheck,
+  },
 };
 
 function formatAction(action: string) {
   return actionLabels[action] || { label: action, variant: "outline" as const, icon: Activity };
+}
+
+const detailKeyLabels: Record<string, string> = {
+  lot_id: "Lote",
+  project_name: "Proyecto",
+  project_slug: "Slug",
+  status: "Estado",
+  manzana: "Manzana",
+  area_m2: "Área (m²)",
+  price_cop: "Precio (COP)",
+  buyer: "Comprador",
+  advisor: "Asesor",
+  ubicacion: "Ubicación",
+  name: "Nombre",
+  email: "Correo",
+  role: "Rol",
+  previousRole: "Rol anterior",
+  newRole: "Nuevo rol",
+  fileName: "Archivo",
+  mediaType: "Tipo de medio",
+  tipo: "Operación",
+};
+
+function AuditDetailsView({ details }: { details: Record<string, unknown> | null | undefined }) {
+  if (!details || Object.keys(details).length === 0) {
+    return <span className="text-muted-foreground">Sin detalles adicionales</span>;
+  }
+
+  const entries = Object.entries(details).filter(
+    ([, value]) => value !== null && value !== undefined && value !== "",
+  );
+
+  if (entries.length === 0) {
+    return <span className="text-muted-foreground">Sin detalles adicionales</span>;
+  }
+
+  return (
+    <div className="flex max-w-md flex-wrap gap-1.5">
+      {entries.map(([key, value]) => {
+        const label = detailKeyLabels[key] ?? key;
+        const formattedValue = Array.isArray(value)
+          ? value.join(", ")
+          : typeof value === "object"
+            ? JSON.stringify(value)
+            : String(value);
+        return (
+          <span
+            key={key}
+            className="inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-0.5 text-[11px]"
+          >
+            <strong className="font-medium text-muted-foreground">{label}:</strong>
+            <span className="font-mono text-foreground">{formattedValue}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function AuditLogsPage() {
@@ -82,7 +147,7 @@ function AuditLogsPage() {
   const [query, setQuery] = useState("");
   const [actionFilter, setActionFilter] = useState("todos");
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
     try {
@@ -104,11 +169,11 @@ function AuditLogsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void fetchLogs();
-  }, []);
+  }, [fetchLogs]);
 
   const filteredLogs = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -129,8 +194,11 @@ function AuditLogsPage() {
     return {
       total: logs.length,
       lotsUpdated: logs.filter((l) => l.action === "update_lot").length,
-      mediaUploaded: logs.filter((l) => l.action === "upload_media").length,
-      projectsModified: logs.filter((l) => l.action.includes("project")).length,
+      mediaUploaded: logs.filter((l) => l.action === "upload_media" || l.action === "delete_media")
+        .length,
+      projectsAndTeam: logs.filter(
+        (l) => l.action.includes("project") || l.action.startsWith("team:"),
+      ).length,
     };
   }, [logs]);
 
@@ -151,7 +219,7 @@ function AuditLogsPage() {
           </div>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
             Registro cronológico inmutable de cada acción realizada por los usuarios en sus
-            proyectos asignados (edición de lotes, subida de planos y modificaciones).
+            proyectos asignados (edición de lotes, subida de planos, accesos y modificaciones).
           </p>
         </div>
         <Button
@@ -199,9 +267,11 @@ function AuditLogsPage() {
         </Card>
         <Card className="rounded-xl">
           <CardContent className="flex flex-col gap-1 p-5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Proyectos</p>
-            <p className="font-serif text-3xl text-foreground">{metrics.projectsModified}</p>
-            <p className="text-xs text-muted-foreground">Creaciones y actualizaciones</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              Proyectos y Equipo
+            </p>
+            <p className="font-serif text-3xl text-foreground">{metrics.projectsAndTeam}</p>
+            <p className="text-xs text-muted-foreground">Desarrollos y permisos de acceso</p>
           </CardContent>
         </Card>
       </section>
@@ -237,6 +307,9 @@ function AuditLogsPage() {
                   <SelectItem value="update_project">Proyectos actualizados</SelectItem>
                   <SelectItem value="upload_media">Archivos subidos</SelectItem>
                   <SelectItem value="delete_media">Archivos eliminados</SelectItem>
+                  <SelectItem value="team:invite_member">Invitaciones enviadas</SelectItem>
+                  <SelectItem value="team:update_member_access">Permisos actualizados</SelectItem>
+                  <SelectItem value="team:remove_member">Accesos revocados</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -308,9 +381,7 @@ function AuditLogsPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs">
-                          <pre className="max-w-md overflow-x-auto whitespace-pre-wrap rounded-lg bg-muted/30 p-2 font-mono text-[11px] text-muted-foreground border">
-                            {JSON.stringify(log.details, null, 2)}
-                          </pre>
+                          <AuditDetailsView details={log.details} />
                         </TableCell>
                       </TableRow>
                     );

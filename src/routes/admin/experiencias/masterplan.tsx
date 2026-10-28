@@ -10,7 +10,7 @@ import {
   Plus,
   Video,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -140,10 +140,32 @@ function MasterplanExperiencePage() {
   const enabledScenes = scenes.filter((scene) => scene.enabled).length;
   const readyScenes = scenes.filter((scene) => scene.hasMedia).length;
   const sceneDestinations = useMemo(() => scenes.filter((scene) => scene.id !== "aerea"), [scenes]);
+  const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const tracked = blobUrlsRef.current;
+    return () => {
+      for (const url of tracked) {
+        URL.revokeObjectURL(url);
+      }
+      tracked.clear();
+    };
+  }, []);
 
   const updateScene = (id: string, patch: Partial<Scene>) =>
     setScenes((current) =>
-      current.map((scene) => (scene.id === id ? { ...scene, ...patch } : scene)),
+      current.map((scene) => {
+        if (scene.id !== id) return scene;
+        if (
+          patch.sourceUrl !== undefined &&
+          patch.sourceUrl !== scene.sourceUrl &&
+          scene.sourceUrl.startsWith("blob:")
+        ) {
+          URL.revokeObjectURL(scene.sourceUrl);
+          blobUrlsRef.current.delete(scene.sourceUrl);
+        }
+        return { ...scene, ...patch };
+      }),
     );
   const updateHotspotDestination = (destination: string) => {
     setConfiguredHotspots((current) =>
@@ -173,6 +195,11 @@ function MasterplanExperiencePage() {
   const addScene = () => {
     if (!sceneDraft.name.trim()) return;
     const number = scenes.length + 1;
+    const blobUrl =
+      sceneDraft.sourceMethod === "file" && sceneDraft.file
+        ? URL.createObjectURL(sceneDraft.file)
+        : null;
+    if (blobUrl) blobUrlsRef.current.add(blobUrl);
     const scene: Scene = {
       id: `escena-${number}`,
       name: sceneDraft.name.trim(),
@@ -183,10 +210,7 @@ function MasterplanExperiencePage() {
         sceneDraft.sourceMethod === "file"
           ? Boolean(sceneDraft.file)
           : Boolean(sceneDraft.sourceUrl.trim()),
-      sourceUrl:
-        sceneDraft.sourceMethod === "file" && sceneDraft.file
-          ? URL.createObjectURL(sceneDraft.file)
-          : sceneDraft.sourceUrl.trim(),
+      sourceUrl: blobUrl ?? sceneDraft.sourceUrl.trim(),
       hotspotCount: 0,
     };
     setScenes((current) => [...current, scene]);

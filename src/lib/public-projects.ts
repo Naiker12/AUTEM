@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Property } from "@/data/properties";
-import type { Lot, LotStatus } from "@/data/lots";
+import {
+  formatLotDetail,
+  mapDatabaseLotStatus,
+  sanitizePublicLotMetadata,
+  type Lot,
+  type LotMetadata,
+} from "@/data/lots";
 import { supabase } from "@/lib/supabase";
 
 type PublicProjectRow = {
@@ -47,10 +53,14 @@ function toProperty(row: PublicProjectRow): Property {
     mediaUrl(row.cover_path) ?? media.find((item) => item.media_type === "cover")?.storage_path;
   const image =
     typeof cover === "string" && cover.startsWith("http") ? cover : mediaUrl(cover ?? null);
-  const gallery = media
-    .filter((item) => item.media_type === "gallery" || item.media_type === "cover")
-    .map((item) => mediaUrl(item.storage_path))
-    .filter((url): url is string => Boolean(url));
+  const gallery = [
+    ...new Set(
+      media
+        .filter((item) => item.media_type === "gallery" || item.media_type === "cover")
+        .map((item) => mediaUrl(item.storage_path))
+        .filter((url): url is string => Boolean(url)),
+    ),
+  ];
   const masterplan =
     mediaUrl(row.masterplan_path) ??
     mediaUrl(media.find((item) => item.media_type === "masterplan")?.storage_path ?? null);
@@ -134,15 +144,7 @@ type PublicLotRow = {
   area_m2: number | null;
   centroid: [number, number] | null;
   geometry: { pathD?: string } | null;
-  metadata: Record<string, unknown> | null;
-};
-
-const lotStatus: Record<PublicLotRow["status"], LotStatus> = {
-  available: "Disponible",
-  reserved: "Reservado",
-  sold: "Vendido",
-  last_units: "Últimas unidades",
-  hidden: "Por confirmar",
+  metadata: LotMetadata | null;
 };
 
 export function usePublishedLots(projectId: string | undefined, projectSlug: string) {
@@ -167,21 +169,26 @@ export function usePublishedLots(projectId: string | undefined, projectSlug: str
         if (error) throw error;
         if (!active) return;
         setLots(
-          (data as PublicLotRow[]).map((row) => ({
-            id: row.external_id,
-            projectSlug,
-            area: Number(row.area_m2 ?? 0),
-            price: Number(row.price_cop ?? 0),
-            status: lotStatus[row.status],
-            detail: `${row.manzana ? `Manzana ${row.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${row.metadata?.isReserve ? "Zona de reserva" : "Vía interna"}`,
-            terrainPosition: [0, 0],
-            centroid: row.centroid ?? undefined,
-            manzana: row.manzana ?? undefined,
-            lotNumber: row.lot_number ?? undefined,
-            pathD: row.geometry?.pathD,
-            isReserve: Boolean(row.metadata?.isReserve),
-            metadata: row.metadata ?? undefined,
-          })),
+          (data as PublicLotRow[]).map((row) => {
+            const sanitizedMeta = sanitizePublicLotMetadata(row.metadata);
+            const isReserve = Boolean(sanitizedMeta?.isReserve);
+            const normalizedManzana = row.manzana ? row.manzana.replace(/^M\s*/i, "") : undefined;
+            return {
+              id: row.external_id,
+              projectSlug,
+              area: Number(row.area_m2 ?? 0),
+              price: Number(row.price_cop ?? 0),
+              status: row.status === "hidden" ? "Por confirmar" : mapDatabaseLotStatus(row.status),
+              detail: formatLotDetail(normalizedManzana, isReserve),
+              terrainPosition: [0, 0],
+              centroid: row.centroid ?? undefined,
+              manzana: row.manzana ?? undefined,
+              lotNumber: row.lot_number ?? undefined,
+              pathD: row.geometry?.pathD,
+              isReserve,
+              metadata: sanitizedMeta,
+            };
+          }),
         );
       } catch {
         // Keep the visitor from seeing stale local inventory if the query fails.

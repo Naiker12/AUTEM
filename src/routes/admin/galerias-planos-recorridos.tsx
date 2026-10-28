@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CheckCircle2,
-  FileImage,
+  ExternalLink,
   FileText,
   ImageIcon,
-  Link2,
   Map,
   Play,
   Plus,
   Search,
   Upload,
 } from "lucide-react";
-import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -57,6 +56,7 @@ import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import {
   listManagedProjects,
   listProjectMedia,
+  type ManagedProjectRecord,
   type ProjectMediaRecord,
   uploadProjectMedia,
 } from "@/lib/project-repository";
@@ -98,6 +98,7 @@ function asAsset(item: ProjectMediaRecord): MediaAsset {
 
 function MediaLibraryPage() {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [projects, setProjects] = useState<ManagedProjectRecord[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [libraryError, setLibraryError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -109,6 +110,33 @@ function MediaLibraryPage() {
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState("");
   const [title, setTitle] = useState("");
+
+  const selectedProject = useMemo(
+    () => projects.find((item) => item.id === projectId) ?? projects[0] ?? null,
+    [projectId, projects],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (filePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(filePreview);
+      }
+    };
+  }, [filePreview]);
+
+  const loadProjectAssets = useCallback(async (targetProjectId: string) => {
+    setLibraryError(null);
+    setProjectId(targetProjectId);
+    try {
+      const media = await listProjectMedia(targetProjectId);
+      setAssets(media.map(asAsset));
+    } catch (error) {
+      setLibraryError(
+        error instanceof Error ? error.message : "No fue posible cargar los recursos.",
+      );
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -116,13 +144,15 @@ function MediaLibraryPage() {
         const access = await getCurrentAdminAccess();
         if (!access) throw new Error("Inicia sesión para administrar los recursos.");
         const allowedIds = access.isSuperAdmin ? undefined : access.assignedProjectIds;
-        const projects = await listManagedProjects(access.organizationId, allowedIds);
-        if (!projects || projects.length === 0) {
+        const managedProjects = await listManagedProjects(access.organizationId, allowedIds);
+        if (!managedProjects || managedProjects.length === 0) {
           throw new Error("No tienes proyectos asignados para administrar medios multimedia.");
         }
-        const project = projects.find((item) => item.slug === "villa-paraiso") ?? projects[0];
+        const project =
+          managedProjects.find((item) => item.slug === "villa-paraiso") ?? managedProjects[0];
         const media = await listProjectMedia(project.id);
         if (!active) return;
+        setProjects(managedProjects);
         setProjectId(project.id);
         setAssets(media.map(asAsset));
       } catch (error) {
@@ -136,6 +166,7 @@ function MediaLibraryPage() {
       active = false;
     };
   }, []);
+
   const filteredAssets = useMemo(
     () =>
       assets.filter(
@@ -159,7 +190,10 @@ function MediaLibraryPage() {
   const reset = () => {
     setUploadKind("Imagen");
     setFile(null);
-    setFilePreview("");
+    setFilePreview((prev) => {
+      if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return "";
+    });
     setTitle("");
     setProgress(0);
     setLoading(false);
@@ -172,7 +206,10 @@ function MediaLibraryPage() {
     const selected = event.target.files?.[0] ?? null;
     if (!selected) return;
     setFile(selected);
-    setFilePreview(selected.type.startsWith("image/") ? URL.createObjectURL(selected) : "");
+    setFilePreview((prev) => {
+      if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return selected.type.startsWith("image/") ? URL.createObjectURL(selected) : "";
+    });
     if (!title) setTitle(selected.name.replace(/\.[^/.]+$/, ""));
   };
   const submit = async () => {
@@ -197,9 +234,32 @@ function MediaLibraryPage() {
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
       <section className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2 border-l-2 border-accent pl-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Villa Paraíso · Biblioteca
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              {selectedProject?.name || "Proyecto"} · Biblioteca
+            </p>
+            {projects.length > 1 && (
+              <Select
+                value={projectId ?? ""}
+                onValueChange={(val) => {
+                  if (val) void loadProjectAssets(val);
+                }}
+              >
+                <SelectTrigger className="h-7 w-auto gap-1.5 rounded-full border-accent/30 bg-accent/5 px-2.5 text-xs font-medium text-accent">
+                  <SelectValue placeholder="Cambiar proyecto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {projects.map((proj) => (
+                      <SelectItem key={proj.id} value={proj.id}>
+                        {proj.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
           <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
             Galerías, planos y recorridos
           </h1>
@@ -345,9 +405,17 @@ function MediaCard({ asset }: { asset: MediaAsset }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
         <span>{asset.fileType}</span>
-        <Button variant="ghost" size="sm">
-          Ver recurso
-        </Button>
+        {asset.source ? (
+          <Button asChild variant="ghost" size="sm">
+            <a href={asset.source} target="_blank" rel="noopener noreferrer">
+              Ver recurso <ExternalLink className="ml-1 size-3" />
+            </a>
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" disabled>
+            Sin archivo
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

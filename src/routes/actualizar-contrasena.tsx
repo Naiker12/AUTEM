@@ -17,23 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { evaluatePasswordRules } from "@/lib/password-security";
 import { requireSupabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-
-const passwordRules = [
-  { label: "12 caracteres como mínimo", test: (value: string) => value.length >= 12 },
-  { label: "Una letra mayúscula", test: (value: string) => /[A-Z]/.test(value) },
-  { label: "Una letra minúscula", test: (value: string) => /[a-z]/.test(value) },
-  { label: "Un número", test: (value: string) => /\d/.test(value) },
-  { label: "Un símbolo", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
-];
-
-function getPasswordStrength(completedRules: number) {
-  if (completedRules <= 1) return { label: "Aún no es segura", value: 20 };
-  if (completedRules <= 3) return { label: "Puede mejorar", value: 55 };
-  if (completedRules === 4) return { label: "Casi lista", value: 80 };
-  return { label: "Contraseña segura", value: 100 };
-}
 
 export const Route = createFileRoute("/actualizar-contrasena")({
   head: () => ({ meta: [{ title: "Actualizar contraseña | AUTEM" }] }),
@@ -50,14 +36,13 @@ function UpdatePasswordRoute() {
   const [status, setStatus] = useState<"checking" | "ready" | "invalid" | "success">("checking");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const passwordRuleResults = passwordRules.map((rule) => ({
-    ...rule,
-    complete: rule.test(password),
-  }));
-  const completedRules = passwordRuleResults.filter((rule) => rule.complete).length;
-  const passwordIsSecure = completedRules === passwordRules.length;
+  const {
+    rules: passwordRuleResults,
+    completedRules,
+    isSecure: passwordIsSecure,
+    strength,
+  } = evaluatePasswordRules(password);
   const passwordsMatch = confirmation.length > 0 && password === confirmation;
-  const strength = getPasswordStrength(completedRules);
 
   useEffect(() => {
     let active = true;

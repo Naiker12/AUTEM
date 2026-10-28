@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { evaluatePasswordRules } from "@/lib/password-security";
 import { requireSupabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/perfil")({
@@ -115,15 +116,40 @@ function ProfileRoute() {
 
   const changePassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (newPassword.length < 12) {
-      toast.error("La nueva contraseña debe tener al menos 12 caracteres.");
+    if (!currentPassword) {
+      toast.error("Ingresa tu contraseña actual para confirmar el cambio.");
+      return;
+    }
+    const { isSecure, rules } = evaluatePasswordRules(newPassword);
+    if (!isSecure) {
+      const missing = rules
+        .filter((rule) => !rule.complete)
+        .map((rule) => rule.label.toLowerCase())
+        .join(", ");
+      toast.error("La contraseña nueva no cumple los requisitos de seguridad", {
+        description: `Falta: ${missing}.`,
+      });
+      return;
+    }
+    if (newPassword === currentPassword) {
+      toast.error("La contraseña nueva debe ser diferente a la actual.");
       return;
     }
     setSavingPassword(true);
     try {
-      const { error } = await requireSupabase().auth.updateUser({
+      const client = requireSupabase();
+      if (!email) throw new Error("No se pudo verificar el correo de tu sesión.");
+
+      const { error: verifyError } = await client.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (verifyError) {
+        throw new Error("La contraseña actual es incorrecta.");
+      }
+
+      const { error } = await client.auth.updateUser({
         password: newPassword,
-        current_password: currentPassword,
       });
       if (error) throw error;
       setCurrentPassword("");

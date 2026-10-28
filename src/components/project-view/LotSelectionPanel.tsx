@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Download,
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import { filterAndSortLots, formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
 
 interface LotSelectionPanelProps {
   lots: Lot[];
@@ -88,29 +88,17 @@ export default function LotSelectionPanel({
     }
   };
 
-  const statusLots =
-    status === "Todos"
-      ? lots
-      : status === "Reservados"
-        ? lots.filter((lot) => lot.status === "Reservado")
-        : status === "Vendidos"
-          ? lots.filter((lot) => lot.status === "Vendido")
-          : lots.filter((lot) => lot.status === "Disponible" || lot.status === "Últimas unidades");
-
-  const computedFilteredLots = statusLots
-    .filter((lot) => minArea === "all" || lot.area >= Number(minArea))
-    .filter((lot) => maxPrice === "all" || lot.price <= Number(maxPrice) * 1_000_000)
-    .sort((first, second) => {
-      if (sort === "lot-asc") return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
-      if (sort === "lot-desc") return (second.lotNumber ?? 0) - (first.lotNumber ?? 0);
-      if (sort === "area-desc") return second.area - first.area;
-      if (sort === "area-asc") return first.area - second.area;
-      if (sort === "price-asc") return first.price - second.price;
-      if (sort === "price-desc") return second.price - first.price;
-      return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
-    });
-
-  const filteredLots = controlledFilteredLots ?? computedFilteredLots;
+  const filteredLots = useMemo(
+    () =>
+      controlledFilteredLots ??
+      filterAndSortLots(lots, {
+        status,
+        minArea,
+        maxPrice,
+        sort,
+      }),
+    [controlledFilteredLots, lots, status, minArea, maxPrice, sort],
+  );
 
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
     "Hola AUTEM, quiero recibir asesoría sobre los lotes del plano maestro.",
@@ -392,6 +380,7 @@ function LotCatalog({
   isMobile?: boolean;
 }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const totalLotsCount = lots.length || 343;
 
   const handleSelectFromSearch = (lot: Lot) => {
     // Si el lote tiene un estado comercial diferente al filtro activo, cambiar a "Todos"
@@ -514,8 +503,8 @@ function LotCatalog({
               value={sort}
               onValueChange={onSortChange}
               items={[
-                { value: "lot-asc", label: "Número de lote (1 a 343)" },
-                { value: "lot-desc", label: "Número de lote (343 a 1)" },
+                { value: "lot-asc", label: `Número de lote (1 a ${totalLotsCount})` },
+                { value: "lot-desc", label: `Número de lote (${totalLotsCount} a 1)` },
                 { value: "area-asc", label: "Área: menor a mayor" },
                 { value: "area-desc", label: "Área: mayor a menor" },
                 { value: "price-asc", label: "Precio: menor a mayor" },
@@ -543,9 +532,9 @@ function LotCatalog({
         </strong>
         <span className="text-[7.5px] sm:text-[8px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {sort === "lot-asc"
-            ? "Lotes 1 → 343"
+            ? `Lotes 1 → ${totalLotsCount}`
             : sort === "lot-desc"
-              ? "Lotes 343 → 1"
+              ? `Lotes ${totalLotsCount} → 1`
               : sort === "area-asc"
                 ? "Área ↑"
                 : sort === "area-desc"

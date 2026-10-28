@@ -184,7 +184,7 @@ function AdminDashboard() {
               </>
             )}
             <Button asChild variant="outline">
-              <a href="/" target="_blank" rel="noreferrer">
+              <a href="/" target="_blank" rel="noopener noreferrer">
                 Ver sitio <ArrowUpRight data-icon="inline-end" />
               </a>
             </Button>

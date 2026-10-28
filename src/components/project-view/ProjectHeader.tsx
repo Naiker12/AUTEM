@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, MessageCircle, Moon, MoreVertical, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 import ModeSwitcher from "./ModeSwitcher";
 import MobileProjectMenu from "./MobileProjectMenu";
 import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
@@ -30,28 +30,10 @@ export default function ProjectHeader({
   isDark: propIsDark,
   onToggleTheme,
 }: ProjectHeaderProps) {
-  const [internalIsDark, setInternalIsDark] = useState(() => {
-    if (typeof document !== "undefined") {
-      const stored = localStorage.getItem("autem-theme");
-      if (stored) return stored === "dark";
-      return (
-        document.documentElement.classList.contains("dark") ||
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      );
-    }
-    return false;
-  });
-
-  const isDark = propIsDark !== undefined ? propIsDark : internalIsDark;
+  const { isDark: fallbackIsDark, toggleTheme: fallbackToggleTheme } = useTheme();
+  const isDark = propIsDark !== undefined ? propIsDark : fallbackIsDark;
+  const toggleTheme = onToggleTheme ?? fallbackToggleTheme;
   const activeView = PROJECT_VIEW_MODES.find((view) => view.id === activeMode);
-  const toggleTheme = onToggleTheme || (() => setInternalIsDark((value) => !value));
-
-  useEffect(() => {
-    if (propIsDark === undefined) {
-      document.documentElement.classList.toggle("dark", isDark);
-      localStorage.setItem("autem-theme", isDark ? "dark" : "light");
-    }
-  }, [isDark, propIsDark]);
 
   return (
     <header className="absolute inset-x-0 top-0 z-40 h-14 sm:h-16 lg:h-[72px] border-b border-border bg-background/94 text-foreground shadow-2xl backdrop-blur-2xl">

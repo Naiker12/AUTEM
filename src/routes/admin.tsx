@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { AdminShell } from "@/components/admin/layout/AdminShell";
-import { canAccessAdminPath, getCurrentAdminAccess, type AdminAccess } from "@/lib/admin-auth";
+import {
+  canAccessAdminPath,
+  clearAdminAccessCache,
+  getCurrentAdminAccess,
+  type AdminAccess,
+} from "@/lib/admin-auth";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin")({
@@ -19,8 +24,8 @@ function AdminRoute() {
 
   useEffect(() => {
     let active = true;
-    const checkAccess = () => {
-      void getCurrentAdminAccess()
+    const checkAccess = (forceRefresh = false) => {
+      void getCurrentAdminAccess(forceRefresh)
         .then((access) => {
           if (active) setAccessState(access);
         })
@@ -29,8 +34,11 @@ function AdminRoute() {
         });
     };
 
-    checkAccess();
-    const subscription = supabase?.auth.onAuthStateChange(() => checkAccess()).data.subscription;
+    checkAccess(false);
+    const subscription = supabase?.auth.onAuthStateChange(() => {
+      clearAdminAccessCache();
+      checkAccess(true);
+    }).data.subscription;
 
     return () => {
       active = false;

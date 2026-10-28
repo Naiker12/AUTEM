@@ -12,6 +12,15 @@ export type AdminAccess = {
   isSuperAdmin: boolean;
 };
 
+let cachedAccessPromise: Promise<AdminAccess | null> | null = null;
+let cachedAccessTimestamp = 0;
+const ACCESS_CACHE_TTL_MS = 15_000;
+
+export function clearAdminAccessCache() {
+  cachedAccessPromise = null;
+  cachedAccessTimestamp = 0;
+}
+
 export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
   if (pathname === "/admin" || pathname === "/admin/" || pathname === "/admin/perfil") {
     return true;
@@ -53,22 +62,24 @@ export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
 
 export async function signInToAdmin(email: string, password: string) {
   const client = requireSupabase();
+  clearAdminAccessCache();
   const { error } = await client.auth.signInWithPassword({ email, password });
 
   if (error) {
     throw new Error("El correo o la contraseña no son correctos.");
   }
 
-  const access = await getCurrentAdminAccess();
+  const access = await getCurrentAdminAccess(true);
   if (!access) {
     await client.auth.signOut();
+    clearAdminAccessCache();
     throw new Error("Esta cuenta no tiene acceso al panel de administración.");
   }
 
   return access;
 }
 
-export async function getCurrentAdminAccess(): Promise<AdminAccess | null> {
+async function fetchCurrentAdminAccess(): Promise<AdminAccess | null> {
   const client = requireSupabase();
   const {
     data: { user },
@@ -125,6 +136,21 @@ export async function getCurrentAdminAccess(): Promise<AdminAccess | null> {
   };
 }
 
+export async function getCurrentAdminAccess(forceRefresh = false): Promise<AdminAccess | null> {
+  const now = Date.now();
+  if (!forceRefresh && cachedAccessPromise && now - cachedAccessTimestamp < ACCESS_CACHE_TTL_MS) {
+    return cachedAccessPromise;
+  }
+
+  cachedAccessTimestamp = now;
+  cachedAccessPromise = fetchCurrentAdminAccess().catch((error) => {
+    clearAdminAccessCache();
+    throw error;
+  });
+
+  return cachedAccessPromise;
+}
+
 export async function requestPasswordReset(email: string) {
   const client = requireSupabase();
   const { error } = await client.auth.resetPasswordForEmail(email);
@@ -145,6 +171,7 @@ export async function verifyRecoveryCode(email: string, token: string) {
 
 export async function signOutFromAdmin() {
   const client = requireSupabase();
+  clearAdminAccessCache();
   const { error } = await client.auth.signOut();
 
   if (error) {

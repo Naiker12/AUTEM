@@ -427,11 +427,17 @@ function ProjectsPage() {
         onDraftChange={updateDraft}
         onSelectCover={(file) => {
           setCoverFile(file);
-          setCoverPreview(URL.createObjectURL(file));
+          setCoverPreview((prev) => {
+            if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return URL.createObjectURL(file);
+          });
         }}
         onRemoveCover={() => {
           setCoverFile(null);
-          setCoverPreview(editingProject?.image ?? "");
+          setCoverPreview((prev) => {
+            if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return editingProject?.image ?? "";
+          });
         }}
         onAddGalleryFiles={(files) => setPendingGalleryFiles((prev) => [...prev, ...files])}
         onRemovePendingGalleryFile={(index) =>
@@ -674,6 +680,17 @@ function ProjectDialog({
   const existingGallery = existingMedia.filter((m) => m.media_type === "gallery");
   const existingMasterplan = existingMedia.find((m) => m.media_type === "masterplan");
   const existingDocuments = existingMedia.filter((m) => m.media_type === "document");
+  const [pendingGalleryPreviews, setPendingGalleryPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = pendingGalleryFiles.map((file) => URL.createObjectURL(file));
+    setPendingGalleryPreviews(urls);
+    return () => {
+      for (const url of urls) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [pendingGalleryFiles]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -909,7 +926,7 @@ function ProjectDialog({
                               className="group relative aspect-square overflow-hidden rounded-lg border border-accent/40 bg-accent/5"
                             >
                               <img
-                                src={URL.createObjectURL(file)}
+                                src={pendingGalleryPreviews[index] ?? ""}
                                 alt=""
                                 className="size-full object-cover"
                               />
@@ -991,7 +1008,7 @@ function ProjectDialog({
                             <a
                               href={existingMasterplan.url}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noopener noreferrer"
                               className="inline-flex size-7 items-center justify-center rounded-md hover:bg-muted"
                               title="Ver plano"
                             >
@@ -1067,7 +1084,7 @@ function ProjectDialog({
                                 <a
                                   href={doc.url}
                                   target="_blank"
-                                  rel="noreferrer"
+                                  rel="noopener noreferrer"
                                   className="inline-flex size-6 items-center justify-center rounded hover:bg-muted"
                                 >
                                   <ExternalLink className="size-3 text-muted-foreground" />

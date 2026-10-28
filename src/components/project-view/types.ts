@@ -1,4 +1,4 @@
-import { Images, MapPinned, Navigation, Orbit, Route, type LucideIcon } from "lucide-react";
+import { Images, MapPinned, Navigation, Orbit, type LucideIcon } from "lucide-react";
 
 export type ViewMode = "lot" | "perspective" | "tour" | "terrain" | "gallery";
 
@@ -48,14 +48,6 @@ export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
     label: "Plano Urbanístico",
     shortLabel: "Plano",
     icon: Orbit,
-    badge: "Próx.",
-    available: false,
-  },
-  {
-    id: "tour",
-    label: "Galería",
-    shortLabel: "Galería",
-    icon: Route,
     badge: "Próx.",
     available: false,
   },

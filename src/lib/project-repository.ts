@@ -72,6 +72,21 @@ function normalizeSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+function sanitizeHttpUrl(rawUrl?: string | null): string | null {
+  const trimmed = rawUrl?.trim();
+  if (!trimmed) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error("El enlace de recorrido debe ser una URL válida (https://…).");
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new Error("El enlace de recorrido solo permite protocolo HTTP o HTTPS.");
+  }
+  return parsed.toString();
+}
+
 function toProjectPayload(input: ProjectInput) {
   const slug = normalizeSlug(input.slug || input.name);
   if (!slug) throw new Error("Escribe un nombre o identificador válido para el proyecto.");
@@ -85,7 +100,7 @@ function toProjectPayload(input: ProjectInput) {
     area_label: input.areaLabel?.trim() || null,
     description: input.description?.trim() || null,
     long_description: input.longDescription?.trim() || null,
-    tour_url: input.tourUrl?.trim() || null,
+    tour_url: sanitizeHttpUrl(input.tourUrl),
     published_at: input.status === "published" ? new Date().toISOString() : null,
   };
 }
@@ -196,6 +211,15 @@ export async function listProjectMedia(projectId: string): Promise<ProjectMediaR
   })) as ProjectMediaRecord[];
 }
 
+const ALLOWED_PROJECT_MEDIA_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/svg+xml",
+  "application/pdf",
+]);
+
 export async function uploadProjectMedia(
   projectId: string,
   file: File,
@@ -204,6 +228,11 @@ export async function uploadProjectMedia(
 ) {
   if (file.size > 25 * 1024 * 1024) {
     throw new Error(`${file.name} supera el límite de 25 MB.`);
+  }
+  if (file.type && !ALLOWED_PROJECT_MEDIA_MIME_TYPES.has(file.type)) {
+    throw new Error(
+      `El formato de ${file.name} (${file.type}) no está permitido. Usa JPG, PNG, WebP, AVIF, SVG o PDF.`,
+    );
   }
   const client = requireSupabase();
   const storagePath = `${projectId}/${mediaType}/${crypto.randomUUID()}-${storageSafeFileName(file.name)}`;

@@ -9,22 +9,29 @@ import {
   Settings2,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SheetContent } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import {
+  formatLotArea,
+  formatLotPrice,
+  getLotFinancing,
+  getLotsSummary,
+  type Lot,
+} from "@/data/lots";
 import type { Property } from "@/data/properties";
 import type { ProjectViewSettings, ViewMode } from "./types";
 
 export interface ProjectViewControlPanelProps {
   property: Property;
+  lots?: Lot[];
   settings: ProjectViewSettings;
   onSettingsChange: (changes: Partial<ProjectViewSettings>) => void;
   onResetSettings: () => void;
@@ -64,6 +71,7 @@ function SettingRow({ title, description, checked, onCheckedChange }: SettingRow
  */
 export function ProjectViewControlPanelContent({
   property,
+  lots = [],
   settings,
   onSettingsChange,
   onResetSettings,
@@ -73,14 +81,13 @@ export function ProjectViewControlPanelContent({
   onClearSelectedLot,
 }: ProjectViewControlPanelProps) {
   const hasSelectedLot = Boolean(selectedLot);
-
-  const initialPayment: number = selectedLot
-    ? Number(selectedLot.metadata?.cuota_inicial_20) || Math.round(selectedLot.price * 0.2)
-    : 0;
-
-  const monthlyPayment48: number = selectedLot
-    ? Number(selectedLot.metadata?.cuotas_48) || Math.round((selectedLot.price * 0.8) / 48)
-    : 0;
+  const { initialPayment, monthlyPayment48 } = useMemo(
+    () => getLotFinancing(selectedLot),
+    [selectedLot],
+  );
+  const summary = useMemo(() => getLotsSummary(lots), [lots]);
+  const totalLotsLabel = summary.totalCount > 0 ? summary.totalCount : 343;
+  const areaRangeLabel = summary.totalCount > 0 ? summary.areaRangeLabel : `${property.m2} m²`;
 
   const contactUrl = selectedLot
     ? `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
@@ -267,7 +274,7 @@ export function ProjectViewControlPanelContent({
                       variant="outline"
                       className="border-accent/40 bg-accent/10 text-[8.5px] font-semibold text-accent uppercase py-0 px-1.5"
                     >
-                      343 Lotes
+                      {totalLotsLabel} Lotes
                     </Badge>
                   </div>
                   <p className="mt-1 text-[11px] text-muted-foreground">{property.location}</p>
@@ -280,7 +287,7 @@ export function ProjectViewControlPanelContent({
                       Lotes totales
                     </span>
                     <span className="mt-0.5 block font-serif text-sm text-foreground dark:text-stone-100">
-                      343 parcelas
+                      {totalLotsLabel} parcelas
                     </span>
                   </div>
                   <div className="rounded-xl border border-border/80 dark:border-white/10 bg-card/90 dark:bg-stone-900/85 p-2.5 transition-colors hover:border-accent/40">
@@ -296,7 +303,7 @@ export function ProjectViewControlPanelContent({
                       Áreas
                     </span>
                     <span className="mt-0.5 block font-serif text-sm text-foreground dark:text-stone-100">
-                      240 - 1.080 m²
+                      {areaRangeLabel}
                     </span>
                   </div>
                   <div className="rounded-xl border border-border/80 dark:border-white/10 bg-card/90 dark:bg-stone-900/85 p-2.5 transition-colors hover:border-accent/40">
@@ -346,7 +353,7 @@ export function ProjectViewControlPanelContent({
             />
             <SettingRow
               title="Selector de vistas"
-              description="Navegación entre plano urbanístico, 3D y galería."
+              description="Navegación entre localización, recorrido y galería."
               checked={settings.showViewSwitcher}
               onCheckedChange={(showViewSwitcher) => onSettingsChange({ showViewSwitcher })}
             />
@@ -358,7 +365,7 @@ export function ProjectViewControlPanelContent({
             />
             <SettingRow
               title="Identidad del proyecto"
-              description="Nombre de Villa Paraíso y badge en cabecera."
+              description={`Nombre de ${property.name} y badge en cabecera.`}
               checked={settings.showProjectBrand}
               onCheckedChange={(showProjectBrand) => onSettingsChange({ showProjectBrand })}
             />

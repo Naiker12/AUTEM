@@ -7,14 +7,14 @@ import { ChevronLeft, ChevronRight, Orbit, PanelLeftOpen, Route as RouteIcon } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
-import { formatLotPrice, formatLotArea } from "@/data/lots";
+import { filterAndSortLots, formatLotPrice, formatLotArea } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
+import { useTheme } from "@/hooks/use-theme";
 import "@/components/project-view/project-editorial.css";
 import {
   MasterplanSvgViewer,
   LotSelectionPanel,
   DEFAULT_PROJECT_VIEW_SETTINGS,
-  PROJECT_VIEW_MODES,
   ProjectViewControlPanelContent,
   ProjectHeader,
   ProjectLoadingScreen,
@@ -26,7 +26,7 @@ import {
 const InteractivePanorama = lazy(() => import("@/components/project-view/InteractivePanorama"));
 
 export const Route = createFileRoute("/proyecto/$slug")({
-  head: ({ params }) => {
+  head: () => {
     return {
       meta: [
         {
@@ -70,36 +70,7 @@ function ProjectView() {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 1024,
   );
-
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document !== "undefined") {
-      const stored = localStorage.getItem("autem-theme");
-      if (stored) return stored === "dark";
-      return (
-        document.documentElement.classList.contains("dark") ||
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      );
-    }
-    return false;
-  });
-
-  const handleToggleTheme = useCallback(() => {
-    setIsDark((prev) => {
-      const next = !prev;
-      if (typeof document !== "undefined") {
-        document.documentElement.classList.toggle("dark", next);
-        localStorage.setItem("autem-theme", next ? "dark" : "light");
-      }
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle("dark", isDark);
-      localStorage.setItem("autem-theme", isDark ? "dark" : "light");
-    }
-  }, [isDark]);
+  const { isDark, toggleTheme: handleToggleTheme } = useTheme();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -111,6 +82,77 @@ function ProjectView() {
   useEffect(() => {
     setIsPanelOpen(!isMobile && mode === "lot");
   }, [isMobile, mode]);
+
+  const galleryImages = useMemo(
+    () =>
+      property?.images && property.images.length > 0
+        ? property.images
+        : property?.image
+          ? [property.image]
+          : [],
+    [property],
+  );
+  const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
+  const gallerySwipeStartXRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setGalleryIndex(0);
+  }, [slug]);
+
+  // Precargar todas las imágenes de la galería en segundo plano para transiciones instantáneas sin parpadeo
+  useEffect(() => {
+    if (galleryImages.length <= 1) return;
+    for (const url of galleryImages) {
+      if (!url) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+    }
+  }, [galleryImages]);
+
+  // Navegación por teclado (← / → / Inicio / Fin) en modo "Conoce el proyecto" (gallery)
+  useEffect(() => {
+    if (mode !== "gallery" || galleryImages.length <= 1) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setGalleryIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setGalleryIndex((prev) => (prev + 1) % galleryImages.length);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        setGalleryIndex(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        setGalleryIndex(galleryImages.length - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mode, galleryImages.length]);
+
+  // Mantener visible la miniatura activa al recorrer con el teclado
+  useEffect(() => {
+    if (mode !== "gallery" || !thumbnailsContainerRef.current) return;
+    const activeThumb = thumbnailsContainerRef.current.querySelector<HTMLElement>(
+      `[data-thumb-index="${galleryIndex}"]`,
+    );
+    activeThumb?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [galleryIndex, mode]);
 
   // Estados de filtrado sincronizados para el mapa interactivo y el catálogo
   const [filterStatus, setFilterStatus] = useState("Todos");
@@ -145,31 +187,16 @@ function ProjectView() {
   const isFilterActive =
     filterStatus !== "Todos" || filterMinArea !== "all" || filterMaxPrice !== "all";
 
-  const filteredLots = useMemo(() => {
-    const statusLots =
-      filterStatus === "Todos"
-        ? projectLots
-        : filterStatus === "Reservados"
-          ? projectLots.filter((lot) => lot.status === "Reservado")
-          : filterStatus === "Vendidos"
-            ? projectLots.filter((lot) => lot.status === "Vendido")
-            : projectLots.filter(
-                (lot) => lot.status === "Disponible" || lot.status === "Últimas unidades",
-              );
-
-    return statusLots
-      .filter((lot) => filterMinArea === "all" || lot.area >= Number(filterMinArea))
-      .filter((lot) => filterMaxPrice === "all" || lot.price <= Number(filterMaxPrice) * 1_000_000)
-      .sort((first, second) => {
-        if (filterSort === "lot-asc") return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
-        if (filterSort === "lot-desc") return (second.lotNumber ?? 0) - (first.lotNumber ?? 0);
-        if (filterSort === "area-desc") return second.area - first.area;
-        if (filterSort === "area-asc") return first.area - second.area;
-        if (filterSort === "price-asc") return first.price - second.price;
-        if (filterSort === "price-desc") return second.price - first.price;
-        return (first.lotNumber ?? 0) - (second.lotNumber ?? 0);
-      });
-  }, [projectLots, filterStatus, filterMinArea, filterMaxPrice, filterSort]);
+  const filteredLots = useMemo(
+    () =>
+      filterAndSortLots(projectLots, {
+        status: filterStatus,
+        minArea: filterMinArea,
+        maxPrice: filterMaxPrice,
+        sort: filterSort,
+      }),
+    [projectLots, filterStatus, filterMinArea, filterMaxPrice, filterSort],
+  );
 
   useEffect(() => {
     const storedSettings = localStorage.getItem("autem-project-view-settings-v2");
@@ -268,7 +295,7 @@ function ProjectView() {
     },
     [isMobile],
   );
-  const handleView3D = useCallback(() => handleModeChange("tour"), [handleModeChange]);
+  const handleView3D = useCallback(() => handleModeChange("perspective"), [handleModeChange]);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
 
   const updateViewSettings = (changes: Partial<ProjectViewSettings>) => {
@@ -312,15 +339,16 @@ function ProjectView() {
     );
   }
 
-  const images = property.images && property.images.length > 0 ? property.images : [property.image];
-  const activeGalleryImage = images[galleryIndex] || property.image;
-  const lotViewImage = property.lotViewImage || property.floorPlanImage || property.image;
+  const images = galleryImages.length > 0 ? galleryImages : [property.image];
+  const safeGalleryIndex = galleryIndex < images.length ? galleryIndex : 0;
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
-  const mobileControlOpen = isMobile && isPanelOpen;
+  const isRightPanelVisible = mode !== "gallery" && isPanelOpen;
+  const mobileControlOpen = isMobile && isRightPanelVisible;
   const effectiveSheetPercent = mobileControlOpen ? controlPanelPercent : sheetPercent;
   const controlPanel = (
     <ProjectViewControlPanelContent
       property={property}
+      lots={projectLots}
       settings={viewSettings}
       onSettingsChange={updateViewSettings}
       onResetSettings={resetViewSettings}
@@ -360,7 +388,7 @@ function ProjectView() {
         activeMode={mode}
         onModeChange={handleModeChange}
         showViewSwitcher={viewSettings.showViewSwitcher}
-        isPanelOpen={isPanelOpen}
+        isPanelOpen={isRightPanelVisible}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
       />
@@ -415,7 +443,7 @@ function ProjectView() {
                   }
                 }}
                 isDesktopSidebarOpen={isLotPanelVisible}
-                isRightPanelOpen={!isMobile && isPanelOpen}
+                isRightPanelOpen={!isMobile && isRightPanelVisible}
                 isDark={isDark}
               />
             </div>
@@ -582,7 +610,7 @@ function ProjectView() {
           <div className="relative flex h-full w-full items-center justify-center bg-black/80">
             <img
               src={property.image}
-              alt="Perspectiva 3D Villa Paraíso"
+              alt={`Perspectiva 3D ${property.name}`}
               loading="lazy"
               decoding="async"
               className="absolute inset-0 h-full w-full object-cover opacity-35 filter blur-[2px] transition-all duration-700"
@@ -623,40 +651,66 @@ function ProjectView() {
             </div>
           </div>
         ) : mode === "terrain" ? (
-          <>
-            <TerrainRouteView
-              lots={projectLots}
-              selectedLot={selectedLot ?? projectLots[0]}
-              onSelectLot={selectLot}
-              settings={viewSettings}
-              isDark={isDark}
-              isRightPanelOpen={false}
-              projectId={property.id}
-              projectSlug={property.slug}
-              masterplanVersion={property.masterplanVersion}
-              projectAnchor={{ lat: property.lat, lng: property.lng }}
-              alternatePanel={mobileControlOpen ? controlPanel : undefined}
-              panelPercent={controlPanelPercent}
-              onPanelPercentChange={setControlPanelPercent}
-            />
-          </>
+          <TerrainRouteView
+            lots={projectLots}
+            selectedLot={selectedLot ?? projectLots[0]}
+            onSelectLot={selectLot}
+            settings={viewSettings}
+            isDark={isDark}
+            isRightPanelOpen={false}
+            projectId={property.id}
+            projectSlug={property.slug}
+            masterplanVersion={property.masterplanVersion}
+            projectAnchor={{ lat: property.lat, lng: property.lng }}
+            alternatePanel={mobileControlOpen ? controlPanel : undefined}
+            panelPercent={controlPanelPercent}
+            onPanelPercentChange={setControlPanelPercent}
+          />
         ) : (
-          <div className="relative h-full w-full bg-black/20">
-            <img
-              key={mode === "gallery" ? activeGalleryImage : property.image}
-              src={mode === "gallery" ? activeGalleryImage : property.image}
-              alt={property.name}
-              loading="eager"
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
-            />
+          <div
+            className="relative h-full w-full overflow-hidden bg-neutral-950 select-none"
+            onPointerDown={(e) => {
+              gallerySwipeStartXRef.current = e.clientX;
+            }}
+            onPointerUp={(e) => {
+              if (gallerySwipeStartXRef.current === null || images.length <= 1) return;
+              const deltaX = e.clientX - gallerySwipeStartXRef.current;
+              gallerySwipeStartXRef.current = null;
+              if (Math.abs(deltaX) > 45) {
+                setGalleryIndex((prev) =>
+                  deltaX < 0
+                    ? (prev + 1) % images.length
+                    : (prev - 1 + images.length) % images.length,
+                );
+              }
+            }}
+          >
+            {images.map((imageUrl, index) => {
+              const isActive = index === safeGalleryIndex;
+              return (
+                <img
+                  key={`${imageUrl}-${index}`}
+                  src={imageUrl}
+                  alt={`${property.name} - Vista ${index + 1}`}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={isActive ? "high" : "auto"}
+                  decoding={isActive ? "sync" : "async"}
+                  draggable={false}
+                  className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${
+                    isActive
+                      ? "z-10 scale-100 opacity-100"
+                      : "z-0 scale-[1.02] opacity-0 pointer-events-none"
+                  }`}
+                />
+              );
+            })}
           </div>
         )}
 
         {mode === "gallery" && !mobileControlOpen && (
           <>
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-black/40 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-56 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           </>
         )}
 
@@ -739,47 +793,68 @@ function ProjectView() {
         {mode === "gallery" && !mobileControlOpen && (
           <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:px-10 lg:pb-6">
             <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
-              <div>
+              <div className="drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
+                {images.length > 1 && (
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3 py-1 text-[11px] font-medium text-white/90 backdrop-blur-md">
+                    <span>
+                      {safeGalleryIndex + 1} / {images.length}
+                    </span>
+                    <span className="hidden sm:inline text-white/60">· Usa ← → para recorrer</span>
+                  </div>
+                )}
                 <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
                   {property.name}
                 </h1>
-                <p className="mt-2 text-sm text-white/70">
+                <p className="mt-2 text-sm text-white/85">
                   {property.location} · {property.m2} m² · {property.price}
                 </p>
               </div>
-              {mode === "gallery" ? (
-                <div className="flex max-w-full gap-2 overflow-x-auto">
-                  {images.slice(0, 6).map((image, index) => (
+              <div
+                ref={thumbnailsContainerRef}
+                className="flex max-w-full gap-2.5 overflow-x-auto pb-1 scrollbar-none"
+              >
+                {images.map((image, index) => {
+                  const isCurrent = safeGalleryIndex === index;
+                  return (
                     <button
                       key={`${image}-${index}`}
                       type="button"
+                      data-thumb-index={index}
                       onClick={() => setGalleryIndex(index)}
-                      className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 ${galleryIndex === index ? "border-accent" : "border-transparent opacity-60"}`}
+                      aria-label={`Ver imagen ${index + 1} de ${images.length}`}
+                      aria-current={isCurrent ? "true" : undefined}
+                      className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                        isCurrent
+                          ? "scale-105 border-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] opacity-100"
+                          : "border-white/20 opacity-65 hover:opacity-95"
+                      }`}
                     >
-                      <img src={image} alt="" className="h-full w-full object-cover" />
+                      <img
+                        src={image}
+                        alt=""
+                        loading="eager"
+                        decoding="async"
+                        className="h-full w-full object-cover"
+                      />
                     </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="max-w-sm rounded-2xl border border-border bg-background/85 p-4 text-xs leading-5 text-muted-foreground backdrop-blur-xl">
-                  <strong className="mb-1 block text-accent">Explora el proyecto</strong>Consulta
-                  las zonas, accesos y visuales clave antes de elegir tu lote.
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           </section>
         )}
       </div>
 
-      {/* Panel lateral flotante en PC (estrictamente por debajo del header, sin moverlo ni achicarlo) */}
+      {/* Panel lateral flotante en PC (estrictamente por debajo del header y oculto en Conoce el proyecto) */}
       <aside
         className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[340px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${
-          isPanelOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
+          isRightPanelVisible ? "translate-x-0" : "translate-x-full pointer-events-none"
         }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border dark:border-white/10 bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] dark:shadow-[20px_20px_70px_rgba(0,0,0,.5)] backdrop-blur-2xl">
           <ProjectViewControlPanelContent
             property={property}
+            lots={projectLots}
             settings={viewSettings}
             onSettingsChange={updateViewSettings}
             onResetSettings={resetViewSettings}

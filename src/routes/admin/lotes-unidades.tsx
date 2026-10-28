@@ -1,10 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Eye, Map, MapPinned, Pencil, Search, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   formatLotArea,
+  formatLotDetail,
   formatLotPrice,
+  getLotFinancing,
+  mapDatabaseLotStatus,
+  mapUiLotStatusToDb,
   type Lot,
   type LotMetadata,
   type LotStatus,
@@ -69,7 +74,7 @@ type DatabaseLot = {
   external_id: string;
   lot_number: number | null;
   manzana: string | null;
-  status: keyof typeof databaseLotStatus;
+  status: "available" | "reserved" | "sold" | "last_units" | "hidden";
   price_cop: number | null;
   area_m2: number | null;
   centroid: [number, number] | null;
@@ -79,25 +84,6 @@ type DatabaseLot = {
 };
 
 const PAGE_SIZE = 12;
-const databaseLotStatus: Record<
-  "available" | "reserved" | "sold" | "last_units" | "hidden",
-  LotStatus
-> = {
-  available: "Disponible",
-  reserved: "Reservado",
-  sold: "Vendido",
-  last_units: "Últimas unidades",
-  hidden: "Por confirmar",
-};
-
-const uiLotStatus: Record<LotStatus, "available" | "reserved" | "sold" | "last_units" | "hidden"> =
-  {
-    Disponible: "available",
-    "Últimas unidades": "last_units",
-    Reservado: "reserved",
-    Vendido: "sold",
-    "Por confirmar": "hidden",
-  };
 
 const statusLabels: Record<LotStatus, string> = {
   Disponible: "Disponible",
@@ -120,7 +106,7 @@ function LotsAndUnitsPage() {
   const [selectedProject, setSelectedProject] = useState<ManagedProjectSummary | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [masterplanUrl, setMasterplanUrl] = useState<string | null>(null);
-  const [isLoadingLots, setIsLoadingLots] = useState(false);
+  const [, setIsLoadingLots] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | LotStatus>("todos");
@@ -132,7 +118,7 @@ function LotsAndUnitsPage() {
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
   const selectedLot = inventory.find((lot) => lot.id === selectedLotId) ?? null;
 
-  async function loadProjectLots(project: ManagedProjectSummary) {
+  const loadProjectLots = useCallback(async (project: ManagedProjectSummary) => {
     setIsLoadingLots(true);
     setLoadError(null);
     setProjectId(project.id);
@@ -165,8 +151,11 @@ function LotsAndUnitsPage() {
           projectSlug: project.slug,
           area: Number(lot.area_m2 ?? 0),
           price: Number(lot.price_cop ?? 0),
-          status: databaseLotStatus[lot.status as keyof typeof databaseLotStatus],
-          detail: `${lot.manzana ? `Manzana ${lot.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${lot.metadata?.isReserve ? "Zona de reserva" : "Vía interna"}`,
+          status: lot.status === "hidden" ? "Por confirmar" : mapDatabaseLotStatus(lot.status),
+          detail: formatLotDetail(
+            lot.manzana ? lot.manzana.replace(/^M\s*/i, "") : undefined,
+            Boolean(lot.metadata?.isReserve),
+          ),
           terrainPosition: [0, 0] as [number, number],
           centroid: lot.centroid ?? undefined,
           manzana: lot.manzana ?? undefined,
@@ -189,7 +178,7 @@ function LotsAndUnitsPage() {
     } finally {
       setIsLoadingLots(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -234,7 +223,7 @@ function LotsAndUnitsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadProjectLots]);
 
   const blocks = useMemo(
     () => [...new Set(inventory.map((lot) => lot.manzana).filter(Boolean))],
@@ -269,68 +258,146 @@ function LotsAndUnitsPage() {
     [inventory],
   );
 
-  async function changeLot(lotId: string, updates: Partial<InventoryLot>) {
-    setInventory((current) =>
-      current.map((lot) =>
-        lot.id === lotId ? { ...lot, ...updates, updatedAt: "Actualizado en esta sesión" } : lot,
-      ),
-    );
-    if (!projectId) return;
-    const client = requireSupabase();
+  async function persistLotUpdate(
+    lotId: string,
+    nextValues: {
+      manzana: string;
+      area: number;
+      price: number;
+      status: LotStatus;
+      buyer: string;
+      advisor: string;
+      ubicacion?: string;
+      descripcion_lindero?: string;
+      reservationEndsAt?: string;
+      auditType: "cambio_rapido_comercial" | "edicion_completa";
+    },
+  ) {
     const targetLot = inventory.find((l) => l.id === lotId);
-    const dbStatus = updates.status
-      ? uiLotStatus[updates.status]
-      : targetLot
-        ? uiLotStatus[targetLot.status]
-        : "available";
-    const updatedMetadata = {
-      ...(targetLot?.metadata ?? {}),
-      ...(updates.metadata ?? {}),
-      buyer: updates.buyer ?? targetLot?.buyer ?? "",
-      advisor: updates.advisor ?? targetLot?.advisor ?? "",
+    if (!targetLot) return;
+
+    const { initialPayment, monthlyPayment48 } = getLotFinancing({
+      price: nextValues.price,
+      area: nextValues.area,
+    });
+
+    const updatedMetadata: LotMetadata = {
+      ...(targetLot.metadata ?? {}),
+      buyer: nextValues.buyer,
+      advisor: nextValues.advisor,
+      ubicacion: nextValues.ubicacion ?? (targetLot.metadata?.ubicacion as string | undefined),
+      descripcion_lindero:
+        nextValues.descripcion_lindero ?? targetLot.metadata?.descripcion_lindero,
+      ...(initialPayment > 0 ? { cuota_inicial_20: initialPayment } : {}),
+      ...(monthlyPayment48 > 0 ? { cuotas_48: monthlyPayment48 } : {}),
     };
 
+    const previousInventory = inventory;
+    setInventory((prev) =>
+      prev.map((l) =>
+        l.id === lotId
+          ? {
+              ...l,
+              manzana: nextValues.manzana,
+              area: nextValues.area,
+              price: nextValues.price,
+              status: nextValues.status,
+              buyer: nextValues.buyer,
+              advisor: nextValues.advisor,
+              reservationEndsAt: nextValues.reservationEndsAt,
+              detail: formatLotDetail(
+                nextValues.manzana ? nextValues.manzana.replace(/^M\s*/i, "") : undefined,
+                Boolean(targetLot.isReserve),
+              ),
+              metadata: updatedMetadata,
+              updatedAt: "Recién actualizado",
+            }
+          : l,
+      ),
+    );
+
+    if (!projectId) return;
+
+    const dbStatus =
+      nextValues.status === "Por confirmar" ? "hidden" : mapUiLotStatusToDb(nextValues.status);
     const payload = [
       {
         external_id: lotId,
-        area_m2: updates.area ?? targetLot?.area ?? 0,
-        price_cop: updates.price ?? targetLot?.price ?? 0,
-        manzana: updates.manzana ?? targetLot?.manzana ?? null,
+        area_m2: nextValues.area,
+        price_cop: nextValues.price,
+        manzana: nextValues.manzana || null,
         status: dbStatus,
         metadata: updatedMetadata,
       },
     ];
 
     try {
-      await client.rpc("update_lot_data", { lot_data: payload });
-    } catch {
-      await client
-        .from("lots")
-        .update({
-          status: dbStatus,
-          metadata: updatedMetadata,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("project_id", projectId)
-        .eq("external_id", lotId);
-    }
+      const client = requireSupabase();
+      const { error: rpcErr } = await client.rpc("update_lot_data", { lot_data: payload });
+      if (rpcErr) {
+        const { error: updateErr } = await client
+          .from("lots")
+          .update({
+            manzana: nextValues.manzana || null,
+            area_m2: nextValues.area,
+            price_cop: nextValues.price,
+            status: dbStatus,
+            metadata: updatedMetadata,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("project_id", projectId)
+          .eq("external_id", lotId);
+        if (updateErr) throw updateErr;
+      }
 
-    // Registrar evento en la auditoría para el Superadministrador
-    void client.rpc("record_audit_event", {
-      p_action: "update_lot",
-      p_entity_type: "lot",
-      p_entity_id: lotId,
-      p_project_id: projectId,
-      p_details: {
-        lot_id: lotId,
-        project_slug: selectedProject?.slug,
-        project_name: selectedProject?.name,
-        status: updates.status ?? targetLot?.status,
-        buyer: updates.buyer ?? targetLot?.buyer,
-        advisor: updates.advisor ?? targetLot?.advisor,
-        tipo: "cambio_rapido_comercial",
-      },
-    });
+      void client.rpc("record_audit_event", {
+        p_action: "update_lot",
+        p_entity_type: "lot",
+        p_entity_id: lotId,
+        p_project_id: projectId,
+        p_details: {
+          lot_id: lotId,
+          project_slug: selectedProject?.slug,
+          project_name: selectedProject?.name,
+          manzana: nextValues.manzana,
+          area_m2: nextValues.area,
+          price_cop: nextValues.price,
+          status: nextValues.status,
+          buyer: nextValues.buyer || null,
+          advisor: nextValues.advisor || null,
+          ubicacion: nextValues.ubicacion || null,
+          tipo: nextValues.auditType,
+        },
+      });
+    } catch (error) {
+      setInventory(previousInventory);
+      throw error;
+    }
+  }
+
+  async function changeLot(lotId: string, updates: Partial<InventoryLot>) {
+    const targetLot = inventory.find((l) => l.id === lotId);
+    if (!targetLot) return;
+
+    try {
+      await persistLotUpdate(lotId, {
+        manzana: updates.manzana ?? targetLot.manzana ?? "",
+        area: updates.area ?? targetLot.area,
+        price: updates.price ?? targetLot.price,
+        status: updates.status ?? targetLot.status,
+        buyer: updates.buyer ?? targetLot.buyer,
+        advisor: updates.advisor ?? targetLot.advisor,
+        reservationEndsAt: updates.reservationEndsAt,
+        auditType: "cambio_rapido_comercial",
+      });
+      toast.success(`Lote ${lotId} actualizado`, {
+        description: `Estado: ${updates.status ?? targetLot.status}`,
+      });
+    } catch (err) {
+      toast.error("No fue posible actualizar el lote", {
+        description: err instanceof Error ? err.message : "Intenta nuevamente.",
+      });
+    }
   }
 
   async function handleSaveLot(
@@ -349,96 +416,19 @@ function LotsAndUnitsPage() {
     setIsSavingLot(true);
     setSaveFeedback(null);
     try {
-      const dbStatus = uiLotStatus[updates.status];
-      const targetLot = inventory.find((l) => l.id === lotId);
-      const cuotaInicial = updates.price > 0 ? Math.round(updates.price * 0.2) : undefined;
-      const cuotas48 = updates.price > 0 ? Math.round((updates.price * 0.8) / 48) : undefined;
-
-      const updatedMetadata: LotMetadata = {
-        ...(targetLot?.metadata ?? {}),
-        buyer: updates.buyer,
-        advisor: updates.advisor,
-        ubicacion: updates.ubicacion ?? (targetLot?.metadata?.ubicacion as string | undefined),
-        descripcion_lindero:
-          updates.descripcion_lindero ?? targetLot?.metadata?.descripcion_lindero,
-        ...(cuotaInicial ? { cuota_inicial_20: cuotaInicial } : {}),
-        ...(cuotas48 ? { cuotas_48: cuotas48 } : {}),
-      };
-
-      setInventory((prev) =>
-        prev.map((l) =>
-          l.id === lotId
-            ? {
-                ...l,
-                manzana: updates.manzana,
-                area: updates.area,
-                price: updates.price,
-                status: updates.status,
-                buyer: updates.buyer,
-                advisor: updates.advisor,
-                detail: `${updates.manzana ? `Manzana ${updates.manzana.replace(/^M\s*/i, "")}` : "Proyecto"} · ${targetLot?.isReserve ? "Zona de reserva" : "Vía interna"}`,
-                metadata: updatedMetadata,
-                updatedAt: "Recién actualizado",
-              }
-            : l,
-        ),
-      );
-
-      if (projectId) {
-        const payload = [
-          {
-            external_id: lotId,
-            area_m2: updates.area,
-            price_cop: updates.price,
-            manzana: updates.manzana,
-            status: dbStatus,
-            metadata: updatedMetadata,
-          },
-        ];
-        const client = requireSupabase();
-        const { error: rpcErr } = await client.rpc("update_lot_data", { lot_data: payload });
-        if (rpcErr) {
-          await client
-            .from("lots")
-            .update({
-              manzana: updates.manzana,
-              area_m2: updates.area,
-              price_cop: updates.price,
-              status: dbStatus,
-              metadata: updatedMetadata,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("project_id", projectId)
-            .eq("external_id", lotId);
-        }
-
-        // Registrar auditoría para el Superadministrador
-        void client.rpc("record_audit_event", {
-          p_action: "update_lot",
-          p_entity_type: "lot",
-          p_entity_id: lotId,
-          p_project_id: projectId,
-          p_details: {
-            lot_id: lotId,
-            project_slug: selectedProject?.slug,
-            project_name: selectedProject?.name,
-            manzana: updates.manzana,
-            area_m2: updates.area,
-            price_cop: updates.price,
-            status: updates.status,
-            buyer: updates.buyer || null,
-            advisor: updates.advisor || null,
-            ubicacion: updates.ubicacion || null,
-          },
-        });
-      }
-
+      await persistLotUpdate(lotId, {
+        ...updates,
+        auditType: "edicion_completa",
+      });
       setSaveFeedback(`Lote ${lotId} actualizado exitosamente.`);
-      setTimeout(() => setSaveFeedback(null), 4000);
+      toast.success(`Lote ${lotId} guardado`, {
+        description: "Los cambios ya están sincronizados con el plano interactivo.",
+      });
       setEditingLot(null);
     } catch (err) {
-      console.error("Error al guardar lote:", err);
-      alert("Hubo un error al guardar el lote.");
+      toast.error("Error al guardar el lote", {
+        description: err instanceof Error ? err.message : "Revisa tu conexión e intenta de nuevo.",
+      });
     } finally {
       setIsSavingLot(false);
     }
@@ -607,11 +597,16 @@ function LotsAndUnitsPage() {
             />
           </CardContent>
         </Card>
-        <MasterplanCard selectedLot={selectedLot} masterplanUrl={masterplanUrl} />
+        <MasterplanCard
+          selectedLot={selectedLot}
+          masterplanUrl={masterplanUrl}
+          projectName={selectedProject?.name}
+        />
       </section>
       <LotDetailSheet
         lot={selectedLot}
         masterplanUrl={masterplanUrl}
+        projectName={selectedProject?.name}
         onOpenChange={(open) => !open && setSelectedLotId(null)}
         onChangeLot={changeLot}
         onEdit={(lot) => setEditingLot(lot)}
@@ -808,9 +803,11 @@ function LotPagination({
 function MasterplanCard({
   selectedLot,
   masterplanUrl,
+  projectName,
 }: {
   selectedLot: InventoryLot | null;
   masterplanUrl: string | null;
+  projectName?: string;
 }) {
   return (
     <Card className="h-fit rounded-2xl">
@@ -853,7 +850,7 @@ function MasterplanCard({
               {masterplanUrl && (
                 <img
                   src={masterplanUrl}
-                  alt="Plano urbanístico de Villa Paraíso"
+                  alt={`Plano urbanístico de ${projectName ?? "proyecto"}`}
                   className="aspect-square w-full object-cover"
                 />
               )}
@@ -919,12 +916,14 @@ function LotPlanPreview({
 function LotDetailSheet({
   lot,
   masterplanUrl,
+  projectName,
   onOpenChange,
   onChangeLot,
   onEdit,
 }: {
   lot: InventoryLot | null;
   masterplanUrl: string | null;
+  projectName?: string;
   onOpenChange: (open: boolean) => void;
   onChangeLot: (id: string, updates: Partial<InventoryLot>) => void;
   onEdit?: (lot: InventoryLot) => void;
@@ -956,10 +955,7 @@ function LotDetailSheet({
     });
 
   const metadata = lot.metadata;
-  const initialPayment =
-    Number(metadata?.cuota_inicial_20) || (lot.price > 0 ? Math.round(lot.price * 0.2) : 0);
-  const monthlyPayment48 =
-    Number(metadata?.cuotas_48) || (lot.price > 0 ? Math.round((lot.price * 0.8) / 48) : 0);
+  const { initialPayment, monthlyPayment48 } = getLotFinancing(lot);
   const hasFinancialPlan = lot.price > 0 || Boolean(metadata?.precio_preventa);
 
   return (
@@ -1112,7 +1108,7 @@ function LotDetailSheet({
             </div>
             <p className="text-sm text-muted-foreground">
               Reserva temporal predeterminada: 48 horas. Al cambiar el estado, se actualizará
-              directamente en la base de datos de Villa Paraíso.
+              directamente en la base de datos de {projectName ?? "este proyecto"}.
             </p>
             {lot.reservationEndsAt && <p className="text-sm">Reserva: {lot.reservationEndsAt}</p>}
           </div>
@@ -1194,6 +1190,11 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
       setDescripcionLindero(editingLot.metadata?.descripcion_lindero || "");
     }
   }, [editingLot]);
+
+  const { initialPayment, monthlyPayment48 } = useMemo(
+    () => getLotFinancing({ price, area }),
+    [price, area],
+  );
 
   if (!editingLot) return null;
 
@@ -1327,13 +1328,13 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                   <div>
                     <span className="text-muted-foreground block">Cuota Inicial (20%):</span>
                     <span className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(Math.round(price * 0.2))}
+                      {formatLotPrice(initialPayment)}
                     </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block">48 Cuotas mes (80%):</span>
                     <span className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(Math.round((price * 0.8) / 48))}
+                      {formatLotPrice(monthlyPayment48)}
                     </span>
                   </div>
                 </div>
