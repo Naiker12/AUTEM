@@ -15,6 +15,7 @@ const socialImage = publicSiteMediaUrl(
 function NotFoundComponent() {
   return (
     <div className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground">
+      <HeadContent />
       <div className="pointer-events-none absolute size-[480px] rounded-full bg-accent/8 blur-[120px]" />
       <div className="relative z-10 mx-auto max-w-lg text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-accent backdrop-blur-sm">
@@ -52,6 +53,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground">
+      <HeadContent />
       <div className="pointer-events-none absolute size-[480px] rounded-full bg-accent/8 blur-[120px]" />
       <div className="relative z-10 mx-auto max-w-lg text-center">
         <h1 className="mt-6 font-serif text-[clamp(2.2rem,4.5vw,3.4rem)] font-light leading-tight tracking-tight text-foreground">
@@ -62,7 +64,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <button
+            type="button"
             onClick={() => {
+              const message = error?.message ?? "";
+              if (
+                message.includes("Failed to fetch dynamically imported module") ||
+                message.includes("does not provide an export") ||
+                message.includes("Importing a module script failed")
+              ) {
+                window.location.reload();
+                return;
+              }
               router.invalidate();
               reset();
             }}

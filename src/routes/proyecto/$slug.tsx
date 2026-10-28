@@ -655,6 +655,11 @@ function ProjectView() {
             lots={projectLots}
             selectedLot={selectedLot ?? projectLots[0]}
             onSelectLot={selectLot}
+            onInspectLotDetails={(lot) => {
+              selectLot(lot);
+              handleModeChange("lot");
+              setIsPanelOpen(true);
+            }}
             settings={viewSettings}
             isDark={isDark}
             isRightPanelOpen={false}

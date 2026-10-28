@@ -105,10 +105,17 @@ export function mapUiLotStatusToDb(status: LotStatus): string {
   return UI_TO_DB_LOT_STATUS[status] ?? "available";
 }
 
+export function formatManzanaLabel(manzana: string | null | undefined): string {
+  if (!manzana) return "Manzana por confirmar";
+  const cleaned = manzana
+    .trim()
+    .replace(/^M\s*/i, "")
+    .replace(/^Manzana\s*/i, "");
+  return cleaned ? `Manzana ${cleaned}` : "Manzana por confirmar";
+}
+
 export function formatLotDetail(manzana: string | null | undefined, isReserve: boolean): string {
-  return `${manzana ? `Manzana ${manzana}` : "Manzana por confirmar"} · ${
-    isReserve ? "Zona de reserva" : "Vía interna"
-  }`;
+  return `${formatManzanaLabel(manzana)} · ${isReserve ? "Zona de reserva" : "Vía interna"}`;
 }
 
 export function sanitizePublicLotMetadata(

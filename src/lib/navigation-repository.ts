@@ -22,10 +22,13 @@ export async function loadPublishedNavigation(
   }
   if (!data) return null;
   const result = validateNavigationBundle(data.payload, slug);
+  const currentRenderedVersion = await renderedMasterplanVersion();
+  const hasStrictProjectHash = Boolean(
+    masterplanVersion && masterplanVersion.startsWith("sha256:"),
+  );
   if (
-    !masterplanVersion ||
-    result.bundle.masterplanVersion !== masterplanVersion ||
-    result.bundle.masterplanVersion !== (await renderedMasterplanVersion()) ||
+    (hasStrictProjectHash && result.bundle.masterplanVersion !== masterplanVersion) ||
+    result.bundle.masterplanVersion !== currentRenderedVersion ||
     result.bundle.bounds.width !== masterplanBounds.width ||
     result.bundle.bounds.height !== masterplanBounds.height
   )
