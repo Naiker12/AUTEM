@@ -10,6 +10,7 @@ export interface LotMetadata {
   precio_venta?: number;
   precio_preventa?: number;
   cuota_ini_20?: number;
+  cuota_inicial_20?: number;
   cuotas_3_ini?: number;
   cuotas_48?: number;
   cuota_ini_pre_20?: number;

@@ -74,12 +74,12 @@ export function ProjectViewControlPanelContent({
 }: ProjectViewControlPanelProps) {
   const hasSelectedLot = Boolean(selectedLot);
 
-  const initialPayment = selectedLot
-    ? selectedLot.metadata?.cuota_inicial_20 || Math.round(selectedLot.price * 0.2)
+  const initialPayment: number = selectedLot
+    ? Number(selectedLot.metadata?.cuota_inicial_20) || Math.round(selectedLot.price * 0.2)
     : 0;
 
-  const monthlyPayment48 = selectedLot
-    ? selectedLot.metadata?.cuotas_48 || Math.round((selectedLot.price * 0.8) / 48)
+  const monthlyPayment48: number = selectedLot
+    ? Number(selectedLot.metadata?.cuotas_48) || Math.round((selectedLot.price * 0.8) / 48)
     : 0;
 
   const contactUrl = selectedLot

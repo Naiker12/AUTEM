@@ -977,41 +977,41 @@ function LotDetailSheet({
           </div>
 
           {/* Información Financiera y de Preventa si existe */}
-          {metadata && (metadata.precio_preventa || metadata.cuota_inicial_20) && (
+          {metadata && Boolean(metadata.precio_preventa || metadata.cuota_inicial_20) && (
             <div className="rounded-xl border bg-muted/20 p-4">
               <p className="text-xs uppercase tracking-[0.14em] font-semibold text-accent">
                 Plan comercial y financiamiento
               </p>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                {metadata.precio_preventa && (
+                {Boolean(metadata.precio_preventa) && (
                   <div>
                     <span className="text-muted-foreground">Precio Preventa:</span>
                     <p className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(metadata.precio_preventa)}
+                      {formatLotPrice(Number(metadata.precio_preventa))}
                     </p>
                   </div>
                 )}
-                {metadata.precio_venta && (
+                {Boolean(metadata.precio_venta) && (
                   <div>
                     <span className="text-muted-foreground">Precio Regular:</span>
                     <p className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(metadata.precio_venta)}
+                      {formatLotPrice(Number(metadata.precio_venta))}
                     </p>
                   </div>
                 )}
-                {metadata.cuota_inicial_20 && (
+                {Boolean(metadata.cuota_inicial_20) && (
                   <div>
                     <span className="text-muted-foreground">Cuota inicial (20%):</span>
                     <p className="font-semibold text-foreground">
-                      {formatLotPrice(metadata.cuota_inicial_20)}
+                      {formatLotPrice(Number(metadata.cuota_inicial_20))}
                     </p>
                   </div>
                 )}
-                {metadata.cuotas_48 && (
+                {Boolean(metadata.cuotas_48) && (
                   <div>
                     <span className="text-muted-foreground">48 Cuotas mes:</span>
                     <p className="font-semibold text-foreground">
-                      {formatLotPrice(metadata.cuotas_48)}
+                      {formatLotPrice(Number(metadata.cuotas_48))}
                     </p>
                   </div>
                 )}
