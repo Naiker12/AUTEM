@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -81,6 +81,7 @@ type TeamMember = {
   email: string;
   role: Role;
   projects: string[];
+  projectIds?: string[];
   status: MemberStatus;
   emailConfirmedAt?: string | null;
   invitation?: {
@@ -140,19 +141,21 @@ const roleAccess: Record<Role, RoleAccess> = {
   },
 };
 
-const teamSeed: TeamMember[] = [
-  {
-    id: "owner",
-    name: "Equipo AUTEM",
-    email: "administracion@autem.co",
-    role: "superadmin",
-    projects: ["Todos los proyectos"],
-    status: "Activo",
-  },
-];
+function formatEdgeError(rawError: string | null | undefined, fallback: string): string {
+  if (!rawError) return fallback;
+  if (
+    rawError.includes("Failed to send a request to the Edge Function") ||
+    rawError.includes("FunctionsFetchError") ||
+    rawError.includes("failed to fetch")
+  ) {
+    return "El servicio en la nube no está respondiendo. Verifica que la Edge Function esté desplegada.";
+  }
+  return rawError;
+}
 
 export function TeamAccessPage() {
-  const [members, setMembers] = useState(teamSeed);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [availableProjects, setAvailableProjects] = useState<{ id: string; name: string }[]>([]);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -183,51 +186,153 @@ export function TeamAccessPage() {
     [members],
   );
 
-  useEffect(() => {
-    async function loadMembers() {
+  const loadMembers = useCallback(async () => {
+    setIsLoading(true);
+    setTeamLoadError("");
+    try {
+      const access = await getCurrentAdminAccess();
+      if (!access) {
+        setIsLoading(false);
+        return;
+      }
+      setOrganizationId(access.organizationId);
+      setCurrentRole(access.role);
+      setCurrentUserId(access.user.id);
+      setCurrentUserEmail(access.user.email?.toLowerCase() ?? null);
+
+      // Cargar lista dinámica de proyectos de la organización
+      let projectList: { id: string; name: string }[] = [];
       try {
-        const access = await getCurrentAdminAccess();
-        if (!access) return;
-        setOrganizationId(access.organizationId);
-        setCurrentRole(access.role);
-        setCurrentUserId(access.user.id);
-        setCurrentUserEmail(access.user.email?.toLowerCase() ?? null);
-
-        // Cargar lista dinámica de proyectos de la organización
-        try {
-          const projs = await listManagedProjects(access.organizationId);
-          const projectList = projs.map((p) => ({ id: p.id, name: p.name }));
-          setAvailableProjects(projectList);
-          if (projectList.length > 0) {
-            setSelectedProjectIds((prev) => (prev.length === 0 ? [projectList[0].id] : prev));
-          }
-        } catch (projErr) {
-          console.warn("No fue posible cargar proyectos de la organización:", projErr);
+        const projs = await listManagedProjects(access.organizationId);
+        projectList = projs.map((p) => ({ id: p.id, name: p.name }));
+        setAvailableProjects(projectList);
+        if (projectList.length > 0) {
+          setSelectedProjectIds((prev) => (prev.length === 0 ? [projectList[0].id] : prev));
         }
+      } catch (projErr) {
+        console.warn("No fue posible cargar proyectos de la organización:", projErr);
+      }
 
-        const { data, error } = await requireSupabase().functions.invoke("invite-user", {
+      const client = requireSupabase();
+      let loadedFromEdge = false;
+
+      // 1. Intentar llamar a la Edge Function
+      try {
+        const { data, error } = await client.functions.invoke("invite-user", {
           body: { action: "list", organizationId: access.organizationId },
         });
-        if (error || !data?.members) {
-          setTeamLoadError("No fue posible sincronizar las invitaciones guardadas en Supabase.");
-          return;
+
+        if (!error && Array.isArray(data?.members) && data.members.length > 0) {
+          setMembers(
+            data.members.map((member: Omit<TeamMember, "status">) => ({
+              ...member,
+              status:
+                member.emailConfirmedAt || member.invitation?.acceptedAt
+                  ? "Activo"
+                  : "Invitación pendiente",
+            })),
+          );
+          loadedFromEdge = true;
+          setTeamLoadError("");
         }
-        setTeamLoadError("");
-        setMembers(
-          data.members.map((member: Omit<TeamMember, "status">) => ({
-            ...member,
-            status:
-              member.emailConfirmedAt || member.invitation?.acceptedAt
-                ? "Activo"
-                : "Invitación pendiente",
-          })),
-        );
-      } catch {
-        setTeamLoadError("No fue posible conectar el panel con las invitaciones guardadas.");
+      } catch (edgeErr) {
+        console.warn("Edge Function invite-user no disponible, usando fallback directo:", edgeErr);
       }
+
+      // 2. Fallback resiliente: consultar directamente las tablas de Supabase
+      if (!loadedFromEdge) {
+        try {
+          const [orgMembersRes, profilesRes, projMembersRes, invitationsRes] = await Promise.all([
+            client
+              .from("organization_members")
+              .select("user_id, role, created_at")
+              .eq("organization_id", access.organizationId),
+            client.from("profiles").select("id, email, full_name, avatar_url"),
+            client.from("project_members").select("project_id, user_id"),
+            client
+              .from("access_invitations")
+              .select(
+                "user_id, email, sent_at, expires_at, accepted_at, last_resent_at, resend_count",
+              )
+              .eq("organization_id", access.organizationId),
+          ]);
+
+          if (orgMembersRes.error) throw orgMembersRes.error;
+
+          const orgMembers = orgMembersRes.data ?? [];
+          const profiles = profilesRes.data ?? [];
+          const projMembers = projMembersRes.data ?? [];
+          const invitations = invitationsRes.data ?? [];
+
+          const profilesMap = new Map(profiles.map((p) => [p.id, p]));
+          const invMap = new Map(invitations.map((i) => [i.user_id, i]));
+          const projectMap = new Map(projectList.map((p) => [p.id, p.name]));
+
+          const mappedMembers: TeamMember[] = orgMembers.map((m) => {
+            const prof = profilesMap.get(m.user_id);
+            const inv = invMap.get(m.user_id);
+            const assignedIds = projMembers
+              .filter((pm) => pm.user_id === m.user_id)
+              .map((pm) => pm.project_id);
+
+            const assignedNames =
+              m.role === "superadmin"
+                ? ["Todos los proyectos"]
+                : assignedIds.map((id) => projectMap.get(id) || id).filter(Boolean);
+
+            const email =
+              prof?.email ||
+              inv?.email ||
+              (m.user_id === access.user.id ? (access.user.email ?? "") : "");
+            const name = prof?.full_name || (email ? email.split("@")[0] : "Miembro del equipo");
+
+            const isConfirmed = Boolean(inv?.accepted_at || m.user_id === access.user.id);
+
+            return {
+              id: m.user_id,
+              name,
+              email,
+              role: m.role as Role,
+              projects: assignedNames,
+              projectIds: assignedIds,
+              status: isConfirmed ? "Activo" : "Invitación pendiente",
+              invitation: inv
+                ? {
+                    sentAt: inv.sent_at,
+                    expiresAt: inv.expires_at,
+                    acceptedAt: inv.accepted_at,
+                    lastResentAt: inv.last_resent_at,
+                    resendCount: inv.resend_count ?? 0,
+                  }
+                : null,
+            };
+          });
+
+          if (mappedMembers.length > 0) {
+            setMembers(mappedMembers);
+            setTeamLoadError("");
+          } else {
+            setMembers([]);
+          }
+        } catch (dbErr) {
+          console.error("Error al consultar miembros desde base de datos:", dbErr);
+          setTeamLoadError(
+            "No fue posible sincronizar los miembros del equipo. Verifica tu conexión a internet o el servicio de Supabase.",
+          );
+          setMembers([]);
+        }
+      }
+    } catch (err) {
+      setTeamLoadError("No fue posible conectar con el servidor. Revisa tu conexión a internet.");
+      setMembers([]);
+    } finally {
+      setIsLoading(false);
     }
-    void loadMembers();
   }, []);
+
+  useEffect(() => {
+    void loadMembers();
+  }, [loadMembers]);
 
   async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -254,8 +359,14 @@ export function TeamAccessPage() {
     setInviteFeedback("");
     try {
       const access = await getCurrentAdminAccess();
-      if (!access || access.role !== "superadmin") {
-        throw new Error("Solo un superadministrador puede invitar personas.");
+      if (!access || (access.role !== "superadmin" && access.role !== "administrador")) {
+        throw new Error("Solo un administrador o superadministrador puede invitar personas.");
+      }
+      if (access.role === "administrador" && (role === "superadmin" || role === "administrador")) {
+        toast.error("Rol restringido", {
+          description: "Un administrador solo puede invitar miembros con rol editor o comercial.",
+        });
+        return;
       }
       if (role !== "superadmin" && selectedProjectIds.length === 0) {
         toast.error("Selección de proyecto requerida", {
@@ -266,6 +377,7 @@ export function TeamAccessPage() {
       const projectIdsToSend = role === "superadmin" ? [] : selectedProjectIds;
       const { data, error } = await requireSupabase().functions.invoke("invite-user", {
         body: {
+          action: "invite",
           email,
           fullName: name,
           organizationId: access.organizationId,
@@ -273,7 +385,12 @@ export function TeamAccessPage() {
           projectIds: projectIdsToSend,
         },
       });
-      if (error) throw error;
+      if (error || data?.error) {
+        throw new Error(
+          formatEdgeError(data?.error || error?.message, "No fue posible enviar la invitación."),
+        );
+      }
+
       if (data?.status === "already_active" || data?.status === "already_invited") {
         toast.info(
           data.status === "already_active"
@@ -289,30 +406,6 @@ export function TeamAccessPage() {
         return;
       }
 
-      const assignedProjectNames =
-        role === "superadmin"
-          ? ["Todos los proyectos"]
-          : availableProjects.filter((p) => selectedProjectIds.includes(p.id)).map((p) => p.name);
-
-      setMembers((current) => [
-        ...current,
-        {
-          id: data?.userId,
-          name,
-          email,
-          role,
-          projects:
-            assignedProjectNames.length > 0 ? assignedProjectNames : ["Sin proyectos asignados"],
-          status: "Invitación pendiente",
-          invitation: {
-            sentAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-            acceptedAt: null,
-            lastResentAt: null,
-            resendCount: 0,
-          },
-        },
-      ]);
       setDialogOpen(false);
       setInviteName("");
       setInviteEmail("");
@@ -321,15 +414,7 @@ export function TeamAccessPage() {
         `Invitación enviada a ${email}. La persona recibirá un correo para activar su acceso.`,
       );
       toast.success("Invitación enviada", { description: `Se envió a ${email}.` });
-
-      // Registrar auditoría de invitación
-      void requireSupabase().rpc("record_audit_event", {
-        p_action: "team:invite_member",
-        p_entity_type: "team_member",
-        p_entity_id: data?.userId ?? email,
-        p_project_id: projectIdsToSend[0] ?? null,
-        p_details: { email, name, role, phone: invitePhone || null, projectIds: projectIdsToSend },
-      });
+      void loadMembers();
     } catch (error) {
       const rawMessage = error instanceof Error ? error.message : "";
       const message = rawMessage.includes("Edge Function")
@@ -346,10 +431,14 @@ export function TeamAccessPage() {
     if (!memberToResend || !organizationId) return;
     setIsResending(true);
     try {
-      const { error } = await requireSupabase().functions.invoke("invite-user", {
+      const { data, error } = await requireSupabase().functions.invoke("invite-user", {
         body: { action: "resend", organizationId, userId: memberToResend.id },
       });
-      if (error) throw error;
+      if (error || data?.error) {
+        throw new Error(
+          formatEdgeError(data?.error || error?.message, "No fue posible reenviar la invitación."),
+        );
+      }
       const sentAt = new Date();
       setMembers((current) =>
         current.map((member) =>
@@ -368,15 +457,6 @@ export function TeamAccessPage() {
             : member,
         ),
       );
-
-      // Registrar auditoría de reenvío
-      void requireSupabase().rpc("record_audit_event", {
-        p_action: "team:resend_invite",
-        p_entity_type: "team_member",
-        p_entity_id: memberToResend.id,
-        p_project_id: null,
-        p_details: { memberEmail: memberToResend.email, memberName: memberToResend.name },
-      });
 
       toast.success("Invitación reenviada", {
         description: `Se envió un nuevo enlace a ${memberToResend.email}.`,
@@ -404,7 +484,7 @@ export function TeamAccessPage() {
       return;
     }
     const projectIdsToSend = nextRole === "superadmin" ? [] : nextProjectIds;
-    const { error } = await requireSupabase().functions.invoke("invite-user", {
+    const { data, error } = await requireSupabase().functions.invoke("invite-user", {
       body: {
         action: "update",
         organizationId,
@@ -413,7 +493,11 @@ export function TeamAccessPage() {
         projectIds: projectIdsToSend,
       },
     });
-    if (error) throw error;
+    if (error || data?.error) {
+      throw new Error(
+        formatEdgeError(data?.error || error?.message, "No fue posible actualizar los permisos."),
+      );
+    }
 
     const assignedProjectNames =
       nextRole === "superadmin"
@@ -427,21 +511,13 @@ export function TeamAccessPage() {
               ...item,
               role: nextRole,
               projects: assignedProjectNames.length > 0 ? assignedProjectNames : [],
+              projectIds: nextRole === "superadmin" ? [] : nextProjectIds,
             }
           : item,
       ),
     );
     setSelectedMember(null);
     setMemberToManage(null);
-
-    // Registrar auditoría de actualización
-    void requireSupabase().rpc("record_audit_event", {
-      p_action: "team:update_permissions",
-      p_entity_type: "team_member",
-      p_entity_id: member.id,
-      p_project_id: projectIdsToSend[0] ?? null,
-      p_details: { memberEmail: member.email, newRole: nextRole, projectIds: projectIdsToSend },
-    });
 
     toast.success("Permisos actualizados", {
       description: `Se actualizó el acceso de ${member.name}.`,
@@ -459,20 +535,15 @@ export function TeamAccessPage() {
     }
     setIsRemoving(true);
     try {
-      const { error } = await requireSupabase().functions.invoke("invite-user", {
+      const { data, error } = await requireSupabase().functions.invoke("invite-user", {
         body: { action: "remove", organizationId, userId: memberToRemove.id },
       });
-      if (error) throw error;
+      if (error || data?.error) {
+        throw new Error(
+          formatEdgeError(data?.error || error?.message, "No fue posible retirar el acceso."),
+        );
+      }
       setMembers((current) => current.filter((member) => member.id !== memberToRemove.id));
-
-      // Registrar auditoría de retiro de acceso
-      void requireSupabase().rpc("record_audit_event", {
-        p_action: "team:remove_access",
-        p_entity_type: "team_member",
-        p_entity_id: memberToRemove.id,
-        p_project_id: null,
-        p_details: { memberEmail: memberToRemove.email, memberName: memberToRemove.name },
-      });
 
       toast.success("Acceso retirado", {
         description: `${memberToRemove.name} ya no puede entrar al panel.`,
@@ -771,7 +842,17 @@ export function TeamAccessPage() {
         {teamLoadError && (
           <Alert variant="destructive">
             <AlertTitle>No se pudo cargar el equipo</AlertTitle>
-            <AlertDescription>{teamLoadError}</AlertDescription>
+            <AlertDescription className="mt-2 flex items-center justify-between gap-4">
+              <span>{teamLoadError}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 bg-background text-foreground hover:bg-muted"
+                onClick={() => void loadMembers()}
+              >
+                <RefreshCw className="mr-1.5 size-3.5" /> Reintentar
+              </Button>
+            </AlertDescription>
           </Alert>
         )}
         <Card size="sm">
@@ -798,120 +879,141 @@ export function TeamAccessPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => {
-                  const isSelf = isSelfMember(member, currentUserId, currentUserEmail);
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="size-9">
-                            <AvatarFallback>
-                              {member.name
-                                .split(" ")
-                                .map((part) => part[0])
-                                .slice(0, 2)
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium">{member.name}</span>
-                              {isSelf && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-accent/40 bg-accent/10 px-1.5 py-0 text-[10px] font-semibold text-accent"
-                                >
-                                  Tú
-                                </Badge>
-                              )}
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="size-4 animate-spin text-primary" />
+                        <span className="text-sm">Cargando personas con acceso...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : members.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                      <p className="text-sm">
+                        {teamLoadError
+                          ? "No fue posible listar los miembros del equipo en este momento."
+                          : "No se encontraron miembros registrados en esta organización."}
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  members.map((member) => {
+                    const isSelf = isSelfMember(member, currentUserId, currentUserEmail);
+                    return (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="size-9">
+                              <AvatarFallback>
+                                {member.name
+                                  .split(" ")
+                                  .map((part) => part[0])
+                                  .slice(0, 2)
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium">{member.name}</span>
+                                {isSelf && (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-accent/40 bg-accent/10 px-1.5 py-0 text-[10px] font-semibold text-accent"
+                                  >
+                                    Tú
+                                  </Badge>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">{member.email}</span>
                             </div>
-                            <span className="text-xs text-muted-foreground">{member.email}</span>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={member.role === "superadmin" ? "default" : "secondary"}>
-                          {roleLabels[member.role]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {member.projects.length ? (
-                          member.projects.join(", ")
-                        ) : (
-                          <span className="text-muted-foreground">Sin proyectos asignados</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <InvitationBadge member={member} />
-                        {member.invitation && memberInvitationStatus(member) !== "Activo" && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {invitationTiming(member.invitation)}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {canResendInvitation(member) && !isSelf && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setMemberToResend(member)}
-                            >
-                              <RefreshCw data-icon="inline-start" /> Reenviar
-                            </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={member.role === "superadmin" ? "default" : "secondary"}>
+                            {roleLabels[member.role]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {member.projects.length ? (
+                            member.projects.join(", ")
+                          ) : (
+                            <span className="text-muted-foreground">Sin proyectos asignados</span>
                           )}
-                          {memberInvitationStatus(member) !== "Activo" && (
+                        </TableCell>
+                        <TableCell>
+                          <InvitationBadge member={member} />
+                          {member.invitation && memberInvitationStatus(member) !== "Activo" && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {invitationTiming(member.invitation)}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            {canResendInvitation(member) && !isSelf && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setMemberToResend(member)}
+                              >
+                                <RefreshCw data-icon="inline-start" /> Reenviar
+                              </Button>
+                            )}
+                            {memberInvitationStatus(member) !== "Activo" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Copiar mensaje de activación para WhatsApp o correo"
+                                aria-label={`Copiar mensaje de activación para ${member.name}`}
+                                onClick={() => handleCopyInvite(member)}
+                              >
+                                <Copy className="size-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              title="Copiar mensaje de activación para WhatsApp o correo"
-                              aria-label={`Copiar mensaje de activación para ${member.name}`}
-                              onClick={() => handleCopyInvite(member)}
+                              title="Ver perfil"
+                              aria-label={`Ver perfil de ${member.name}`}
+                              onClick={() => setSelectedMember(member)}
                             >
-                              <Copy className="size-4" />
+                              <Eye />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Ver perfil"
-                            aria-label={`Ver perfil de ${member.name}`}
-                            onClick={() => setSelectedMember(member)}
-                          >
-                            <Eye />
-                          </Button>
-                          {canManageMember(
-                            currentRole,
-                            member,
-                            currentUserId,
-                            currentUserEmail,
-                          ) && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Editar permisos"
-                                aria-label={`Editar permisos de ${member.name}`}
-                                onClick={() => setMemberToManage(member)}
-                              >
-                                <Pencil />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Retirar acceso"
-                                aria-label={`Retirar acceso de ${member.name}`}
-                                onClick={() => setMemberToRemove(member)}
-                              >
-                                <Trash2 />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                            {canManageMember(
+                              currentRole,
+                              member,
+                              currentUserId,
+                              currentUserEmail,
+                            ) && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Editar permisos"
+                                  aria-label={`Editar permisos de ${member.name}`}
+                                  onClick={() => setMemberToManage(member)}
+                                >
+                                  <Pencil />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Retirar acceso"
+                                  aria-label={`Retirar acceso de ${member.name}`}
+                                  onClick={() => setMemberToRemove(member)}
+                                >
+                                  <Trash2 />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -1209,9 +1311,12 @@ function MemberPermissionDialog({
     if (!member) return;
     setRole(member.role);
     // Identificar qué proyectos tiene asignados el miembro
-    const matchingIds = availableProjects
-      .filter((p) => member.projects.includes(p.name) || member.projects.includes(p.id))
-      .map((p) => p.id);
+    const matchingIds =
+      member.projectIds && member.projectIds.length > 0
+        ? member.projectIds
+        : availableProjects
+            .filter((p) => member.projects.includes(p.name) || member.projects.includes(p.id))
+            .map((p) => p.id);
     setSelectedProjectIds(matchingIds);
   }, [member, availableProjects]);
 

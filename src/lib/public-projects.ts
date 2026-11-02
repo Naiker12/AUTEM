@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Property } from "@/data/properties";
+import { properties, type Property } from "@/data/properties";
 import {
   formatLotDetail,
   mapDatabaseLotStatus,
@@ -7,6 +7,7 @@ import {
   type Lot,
   type LotMetadata,
 } from "@/data/lots";
+import villaParaisoCadLots from "@/data/villa-paraiso-lots.json";
 import { supabase } from "@/lib/supabase";
 
 type PublicProjectRow = {
@@ -27,6 +28,7 @@ type PublicProjectRow = {
   masterplan_path: string | null;
   masterplan_version: string | null;
   tour_url: string | null;
+  metadata?: import("@/data/properties").ProjectDossierMetadata | null;
   project_media?: PublicMediaRow[];
 };
 
@@ -93,6 +95,15 @@ function toProperty(row: PublicProjectRow): Property {
     lotViewImage: masterplan ?? undefined,
     tourImage: tour ?? undefined,
     images: gallery.length ? gallery : image ? [image] : [],
+    metadata:
+      row.metadata ??
+      properties.find(
+        (p) =>
+          p.slug === row.slug ||
+          p.id === row.id ||
+          (row.slug && row.slug.toLowerCase().includes("paraiso")),
+      )?.metadata ??
+      undefined,
   };
 }
 
@@ -147,8 +158,31 @@ type PublicLotRow = {
   metadata: LotMetadata | null;
 };
 
+function getInitialVillaParaisoLots(projectSlug: string): Lot[] {
+  return villaParaisoCadLots.map((cadLot) => {
+    const normalizedManzana = cadLot.manzana ? cadLot.manzana.replace(/^M\s*/i, "") : undefined;
+    return {
+      id: cadLot.id,
+      projectSlug,
+      area: cadLot.areaM2,
+      price: 0,
+      status: "Disponible" as const,
+      detail: formatLotDetail(normalizedManzana, false),
+      terrainPosition: [0, 0] as [number, number],
+      centroid: cadLot.centroid as [number, number],
+      manzana: cadLot.manzana,
+      lotNumber: cadLot.lotNumber,
+      pathD: cadLot.pathD,
+      isReserve: false,
+    };
+  });
+}
+
 export function usePublishedLots(projectId: string | undefined, projectSlug: string) {
-  const [lots, setLots] = useState<Lot[]>([]);
+  const isVillaParaiso = projectSlug === "villa-paraiso" || projectSlug === "lotes-360";
+  const [lots, setLots] = useState<Lot[]>(() =>
+    isVillaParaiso ? getInitialVillaParaisoLots(projectSlug) : [],
+  );
   const [loading, setLoading] = useState(Boolean(supabase && projectId));
 
   useEffect(() => {
@@ -168,28 +202,62 @@ export function usePublishedLots(projectId: string | undefined, projectSlug: str
           .order("lot_number");
         if (error) throw error;
         if (!active) return;
-        setLots(
-          (data as PublicLotRow[]).map((row) => {
-            const sanitizedMeta = sanitizePublicLotMetadata(row.metadata);
+
+        if (isVillaParaiso && villaParaisoCadLots.length > 0) {
+          const rowMap = new Map((data as PublicLotRow[]).map((r) => [r.external_id, r]));
+          const mappedLots: Lot[] = villaParaisoCadLots.map((cadLot) => {
+            const row = rowMap.get(cadLot.id);
+            const sanitizedMeta = sanitizePublicLotMetadata(row?.metadata);
             const isReserve = Boolean(sanitizedMeta?.isReserve);
-            const normalizedManzana = row.manzana ? row.manzana.replace(/^M\s*/i, "") : undefined;
+            const normalizedManzana = cadLot.manzana
+              ? cadLot.manzana.replace(/^M\s*/i, "")
+              : undefined;
             return {
-              id: row.external_id,
+              id: cadLot.id,
               projectSlug,
-              area: Number(row.area_m2 ?? 0),
-              price: Number(row.price_cop ?? 0),
-              status: row.status === "hidden" ? "Por confirmar" : mapDatabaseLotStatus(row.status),
+              area: cadLot.areaM2,
+              price: Number(row?.price_cop ?? 0),
+              status: !row
+                ? "Disponible"
+                : row.status === "hidden"
+                  ? "Por confirmar"
+                  : mapDatabaseLotStatus(row.status),
               detail: formatLotDetail(normalizedManzana, isReserve),
               terrainPosition: [0, 0],
-              centroid: row.centroid ?? undefined,
-              manzana: row.manzana ?? undefined,
-              lotNumber: row.lot_number ?? undefined,
-              pathD: row.geometry?.pathD,
+              centroid: cadLot.centroid as [number, number],
+              manzana: cadLot.manzana,
+              lotNumber: cadLot.lotNumber,
+              pathD: cadLot.pathD,
               isReserve,
               metadata: sanitizedMeta,
             };
-          }),
-        );
+          });
+          setLots(mappedLots);
+        } else {
+          setLots(
+            (data as PublicLotRow[]).map((row) => {
+              const sanitizedMeta = sanitizePublicLotMetadata(row.metadata);
+              const isReserve = Boolean(sanitizedMeta?.isReserve);
+              const normalizedManzana = row.manzana ? row.manzana.replace(/^M\s*/i, "") : undefined;
+              return {
+                id: row.external_id,
+                projectSlug,
+                area: Number(row.area_m2 ?? 0),
+                price: Number(row.price_cop ?? 0),
+                status:
+                  row.status === "hidden" ? "Por confirmar" : mapDatabaseLotStatus(row.status),
+                detail: formatLotDetail(normalizedManzana, isReserve),
+                terrainPosition: [0, 0],
+                centroid: row.centroid ?? undefined,
+                manzana: row.manzana ?? undefined,
+                lotNumber: row.lot_number ?? undefined,
+                pathD: row.geometry?.pathD,
+                isReserve,
+                metadata: sanitizedMeta,
+              };
+            }),
+          );
+        }
       } catch {
         // Keep the visitor from seeing stale local inventory if the query fails.
       } finally {
@@ -199,7 +267,84 @@ export function usePublishedLots(projectId: string | undefined, projectSlug: str
     return () => {
       active = false;
     };
-  }, [projectId, projectSlug]);
+  }, [projectId, projectSlug, isVillaParaiso]);
 
   return { lots, loading };
+}
+
+export interface ProjectGeoreference {
+  id: string;
+  project_id: string;
+  srid: number;
+  status: "missing" | "draft" | "validated";
+  cad_units: string;
+  origin_cad: { x: number; y: number } | null;
+  origin_geo: { lat: number; lng: number } | null;
+  rotation_deg: number;
+  scale_factor: number;
+  affine_transform: {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    e: number;
+    f: number;
+    rmsError: number;
+    controlPointCount: number;
+  } | null;
+  bounds_geo: {
+    minLat: number;
+    minLng: number;
+    maxLat: number;
+    maxLng: number;
+  } | null;
+  control_points: Array<{
+    source: { x: number; y: number };
+    target: { x: number; y: number };
+    label?: string;
+  }>;
+  notes: string | null;
+  validated_at: string | null;
+}
+
+export function useProjectGeoreference(slug: string | undefined) {
+  const [georeference, setGeoreference] = useState<ProjectGeoreference | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const client = supabase;
+    let active = true;
+    if (!slug || !client) {
+      setGeoreference(null);
+      setLoading(false);
+      return;
+    }
+    const activeClient = client;
+
+    async function load() {
+      try {
+        const { data, error } = await activeClient.rpc("get_project_georeference", {
+          p_project_slug: slug,
+        });
+        if (error) {
+          // Si no existe la función o no está publicada la georreferencia, continúa sin error
+          if (active) setGeoreference(null);
+        } else if (active) {
+          const item = Array.isArray(data) ? data[0] : data;
+          setGeoreference(item ?? null);
+        }
+      } catch {
+        if (active) setGeoreference(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  return { georeference, loading };
 }

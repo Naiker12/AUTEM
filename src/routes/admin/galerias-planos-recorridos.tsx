@@ -8,9 +8,12 @@ import {
   Play,
   Plus,
   Search,
+  Sparkles,
+  Trash2,
   Upload,
 } from "lucide-react";
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import AutemBrandIcon from "@/components/AutemBrandIcon";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -54,6 +57,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import {
+  cleanupOrphanedProjectMedia,
+  deleteProjectMedia,
   listManagedProjects,
   listProjectMedia,
   type ManagedProjectRecord,
@@ -74,6 +79,8 @@ type MediaAsset = {
   published: boolean;
   description: string;
   fileType: string;
+  storagePath: string;
+  mediaType: ProjectMediaRecord["media_type"];
 };
 
 const kindByMediaType: Record<ProjectMediaRecord["media_type"], AssetKind> = {
@@ -82,6 +89,9 @@ const kindByMediaType: Record<ProjectMediaRecord["media_type"], AssetKind> = {
   masterplan: "Plano",
   document: "Plano",
   tour: "Recorrido",
+  cad_source: "Plano",
+  masterplan_vector: "Plano",
+  georef: "Plano",
 };
 
 function asAsset(item: ProjectMediaRecord): MediaAsset {
@@ -93,6 +103,8 @@ function asAsset(item: ProjectMediaRecord): MediaAsset {
     published: item.is_public,
     description: item.media_type === "cover" ? "Portada del proyecto" : item.media_type,
     fileType: item.mime_type?.split("/").pop()?.toUpperCase() || "Archivo",
+    storagePath: item.storage_path,
+    mediaType: item.media_type,
   };
 }
 
@@ -230,6 +242,50 @@ function MediaLibraryPage() {
       setLoading(false);
     }
   };
+
+  const [deletingAsset, setDeletingAsset] = useState<MediaAsset | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!deletingAsset || !projectId) return;
+    setIsDeleting(true);
+    try {
+      await deleteProjectMedia(
+        deletingAsset.id,
+        deletingAsset.storagePath,
+        projectId,
+        deletingAsset.mediaType,
+      );
+      setAssets((prev) => prev.filter((a) => a.id !== deletingAsset.id));
+      toast.success("Recurso eliminado del almacenamiento en la nube y de la base de datos.");
+      setDeletingAsset(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No fue posible eliminar el recurso.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCleanOrphans = async () => {
+    if (!projectId) return;
+    setIsCleaning(true);
+    try {
+      const result = await cleanupOrphanedProjectMedia(projectId);
+      if (result.removedCount > 0) {
+        toast.success(
+          `Almacenamiento optimizado: se eliminaron ${result.removedCount} archivo(s) huérfano(s) del bucket.`,
+        );
+      } else {
+        toast.info("Almacenamiento limpio: no hay archivos huérfanos ocupando espacio.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al escanear el almacenamiento.");
+    } finally {
+      setIsCleaning(false);
+    }
+  };
+
   return (
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
       <section className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -268,9 +324,25 @@ function MediaLibraryPage() {
             inmersiva del proyecto.
           </p>
         </div>
-        <Button className="shrink-0 rounded-full" onClick={() => setDialogOpen(true)}>
-          <Plus data-icon="inline-start" /> Añadir recurso
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            className="shrink-0 rounded-full"
+            onClick={handleCleanOrphans}
+            disabled={isCleaning || !projectId}
+            title="Escanea y elimina archivos huérfanos del almacenamiento en la nube para liberar espacio"
+          >
+            {isCleaning ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Sparkles data-icon="inline-start" />
+            )}
+            {isCleaning ? "Limpiando espacio…" : "Optimizar almacenamiento"}
+          </Button>
+          <Button className="shrink-0 rounded-full" onClick={() => setDialogOpen(true)}>
+            <Plus data-icon="inline-start" /> Añadir recurso
+          </Button>
+        </div>
       </section>
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <MediaMetric icon={ImageIcon} label="Galería" value={metrics.images} />
@@ -321,11 +393,48 @@ function MediaLibraryPage() {
         <CardContent>
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {filteredAssets.map((asset) => (
-              <MediaCard key={asset.id} asset={asset} />
+              <MediaCard key={asset.id} asset={asset} onDelete={setDeletingAsset} />
             ))}
           </div>
         </CardContent>
       </Card>
+      <Dialog
+        open={Boolean(deletingAsset)}
+        onOpenChange={(open) => !open && setDeletingAsset(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>¿Eliminar recurso?</DialogTitle>
+            <DialogDescription>
+              El archivo "{deletingAsset?.name}" se eliminará definitivamente de Supabase Storage y
+              de la base de datos para liberar espacio. Esta acción es permanente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:space-x-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeletingAsset(null)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <Trash2 data-icon="inline-start" />
+              )}
+              {isDeleting ? "Eliminando…" : "Eliminar de Storage"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <MediaUploadDialog
         open={dialogOpen}
         onOpenChange={closeDialog}
@@ -367,7 +476,13 @@ function MediaMetric({
     </Card>
   );
 }
-function MediaCard({ asset }: { asset: MediaAsset }) {
+function MediaCard({
+  asset,
+  onDelete,
+}: {
+  asset: MediaAsset;
+  onDelete: (asset: MediaAsset) => void;
+}) {
   const isImage = asset.kind !== "Plano" || asset.fileType === "SVG";
   return (
     <Card className="overflow-hidden rounded-xl">
@@ -405,17 +520,29 @@ function MediaCard({ asset }: { asset: MediaAsset }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
         <span>{asset.fileType}</span>
-        {asset.source ? (
-          <Button asChild variant="ghost" size="sm">
-            <a href={asset.source} target="_blank" rel="noopener noreferrer">
-              Ver recurso <ExternalLink className="ml-1 size-3" />
-            </a>
+        <div className="flex items-center gap-1.5">
+          {asset.source ? (
+            <Button asChild variant="ghost" size="sm">
+              <a href={asset.source} target="_blank" rel="noopener noreferrer">
+                Ver recurso <ExternalLink className="ml-1 size-3" />
+              </a>
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" disabled>
+              Sin archivo
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => onDelete(asset)}
+            title="Eliminar de almacenamiento y base de datos"
+          >
+            <Trash2 className="size-3.5" />
           </Button>
-        ) : (
-          <Button variant="ghost" size="sm" disabled>
-            Sin archivo
-          </Button>
-        )}
+        </div>
       </CardFooter>
     </Card>
   );

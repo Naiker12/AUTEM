@@ -48,7 +48,7 @@ const settingsModules = 5;
 const coverageData = [
   { area: "Contenido", modules: 9 },
   { area: "Proyectos", modules: 3 },
-  { area: "Experiencias", modules: 3 },
+  { area: "Experiencias", modules: 2 },
   { area: "Ajustes", modules: settingsModules },
 ];
 
@@ -92,8 +92,8 @@ const moduleRows = [
   },
   {
     area: "Experiencias",
-    detail: "Visor de lotes, masterplan y tour panorámico.",
-    modules: 3,
+    detail: "Masterplan interactivo y tour de terreno con GPS.",
+    modules: 2,
     status: "Disponible",
   },
   {

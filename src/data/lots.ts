@@ -135,7 +135,14 @@ export function sanitizePublicLotMetadata(
 
 export function formatLotPrice(price: number): string {
   if (price <= 0) return "Por definir";
-  return `$${Math.round(price / 1_000_000)}M`;
+  return `$${Math.round(price).toLocaleString("es-CO")}`;
+}
+
+export function formatLotPriceCompact(price: number): string {
+  if (price <= 0) return "Por definir";
+  if (price >= 1_000_000_000) return `$${(price / 1_000_000_000).toFixed(1)}B`;
+  if (price >= 1_000_000) return `$${Math.round(price / 1_000_000)}M`;
+  return `$${Math.round(price).toLocaleString("es-CO")}`;
 }
 
 export function formatLotArea(area: number): string {

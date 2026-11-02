@@ -3,16 +3,28 @@ import PanelResizeHandle, {
 } from "@/components/project-view/PanelResizeHandle";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Orbit, PanelLeftOpen, Route as RouteIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPinned,
+  Orbit,
+  PanelLeftOpen,
+  Route as RouteIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
+import {
+  usePublishedLots,
+  usePublishedProject,
+  useProjectGeoreference,
+} from "@/lib/public-projects";
 import { filterAndSortLots, formatLotPrice, formatLotArea } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { useTheme } from "@/hooks/use-theme";
 import "@/components/project-view/project-editorial.css";
 import {
   MasterplanSvgViewer,
+  ProjectLocationMap,
   LotSelectionPanel,
   DEFAULT_PROJECT_VIEW_SETTINGS,
   ProjectViewControlPanelContent,
@@ -50,6 +62,8 @@ function ProjectView() {
     property?.slug ?? slug,
   );
   const [mode, setMode] = useState<ViewMode>("lot");
+  const [mapLayer, setMapLayer] = useState<"vector" | "satellite">("vector");
+  const { georeference } = useProjectGeoreference(property?.slug ?? slug);
   const [introReady, setIntroReady] = useState(false);
   const finishIntro = useCallback(() => setIntroReady(true), []);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -83,15 +97,15 @@ function ProjectView() {
     setIsPanelOpen(!isMobile && mode === "lot");
   }, [isMobile, mode]);
 
-  const galleryImages = useMemo(
-    () =>
+  const galleryImages = useMemo(() => {
+    const list =
       property?.images && property.images.length > 0
         ? property.images
         : property?.image
           ? [property.image]
-          : [],
-    [property],
-  );
+          : [];
+    return list.filter((url): url is string => Boolean(url && url.trim()));
+  }, [property]);
   const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
   const gallerySwipeStartXRef = useRef<number | null>(null);
 
@@ -339,7 +353,7 @@ function ProjectView() {
     );
   }
 
-  const images = galleryImages.length > 0 ? galleryImages : [property.image];
+  const images = galleryImages;
   const safeGalleryIndex = galleryIndex < images.length ? galleryIndex : 0;
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, me interesa el proyecto ${property.name}${selectedLot ? ` y el lote ${selectedLot.id}` : ""}.`)}`;
   const isRightPanelVisible = mode !== "gallery" && isPanelOpen;
@@ -419,33 +433,79 @@ function ProjectView() {
               }}
               className="relative w-full min-h-[140px] lg:!h-full lg:absolute lg:inset-0"
             >
-              <MasterplanSvgViewer
-                settings={viewSettings}
-                lots={projectLots}
-                filteredLots={filteredLots}
-                isFilterActive={isFilterActive}
-                filterRequest={filterRequest}
-                onClearFilter={handleClearFilters}
-                selectedLotId={selectedLot?.id ?? ""}
-                focusRequest={lotFocusRequest}
-                onSelectLot={(lotId) => {
-                  const cleanId = lotId.replace(/^lot-/, "");
-                  const lot = projectLots.find(
-                    (item) =>
-                      item.id === cleanId ||
-                      item.id === `L-${cleanId}` ||
-                      item.id.replace(/^L-/, "") === cleanId.replace(/^L-/, "") ||
-                      String(item.lotNumber) === cleanId.replace(/^L-/, ""),
-                  );
-                  if (lot) {
-                    selectLot(lot);
-                    setIsLotPanelVisible(true);
-                  }
-                }}
-                isDesktopSidebarOpen={isLotPanelVisible}
-                isRightPanelOpen={!isMobile && isRightPanelVisible}
-                isDark={isDark}
-              />
+              {/* Selector de capa: Plano Vectorial vs Mapa Satelital */}
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 select-none">
+                <div className="flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-lg backdrop-blur-xl">
+                  <button
+                    type="button"
+                    onClick={() => setMapLayer("vector")}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                      mapLayer === "vector"
+                        ? "bg-accent text-accent-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Plano Vectorial
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMapLayer("satellite")}
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                      mapLayer === "satellite"
+                        ? "bg-accent text-accent-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>Satélite HD</span>
+                    {georeference?.status === "validated" && (
+                      <span
+                        className="inline-block size-1.5 rounded-full bg-emerald-400"
+                        title="Georreferenciación validada"
+                      />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {mapLayer === "satellite" ? (
+                <ProjectLocationMap
+                  lat={property.lat}
+                  lng={property.lng}
+                  projectName={property.name}
+                  locationName={property.location}
+                  isDark={isDark}
+                  georeferenceStatus={georeference?.status}
+                  boundsGeo={georeference?.bounds_geo}
+                />
+              ) : (
+                <MasterplanSvgViewer
+                  settings={viewSettings}
+                  lots={projectLots}
+                  filteredLots={filteredLots}
+                  isFilterActive={isFilterActive}
+                  filterRequest={filterRequest}
+                  onClearFilter={handleClearFilters}
+                  selectedLotId={selectedLot?.id ?? ""}
+                  focusRequest={lotFocusRequest}
+                  onSelectLot={(lotId) => {
+                    const cleanId = lotId.replace(/^lot-/, "");
+                    const lot = projectLots.find(
+                      (item) =>
+                        item.id === cleanId ||
+                        item.id === `L-${cleanId}` ||
+                        item.id.replace(/^L-/, "") === cleanId.replace(/^L-/, "") ||
+                        String(item.lotNumber) === cleanId.replace(/^L-/, ""),
+                    );
+                    if (lot) {
+                      selectLot(lot);
+                      setIsLotPanelVisible(true);
+                    }
+                  }}
+                  isDesktopSidebarOpen={isLotPanelVisible}
+                  isRightPanelOpen={!isMobile && isRightPanelVisible}
+                  isDark={isDark}
+                />
+              )}
             </div>
 
             {/* Barra divisora táctil y dinámica para ajustar tamaño (solo móvil) */}
@@ -575,13 +635,15 @@ function ProjectView() {
             </Suspense>
           ) : (
             <div className="relative flex h-full w-full items-center justify-center bg-black/75">
-              <img
-                src={property.image}
-                alt={property.name}
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
-              />
+              {property.image && (
+                <img
+                  src={property.image}
+                  alt={property.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
+                />
+              )}
               <div className="relative z-20 mx-4 max-w-md rounded-[24px] border border-border bg-background/95 p-8 text-center shadow-2xl backdrop-blur-2xl">
                 <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
                   <RouteIcon size={30} />
@@ -608,37 +670,39 @@ function ProjectView() {
           )
         ) : mode === "perspective" ? (
           <div className="relative flex h-full w-full items-center justify-center bg-black/80">
-            <img
-              src={property.image}
-              alt={`Perspectiva 3D ${property.name}`}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover opacity-35 filter blur-[2px] transition-all duration-700"
-            />
+            {property.image && (
+              <img
+                src={property.image}
+                alt={`Localización ${property.name}`}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover opacity-35 filter blur-[2px] transition-all duration-700"
+              />
+            )}
             <div className="relative z-20 mx-4 max-w-lg rounded-[28px] border border-border/80 bg-background/95 p-8 sm:p-10 text-center shadow-2xl backdrop-blur-2xl">
               <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-                <Orbit size={32} />
+                <MapPinned size={32} />
               </span>
               <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
-                Perspectiva 3D · Próximamente
+                Localización · Próximamente
               </Badge>
               <h2 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                Perspectiva 3D en desarrollo
+                Localización geográfica en preparación
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Estamos preparando la maqueta topográfica y volumétrica interactiva de{" "}
-                {property.name}. Próximamente podrás rotar la vista aérea del proyecto, inspeccionar
-                cotas y desniveles del terreno y proyectar construcciones.
+                Estamos preparando la experiencia ampliada de localización geográfica y entorno de{" "}
+                {property.name}. Mientras tanto, puedes explorar todos los lotes y manzanas en el
+                Plano Urbanístico interactivo.
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
-                  Topografía real
+                  Santa Rosa de Lima
                 </span>
                 <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
-                  Volumetría de lotes
+                  Vía a Villanueva
                 </span>
                 <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
-                  Orientación solar
+                  Georreferenciación GPS
                 </span>
               </div>
               <Button
@@ -690,25 +754,35 @@ function ProjectView() {
               }
             }}
           >
-            {images.map((imageUrl, index) => {
-              const isActive = index === safeGalleryIndex;
-              return (
-                <img
-                  key={`${imageUrl}-${index}`}
-                  src={imageUrl}
-                  alt={`${property.name} - Vista ${index + 1}`}
-                  loading={index === 0 ? "eager" : "lazy"}
-                  fetchPriority={isActive ? "high" : "auto"}
-                  decoding={isActive ? "sync" : "async"}
-                  draggable={false}
-                  className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${
-                    isActive
-                      ? "z-10 scale-100 opacity-100"
-                      : "z-0 scale-[1.02] opacity-0 pointer-events-none"
-                  }`}
-                />
-              );
-            })}
+            {images.length === 0 ? (
+              <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center text-white/70">
+                <p className="font-serif text-3xl text-white">Galería en preparación</p>
+                <p className="mt-2 text-sm max-w-md text-white/60">
+                  Las fotografías y perspectivas de {property.name} se cargarán desde la base de
+                  datos.
+                </p>
+              </div>
+            ) : (
+              images.map((imageUrl, index) => {
+                const isActive = index === safeGalleryIndex;
+                return (
+                  <img
+                    key={`${imageUrl}-${index}`}
+                    src={imageUrl}
+                    alt={`${property.name} - Vista ${index + 1}`}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={isActive ? "high" : "auto"}
+                    decoding={isActive ? "sync" : "async"}
+                    draggable={false}
+                    className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${
+                      isActive
+                        ? "z-10 scale-100 opacity-100"
+                        : "z-0 scale-[1.02] opacity-0 pointer-events-none"
+                    }`}
+                  />
+                );
+              })
+            )}
           </div>
         )}
 
@@ -814,37 +888,39 @@ function ProjectView() {
                   {property.location} · {property.m2} m² · {property.price}
                 </p>
               </div>
-              <div
-                ref={thumbnailsContainerRef}
-                className="flex max-w-full gap-2.5 overflow-x-auto pb-1 scrollbar-none"
-              >
-                {images.map((image, index) => {
-                  const isCurrent = safeGalleryIndex === index;
-                  return (
-                    <button
-                      key={`${image}-${index}`}
-                      type="button"
-                      data-thumb-index={index}
-                      onClick={() => setGalleryIndex(index)}
-                      aria-label={`Ver imagen ${index + 1} de ${images.length}`}
-                      aria-current={isCurrent ? "true" : undefined}
-                      className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                        isCurrent
-                          ? "scale-105 border-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] opacity-100"
-                          : "border-white/20 opacity-65 hover:opacity-95"
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt=""
-                        loading="eager"
-                        decoding="async"
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  );
-                })}
-              </div>
+              {images.length > 0 && (
+                <div
+                  ref={thumbnailsContainerRef}
+                  className="flex max-w-full gap-2.5 overflow-x-auto pb-1 scrollbar-none"
+                >
+                  {images.map((image, index) => {
+                    const isCurrent = safeGalleryIndex === index;
+                    return (
+                      <button
+                        key={`${image}-${index}`}
+                        type="button"
+                        data-thumb-index={index}
+                        onClick={() => setGalleryIndex(index)}
+                        aria-label={`Ver imagen ${index + 1} de ${images.length}`}
+                        aria-current={isCurrent ? "true" : undefined}
+                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                          isCurrent
+                            ? "scale-105 border-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] opacity-100"
+                            : "border-white/20 opacity-65 hover:opacity-95"
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt=""
+                          loading="eager"
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -852,7 +928,7 @@ function ProjectView() {
 
       {/* Panel lateral flotante en PC (estrictamente por debajo del header y oculto en Conoce el proyecto) */}
       <aside
-        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[340px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${
+        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[350px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${
           isRightPanelVisible ? "translate-x-0" : "translate-x-full pointer-events-none"
         }`}
       >

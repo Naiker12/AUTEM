@@ -1,3 +1,15 @@
+interface CourtAmenity {
+  d?: string;
+  type?: string;
+  net?: string;
+  lines?: string[];
+  centerCircle?: { cx: number; cy: number; r: number };
+  grandstands?: string[];
+}
+interface PoolAmenity {
+  d?: string;
+  lines?: string[];
+}
 import {
   Expand,
   Minus,
@@ -41,6 +53,8 @@ interface MasterplanSvgViewerProps {
   overlay?: ReactNode;
   /** Internal tooling can capture an exact coordinate over the plan without selecting a lot. */
   onPlanPointSelect?: (point: { x: number; y: number }) => void;
+  /** Ángulo de rotación inicial en grados (por defecto 48°) */
+  initialRotation?: number;
 }
 
 const MIN_SCALE = 0.15;
@@ -70,6 +84,7 @@ export default function MasterplanSvgViewer({
   disableWheelZoom = false,
   overlay,
   onPlanPointSelect,
+  initialRotation = 48,
 }: MasterplanSvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -98,9 +113,9 @@ export default function MasterplanSvgViewer({
   const lastHandledFilterRef = useRef<number>(0);
 
   const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
+  const [rotation, setRotation] = useState(initialRotation);
   const [rotationOpen, setRotationOpen] = useState(false);
-  const rotationRef = useRef(0);
+  const rotationRef = useRef(initialRotation);
   rotationRef.current = rotation;
   const rotatePoint = (x: number, y: number) => {
     const angle = (rotationRef.current * Math.PI) / 180;
@@ -175,6 +190,7 @@ export default function MasterplanSvgViewer({
   const staticBackgroundElements = useMemo(
     () => (
       <>
+        {/* Capa 1: Linderos / Base del terreno */}
         <g id="svg-linderos" opacity={0.95}>
           {layersData.linderos.map((d, i) => (
             <path
@@ -187,6 +203,8 @@ export default function MasterplanSvgViewer({
             />
           ))}
         </g>
+
+        {/* Capa 2: Zonas Verdes y Parques Centrales */}
         <g id="svg-green-areas">
           {layersData.greenAreas.map((d, i) => (
             <path
@@ -194,32 +212,63 @@ export default function MasterplanSvgViewer({
               d={d}
               fill={isDark ? "#12281a" : "#b8e0a2"}
               stroke={isDark ? "#1d472c" : "#5e8f42"}
-              strokeWidth={2}
+              strokeWidth={1.8}
               className="pointer-events-none transition-colors duration-500"
             />
           ))}
         </g>
+
+        {/* Capa 3: Red Vial y Calzadas (sin solapamiento sobre lagos) */}
         <g id="svg-roads">
           {layersData.roads.map((d, i) => (
             <path
               key={`road-${i}`}
               d={d}
-              fill={isDark ? "#221e1a" : "#ded6c2"}
+              fill="none"
               stroke={isDark ? "#3d352b" : "#998a72"}
-              strokeWidth={2}
+              strokeWidth={2.5}
               className="pointer-events-none transition-colors duration-500"
             />
           ))}
-          {layersData.calzadas.map((d, i) => (
-            <path
-              key={`calzada-${i}`}
-              d={d}
-              fill={isDark ? "#1b1814" : "#d5cbba"}
-              stroke={isDark ? "#332c24" : "#8f7e65"}
-              strokeWidth={2}
-              className="pointer-events-none transition-colors duration-500"
-            />
-          ))}
+
+          {/* Calzadas cerradas (superficie pavimentada) */}
+          {"calzadasFilled" in layersData && Array.isArray(layersData.calzadasFilled)
+            ? layersData.calzadasFilled.map((d: string, i: number) => (
+                <path
+                  key={`calzada-f-${i}`}
+                  d={d}
+                  fill={isDark ? "#1f1b17" : "#ded6c2"}
+                  stroke={isDark ? "#383129" : "#8f7e65"}
+                  strokeWidth={1.5}
+                  className="pointer-events-none transition-colors duration-500"
+                />
+              ))
+            : layersData.calzadas.map((d, i) => (
+                <path
+                  key={`calzada-${i}`}
+                  d={d}
+                  fill="none"
+                  stroke={isDark ? "#332c24" : "#8f7e65"}
+                  strokeWidth={2}
+                  className="pointer-events-none transition-colors duration-500"
+                />
+              ))}
+
+          {/* Calzadas abiertas (bordillos y ejes viales con stroke libre) */}
+          {"calzadasStroked" in layersData &&
+            Array.isArray(layersData.calzadasStroked) &&
+            layersData.calzadasStroked.map((d: string, i: number) => (
+              <path
+                key={`calzada-s-${i}`}
+                d={d}
+                fill="none"
+                stroke={isDark ? "#383129" : "#8f7e65"}
+                strokeWidth={1.8}
+                className="pointer-events-none transition-colors duration-500"
+              />
+            ))}
+
+          {/* Senderos peatonales y ecológicos */}
           {layersData.senderos.map((d, i) => (
             <path
               key={`sendero-${i}`}
@@ -232,6 +281,263 @@ export default function MasterplanSvgViewer({
             />
           ))}
         </g>
+
+        {/* Capa 4: Estructuras y Amenidades Arquitectónicas */}
+        {"amenities" in layersData && Array.isArray(layersData.amenities) && (
+          <g id="svg-amenities">
+            {layersData.amenities.map(
+              (item: { layer: string; closed: boolean; d: string }, i: number) => (
+                <path
+                  key={`amenity-${i}`}
+                  d={item.d}
+                  fill={item.closed ? (isDark ? "#28231c" : "#ebdcc3") : "none"}
+                  stroke={isDark ? "#4d4032" : "#8d795b"}
+                  strokeWidth={1.5}
+                  className="pointer-events-none transition-colors duration-500"
+                />
+              ),
+            )}
+          </g>
+        )}
+
+        {/* Capa 4b: Country Club - Terrazas, Canchas, Piscinas y Parqueaderos */}
+        {"clubAmenities" in layersData && layersData.clubAmenities && (
+          <g id="svg-club-amenities" className="pointer-events-none">
+            {/* Terrazas y solárium */}
+            {Array.isArray(layersData.clubAmenities.terraces) &&
+              layersData.clubAmenities.terraces.map((d: string, i: number) => (
+                <path
+                  key={`terrace-${i}`}
+                  d={d}
+                  fill={isDark ? "#262320" : "#f5eedc"}
+                  stroke={isDark ? "#4a4035" : "#c2b199"}
+                  strokeWidth={1.2}
+                  opacity={0.92}
+                />
+              ))}
+
+            {/* Parque de Mascotas / Bio Gimnasio */}
+            {"dogPark" in layersData.clubAmenities && layersData.clubAmenities.dogPark && (
+              <path
+                d={layersData.clubAmenities.dogPark as string}
+                fill={isDark ? "#064e3b" : "#bbf7d0"}
+                stroke={isDark ? "#10b981" : "#16a34a"}
+                strokeWidth={1.4}
+                strokeDasharray="4 3"
+                opacity={0.7}
+              />
+            )}
+
+            {/* Edificaciones / Portería / Baños / Casa Club */}
+            {Array.isArray(layersData.clubAmenities.buildings) &&
+              layersData.clubAmenities.buildings.map((d: string, i: number) => (
+                <path
+                  key={`building-${i}`}
+                  d={d}
+                  fill={isDark ? "#3f3f46" : "#e4e4e7"}
+                  stroke={isDark ? "#71717a" : "#52525b"}
+                  strokeWidth={1.5}
+                />
+              ))}
+
+            {/* Pérgolas y Kioscos BBQ */}
+            {"pergolas" in layersData.clubAmenities &&
+              Array.isArray(layersData.clubAmenities.pergolas) &&
+              layersData.clubAmenities.pergolas.map((d: string, i: number) => (
+                <path
+                  key={`pergola-${i}`}
+                  d={d}
+                  fill={isDark ? "#78350f" : "#b45309"}
+                  stroke={isDark ? "#d97706" : "#78350f"}
+                  strokeWidth={1}
+                  opacity={0.85}
+                />
+              ))}
+
+            {/* Canchas Deportivas (Tenis, Pádel, Múltiple / Fútbol) */}
+            {Array.isArray(layersData.clubAmenities.courts) &&
+              (layersData.clubAmenities.courts as CourtAmenity[]).map((court, i: number) => {
+                const d = (typeof court === "string" ? court : court.d) || "";
+                const isTennis = court.type === "tennis" || (typeof court === "string" && i === 0);
+                return (
+                  <g key={`court-g-${i}`}>
+                    {/* Superficie de la cancha */}
+                    <path
+                      key={`court-${i}`}
+                      d={d}
+                      fill={
+                        isDark
+                          ? isTennis
+                            ? "#14532d"
+                            : "#166534"
+                          : isTennis
+                            ? "#15803d"
+                            : "#16a34a"
+                      }
+                      stroke={isDark ? "#86efac" : "#ffffff"}
+                      strokeWidth={1.5}
+                      opacity={0.92}
+                    />
+
+                    {/* Líneas reglamentarias blancas */}
+                    {Array.isArray(court.lines) &&
+                      court.lines.map((line: string, li: number) => (
+                        <path
+                          key={`court-${i}-l-${li}`}
+                          d={line}
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth={1.2}
+                          strokeOpacity={0.95}
+                        />
+                      ))}
+
+                    {/* Círculo central (fútbol/básquetbol) */}
+                    {court.centerCircle && (
+                      <circle
+                        cx={court.centerCircle.cx}
+                        cy={court.centerCircle.cy}
+                        r={court.centerCircle.r}
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth={1.2}
+                        strokeOpacity={0.95}
+                      />
+                    )}
+
+                    {/* Graderías de espectadores */}
+                    {Array.isArray(court.grandstands) &&
+                      court.grandstands.map((gline: string, gi: number) => (
+                        <path
+                          key={`court-${i}-g-${gi}`}
+                          d={gline}
+                          fill="none"
+                          stroke={isDark ? "#71717a" : "#a1a1aa"}
+                          strokeWidth={1.1}
+                          strokeOpacity={0.75}
+                        />
+                      ))}
+                  </g>
+                );
+              })}
+
+            {/* Piscinas y espejos de agua (Adultos, Niños, Jacuzzi) */}
+            {Array.isArray(layersData.clubAmenities.pools) &&
+              (layersData.clubAmenities.pools as PoolAmenity[]).map((pool, i: number) => {
+                const d = (typeof pool === "string" ? pool : pool.d) || "";
+                return (
+                  <g key={`pool-g-${i}`}>
+                    <path
+                      key={`pool-${i}`}
+                      d={d}
+                      fill={isDark ? "#0284c7" : "#38bdf8"}
+                      stroke={isDark ? "#38bdf8" : "#0284c7"}
+                      strokeWidth={1.8}
+                      opacity={0.96}
+                    />
+                    {Array.isArray(pool.lines) &&
+                      pool.lines.map((line: string, li: number) => (
+                        <path
+                          key={`pool-${i}-l-${li}`}
+                          d={line}
+                          fill="none"
+                          stroke={isDark ? "#bae6fd" : "#ffffff"}
+                          strokeWidth={1}
+                          strokeOpacity={0.8}
+                          strokeDasharray="4 3"
+                        />
+                      ))}
+                  </g>
+                );
+              })}
+
+            {/* Parqueadero de visitantes (estacionamientos demarcados) */}
+            {Array.isArray(layersData.clubAmenities.parking) &&
+              layersData.clubAmenities.parking.map((d: string, i: number) => (
+                <path
+                  key={`parking-${i}`}
+                  d={d}
+                  fill="none"
+                  stroke={isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)"}
+                  strokeWidth={1.2}
+                />
+              ))}
+          </g>
+        )}
+
+        {/* Capa 5: Cuerpos de Agua (2 lagos principales + río + canales) */}
+        {"waterAreas" in layersData &&
+          Array.isArray(layersData.waterAreas) &&
+          layersData.waterAreas.length > 0 && (
+            <g id="svg-water-areas">
+              {layersData.waterAreas.map((d: string, i: number) => (
+                <path
+                  key={`water-${i}`}
+                  d={d}
+                  fill={isDark ? "#0c2438" : "#99d5f7"}
+                  stroke={isDark ? "#174668" : "#2ba6df"}
+                  strokeWidth={2.2}
+                  className="pointer-events-none transition-colors duration-500"
+                />
+              ))}
+            </g>
+          )}
+
+        {/* Capa 6: Árboles y Palmeras */}
+        {"trees" in layersData && Array.isArray(layersData.trees) && (
+          <g id="svg-trees" className="pointer-events-none">
+            {layersData.trees.map((t: { type: string; x: number; y: number }, i: number) => (
+              <circle
+                key={`tree-${i}`}
+                cx={t.x}
+                cy={t.y}
+                r={t.type === "palm" ? 4.5 : 5.5}
+                fill={
+                  t.type === "palm"
+                    ? isDark
+                      ? "#14532d"
+                      : "#4ade80"
+                    : isDark
+                      ? "#166534"
+                      : "#22c55e"
+                }
+                stroke={isDark ? "#052e16" : "#15803d"}
+                strokeWidth={1}
+                opacity={0.8}
+              />
+            ))}
+          </g>
+        )}
+
+        {/* Capa 7: Nomenclatura vial (Calles, Carreras, Acceso Principal) */}
+        {"streetLabels" in layersData && Array.isArray(layersData.streetLabels) && (
+          <g id="svg-street-labels" className="pointer-events-none">
+            {layersData.streetLabels
+              .filter((s: { text: string; x: number; y: number }) => !s.text.includes("MASCOTAS"))
+              .map((s: { text: string; x: number; y: number }, i: number) => {
+                const isHighway = s.text.includes("VILLANUEVA");
+                return (
+                  <text
+                    key={`street-${i}`}
+                    x={s.x}
+                    y={s.y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={isHighway ? 14 : 9}
+                    fontWeight={isHighway ? 900 : 700}
+                    letterSpacing={isHighway ? "0.08em" : "0.03em"}
+                    fill={
+                      isHighway ? (isDark ? "#f59e0b" : "#b45309") : isDark ? "#a8a29e" : "#57534e"
+                    }
+                    opacity={isHighway ? 0.95 : 0.7}
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    {s.text}
+                  </text>
+                );
+              })}
+          </g>
+        )}
       </>
     ),
     [isDark],
@@ -271,22 +577,32 @@ export default function MasterplanSvgViewer({
     const cHeight = container.clientHeight;
     if (!cWidth || !cHeight) return { scale: 0.9, offset: { x: 0, y: 0 } };
 
-    const fitScale = Math.min(cWidth / 2050, cHeight / 2000) * 0.95 * initialScaleMultiplier;
     const isDesktop = cWidth >= 1280;
     const desktopShift =
       (isDesktop && isDesktopSidebarOpen ? 90 : 0) - (isDesktop && isRightPanelOpen ? 85 : 0);
 
+    // Adaptar escala y centroide según la rotación activa (a ~48° el plano se visualiza horizontal apaisado)
+    const isRotated48 = Math.abs(rotationRef.current - 48) < 15;
+    const boundingW = isRotated48 ? 2450 : 2100;
+    const boundingH = isRotated48 ? 1420 : 2050;
+    const fitScale =
+      Math.min(cWidth / boundingW, cHeight / boundingH) * 0.95 * initialScaleMultiplier;
+
+    const targetCenterX = isRotated48 ? 1558 : LOTS_CENTER_X;
+    const targetCenterY = isRotated48 ? 1154 : LOTS_CENTER_Y;
+
     return {
       scale: fitScale,
       offset: {
-        x: cWidth / 2 - LOTS_CENTER_X * fitScale + desktopShift,
-        y: cHeight / 2 - LOTS_CENTER_Y * fitScale,
+        x: cWidth / 2 - targetCenterX * fitScale + desktopShift,
+        y: cHeight / 2 - targetCenterY * fitScale,
       },
     };
   }, [initialScaleMultiplier, isDesktopSidebarOpen, isRightPanelOpen]);
 
   const reset = useCallback(() => {
-    setRotation(0);
+    setRotation(initialRotation);
+    rotationRef.current = initialRotation;
     const { scale: initialScale, offset: initialOffset } = calculateFitTransform();
     setScale(initialScale);
     setOffset(initialOffset);
@@ -295,7 +611,7 @@ export default function MasterplanSvgViewer({
       viewportGroupRef.current.style.transition = "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
       viewportGroupRef.current.style.transform = `translate3d(${initialOffset.x}px, ${initialOffset.y}px, 0) scale(${initialScale})`;
     }
-  }, [calculateFitTransform]);
+  }, [calculateFitTransform, initialRotation]);
 
   const zoom = useCallback((factor: number, clientCenter?: { x: number; y: number }) => {
     setScale((prevScale) => {
@@ -1166,20 +1482,36 @@ export default function MasterplanSvgViewer({
               onChange={(event) => setRotation(Number(event.target.value))}
               className="mt-4 w-full accent-current"
             />
-            <div className="mt-3 flex justify-between gap-2 text-xs">
+            <div className="mt-3 flex items-center justify-between gap-1.5 text-xs">
               <button
                 type="button"
                 onClick={() => setRotation((value) => (value + 90) % 360)}
-                className="rounded border border-border px-2 py-1"
+                className="rounded border border-border px-2 py-1 hover:bg-muted transition-colors"
+                title="Girar 90°"
               >
                 +90°
               </button>
               <button
                 type="button"
-                onClick={() => setRotation(0)}
-                className="rounded border border-border px-2 py-1"
+                onClick={() => {
+                  setRotation(initialRotation);
+                  rotationRef.current = initialRotation;
+                }}
+                className="rounded border border-border px-2 py-1 font-semibold text-primary hover:bg-muted transition-colors"
+                title={`Restablecer a ${initialRotation}°`}
               >
-                Volver a 0°
+                {initialRotation}°
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRotation(0);
+                  rotationRef.current = 0;
+                }}
+                className="rounded border border-border px-2 py-1 hover:bg-muted transition-colors"
+                title="Orientación CAD original (0°)"
+              >
+                0°
               </button>
             </div>
           </div>

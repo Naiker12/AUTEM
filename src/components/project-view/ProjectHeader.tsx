@@ -45,7 +45,7 @@ export default function ProjectHeader({
         >
           <AutemBrandIcon size={24} />
           <div className="min-w-0">
-            <strong className="block max-w-[180px] truncate text-sm sm:text-base md:text-lg font-serif font-medium leading-none tracking-tight text-foreground">
+            <strong className="block max-w-[180px] sm:max-w-[280px] md:max-w-[380px] truncate text-sm sm:text-base md:text-lg font-serif font-medium leading-none tracking-tight text-foreground">
               {propertyName}
             </strong>
             <span className="mt-1 hidden text-[7px] sm:text-[7.5px] uppercase tracking-[0.22em] text-muted-foreground lg:block">

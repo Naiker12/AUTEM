@@ -116,7 +116,7 @@ const hotspots: Hotspot[] = [
   { id: "acceso", label: "Acceso principal", x: "22%", y: "53%", destination: "acceso" },
   { id: "social", label: "Zona social", x: "57%", y: "47%", destination: "zona-social" },
   { id: "naturaleza", label: "Entorno natural", x: "76%", y: "32%", destination: "entorno" },
-  { id: "lotes", label: "Explorar lotes", x: "46%", y: "71%", destination: "visor-lotes" },
+  { id: "lotes", label: "Explorar lotes", x: "46%", y: "71%", destination: "lotes-unidades" },
 ];
 
 function MasterplanExperiencePage() {
@@ -173,7 +173,7 @@ function MasterplanExperiencePage() {
         hotspot.id === selectedHotspot.id ? { ...hotspot, destination } : hotspot,
       ),
     );
-    if (destination !== "visor-lotes") setSelectedSceneId(destination);
+    if (destination !== "lotes-unidades") setSelectedSceneId(destination);
   };
   const updateHotspotLabel = (label: string) => {
     setConfiguredHotspots((current) =>
@@ -495,7 +495,7 @@ function MasterplanExperiencePage() {
                             {scene.name}
                           </SelectItem>
                         ))}
-                        <SelectItem value="visor-lotes">Visor de lotes</SelectItem>
+                        <SelectItem value="lotes-unidades">Lotes y unidades</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>

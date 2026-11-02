@@ -28,7 +28,6 @@ import { Route as AdminEquipoAccesosRouteImport } from "./routes/admin/equipo-ac
 import { Route as AdminConfiguracionRouteImport } from "./routes/admin/configuracion"
 import { Route as AdminAuditoriaRouteImport } from "./routes/admin/auditoria"
 import { Route as AdminConfiguracionIndexRouteImport } from "./routes/admin/configuracion/index"
-import { Route as AdminExperienciasVisorLotesRouteImport } from "./routes/admin/experiencias/visor-lotes"
 import { Route as AdminExperienciasRecorridoTerrenoRouteImport } from "./routes/admin/experiencias/recorrido-terreno"
 import { Route as AdminExperienciasMasterplanRouteImport } from "./routes/admin/experiencias/masterplan"
 import { Route as AdminContenidoPortadaRouteImport } from "./routes/admin/contenido/portada"
@@ -135,12 +134,6 @@ const AdminConfiguracionIndexRoute = AdminConfiguracionIndexRouteImport.update({
   path: "/",
   getParentRoute: () => AdminConfiguracionRoute,
 } as any)
-const AdminExperienciasVisorLotesRoute =
-  AdminExperienciasVisorLotesRouteImport.update({
-    id: "/experiencias/visor-lotes",
-    path: "/experiencias/visor-lotes",
-    getParentRoute: () => AdminRoute,
-  } as any)
 const AdminExperienciasRecorridoTerrenoRoute =
   AdminExperienciasRecorridoTerrenoRouteImport.update({
     id: "/experiencias/recorrido-terreno",
@@ -222,7 +215,6 @@ export interface FileRoutesByFullPath {
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
   "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
-  "/admin/experiencias/visor-lotes": typeof AdminExperienciasVisorLotesRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRoutesByTo {
@@ -251,7 +243,6 @@ export interface FileRoutesByTo {
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
   "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
-  "/admin/experiencias/visor-lotes": typeof AdminExperienciasVisorLotesRoute
   "/admin/configuracion": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRoutesById {
@@ -283,7 +274,6 @@ export interface FileRoutesById {
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
   "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
-  "/admin/experiencias/visor-lotes": typeof AdminExperienciasVisorLotesRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
 export interface FileRouteTypes {
@@ -316,7 +306,6 @@ export interface FileRouteTypes {
     | "/admin/contenido/portada"
     | "/admin/experiencias/masterplan"
     | "/admin/experiencias/recorrido-terreno"
-    | "/admin/experiencias/visor-lotes"
     | "/admin/configuracion/"
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -345,7 +334,6 @@ export interface FileRouteTypes {
     | "/admin/contenido/portada"
     | "/admin/experiencias/masterplan"
     | "/admin/experiencias/recorrido-terreno"
-    | "/admin/experiencias/visor-lotes"
     | "/admin/configuracion"
   id:
     | "__root__"
@@ -376,7 +364,6 @@ export interface FileRouteTypes {
     | "/admin/contenido/portada"
     | "/admin/experiencias/masterplan"
     | "/admin/experiencias/recorrido-terreno"
-    | "/admin/experiencias/visor-lotes"
     | "/admin/configuracion/"
   fileRoutesById: FileRoutesById
 }
@@ -528,13 +515,6 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AdminConfiguracionIndexRouteImport
       parentRoute: typeof AdminConfiguracionRoute
     }
-    "/admin/experiencias/visor-lotes": {
-      id: "/admin/experiencias/visor-lotes"
-      path: "/experiencias/visor-lotes"
-      fullPath: "/admin/experiencias/visor-lotes"
-      preLoaderRoute: typeof AdminExperienciasVisorLotesRouteImport
-      parentRoute: typeof AdminRoute
-    }
     "/admin/experiencias/recorrido-terreno": {
       id: "/admin/experiencias/recorrido-terreno"
       path: "/experiencias/recorrido-terreno"
@@ -635,7 +615,6 @@ interface AdminRouteChildren {
   AdminContenidoPortadaRoute: typeof AdminContenidoPortadaRoute
   AdminExperienciasMasterplanRoute: typeof AdminExperienciasMasterplanRoute
   AdminExperienciasRecorridoTerrenoRoute: typeof AdminExperienciasRecorridoTerrenoRoute
-  AdminExperienciasVisorLotesRoute: typeof AdminExperienciasVisorLotesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -652,7 +631,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminExperienciasMasterplanRoute: AdminExperienciasMasterplanRoute,
   AdminExperienciasRecorridoTerrenoRoute:
     AdminExperienciasRecorridoTerrenoRoute,
-  AdminExperienciasVisorLotesRoute: AdminExperienciasVisorLotesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

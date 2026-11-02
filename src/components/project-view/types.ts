@@ -38,16 +38,16 @@ export const DEFAULT_PROJECT_VIEW_SETTINGS: ProjectViewSettings = {
 export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
   {
     id: "lot",
-    label: "Localización",
-    shortLabel: "Ubicación",
-    icon: MapPinned,
+    label: "Plano Urbanístico",
+    shortLabel: "Plano",
+    icon: Orbit,
     available: true,
   },
   {
     id: "perspective",
-    label: "Plano Urbanístico",
-    shortLabel: "Plano",
-    icon: Orbit,
+    label: "Localización",
+    shortLabel: "Ubicación",
+    icon: MapPinned,
     badge: "Próx.",
     available: false,
   },

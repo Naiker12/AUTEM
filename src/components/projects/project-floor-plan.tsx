@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Download, QrCode, X, ExternalLink, Copy, Check, Layers } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { getFloorPlanUrl } from "@/data/properties";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import type { ProjectFloorPlanProps } from "./project-types";
@@ -13,15 +12,8 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
 
   const modalRef = useModalA11y(isQrOpen, () => setIsQrOpen(false));
 
-  const planBase = `${import.meta.env.BASE_URL}projects/${property.slug}`;
-  const currentPlanImage =
-    activeTab === "blueprint"
-      ? `${planBase}/planta-2d.jpg`
-      : activeTab === "iso"
-        ? `${planBase}/planta-3d.jpg`
-        : property.floorPlanImage || `${planBase}/planta.jpg`;
-
-  const downloadUrl = property.floorPlanPdf || currentPlanImage;
+  const currentPlanImage = property.floorPlanImage || "";
+  const downloadUrl = property.floorPlanPdf || currentPlanImage || undefined;
   const qrUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}${import.meta.env.BASE_URL}properties/${property.slug}`
@@ -132,23 +124,33 @@ export default function ProjectFloorPlan({ property, className = "" }: ProjectFl
               </div>
 
               {/* Floor Plan Image Container */}
-              <div className="relative flex-1 w-full min-h-[350px] md:min-h-[400px] overflow-hidden rounded-2xl border border-border dark:border-stone-800 bg-stone-900 group shadow-lg">
-                <img
-                  src={currentPlanImage}
-                  alt={`Plano de ${property.name}`}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
-
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-stone-200">
-                  <span className="bg-black/75 px-4 py-1.5 rounded-full border border-stone-700/60 backdrop-blur-md">
-                    {property.m2} m² totales
-                  </span>
-                  <span className="bg-black/75 px-4 py-1.5 rounded-full border border-stone-700/60 backdrop-blur-md">
-                    {property.bedrooms} Habitaciones · {property.bathrooms} Baños
-                  </span>
-                </div>
+              <div className="relative flex-1 w-full min-h-[350px] md:min-h-[400px] overflow-hidden rounded-2xl border border-border dark:border-stone-800 bg-stone-900 group shadow-lg flex items-center justify-center">
+                {currentPlanImage ? (
+                  <>
+                    <img
+                      src={currentPlanImage}
+                      alt={`Plano de ${property.name}`}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-stone-200">
+                      <span className="bg-black/75 px-4 py-1.5 rounded-full border border-stone-700/60 backdrop-blur-md">
+                        {property.m2} m² totales
+                      </span>
+                      <span className="bg-black/75 px-4 py-1.5 rounded-full border border-stone-700/60 backdrop-blur-md">
+                        {property.bedrooms} Habitaciones · {property.bathrooms} Baños
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 text-center text-stone-400">
+                    <Layers className="size-12 mb-3 text-accent/60" />
+                    <p className="font-serif text-lg text-white">Plano no disponible</p>
+                    <p className="text-xs text-stone-400 mt-1 max-w-xs">
+                      Este proyecto no cuenta con un plano publicado en la base de datos todavía.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

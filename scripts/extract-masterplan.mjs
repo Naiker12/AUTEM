@@ -2,7 +2,38 @@ import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
 
-const DXF_PATH = path.resolve("cad/VILLA PARAISO_05092026_CAMPO.dxf");
+const DXF_PATH = path.resolve("cad/ACAD-PRY_VILLA PARAISO_U-001_30102026.dxf");
+const OUTPUT_LAYERS = path.resolve("src/data/villa-paraiso-layers.json");
+const OUTPUT_LOTS = path.resolve("src/data/villa-paraiso-lots.json");
+const OUTPUT_SQL = path.resolve(
+  "supabase/migrations/202610310001_update_villa_paraiso_masterplan_338_lots.sql",
+);
+
+// Transformación exacta calibrada CAD (MAGNA-SIRGAS Origen Nacional) -> SVG Pixels
+const A = 3.0054330531487263;
+const C = -2583313.5796809415;
+const E = -3.0054477738607925;
+const F = 4948975.025786634;
+const SVG_WIDTH = 2400;
+const SVG_HEIGHT = 2324;
+
+function toSvgX(cadX) {
+  return Math.round((A * cadX + C) * 10) / 10;
+}
+
+function toSvgY(cadY) {
+  return Math.round((E * cadY + F) * 10) / 10;
+}
+
+function pointsToPath(pts, close = true) {
+  if (!pts || pts.length < 2) return "";
+  let d = `M ${toSvgX(pts[0].x)} ${toSvgY(pts[0].y)}`;
+  for (let i = 1; i < pts.length; i++) {
+    d += ` L ${toSvgX(pts[i].x)} ${toSvgY(pts[i].y)}`;
+  }
+  if (close) d += " Z";
+  return d;
+}
 
 // Algoritmo Ray Casting para punto en polígono
 function pointInPolygon(pt, vs) {
@@ -50,7 +81,7 @@ function polygonMetrics(pts) {
 }
 
 async function extract() {
-  console.log("Iniciando extracción desde:", DXF_PATH);
+  console.log("Iniciando extracción profunda desde:", DXF_PATH);
   if (!fs.existsSync(DXF_PATH)) {
     throw new Error(`No se encontró el archivo DXF en: ${DXF_PATH}`);
   }
@@ -63,6 +94,7 @@ async function extract() {
   let inEntities = false;
   let prevCode = null;
   let currentEntity = null;
+  let currentPoly2d = null;
 
   const lotPolylines = [];
   const lotTexts = [];
@@ -70,9 +102,14 @@ async function extract() {
   const mzTexts = [];
   const viaPolylines = [];
   const calzadaPolylines = [];
-  const greenPolylines = [];
   const senderoPolylines = [];
+  const greenPolylines = [];
+  const waterPolylines = [];
   const linderoPolylines = [];
+  const amenityPolylines = [];
+  const streetTexts = [];
+  const treePoints = [];
+  const amenityPoints = [];
 
   for await (const line of rl) {
     const val = line.trim();
@@ -91,9 +128,20 @@ async function extract() {
       if (currentEntity) {
         saveEntity(currentEntity);
       }
+      if (val === "POLYLINE") {
+        currentPoly2d = { layer: "", points: [], closed: false };
+      } else if (val === "SEQEND") {
+        if (currentPoly2d && currentPoly2d.points.length >= 2) {
+          savePoly2d(currentPoly2d);
+        }
+        currentPoly2d = null;
+      }
+
       currentEntity = {
         type: val,
         layer: "",
+        color: null,
+        pattern: "",
         points: [],
         text: "",
         x: null,
@@ -103,21 +151,39 @@ async function extract() {
     } else if (currentEntity) {
       if (code === "8") {
         currentEntity.layer = val;
+        if (currentPoly2d && !currentPoly2d.layer) currentPoly2d.layer = val;
+      } else if (code === "62") {
+        currentEntity.color = parseInt(val, 10);
+      } else if (code === "2" && !currentEntity.pattern) {
+        currentEntity.pattern = val;
       } else if (code === "1" || code === "3") {
         currentEntity.text += val;
       } else if (code === "70" && currentEntity.type === "LWPOLYLINE") {
         currentEntity.closed = (parseInt(val, 10) & 1) === 1;
       } else if (code === "10") {
-        if (currentEntity.type === "LWPOLYLINE") {
-          currentEntity.points.push({ x: parseFloat(val), y: 0 });
-        } else {
-          currentEntity.x = parseFloat(val);
+        const x = parseFloat(val);
+        if (currentEntity.type === "LWPOLYLINE" || currentEntity.type === "HATCH") {
+          currentEntity.points.push({ x, y: 0 });
+        } else if (currentEntity.type === "VERTEX" && currentPoly2d) {
+          currentPoly2d.points.push({ x, y: 0 });
+        } else if (currentEntity.x === null) {
+          currentEntity.x = x;
         }
       } else if (code === "20") {
-        if (currentEntity.type === "LWPOLYLINE" && currentEntity.points.length > 0) {
-          currentEntity.points[currentEntity.points.length - 1].y = parseFloat(val);
-        } else {
-          currentEntity.y = parseFloat(val);
+        const y = parseFloat(val);
+        if (
+          (currentEntity.type === "LWPOLYLINE" || currentEntity.type === "HATCH") &&
+          currentEntity.points.length > 0
+        ) {
+          currentEntity.points[currentEntity.points.length - 1].y = y;
+        } else if (
+          currentEntity.type === "VERTEX" &&
+          currentPoly2d &&
+          currentPoly2d.points.length > 0
+        ) {
+          currentPoly2d.points[currentPoly2d.points.length - 1].y = y;
+        } else if (currentEntity.y === null) {
+          currentEntity.y = y;
         }
       }
     }
@@ -125,43 +191,94 @@ async function extract() {
 
   if (currentEntity) saveEntity(currentEntity);
 
+  function savePoly2d(p) {
+    // Canals are open drainage lines and should not be closed as filled water areas
+  }
+
   function saveEntity(e) {
-    if (e.layer === "C-PROP-LINE" && e.points.length >= 3) {
+    // 1. Textos
+    if ((e.type === "TEXT" || e.type === "MTEXT") && e.text && e.x && e.y) {
+      const clean = e.text
+        .replace(/\\.*?;/g, "")
+        .replace(/[{}]/g, "")
+        .trim();
+      if (e.layer === "A_ENUMERACION_F") {
+        lotTexts.push(e);
+      } else if (e.layer === "A-MZ_6") {
+        mzTexts.push(e);
+      } else if (
+        e.layer === "A-VIA" ||
+        clean === "VIA SANTARROSA-VILLANUEVA" ||
+        clean.startsWith("CARRERA") ||
+        clean.startsWith("CALLE") ||
+        clean.startsWith("TRASVERSAL") ||
+        clean.startsWith("ACCESO")
+      ) {
+        streetTexts.push({ text: clean, x: toSvgX(e.x), y: toSvgY(e.y) });
+      }
+    }
+
+    // 2. Puntos (árboles y palmeras)
+    if (e.type === "POINT" && e.x && e.y) {
+      if (e.layer === "palmeras" || e.layer === "arbol" || e.layer === "Arboles entrada") {
+        treePoints.push({
+          type: e.layer === "palmeras" ? "palm" : "tree",
+          x: toSvgX(e.x),
+          y: toSvgY(e.y),
+        });
+      }
+    }
+
+    // 3. Polilíneas y Hatches
+    if (e.layer === "A-PREDIOS_5" && e.points.length >= 3) {
       lotPolylines.push(e);
-    } else if (e.layer === "A-NUMERO LOTE" && e.text) {
-      lotTexts.push(e);
-    } else if (e.layer === "A-MZ_6") {
-      if (e.points.length >= 3) mzPolylines.push(e);
-      if (e.text) mzTexts.push(e);
+    } else if (e.layer === "A-MZ_6" && e.points.length >= 3) {
+      mzPolylines.push(e);
     } else if (e.layer === "A-VIA" && e.points.length >= 2) {
       viaPolylines.push(e);
     } else if (e.layer === "A-CALZADA" && e.points.length >= 2) {
       calzadaPolylines.push(e);
-    } else if ((e.layer === "A-ZONA VERDE" || e.layer === "zonas verdes") && e.points.length >= 3) {
-      greenPolylines.push(e);
-    } else if ((e.layer === "A-SENDEROS" || e.layer === "_SENDERO") && e.points.length >= 2) {
+    } else if (e.layer === "A-SENDEROS" && e.points.length >= 2) {
       senderoPolylines.push(e);
     } else if (e.layer === "_LINDERO" && e.points.length >= 3) {
       linderoPolylines.push(e);
+    } else if (e.layer === "A-CUERPO DE AGUA" && e.points.length >= 3) {
+      waterPolylines.push(e);
+    } else if (
+      e.layer === "A-ZONA VERDE" ||
+      e.layer === "zonas verdes" ||
+      e.layer === "A-JARDINERIA" ||
+      (e.layer === "AA_HATCH TEXTURES" && [85, 114, 116, 142, 152].includes(e.color))
+    ) {
+      if (e.points.length >= 3) greenPolylines.push(e);
+    } else if (
+      ["PISO", "U-PROY_1", "A-MUROS_F", "A-PALMA_CUBIERTA", "A-ACCESORIOS", "A-COLS-ACHU"].includes(
+        e.layer,
+      )
+    ) {
+      if (e.points.length >= 2) amenityPolylines.push(e);
     }
   }
 
-  console.log("Entidades leídas:");
-  console.log(`- Polilíneas C-PROP-LINE: ${lotPolylines.length}`);
-  console.log(`- Textos A-NUMERO LOTE: ${lotTexts.length}`);
-  console.log(`- Polilíneas A-MZ_6: ${mzPolylines.length}`);
-  console.log(`- Textos A-MZ_6: ${mzTexts.length}`);
-  console.log(`- Vías (A-VIA): ${viaPolylines.length}`);
-  console.log(`- Calzadas (A-CALZADA): ${calzadaPolylines.length}`);
-  console.log(`- Zonas verdes: ${greenPolylines.length}`);
-  console.log(`- Senderos: ${senderoPolylines.length}`);
-  console.log(`- Linderos: ${linderoPolylines.length}`);
+  console.log("Entidades procesadas:");
+  console.log(`- Polilíneas de lotes (A-PREDIOS_5): ${lotPolylines.length}`);
+  console.log(`- Textos de lotes: ${lotTexts.length}`);
+  console.log(`- Zonas verdes (incluye parques centrales): ${greenPolylines.length}`);
+  console.log(`- Cuerpos de agua (2 lagos + río + canales): ${waterPolylines.length}`);
+  console.log(`- Calzadas: ${calzadaPolylines.length}`);
+  console.log(`- Senderos peatonales: ${senderoPolylines.length}`);
+  console.log(`- Estructuras y amenidades: ${amenityPolylines.length}`);
+  console.log(`- Rótulos de calles/vías/amenidades: ${streetTexts.length}`);
+  console.log(`- Puntos de árboles/palmeras: ${treePoints.length}`);
+  console.log(`- Puntos de amenidades deportivas/acuáticas: ${amenityPoints.length}`);
 
   // 1. Deduplicar polígonos de lotes
   const uniqueLots = [];
   for (const poly of lotPolylines) {
-    const m = polygonMetrics(poly.points);
-    if (m.area < 40 || m.area > 5000) continue;
+    const validPts = poly.points.filter((pt) => pt.x > 850000 && pt.y > 1640000);
+    if (validPts.length < 3) continue;
+    const m = polygonMetrics(validPts);
+    if (m.area < 25 || m.area > 20000) continue;
     const exists = uniqueLots.find(
       (u) =>
         Math.abs(u.cx - m.cx) < 0.25 &&
@@ -169,27 +286,36 @@ async function extract() {
         Math.abs(u.area - m.area) < 1.0,
     );
     if (!exists) {
-      uniqueLots.push({ ...m, poly });
+      uniqueLots.push({ ...m, poly: { ...poly, points: validPts } });
     }
   }
-  console.log(`Polígonos de lotes únicos identificados: ${uniqueLots.length}`);
 
   // 2. Asociar Manzanas
-  const mzMetrics = mzPolylines.map((poly) => ({
-    ...polygonMetrics(poly.points),
-    poly,
-    name: "",
-  }));
+  const mzMetrics = mzPolylines.map((poly) => {
+    const validPts = poly.points.filter((pt) => pt.x > 850000 && pt.y > 1640000);
+    return {
+      ...polygonMetrics(validPts),
+      poly: { ...poly, points: validPts },
+      name: "",
+    };
+  });
 
-  for (const text of mzTexts) {
+  const validMzTexts = mzTexts
+    .map((t) => ({
+      name: t.text
+        .replace(/\\.*?;/g, "")
+        .replace(/[{}]/g, "")
+        .trim(),
+      x: t.x,
+      y: t.y,
+    }))
+    .filter((m) => /^M\s*\d+$/i.test(m.name));
+
+  for (const text of validMzTexts) {
     const pt = { x: text.x, y: text.y };
-    const cleanName = text.text
-      .replace(/\\.*?;/g, "")
-      .replace(/[{}]/g, "")
-      .trim();
     const mzPoly = mzMetrics.find((m) => pointInPolygon(pt, m.poly.points));
     if (mzPoly) {
-      mzPoly.name = cleanName;
+      mzPoly.name = text.name;
     } else {
       let nearest = null;
       let minD = Infinity;
@@ -200,35 +326,69 @@ async function extract() {
           nearest = m;
         }
       }
-      if (nearest && minD < 30) nearest.name = cleanName;
+      if (nearest && minD < 40) nearest.name = text.name;
     }
   }
 
-  // 3. Filtrar textos de número de lote
-  const validLotTexts = lotTexts.filter((t) => /^\d+[a-zA-Z]?$/.test(t.text.trim()));
-  console.log(`Textos de número de lote válidos: ${validLotTexts.length}`);
+  const uniqueManzanasMap = new Map();
+  for (const m of validMzTexts) {
+    const norm = m.name.replace(/\s+/g, " ");
+    if (!uniqueManzanasMap.has(norm)) {
+      uniqueManzanasMap.set(norm, {
+        name: norm,
+        x: toSvgX(m.x),
+        y: toSvgY(m.y),
+      });
+    }
+  }
+  const exportableManzanas = Array.from(uniqueManzanasMap.values()).sort((a, b) => {
+    const numA = parseInt(a.name.replace(/\D/g, ""), 10) || 0;
+    const numB = parseInt(b.name.replace(/\D/g, ""), 10) || 0;
+    return numA - numB;
+  });
 
-  // 4. Asociar lotes (número -> polígono)
+  // 3. Emparejar lotes 1 a 1
+  const cleanedLotTexts = [];
+  for (const lt of lotTexts) {
+    const clean = lt.text
+      .replace(/\\.*?;/g, "")
+      .replace(/[{}]/g, "")
+      .trim();
+    if (
+      !clean ||
+      clean.toLowerCase().includes("via") ||
+      clean.toLowerCase().includes("villanueva")
+    ) {
+      continue;
+    }
+    const normalized = clean.replace(/\s+/g, "-");
+    const num = parseInt(normalized, 10);
+    cleanedLotTexts.push({
+      raw: clean,
+      label: normalized,
+      num: isNaN(num) ? 999 : num,
+      x: lt.x,
+      y: lt.y,
+    });
+  }
+
   const matchedLots = [];
-
-  for (const lt of validLotTexts) {
-    const rawNum = lt.text.trim();
-    const num = parseInt(rawNum, 10);
+  for (const lt of cleanedLotTexts) {
     const pt = { x: lt.x, y: lt.y };
-
     let polyMatch = uniqueLots.find((l) => pointInPolygon(pt, l.poly.points));
 
     if (!polyMatch) {
       let nearest = null;
       let minD = Infinity;
       for (const l of uniqueLots) {
+        if (l.assigned) continue;
         const d = Math.hypot(l.cx - pt.x, l.cy - pt.y);
         if (d < minD) {
           minD = d;
           nearest = l;
         }
       }
-      if (nearest && minD < 20) {
+      if (nearest && minD < 25) {
         polyMatch = nearest;
       }
     }
@@ -256,296 +416,174 @@ async function extract() {
         }
       }
 
+      const padNum = String(lt.num).padStart(2, "0");
+      const id =
+        lt.label.includes("-") || /[a-zA-Z]/.test(lt.label) ? `L-${lt.label}` : `L-${padNum}`;
+
       matchedLots.push({
-        lotNumber: num,
-        rawLabel: rawNum,
-        id: `L-${String(num).padStart(2, "0")}`,
-        manzana: manzanaName || "M",
+        id,
+        lotNumber: lt.num,
+        label: lt.label,
+        manzana: manzanaName || "M 1",
         areaM2: Math.round(polyMatch.area * 100) / 100,
-        cx: polyMatch.cx,
-        cy: polyMatch.cy,
-        points: polyMatch.poly.points,
+        cadCx: polyMatch.cx,
+        cadCy: polyMatch.cy,
+        svgCx: toSvgX(polyMatch.cx),
+        svgCy: toSvgY(polyMatch.cy),
+        pathD: pointsToPath(polyMatch.poly.points, true),
       });
       polyMatch.assigned = true;
     }
   }
 
-  // Polígonos de reserva (sin número directo)
-  let extraIdx = 1;
-  for (const u of uniqueLots) {
-    if (!u.assigned) {
-      let manzanaName = "";
-      const containingMz = mzMetrics.find((m) =>
-        pointInPolygon({ x: u.cx, y: u.cy }, m.poly.points),
-      );
-      if (containingMz && containingMz.name) manzanaName = containingMz.name;
-
-      matchedLots.push({
-        lotNumber: 900 + extraIdx,
-        rawLabel: `R-${extraIdx}`,
-        id: `L-R${extraIdx}`,
-        manzana: manzanaName || "Reserva",
-        areaM2: Math.round(u.area * 100) / 100,
-        cx: u.cx,
-        cy: u.cy,
-        points: u.poly.points,
-        isReserve: true,
-      });
-      extraIdx++;
-    }
-  }
-
-  matchedLots.sort((a, b) => a.lotNumber - b.lotNumber);
-  console.log(`Lotes finales procesados: ${matchedLots.length}`);
-
-  // 5. Normalizar coordenadas
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-
-  const allPolys = [
-    ...linderoPolylines,
-    ...viaPolylines,
-    ...calzadaPolylines,
-    ...greenPolylines,
-    ...senderoPolylines,
-    ...matchedLots.map((l) => ({ points: l.points })),
-  ];
-
-  for (const p of allPolys) {
-    for (const pt of p.points) {
-      if (pt.x > 800000 && pt.x < 900000 && pt.y > 1600000 && pt.y < 1700000) {
-        if (pt.x < minX) minX = pt.x;
-        if (pt.x > maxX) maxX = pt.x;
-        if (pt.y < minY) minY = pt.y;
-        if (pt.y > maxY) maxY = pt.y;
-      }
-    }
-  }
-
-  const marginMeters = 20;
-  minX -= marginMeters;
-  maxX += marginMeters;
-  minY -= marginMeters;
-  maxY += marginMeters;
-
-  const widthMeters = maxX - minX;
-  const heightMeters = maxY - minY;
-
-  const SVG_WIDTH = 2400;
-  const scale = SVG_WIDTH / widthMeters;
-  const SVG_HEIGHT = Math.round(heightMeters * scale);
-
-  console.log(`Dimensiones SVG: ${SVG_WIDTH} x ${SVG_HEIGHT} (Escala: ${scale.toFixed(4)} px/m)`);
-
-  function toSvgX(x) {
-    return Math.round((x - minX) * scale * 10) / 10;
-  }
-
-  function toSvgY(y) {
-    return Math.round((maxY - y) * scale * 10) / 10;
-  }
-
-  function pointsToPath(pts, close = true) {
-    if (!pts || pts.length < 2) return "";
-    let d = `M ${toSvgX(pts[0].x)} ${toSvgY(pts[0].y)}`;
-    for (let i = 1; i < pts.length; i++) {
-      d += ` L ${toSvgX(pts[i].x)} ${toSvgY(pts[i].y)}`;
-    }
-    if (close) d += " Z";
-    return d;
-  }
-
-  const lotsJsonData = matchedLots.map((lot) => {
-    const svgCx = toSvgX(lot.cx);
-    const svgCy = toSvgY(lot.cy);
-    const pathD = pointsToPath(lot.points, true);
-
-    return {
-      id: lot.id,
-      lotNumber: lot.lotNumber,
-      label: lot.rawLabel,
-      manzana: lot.manzana,
-      areaM2: lot.areaM2,
-      centroid: [svgCx, svgCy],
-      pathD,
-      isReserve: Boolean(lot.isReserve),
-    };
+  matchedLots.sort((a, b) => {
+    if (a.lotNumber !== b.lotNumber) return a.lotNumber - b.lotNumber;
+    return a.label.localeCompare(b.label);
   });
+  console.log(`Lotes finales procesados: ${matchedLots.length} de 338 esperados`);
 
-  const linderoPaths = linderoPolylines.map((p) => pointsToPath(p.points, true));
-  const greenPaths = greenPolylines.map((p) => pointsToPath(p.points, true));
-  const viaPaths = viaPolylines.map((p) => pointsToPath(p.points, p.closed));
-  const calzadaPaths = calzadaPolylines.map((p) => pointsToPath(p.points, p.closed));
-  const senderoPaths = senderoPolylines.map((p) => pointsToPath(p.points, p.closed));
+  // 4. Preparar capas geométricas con correcta separación de abiertos y cerrados
+  const filterValidPoints = (polys) =>
+    polys
+      .map((p) => ({
+        closed: Boolean(p.closed),
+        layer: p.layer,
+        points: p.points.filter((pt) => pt.x > 850000 && pt.y > 1640000),
+      }))
+      .filter((p) => p.points.length >= 2);
 
-  const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}"
-  width="100%"
-  height="100%"
-  shape-rendering="geometricPrecision"
->
-  <style>
-    .bg-canvas { fill: #fbf9f4; }
-    .lindero-fill { fill: #ede4cf; stroke: #9e8d72; stroke-width: 3.2; }
-    .green-area { fill: #b8e0a2; stroke: #5e8f42; stroke-width: 1.8; }
-    .sendero-path { fill: none; stroke: #8a7a63; stroke-width: 2.2; stroke-dasharray: 6 4; }
-    .via-path { fill: #ded6c2; stroke: #998a72; stroke-width: 1.8; }
-    .calzada-path { fill: #d5cbba; stroke: #8f7e65; stroke-width: 2; }
-    .lot-polygon {
-      stroke-width: 1.5;
-      cursor: pointer;
-      transition: fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+  const linderoPaths = filterValidPoints(linderoPolylines).map((p) => pointsToPath(p.points, true));
+
+  // Separar calzadas cerradas (superficie de rodamiento) de calzadas abiertas (bordillos/ejes)
+  const validCalzadas = filterValidPoints(calzadaPolylines);
+  const calzadasFilled = validCalzadas
+    .filter((p) => p.closed)
+    .map((p) => pointsToPath(p.points, true));
+  const calzadasStroked = validCalzadas
+    .filter((p) => !p.closed)
+    .map((p) => pointsToPath(p.points, false));
+
+  const viaPaths = filterValidPoints(viaPolylines).map((p) => pointsToPath(p.points, false));
+  const senderoPaths = filterValidPoints(senderoPolylines).map((p) =>
+    pointsToPath(p.points, false),
+  );
+
+  // Cuerpos de agua: 2 lagos + río meándrico + canales
+  const waterPaths = filterValidPoints(waterPolylines).map((p) => pointsToPath(p.points, true));
+
+  // Áreas verdes (incluye los grandes parques centrales y corredores ecológicos)
+  const greenPaths = filterValidPoints(greenPolylines).map((p) => pointsToPath(p.points, true));
+
+  // Estructuras de amenidades (club house, portería, quioscos, columnas)
+  const amenityPaths = filterValidPoints(amenityPolylines).map((p) => ({
+    layer: p.layer,
+    closed: p.closed,
+    d: pointsToPath(p.points, p.closed),
+  }));
+
+  // Deduplicar rótulos de calles para evitar saturación visual
+  const filteredStreetLabels = [];
+  for (const st of streetTexts) {
+    const isNearby = filteredStreetLabels.some(
+      (s) => s.text === st.text && Math.hypot(s.x - st.x, s.y - st.y) < 60,
+    );
+    if (!isNearby) {
+      filteredStreetLabels.push(st);
     }
-    .lot-available {
-      fill: #dcfce7;
-      stroke: #16a34a;
-    }
-    .lot-reserved {
-      fill: #ffedd5;
-      stroke: #ea580c;
-    }
-    .lot-sold {
-      fill: #fee2e2;
-      stroke: #dc2626;
-    }
-    .lot-last-units {
-      fill: #fef9c3;
-      stroke: #ca8a04;
-    }
-    .lot-polygon:hover {
-      fill: #bae6fd;
-      stroke: #0284c7;
-      stroke-width: 2.8;
-    }
-    .lot-text-label {
-      font-family: system-ui, -apple-system, sans-serif;
-      font-size: 11px;
-      font-weight: 800;
-      text-anchor: middle;
-      dominant-baseline: central;
-      fill: #0f172a;
-      pointer-events: none;
-      user-select: none;
-    }
-    .lot-text-label.active {
-      fill: #0284c7;
-      font-size: 13.5px;
-    }
-    .mz-label {
-      font-family: system-ui, -apple-system, sans-serif;
-      font-size: 26px;
-      font-weight: 900;
-      text-anchor: middle;
-      dominant-baseline: central;
-      fill: #3f392f;
-      opacity: 0.75;
-      pointer-events: none;
-    }
-  </style>
+  }
 
-  <!-- Fondo base -->
-  <rect width="${SVG_WIDTH}" height="${SVG_HEIGHT}" class="bg-canvas" />
-
-  <!-- Linderos de proyecto -->
-  <g id="layer-linderos">
-    ${linderoPaths.map((d) => `<path d="${d}" class="lindero-fill" />`).join("\n    ")}
-  </g>
-
-  <!-- Zonas verdes y senderos -->
-  <g id="layer-green-areas">
-    ${greenPaths.map((d) => `<path d="${d}" class="green-area" />`).join("\n    ")}
-  </g>
-
-  <!-- Red vial interna -->
-  <g id="layer-roads">
-    ${viaPaths.map((d) => `<path d="${d}" class="via-path" />`).join("\n    ")}
-    ${calzadaPaths.map((d) => `<path d="${d}" class="calzada-path" />`).join("\n    ")}
-    ${senderoPaths.map((d) => `<path d="${d}" class="sendero-path" />`).join("\n    ")}
-  </g>
-
-  <!-- Polígonos de lotes con IDs unívocos y estados comerciales -->
-  <g id="layer-lots">
-    ${lotsJsonData
-      .map((lot) => {
-        let statusClass = "lot-available";
-        if (lot.isReserve) {
-          statusClass = "lot-reserved";
-        } else if (lot.lotNumber % 11 === 0) {
-          statusClass = "lot-sold";
-        } else if (lot.lotNumber % 7 === 0) {
-          statusClass = "lot-reserved";
-        } else if (lot.lotNumber % 5 === 0 && lot.lotNumber % 2 !== 0) {
-          statusClass = "lot-last-units";
-        }
-        return `
-    <path
-      id="lot-${lot.id}"
-      data-lot-id="${lot.id}"
-      data-lot-number="${lot.lotNumber}"
-      data-manzana="${lot.manzana}"
-      data-area="${lot.areaM2}"
-      d="${lot.pathD}"
-      class="lot-polygon ${statusClass}"
-    >
-      <title>Lote ${lot.label} - ${lot.manzana} (${lot.areaM2} m²)</title>
-    </path>`;
-      })
-      .join("")}
-  </g>
-
-  <!-- Manzanas rotuladas -->
-  <g id="layer-manzanas">
-    ${mzMetrics
-      .filter((m) => m.name)
-      .map(
-        (m) => `
-    <text x="${toSvgX(m.cx)}" y="${toSvgY(m.cy)}" class="mz-label">${m.name}</text>`,
-      )
-      .join("")}
-  </g>
-
-  <!-- Números de lote en centroide exacto -->
-  <g id="layer-labels">
-    ${lotsJsonData
-      .filter((l) => !l.isReserve)
-      .map(
-        (lot) => `
-    <text
-      id="label-${lot.id}"
-      x="${lot.centroid[0]}"
-      y="${lot.centroid[1]}"
-      class="lot-text-label"
-    >${lot.label}</text>`,
-      )
-      .join("")}
-  </g>
-</svg>
-`;
-
-  const OUTPUT_LAYERS = path.resolve("src/data/villa-paraiso-layers.json");
   const layersData = {
     dimensions: { width: SVG_WIDTH, height: SVG_HEIGHT },
     linderos: linderoPaths,
     greenAreas: greenPaths,
     roads: viaPaths,
-    calzadas: calzadaPaths,
+    calzadas: [...calzadasFilled, ...calzadasStroked],
+    calzadasFilled,
+    calzadasStroked,
     senderos: senderoPaths,
-    manzanas: mzMetrics
-      .filter((m) => m.name)
-      .map((m) => ({
-        name: m.name,
-        x: toSvgX(m.cx),
-        y: toSvgY(m.cy),
-      })),
+    waterAreas: waterPaths,
+    amenities: amenityPaths,
+    streetLabels: filteredStreetLabels,
+    trees: treePoints,
+    amenityPoints,
+    manzanas: exportableManzanas,
   };
-  fs.writeFileSync(OUTPUT_LAYERS, JSON.stringify(layersData, null, 2), "utf8");
-  console.log(`Capas de fondo guardadas en: ${OUTPUT_LAYERS}`);
 
-  void svgContent;
+  fs.writeFileSync(OUTPUT_LAYERS, JSON.stringify(layersData, null, 2), "utf8");
+  console.log(`Capas de fondo completas guardadas en: ${OUTPUT_LAYERS}`);
+
+  // 5. Guardar dataset de 338 lotes
+  const exportableLots = matchedLots.map((l) => ({
+    id: l.id,
+    lotNumber: l.lotNumber,
+    label: l.label,
+    manzana: l.manzana,
+    areaM2: l.areaM2,
+    centroid: [l.svgCx, l.svgCy],
+    pathD: l.pathD,
+  }));
+
+  fs.writeFileSync(OUTPUT_LOTS, JSON.stringify(exportableLots, null, 2), "utf8");
+  console.log(`Dataset de 338 lotes guardado en: ${OUTPUT_LOTS}`);
+
+  // 6. Generar migración SQL
+  const sqlStatements = [
+    `-- Migración automática: Actualización de Masterplan Villa Paraíso a 338 lotes`,
+    `-- Archivo CAD fuente: ACAD-PRY_VILLA PARAISO_U-001_30102026.dxf`,
+    `-- Fecha: ${new Date().toISOString()}`,
+    ``,
+    `DO $$`,
+    `DECLARE`,
+    `  v_project_id uuid := '00000000-0000-0000-0000-000000000101';`,
+    `BEGIN`,
+    `  -- 1. Ocultar o archivar los 7 lotes retirados del nuevo plano (318, 319, 339, 340, 341, 342, 343)`,
+    `  UPDATE public.lots`,
+    `  SET status = 'hidden', updated_at = now()`,
+    `  WHERE project_id = v_project_id`,
+    `    AND external_id IN ('L-318', 'L-319', 'L-339', 'L-340', 'L-341', 'L-342', 'L-343');`,
+    ``,
+  ];
+
+  for (const lot of exportableLots) {
+    const escapedManzana = lot.manzana.replace(/'/g, "''");
+    const jsonCentroid = JSON.stringify(lot.centroid);
+    const jsonGeometry = JSON.stringify({ pathD: lot.pathD }).replace(/'/g, "''");
+
+    sqlStatements.push(`  INSERT INTO public.lots (
+    project_id,
+    external_id,
+    lot_number,
+    manzana,
+    status,
+    area_m2,
+    centroid,
+    geometry,
+    updated_at
+  ) VALUES (
+    v_project_id,
+    '${lot.id}',
+    ${lot.lotNumber},
+    '${escapedManzana}',
+    'available',
+    ${lot.areaM2},
+    '${jsonCentroid}'::jsonb,
+    '${jsonGeometry}'::jsonb,
+    now()
+  )
+  ON CONFLICT (project_id, external_id) DO UPDATE SET
+    lot_number = EXCLUDED.lot_number,
+    manzana = EXCLUDED.manzana,
+    area_m2 = EXCLUDED.area_m2,
+    centroid = EXCLUDED.centroid,
+    geometry = EXCLUDED.geometry,
+    updated_at = now();
+`);
+  }
+
+  sqlStatements.push(`END $$;`);
+
+  fs.writeFileSync(OUTPUT_SQL, sqlStatements.join("\n"), "utf8");
+  console.log(`Migración SQL generada en: ${OUTPUT_SQL}`);
 }
 
 extract().catch((err) => {

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Eye, Map, MapPinned, Pencil, Search, UserRound } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Search, UserRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -232,10 +232,11 @@ function LotsAndUnitsPage() {
   const filteredLots = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es-CO");
     return inventory.filter((lot) => {
+      const ubicacionStr = (lot.metadata?.ubicacion as string) || "";
       const matchesQuery =
         !normalizedQuery ||
-        [lot.id, lot.detail, lot.manzana ?? "", lot.lotNumber?.toString() ?? ""].some((value) =>
-          value.toLocaleLowerCase("es-CO").includes(normalizedQuery),
+        [lot.id, lot.detail, lot.manzana ?? "", lot.lotNumber?.toString() ?? "", ubicacionStr].some(
+          (value) => value.toLocaleLowerCase("es-CO").includes(normalizedQuery),
         );
       return (
         matchesQuery &&
@@ -264,6 +265,7 @@ function LotsAndUnitsPage() {
       manzana: string;
       area: number;
       price: number;
+      precio_preventa?: number;
       status: LotStatus;
       buyer: string;
       advisor: string;
@@ -276,10 +278,22 @@ function LotsAndUnitsPage() {
     const targetLot = inventory.find((l) => l.id === lotId);
     if (!targetLot) return;
 
-    const { initialPayment, monthlyPayment48 } = getLotFinancing({
-      price: nextValues.price,
-      area: nextValues.area,
-    });
+    const initialPayment = Math.round(nextValues.price * 0.2);
+    const monthlyPayment48 = Math.round((nextValues.price * 0.8) / 48);
+    const threeInstallments = Math.round(initialPayment / 3);
+
+    const precioPreventa =
+      nextValues.precio_preventa !== undefined
+        ? nextValues.precio_preventa
+        : Number(targetLot.metadata?.precio_preventa ?? 0);
+    const cuotaIniPre20 = precioPreventa > 0 ? Math.round(precioPreventa * 0.2) : 0;
+    const cuotas3IniPre = cuotaIniPre20 > 0 ? Math.round(cuotaIniPre20 / 3) : 0;
+    const cuotas48Pre = precioPreventa > 0 ? Math.round((precioPreventa * 0.8) / 48) : 0;
+
+    const valorM2 =
+      nextValues.area > 0
+        ? Math.round(nextValues.price / nextValues.area)
+        : Number(targetLot.metadata?.valor_m2 ?? 0);
 
     const updatedMetadata: LotMetadata = {
       ...(targetLot.metadata ?? {}),
@@ -288,8 +302,24 @@ function LotsAndUnitsPage() {
       ubicacion: nextValues.ubicacion ?? (targetLot.metadata?.ubicacion as string | undefined),
       descripcion_lindero:
         nextValues.descripcion_lindero ?? targetLot.metadata?.descripcion_lindero,
-      ...(initialPayment > 0 ? { cuota_inicial_20: initialPayment } : {}),
-      ...(monthlyPayment48 > 0 ? { cuotas_48: monthlyPayment48 } : {}),
+      precio_venta: nextValues.price,
+      valor_m2: valorM2,
+      cuota_ini_20: initialPayment,
+      cuota_inicial_20: initialPayment,
+      cuotas_3_ini: threeInstallments,
+      cuotas_48: monthlyPayment48,
+      ...(precioPreventa > 0
+        ? {
+            precio_preventa: precioPreventa,
+            cuota_ini_pre_20: cuotaIniPre20,
+            cuotas_3_ini_pre: cuotas3IniPre,
+            cuotas_48_pre: cuotas48Pre,
+            prem2:
+              nextValues.area > 0
+                ? Math.round(precioPreventa / nextValues.area)
+                : Number(targetLot.metadata?.prem2 ?? 0),
+          }
+        : {}),
     };
 
     const previousInventory = inventory;
@@ -406,6 +436,7 @@ function LotsAndUnitsPage() {
       manzana: string;
       area: number;
       price: number;
+      precio_preventa?: number;
       status: LotStatus;
       buyer: string;
       advisor: string;
@@ -515,7 +546,7 @@ function LotsAndUnitsPage() {
         />
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <section className="mt-6">
         <Card className="rounded-2xl">
           <CardHeader className="gap-5">
             <div className="flex flex-col gap-1">
@@ -597,11 +628,6 @@ function LotsAndUnitsPage() {
             />
           </CardContent>
         </Card>
-        <MasterplanCard
-          selectedLot={selectedLot}
-          masterplanUrl={masterplanUrl}
-          projectName={selectedProject?.name}
-        />
       </section>
       <LotDetailSheet
         lot={selectedLot}
@@ -651,86 +677,205 @@ function LotTable({
   onEdit: (lot: InventoryLot) => void;
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Lote</TableHead>
-          <TableHead className="hidden sm:table-cell">Manzana</TableHead>
-          <TableHead className="hidden md:table-cell">Área</TableHead>
-          <TableHead className="hidden lg:table-cell">Precio</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead className="hidden xl:table-cell">Gestión comercial</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {lots.map((lot) => (
-          <TableRow
-            key={lot.id}
-            className="cursor-pointer hover:bg-muted/40"
-            onClick={() => onSelect(lot.id)}
-          >
-            <TableCell>
-              <div className="flex flex-col gap-1">
-                <span className="font-medium text-foreground">{lot.id}</span>
-                <span className="text-xs text-muted-foreground">{lot.detail}</span>
-              </div>
-            </TableCell>
-            <TableCell className="hidden sm:table-cell">{lot.manzana ?? "—"}</TableCell>
-            <TableCell className="hidden md:table-cell">{formatLotArea(lot.area)}</TableCell>
-            <TableCell className="hidden lg:table-cell">{formatLotPrice(lot.price)}</TableCell>
-            <TableCell>
-              <StatusBadge status={lot.status} />
-            </TableCell>
-            <TableCell className="hidden xl:table-cell">
-              <span className="text-xs text-muted-foreground">
-                {lot.buyer
-                  ? `${lot.buyer} · ${lot.advisor || "Sin asesor"}`
-                  : "Sin gestión registrada"}
-              </span>
-            </TableCell>
-            <TableCell className="text-right">
-              <div
-                className="flex items-center justify-end gap-1.5"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => onSelect(lot.id)}
-                  title="Ver en plano y ficha técnica"
-                >
-                  <Eye className="mr-1 size-3.5" />
-                  Ver
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 border-accent/40 bg-accent/10 px-2.5 text-xs font-medium text-accent hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onEdit(lot)}
-                  title={`Editar datos del ${lot.id}`}
-                >
-                  <Pencil className="mr-1 size-3.5" />
-                  Editar
-                </Button>
-              </div>
-            </TableCell>
+    <div className="w-full overflow-x-auto rounded-xl border">
+      <Table className="min-w-[1100px]">
+        <TableHeader>
+          <TableRow className="bg-muted/30">
+            <TableHead className="w-[130px]">Lote</TableHead>
+            <TableHead className="w-[90px]">Manzana</TableHead>
+            <TableHead className="w-[110px]">Área</TableHead>
+            <TableHead className="w-[140px]">Valor m²</TableHead>
+            <TableHead className="min-w-[210px]">Precio Venta (Lista)</TableHead>
+            <TableHead className="min-w-[210px]">Precio Pre-Venta</TableHead>
+            <TableHead className="w-[120px]">Estado</TableHead>
+            <TableHead className="min-w-[180px]">Gestión comercial</TableHead>
+            <TableHead className="text-right w-[140px]">Acciones</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {lots.map((lot) => {
+            const meta = lot.metadata;
+            const ubicacion = (meta?.ubicacion as string) || "";
+            const valorM2 = Number(meta?.valor_m2 ?? 0);
+            const preM2 = Number(meta?.prem2 ?? 0);
+            const precioPreventa = Number(meta?.precio_preventa ?? 0);
+            const cuotaIni20 = Number(
+              meta?.cuota_ini_20 ?? meta?.cuota_inicial_20 ?? Math.round(lot.price * 0.2),
+            );
+            const cuotas48 = Number(meta?.cuotas_48 ?? Math.round((lot.price * 0.8) / 48));
+            const cuotaIniPre20 = Number(
+              meta?.cuota_ini_pre_20 ?? (precioPreventa ? Math.round(precioPreventa * 0.2) : 0),
+            );
+            const cuotas48Pre = Number(
+              meta?.cuotas_48_pre ?? (precioPreventa ? Math.round((precioPreventa * 0.8) / 48) : 0),
+            );
+
+            return (
+              <TableRow
+                key={lot.id}
+                className="cursor-pointer hover:bg-muted/40 transition-colors"
+                onClick={() => onSelect(lot.id)}
+              >
+                <TableCell>
+                  <div className="flex flex-col gap-1 items-start">
+                    <span className="font-semibold text-foreground tracking-tight">{lot.id}</span>
+                    {ubicacion && (
+                      <span
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
+                          ubicacion === "ESQUINA"
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800"
+                            : ubicacion === "ISLA"
+                              ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800"
+                              : ubicacion === "CALLEJON"
+                                ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-800"
+                                : "bg-muted text-muted-foreground border border-muted-foreground/20"
+                        }`}
+                      >
+                        {ubicacion}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="font-medium text-foreground">{lot.manzana ?? "—"}</span>
+                </TableCell>
+                <TableCell>
+                  <span className="font-medium tabular-nums">{formatLotArea(lot.area)}</span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium text-foreground tabular-nums text-xs">
+                      {valorM2 > 0 ? formatLotPrice(valorM2) : "—"}
+                    </span>
+                    {preM2 > 0 && (
+                      <span className="text-[11px] text-muted-foreground tabular-nums">
+                        Pre: {formatLotPrice(preM2)}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-semibold text-foreground tabular-nums text-sm">
+                      {formatLotPrice(lot.price)}
+                    </span>
+                    {lot.price > 0 && (
+                      <span className="text-[11px] text-muted-foreground tabular-nums">
+                        Ini 20%: {formatLotPrice(cuotaIni20)} · 48c: {formatLotPrice(cuotas48)}/m
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-0.5">
+                    {precioPreventa > 0 ? (
+                      <>
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums text-sm">
+                          {formatLotPrice(precioPreventa)}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          Ini 20%: {formatLotPrice(cuotaIniPre20)} · 48c:{" "}
+                          {formatLotPrice(cuotas48Pre)}/m
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={lot.status} />
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-0.5 max-w-[200px]">
+                    {lot.buyer ? (
+                      <>
+                        <span
+                          className="text-xs font-medium text-foreground truncate"
+                          title={lot.buyer}
+                        >
+                          {lot.buyer}
+                        </span>
+                        <span
+                          className="text-[11px] text-muted-foreground truncate"
+                          title={lot.advisor || "Sin asesor"}
+                        >
+                          {lot.advisor || "Sin asesor"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Sin gestión asignada</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div
+                    className="flex items-center justify-end gap-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => onSelect(lot.id)}
+                      title="Ver ficha técnica y ubicación"
+                    >
+                      <Eye className="mr-1 size-3.5" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-accent/40 bg-accent/10 px-2.5 text-xs font-medium text-accent hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => onEdit(lot)}
+                      title={`Editar datos del ${lot.id}`}
+                    >
+                      <Pencil className="mr-1 size-3.5" />
+                      Editar
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
 function StatusBadge({ status }: { status: LotStatus }) {
-  return (
-    <Badge
-      variant={status === "Disponible" ? "secondary" : status === "Vendido" ? "outline" : "default"}
-    >
-      {status}
-    </Badge>
-  );
+  if (status === "Disponible") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium text-xs"
+      >
+        Disponible
+      </Badge>
+    );
+  }
+  if (status === "Reservado") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-amber-600/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium text-xs"
+      >
+        Reservado
+      </Badge>
+    );
+  }
+  if (status === "Vendido") {
+    return (
+      <Badge
+        variant="outline"
+        className="border-slate-400/40 bg-slate-500/10 text-slate-700 dark:text-slate-400 font-medium text-xs"
+      >
+        Vendido
+      </Badge>
+    );
+  }
+  return <Badge variant="secondary">{status}</Badge>;
 }
 
 function LotPagination({
@@ -797,75 +942,6 @@ function LotPagination({
         </PaginationContent>
       </Pagination>
     </div>
-  );
-}
-
-function MasterplanCard({
-  selectedLot,
-  masterplanUrl,
-  projectName,
-}: {
-  selectedLot: InventoryLot | null;
-  masterplanUrl: string | null;
-  projectName?: string;
-}) {
-  return (
-    <Card className="h-fit rounded-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <MapPinned className="size-4" /> Plano urbanístico
-        </CardTitle>
-        <CardDescription>Vista de referencia del inventario cargado.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {selectedLot ? (
-          <>
-            <LotPlanPreview lot={selectedLot} masterplanUrl={masterplanUrl} />
-            <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                    Lote enfocado
-                  </p>
-                  <p className="font-serif text-xl text-foreground">{selectedLot.id}</p>
-                </div>
-                <StatusBadge status={selectedLot.status} />
-              </div>
-              <p className="text-sm text-muted-foreground">{selectedLot.detail}</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Área</p>
-                  <p className="font-medium">{formatLotArea(selectedLot.area)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Manzana</p>
-                  <p className="font-medium">{selectedLot.manzana ?? "Por confirmar"}</p>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="overflow-hidden rounded-xl border bg-muted">
-              {masterplanUrl && (
-                <img
-                  src={masterplanUrl}
-                  alt={`Plano urbanístico de ${projectName ?? "proyecto"}`}
-                  className="aspect-square w-full object-cover"
-                />
-              )}
-            </div>
-            <div className="flex flex-col gap-2 rounded-xl border border-dashed p-4">
-              <Map className="size-5 text-accent" />
-              <p className="text-sm font-medium">Selecciona un lote</p>
-              <p className="text-sm text-muted-foreground">
-                El plano se acercará a su zona y mostrará los datos de espacio disponibles.
-              </p>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -992,39 +1068,111 @@ function LotDetailSheet({
 
           {/* Información Financiera y de Preventa */}
           {hasFinancialPlan && (
-            <div className="rounded-xl border bg-muted/20 p-4">
-              <p className="text-xs uppercase tracking-[0.14em] font-semibold text-accent">
-                Plan comercial y financiamiento
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                {Boolean(metadata?.precio_preventa) && (
-                  <div>
-                    <span className="text-muted-foreground">Precio Preventa:</span>
-                    <p className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(Number(metadata?.precio_preventa))}
+            <div className="rounded-xl border bg-muted/20 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.14em] font-semibold text-accent">
+                  Plan comercial y financiamiento
+                </p>
+                {metadata?.color && (
+                  <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                    Categoría: {String(metadata.color)}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Comparativa Venta Lista vs Preventa */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Venta Regular / Lista */}
+                <div className="rounded-lg border bg-card p-3 space-y-2">
+                  <div className="flex items-center justify-between border-b pb-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Venta Lista
+                    </span>
+                    {metadata?.valor_m2 ? (
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {formatLotPrice(Number(metadata.valor_m2))}/m²
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-muted-foreground block">Precio total:</span>
+                    <p className="font-serif text-xl font-bold text-foreground">
+                      {formatLotPrice(lot.price)}
                     </p>
                   </div>
-                )}
-                <div>
-                  <span className="text-muted-foreground">Precio Total:</span>
-                  <p className="font-semibold text-foreground text-sm">
-                    {formatLotPrice(lot.price)}
-                  </p>
+                  <div className="pt-1 border-t space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Cuota inicial (20%):</span>
+                      <span className="font-semibold text-foreground">
+                        {formatLotPrice(Number(metadata?.cuota_ini_20 ?? initialPayment))}
+                      </span>
+                    </div>
+                    {metadata?.cuotas_3_ini ? (
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>3 pagos inicial:</span>
+                        <span>{formatLotPrice(Number(metadata.cuotas_3_ini))}</span>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-between pt-1">
+                      <span className="text-muted-foreground">48 cuotas mes (80%):</span>
+                      <span className="font-semibold text-foreground">
+                        {formatLotPrice(Number(metadata?.cuotas_48 ?? monthlyPayment48))}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                {initialPayment > 0 && (
-                  <div>
-                    <span className="text-muted-foreground">Cuota inicial (20%):</span>
-                    <p className="font-semibold text-foreground">
-                      {formatLotPrice(initialPayment)}
-                    </p>
-                  </div>
-                )}
-                {monthlyPayment48 > 0 && (
-                  <div>
-                    <span className="text-muted-foreground">48 Cuotas mes (80%):</span>
-                    <p className="font-semibold text-foreground">
-                      {formatLotPrice(monthlyPayment48)}
-                    </p>
+
+                {/* Preventa */}
+                {Boolean(metadata?.precio_preventa) && (
+                  <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+                    <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Pre-Venta Especial
+                      </span>
+                      {metadata?.prem2 ? (
+                        <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          {formatLotPrice(Number(metadata.prem2))}/m²
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[11px] text-muted-foreground block">
+                        Precio preventa:
+                      </span>
+                      <p className="font-serif text-xl font-bold text-emerald-700 dark:text-emerald-400">
+                        {formatLotPrice(Number(metadata?.precio_preventa))}
+                      </p>
+                    </div>
+                    <div className="pt-1 border-t border-emerald-500/20 space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Inicial preventa (20%):</span>
+                        <span className="font-semibold text-foreground">
+                          {formatLotPrice(
+                            Number(
+                              metadata?.cuota_ini_pre_20 ??
+                                Math.round(Number(metadata?.precio_preventa) * 0.2),
+                            ),
+                          )}
+                        </span>
+                      </div>
+                      {metadata?.cuotas_3_ini_pre ? (
+                        <div className="flex justify-between text-[11px] text-muted-foreground">
+                          <span>3 pagos inicial:</span>
+                          <span>{formatLotPrice(Number(metadata.cuotas_3_ini_pre))}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex justify-between pt-1">
+                        <span className="text-muted-foreground">48 cuotas mes (80%):</span>
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                          {formatLotPrice(
+                            Number(
+                              metadata?.cuotas_48_pre ??
+                                Math.round((Number(metadata?.precio_preventa) * 0.8) / 48),
+                            ),
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1159,6 +1307,7 @@ interface EditLotDialogProps {
       manzana: string;
       area: number;
       price: number;
+      precio_preventa?: number;
       status: LotStatus;
       buyer: string;
       advisor: string;
@@ -1172,6 +1321,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
   const [manzana, setManzana] = useState("");
   const [area, setArea] = useState<number>(0);
   const [price, setPrice] = useState<number>(0);
+  const [precioPreventa, setPrecioPreventa] = useState<number>(0);
   const [status, setStatus] = useState<LotStatus>("Disponible");
   const [buyer, setBuyer] = useState("");
   const [advisor, setAdvisor] = useState("");
@@ -1183,6 +1333,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
       setManzana(editingLot.manzana || "");
       setArea(editingLot.area || 0);
       setPrice(editingLot.price || 0);
+      setPrecioPreventa(Number(editingLot.metadata?.precio_preventa || 0));
       setStatus(editingLot.status);
       setBuyer(editingLot.buyer || "");
       setAdvisor(editingLot.advisor || "");
@@ -1196,6 +1347,9 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
     [price, area],
   );
 
+  const initialPaymentPre = precioPreventa > 0 ? Math.round(precioPreventa * 0.2) : 0;
+  const monthlyPayment48Pre = precioPreventa > 0 ? Math.round((precioPreventa * 0.8) / 48) : 0;
+
   if (!editingLot) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1204,6 +1358,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
       manzana: manzana.trim(),
       area: Number(area),
       price: Number(price),
+      precio_preventa: Number(precioPreventa),
       status,
       buyer: buyer.trim(),
       advisor: advisor.trim(),
@@ -1223,8 +1378,8 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
             <div>
               <DialogTitle className="font-serif text-2xl">Editar Lote {editingLot.id}</DialogTitle>
               <DialogDescription>
-                Modifica la información comercial, medidas y linderos que se actualizan directamente
-                en la base de datos y en el plano interactivo.
+                Modifica la información comercial, precios, medidas y linderos que se actualizan
+                directamente en la base de datos y en el plano interactivo.
               </DialogDescription>
             </div>
           </div>
@@ -1243,7 +1398,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 id="edit-manzana"
                 value={manzana}
                 onChange={(e) => setManzana(e.target.value)}
-                placeholder="Ej. M1, M2"
+                placeholder="Ej. M 1, M 2"
                 required
               />
             </div>
@@ -1283,7 +1438,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 min="0"
                 value={area || ""}
                 onChange={(e) => setArea(parseFloat(e.target.value) || 0)}
-                placeholder="Ej. 132.50"
+                placeholder="Ej. 350.21"
                 required
               />
               <span className="text-[11px] text-muted-foreground mt-0.5 block">
@@ -1293,10 +1448,25 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
 
             <div>
               <label
+                htmlFor="edit-ubicacion"
+                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              >
+                Ubicación (Esquina, Central, Isla...)
+              </label>
+              <Input
+                id="edit-ubicacion"
+                value={ubicacion}
+                onChange={(e) => setUbicacion(e.target.value)}
+                placeholder="Ej. ESQUINA, CENTRAL, CALLEJON, ISLA"
+              />
+            </div>
+
+            <div>
+              <label
                 htmlFor="edit-price"
                 className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Precio (COP)
+                Precio Venta Lista (COP)
               </label>
               <Input
                 id="edit-price"
@@ -1305,7 +1475,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 min="0"
                 value={price || ""}
                 onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                placeholder="Ej. 45000000"
+                placeholder="Ej. 108565100"
                 required
               />
               <span className="text-[11px] text-muted-foreground mt-0.5 block">
@@ -1313,48 +1483,72 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
               </span>
             </div>
 
-            {price > 0 && (
-              <div className="sm:col-span-2 rounded-xl border border-accent/20 bg-accent/5 p-3.5">
-                <p className="text-xs uppercase tracking-wider font-semibold text-accent mb-2">
-                  Plan Financiero Estimado (20% inicial / 48 cuotas)
+            <div>
+              <label
+                htmlFor="edit-price-pre"
+                className="block text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1"
+              >
+                Precio Pre-Venta (COP)
+              </label>
+              <Input
+                id="edit-price-pre"
+                type="number"
+                step="1000"
+                min="0"
+                value={precioPreventa || ""}
+                onChange={(e) => setPrecioPreventa(parseFloat(e.target.value) || 0)}
+                placeholder="Ej. 98058800"
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Visualización: {formatLotPrice(precioPreventa)}
+              </span>
+            </div>
+
+            {(price > 0 || precioPreventa > 0) && (
+              <div className="sm:col-span-2 rounded-xl border border-accent/20 bg-accent/5 p-3.5 space-y-2">
+                <p className="text-xs uppercase tracking-wider font-semibold text-accent">
+                  Simulación Financiera Calculada (20% inicial / 48 cuotas)
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <span className="text-muted-foreground block">Precio Total:</span>
-                    <span className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(price)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Cuota Inicial (20%):</span>
-                    <span className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(initialPayment)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">48 Cuotas mes (80%):</span>
-                    <span className="font-semibold text-foreground text-sm">
-                      {formatLotPrice(monthlyPayment48)}
-                    </span>
-                  </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  {price > 0 && (
+                    <>
+                      <div>
+                        <span className="text-muted-foreground block">Inicial Lista (20%):</span>
+                        <span className="font-semibold text-foreground text-sm">
+                          {formatLotPrice(initialPayment)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">48 Cuotas Lista:</span>
+                        <span className="font-semibold text-foreground text-sm">
+                          {formatLotPrice(monthlyPayment48)}/m
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {precioPreventa > 0 && (
+                    <>
+                      <div>
+                        <span className="text-muted-foreground block text-emerald-700 dark:text-emerald-400">
+                          Inicial Pre-Venta (20%):
+                        </span>
+                        <span className="font-semibold text-foreground text-sm">
+                          {formatLotPrice(initialPaymentPre)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-emerald-700 dark:text-emerald-400">
+                          48 Cuotas Pre-Venta:
+                        </span>
+                        <span className="font-semibold text-foreground text-sm">
+                          {formatLotPrice(monthlyPayment48Pre)}/m
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
-
-            <div>
-              <label
-                htmlFor="edit-ubicacion"
-                className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
-              >
-                Ubicación
-              </label>
-              <Input
-                id="edit-ubicacion"
-                value={ubicacion}
-                onChange={(e) => setUbicacion(e.target.value)}
-                placeholder="Ej. Esquina, Central"
-              />
-            </div>
 
             <div>
               <label
@@ -1371,7 +1565,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div>
               <label
                 htmlFor="edit-advisor"
                 className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
@@ -1391,7 +1585,7 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 htmlFor="edit-linderos"
                 className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1"
               >
-                Linderos y Descripción Legal
+                Linderos y Descripción Legal Oficial
               </label>
               <Textarea
                 id="edit-linderos"
@@ -1399,10 +1593,11 @@ function EditLotDialog({ editingLot, isSaving, onClose, onSave }: EditLotDialogP
                 value={descripcionLindero}
                 onChange={(e) => setDescripcionLindero(e.target.value)}
                 placeholder="Por el frente linda con... por la derecha... por la izquierda... por el fondo..."
-                className="font-mono text-xs"
+                className="font-mono text-xs leading-relaxed"
               />
               <span className="text-[11px] text-muted-foreground mt-0.5 block">
-                Este texto se muestra en la ficha técnica y legal de cada lote.
+                Este texto corresponde a los linderos jurídicos del lote y se sincroniza en la base
+                de datos.
               </span>
             </div>
           </div>

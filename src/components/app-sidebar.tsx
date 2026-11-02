@@ -59,22 +59,21 @@ const navBase = [
   },
   {
     title: "Experiencias del proyecto",
-    url: "/admin/experiencias/visor-lotes",
+    url: "/admin/experiencias/masterplan",
     icon: Boxes,
     items: [
-      { title: "Visor de lotes", url: "/admin/experiencias/visor-lotes" },
       { title: "Masterplan interactivo", url: "/admin/experiencias/masterplan" },
-      { title: "Tour panorámico y 3D", disabled: true },
+      { title: "Tour de terreno y GPS", url: "/admin/experiencias/recorrido-terreno" },
     ],
   },
   {
     title: "Páginas públicas",
-    url: "/admin#contenido",
+    url: "/",
     icon: PanelTop,
     items: [
-      { title: "Inicio", disabled: true },
-      { title: "Catálogo", disabled: true },
-      { title: "Detalle de propiedad", disabled: true },
+      { title: "Inicio", url: "/" },
+      { title: "Catálogo", url: "/catalogo" },
+      { title: "Nosotros", url: "/nosotros" },
     ],
   },
   {

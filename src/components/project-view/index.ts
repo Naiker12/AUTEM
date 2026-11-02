@@ -2,6 +2,7 @@ export { default as ModeSwitcher } from "./ModeSwitcher";
 export { default as LotSelectionPanel } from "./LotSelectionPanel";
 export { default as MasterplanImageViewer } from "./MasterplanImageViewer";
 export { default as MasterplanSvgViewer } from "./MasterplanSvgViewer";
+export { default as ProjectLocationMap } from "./ProjectLocationMap";
 export { default as TerrainRouteView } from "./TerrainRouteView";
 export {
   default as ProjectViewControlPanel,

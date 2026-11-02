@@ -1,7 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Download,
   MessageCircle,
   PanelLeftClose,
   Ruler,
@@ -101,7 +100,7 @@ export default function LotSelectionPanel({
   );
 
   const contactUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
-    "Hola AUTEM, quiero recibir asesoría sobre los lotes del plano maestro.",
+    "Hola AUTEM, quiero recibir asesoría sobre los lotes del plano maestro de Villa Paraíso.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179 (Santa Rosa de Lima a 1 km vía a Villanueva, Bolívar)",
   )}`;
 
   if (isMobileSplit) {
@@ -244,7 +243,7 @@ const LotCardItem = memo(
         <button
           type="button"
           onClick={() => onSelect(lot)}
-          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5 pr-[68px]" : "py-2 px-3 pr-[76px]"}`}
+          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5 pr-[36px]" : "py-2 px-3 pr-[40px]"}`}
         >
           {/* Fila 1: ID, Estado y Precio en una sola línea compacta */}
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -253,13 +252,15 @@ const LotCardItem = memo(
             >
               {lot.id}
             </strong>
-            <Badge
-              variant="outline"
-              className={`rounded-full ${isMobile ? "px-1.5 py-0 text-[7px]" : "px-2 py-0 text-[7.5px]"} font-semibold flex items-center gap-1 leading-none ${badgeClass}`}
-            >
-              <span className={`${isMobile ? "size-1" : "size-1.5"} rounded-full ${dotClass}`} />
-              {lot.status}
-            </Badge>
+            {!isSold && (
+              <Badge
+                variant="outline"
+                className={`rounded-full ${isMobile ? "px-1.5 py-0 text-[7px]" : "px-2 py-0 text-[7.5px]"} font-semibold flex items-center gap-1 leading-none ${badgeClass}`}
+              >
+                <span className={`${isMobile ? "size-1" : "size-1.5"} rounded-full ${dotClass}`} />
+                {lot.status}
+              </Badge>
+            )}
             {isSold ? (
               <span
                 className={`ml-auto font-semibold text-slate-500 dark:text-stone-400 ${isMobile ? "text-[10px]" : "text-[11px]"}`}
@@ -290,7 +291,7 @@ const LotCardItem = memo(
 
         {/* Acciones de lote compactas */}
         <div
-          className={`absolute ${isMobile ? "right-1.5 gap-1" : "right-2 gap-1.5"} top-1/2 -translate-y-1/2 flex items-center`}
+          className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -305,24 +306,6 @@ const LotCardItem = memo(
             className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center bg-[#403a34] text-[#f6f1eb] dark:bg-stone-800 dark:text-stone-200 dark:border dark:border-white/10 shadow-xs transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-[#151413] active:scale-90 cursor-pointer`}
           >
             <Box size={isMobile ? 11 : 12.5} />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(lot);
-              const text = `Hola AUTEM, me gustaría recibir la ficha técnica y cotización del Lote ${lot.id} (${lot.area} m² - ${lot.detail}).`;
-              window.open(
-                `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(text)}`,
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }}
-            title={`Descargar ficha de ${lot.id}`}
-            aria-label={`Descargar ficha de ${lot.id}`}
-            className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center border border-border/80 dark:border-white/10 bg-background/90 dark:bg-stone-800/80 text-foreground/80 dark:text-stone-300 shadow-xs transition-all hover:border-accent hover:text-accent active:scale-90 cursor-pointer`}
-          >
-            <Download size={isMobile ? 11 : 12.5} />
           </button>
         </div>
       </article>
@@ -380,7 +363,7 @@ function LotCatalog({
   isMobile?: boolean;
 }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const totalLotsCount = lots.length || 343;
+  const totalLotsCount = lots.length || 340;
 
   const handleSelectFromSearch = (lot: Lot) => {
     // Si el lote tiene un estado comercial diferente al filtro activo, cambiar a "Todos"

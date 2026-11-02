@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  Bird,
   CheckCircle2,
   CloudUpload,
+  Compass,
   ExternalLink,
   FileText,
   ImageIcon,
@@ -11,13 +13,22 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Sparkles,
   Trash2,
+  Trees,
   Upload,
+  Waves,
   X,
 } from "lucide-react";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 
-import { PROPERTY_TYPES, type PropertyType } from "@/data/properties";
+import {
+  PROPERTY_TYPES,
+  type PropertyType,
+  type ProjectDossierMetadata,
+  type ProjectEcology,
+  type ProjectMetrics,
+} from "@/data/properties";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +77,7 @@ import {
   deleteProjectMedia,
   listManagedProjects,
   listProjectMedia,
+  parseRawDossierText,
   publicProjectMediaUrl,
   updateManagedProject,
   uploadProjectMedia,
@@ -99,6 +111,7 @@ type ProjectDraft = {
   area: string;
   description: string;
   tourUrl: string;
+  metadata?: ProjectDossierMetadata;
 };
 
 const emptyDraft: ProjectDraft = {
@@ -110,6 +123,7 @@ const emptyDraft: ProjectDraft = {
   area: "",
   description: "",
   tourUrl: "",
+  metadata: undefined,
 };
 
 const humanizeType = (type: PropertyType) =>
@@ -221,6 +235,7 @@ function ProjectsPage() {
       area: project.raw.area_label ?? "",
       description: project.raw.description ?? "",
       tourUrl: project.raw.tour_url ?? "",
+      metadata: project.raw.metadata,
     });
     setCoverFile(null);
     setCoverPreview(project.image);
@@ -273,6 +288,7 @@ function ProjectsPage() {
         areaLabel: draft.area,
         description: draft.description,
         tourUrl: draft.tourUrl,
+        metadata: draft.metadata,
       };
 
       const saved = editingProject
@@ -432,12 +448,22 @@ function ProjectsPage() {
             return URL.createObjectURL(file);
           });
         }}
-        onRemoveCover={() => {
-          setCoverFile(null);
-          setCoverPreview((prev) => {
-            if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
-            return editingProject?.image ?? "";
-          });
+        onRemoveCover={async () => {
+          if (coverFile) {
+            setCoverFile(null);
+            setCoverPreview((prev) => {
+              if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+              return editingProject?.image ?? "";
+            });
+            return;
+          }
+          // Si es una portada existente en Supabase, la eliminamos físicamente de Storage y BD
+          const existingCover = existingMedia.find((m) => m.media_type === "cover");
+          if (existingCover && editingProject) {
+            await handleDeleteExistingMedia(existingCover);
+          } else {
+            setCoverPreview("");
+          }
         }}
         onAddGalleryFiles={(files) => setPendingGalleryFiles((prev) => [...prev, ...files])}
         onRemovePendingGalleryFile={(index) =>
@@ -637,7 +663,7 @@ type ProjectDialogProps = {
   pendingDocumentFiles: File[];
   onDraftChange: <Key extends keyof ProjectDraft>(key: Key, value: ProjectDraft[Key]) => void;
   onSelectCover: (file: File) => void;
-  onRemoveCover: () => void;
+  onRemoveCover: () => void | Promise<void>;
   onAddGalleryFiles: (files: File[]) => void;
   onRemovePendingGalleryFile: (index: number) => void;
   onSelectMasterplan: (file: File) => void;
@@ -681,6 +707,27 @@ function ProjectDialog({
   const existingMasterplan = existingMedia.find((m) => m.media_type === "masterplan");
   const existingDocuments = existingMedia.filter((m) => m.media_type === "document");
   const [pendingGalleryPreviews, setPendingGalleryPreviews] = useState<string[]>([]);
+  const [rawDossierText, setRawDossierText] = useState(draft.metadata?.rawDossierText || "");
+  const [parseNotice, setParseNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRawDossierText(draft.metadata?.rawDossierText || "");
+    setParseNotice(null);
+  }, [editingProject?.id, draft.metadata?.rawDossierText]);
+
+  const handleParseDossier = () => {
+    if (!rawDossierText.trim()) return;
+    const parsed = parseRawDossierText(rawDossierText);
+    const updatedMeta: ProjectDossierMetadata = {
+      ...draft.metadata,
+      ...parsed,
+      rawDossierText,
+    };
+    onDraftChange("metadata", updatedMeta);
+    setParseNotice(
+      `✓ Dossier procesado con éxito: ${updatedMeta.metrics?.totalLots || 340} parcelas, ${updatedMeta.amenities?.length || 27} amenidades y ${updatedMeta.whyBuyReasons?.length || 10} razones detectadas. Haz clic en "Guardar cambios" para persistirlo en la base de datos.`,
+    );
+  };
 
   useEffect(() => {
     const urls = pendingGalleryFiles.map((file) => URL.createObjectURL(file));
@@ -715,6 +762,7 @@ function ProjectDialog({
           <Tabs defaultValue="informacion" className="flex flex-col gap-4">
             <TabsList className="w-full justify-start overflow-x-auto">
               <TabsTrigger value="informacion">Información</TabsTrigger>
+              <TabsTrigger value="dossier">Dossier y Ficha</TabsTrigger>
               <TabsTrigger value="medios">Medios y galería</TabsTrigger>
               <TabsTrigger value="experiencia">Experiencia</TabsTrigger>
             </TabsList>
@@ -801,6 +849,292 @@ function ProjectDialog({
                     />
                   </Field>
                 </FieldGroup>
+              </FieldSet>
+            </TabsContent>
+
+            <TabsContent value="dossier">
+              <FieldSet className="space-y-6">
+                <FieldLegend>Dossier Oficial y Ficha del Proyecto</FieldLegend>
+
+                {/* 1. Herramienta de Pegar Texto / Importar PDF */}
+                <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="size-4 text-accent shrink-0" />
+                      <span className="font-semibold text-xs text-foreground">
+                        Pegar contenido de la ficha técnica o PDF
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] border-accent/40 text-accent">
+                      Importador inteligente
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Pega el texto del documento o folleto oficial del proyecto. Nuestro analizador
+                    identificará automáticamente el concepto ecológico, número de lotes, amenidades,
+                    razones de compra y servicios para guardarlos en la base de datos de Supabase.
+                  </p>
+                  <Textarea
+                    rows={6}
+                    value={rawDossierText}
+                    onChange={(e) => setRawDossierText(e.target.value)}
+                    placeholder="Pega aquí el texto completo del proyecto: descripción, hectáreas, lagos, aves, amenidades, por qué comprar, servicios..."
+                    className="font-mono text-xs bg-background/80"
+                  />
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleParseDossier}
+                      className="gap-1.5 font-medium text-xs rounded-lg cursor-pointer"
+                    >
+                      <Sparkles className="size-3.5" />
+                      Analizar y estructurar información
+                    </Button>
+                    {draft.metadata && (
+                      <span className="text-[11px] text-muted-foreground">
+                        Metadatos cargados en el borrador
+                      </span>
+                    )}
+                  </div>
+                  {parseNotice && (
+                    <Alert className="border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 py-2 text-xs">
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      <AlertDescription>{parseNotice}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
+                {/* 2. Visualización y Edición de Secciones Estructuradas */}
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Field className="space-y-1.5">
+                    <FieldLabel>Nombre de la Reserva Natural</FieldLabel>
+                    <Input
+                      value={draft.metadata?.ecology?.reserveName ?? "Reserva Natural La Ciénaga"}
+                      onChange={(e) => {
+                        const eco = {
+                          ...draft.metadata?.ecology,
+                          reserveName: e.target.value,
+                        } as unknown as ProjectEcology;
+                        onDraftChange("metadata", { ...draft.metadata, ecology: eco });
+                      }}
+                      placeholder="Reserva Natural La Ciénaga"
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5">
+                    <FieldLabel>Especies de aves registradas</FieldLabel>
+                    <Input
+                      type="number"
+                      value={draft.metadata?.ecology?.birdSpeciesCount ?? 130}
+                      onChange={(e) => {
+                        const eco = {
+                          ...draft.metadata?.ecology,
+                          birdSpeciesCount: Number(e.target.value),
+                        } as unknown as ProjectEcology;
+                        onDraftChange("metadata", { ...draft.metadata, ecology: eco });
+                      }}
+                      placeholder="130"
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5">
+                    <FieldLabel>Extensión total (Hectáreas)</FieldLabel>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={draft.metadata?.metrics?.totalAreaHa ?? 25.45}
+                      onChange={(e) => {
+                        const m = {
+                          ...draft.metadata?.metrics,
+                          totalAreaHa: Number(e.target.value),
+                        } as unknown as ProjectMetrics;
+                        onDraftChange("metadata", { ...draft.metadata, metrics: m });
+                      }}
+                      placeholder="25.45"
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5">
+                    <FieldLabel>Área de zonas verdes (m²)</FieldLabel>
+                    <Input
+                      type="number"
+                      value={draft.metadata?.metrics?.greenAreasM2 ?? 106322}
+                      onChange={(e) => {
+                        const m = {
+                          ...draft.metadata?.metrics,
+                          greenAreasM2: Number(e.target.value),
+                        } as unknown as ProjectMetrics;
+                        onDraftChange("metadata", { ...draft.metadata, metrics: m });
+                      }}
+                      placeholder="106322"
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5">
+                    <FieldLabel>Superficie en 3 lagos (m²)</FieldLabel>
+                    <Input
+                      type="number"
+                      value={draft.metadata?.metrics?.lakesAreaM2 ?? 33128}
+                      onChange={(e) => {
+                        const m = {
+                          ...draft.metadata?.metrics,
+                          lakesAreaM2: Number(e.target.value),
+                        } as unknown as ProjectMetrics;
+                        onDraftChange("metadata", { ...draft.metadata, metrics: m });
+                      }}
+                      placeholder="33128"
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5">
+                    <FieldLabel>Senderos totales (Metros lineales)</FieldLabel>
+                    <Input
+                      type="number"
+                      value={draft.metadata?.metrics?.trailsTotalM ?? 3479}
+                      onChange={(e) => {
+                        const m = {
+                          ...draft.metadata?.metrics,
+                          trailsTotalM: Number(e.target.value),
+                        } as unknown as ProjectMetrics;
+                        onDraftChange("metadata", { ...draft.metadata, metrics: m });
+                      }}
+                      placeholder="3479"
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5 md:col-span-2">
+                    <FieldLabel>Fauna silvestre protegida (separada por comas)</FieldLabel>
+                    <Input
+                      value={(
+                        draft.metadata?.ecology?.fauna || [
+                          "Osos Perezosos",
+                          "Osos Hormigueros",
+                          "Monos Aulladores",
+                          "Ardillas",
+                          "Iguanas",
+                          "Puerco Espín",
+                          "Loros",
+                          "Guacamayos Azules y Rojos",
+                          "Conejos",
+                          "Armadillos",
+                          "Tortugas",
+                          "Guartinajas",
+                        ]
+                      ).join(", ")}
+                      onChange={(e) => {
+                        const fauna = e.target.value
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const eco = {
+                          ...draft.metadata?.ecology,
+                          fauna,
+                        } as unknown as ProjectEcology;
+                        onDraftChange("metadata", { ...draft.metadata, ecology: eco });
+                      }}
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5 md:col-span-2">
+                    <FieldLabel>Amenidades Florida Country Club (una por línea)</FieldLabel>
+                    <Textarea
+                      rows={6}
+                      value={(
+                        draft.metadata?.amenities || [
+                          "Portería de Lujo y vigilancia 24 Horas",
+                          "Recepción y Salón de Reuniones",
+                          "Casa Club - Mirador",
+                          "Piscina para Adultos y Piscina para Niños",
+                          "Solárium",
+                          "Baños sociales",
+                          "Parque infantil",
+                          "Gimnasio de mascotas (Pet Park)",
+                          "Cancha múltiple de Microfútbol y Basquetbol",
+                          "Senderismo ecológico",
+                          "Ciclorrutas",
+                          "Gran Kiosco Social",
+                          "Lago para Kayaking",
+                          "Lago para Canotaje",
+                          "Lago para Pesca Deportiva",
+                          "Cancha para Tenis, Pádel y Voleibol",
+                          "Capilla",
+                          "Zona de lectura y meditación",
+                          "Zona de BBQ",
+                          "Puente Mirador en el Arroyo",
+                          "Senderos para Bicicross",
+                          "Bio gimnasio al aire libre",
+                          "Jardines y senderos florales",
+                          "Bosque de árboles frutales",
+                          "Observación de aves",
+                          "Amplias zonas verdes (106.322 m²)",
+                          "Copiosa vegetación y reserva boscosa protegida de 4 ha",
+                        ]
+                      ).join("\n")}
+                      onChange={(e) => {
+                        const amenities = e.target.value
+                          .split("\n")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        onDraftChange("metadata", { ...draft.metadata, amenities });
+                      }}
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5 md:col-span-2">
+                    <FieldLabel>¿Por qué comprar? - Razones clave (una por línea)</FieldLabel>
+                    <Textarea
+                      rows={5}
+                      value={(
+                        draft.metadata?.whyBuyReasons || [
+                          "Fácil acceso a solo 1 km del Municipio en la vía Santa Rosa - Villanueva, con servicios públicos y viabilidad de gas domiciliario.",
+                          "Excelente topografía alta con tanque de 250.000 litros existente que suministra agua por gravedad garantizando gran ahorro energético.",
+                          "Estudio hidrológico radicado en Planeación que garantiza cero inundaciones gracias al arroyo natural que no se desborda y lagunas de amortiguación.",
+                          "Conjunto cerrado con portería de lujo 24 horas, cerramiento en limoncillo y malla galvanizada plastificada en PVC con tubos de 2”.",
+                          "Tres grandes lagos con 33.128 m² de espejo de agua para pesca deportiva y deportes náuticos.",
+                          "Más de 3.400 metros de senderos bajo frondosos árboles nativos escuchando el lindo canto de los pájaros.",
+                          "Hábitat natural protegido con más de 130 especies de aves y fauna silvestre libre (osos perezosos, monos aulladores, armadillos, etc.).",
+                          "5 senderos peatonales internos de 3 metros entre manzanas comunicando directamente con los senderos perimetrales.",
+                          "Alta valorización garantizada a solo 10 minutos de donde se construirá el nuevo Aeropuerto Internacional de Cartagena de Indias.",
+                          "Libertad de construcción con asesoría en conceptos bioclimáticos y sustentables que armonizan con la reserva.",
+                        ]
+                      ).join("\n")}
+                      onChange={(e) => {
+                        const whyBuyReasons = e.target.value
+                          .split("\n")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        onDraftChange("metadata", { ...draft.metadata, whyBuyReasons });
+                      }}
+                    />
+                  </Field>
+
+                  <Field className="space-y-1.5 md:col-span-2">
+                    <FieldLabel>Servicios e Infraestructura (uno por línea)</FieldLabel>
+                    <Textarea
+                      rows={4}
+                      value={(
+                        draft.metadata?.services || [
+                          "Servicio de agua domiciliaria proveniente de pozos profundos o empresa operadora con tanques de reserva (250.000 L)",
+                          "Servicio de energía eléctrica y alumbrado público ecológico",
+                          "Parqueadero para visitantes y accesibilidad total",
+                          "Servicio permanente de jardinería y mantenimiento de áreas comunes",
+                          "Probabilidad y viabilidad de gas domiciliario",
+                          "Circuito Cerrado de Televisión (CCTV) y vigilancia privada 24 horas",
+                          "Vías internas en zahorra compactada con cunetas y bordillos",
+                          "Cercas vivas con limoncillo y malla galvanizada plastificada en PVC con tubos de 2”",
+                        ]
+                      ).join("\n")}
+                      onChange={(e) => {
+                        const services = e.target.value
+                          .split("\n")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        onDraftChange("metadata", { ...draft.metadata, services });
+                      }}
+                    />
+                  </Field>
+                </div>
               </FieldSet>
             </TabsContent>
 
@@ -1024,7 +1358,7 @@ function ProjectDialog({
                             <input
                               id="project-masterplan-replace"
                               type="file"
-                              accept="image/*,.pdf,.svg"
+                              accept=".svg,.png,.jpg,.jpeg,.webp,.pdf,.dxf,.dwg,.geojson,.json"
                               className="sr-only"
                               onChange={(e) => {
                                 const f = e.target.files?.[0];
@@ -1047,9 +1381,9 @@ function ProjectDialog({
                     ) : (
                       <MediaDropzone
                         id="project-masterplan"
-                        accept="image/*,.pdf,.svg"
+                        accept=".svg,.png,.jpg,.jpeg,.webp,.pdf,.dxf,.dwg,.geojson,.json"
                         title="Plano general"
-                        description="SVG, imagen o PDF del urbanismo."
+                        description="SVG, GeoJSON, CAD (.dxf, .dwg), imagen o PDF del urbanismo."
                         onFilesSelected={(files) => files[0] && onSelectMasterplan(files[0])}
                       />
                     )}

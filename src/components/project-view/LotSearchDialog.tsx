@@ -142,7 +142,7 @@ export default function LotSearchDialog({
                 No encontramos el lote "{searchTerm}"
               </p>
               <p className="mt-0.5 text-[10.5px] text-muted-foreground">
-                Intenta con un número entre 1 y 343 o el nombre de una manzana.
+                Intenta con un número entre 1 y 340 o el nombre de una manzana.
               </p>
             </div>
           ) : (

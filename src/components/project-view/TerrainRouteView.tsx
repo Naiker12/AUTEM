@@ -1,10 +1,12 @@
 import PanelResizeHandle from "./PanelResizeHandle";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   ChevronDown,
   ChevronUp,
   Car,
+  Compass,
   Crosshair,
+  ExternalLink,
   FileText,
   Footprints,
   Info,
@@ -19,6 +21,7 @@ import {
 import { formatLotArea, formatLotPrice, formatManzanaLabel, type Lot } from "@/data/lots";
 import cadReference from "@/data/villa-paraiso-cad-reference.json";
 import { useTerrainNavigation } from "@/features/terrain-navigation/use-terrain-navigation";
+import { createFallbackInternalRoute } from "@/features/terrain-navigation/road-pathfinder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -83,6 +86,24 @@ export default function TerrainRouteView({
   );
   const validatedRoute = navigation.route;
 
+  const lotLabel = destination
+    ? `Lote ${destination.lotNumber ?? destination.id.replace("L-", "")}`
+    : "Elige tu destino";
+  const manzanaLabel = destination ? formatManzanaLabel(destination.manzana) : "";
+
+  const entrancePoint =
+    projectSlug === "villa-paraiso" ? cadReference.entranceAnnotation.svg : null;
+
+  // Ruta activa completa por red vial interna (calculada dinámicamente con centroides CAD)
+  const effectiveRoute = useMemo(() => {
+    if (validatedRoute && validatedRoute.svgPaths && validatedRoute.svgPaths.length > 0) {
+      return validatedRoute;
+    }
+    if (!destination?.centroid) return null;
+    const origin = entrancePoint ?? { x: 1014.7, y: 2148.5 };
+    return createFallbackInternalRoute(origin, destination.centroid, lotLabel, travelMode);
+  }, [validatedRoute, destination, entrancePoint, lotLabel, travelMode]);
+
   const selectDestination = (lot: Lot) => {
     if (!lot.centroid || lot.isReserve) return;
     onSelectLot(lot);
@@ -92,13 +113,6 @@ export default function TerrainRouteView({
 
   const locating = location.status === "requesting";
   const tracking = location.status === "ready" || location.status === "low_accuracy";
-  const lotLabel = destination
-    ? `Lote ${destination.lotNumber ?? destination.id.replace("L-", "")}`
-    : "Elige tu destino";
-  const manzanaLabel = destination ? formatManzanaLabel(destination.manzana) : "";
-
-  const entrancePoint =
-    projectSlug === "villa-paraiso" ? cadReference.entranceAnnotation.svg : null;
 
   const isSold = destination?.status === "Vendido";
   const isReserved = destination?.status === "Reservado";
@@ -109,10 +123,10 @@ export default function TerrainRouteView({
       : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/70 dark:text-emerald-300";
   const statusDotClass = isSold ? "bg-rose-500" : isReserved ? "bg-orange-500" : "bg-emerald-500";
 
-  const estimatedMinutes = validatedRoute
+  const estimatedMinutes = effectiveRoute
     ? Math.max(
         1,
-        Math.round(validatedRoute.result.distanceMeters / (travelMode === "driving" ? 350 : 75)),
+        Math.round(effectiveRoute.result.distanceMeters / (travelMode === "driving" ? 350 : 75)),
       )
     : null;
 
@@ -150,8 +164,9 @@ export default function TerrainRouteView({
             overlay={
               <TerrainRouteOverlay
                 destination={destination}
-                route={validatedRoute}
+                route={effectiveRoute}
                 entrancePoint={entrancePoint}
+                travelMode={travelMode}
               />
             }
           />
@@ -400,10 +415,8 @@ export default function TerrainRouteView({
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="driving"
-                  disabled={!navigation.available}
                   className="h-9 rounded-lg text-xs font-semibold data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
                   aria-label="Recorrido en vehículo"
-                  title="Pendiente de validar vías para vehículos"
                 >
                   <Car className="mr-1.5 size-3.5" /> Vehículo
                 </ToggleGroupItem>
@@ -423,7 +436,7 @@ export default function TerrainRouteView({
                   </span>
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent">
                     <Route className="size-3.5" />
-                    {validatedRoute ? "Ruta activa" : "Ubicación en plano"}
+                    {effectiveRoute ? "Ruta trazada" : "Ubicación en plano"}
                   </span>
                 </div>
 
@@ -437,39 +450,52 @@ export default function TerrainRouteView({
                       <p className="truncate text-[11px] text-muted-foreground">
                         {navigation.fromGps
                           ? "Origen dinámico en terreno"
-                          : "Entrada principal del proyecto"}
+                          : "Entrada principal del proyecto (CAD 1014, 2148)"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {validatedRoute ? (
-                  <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
-                    <div className="rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
-                      <span className="block text-[9px] font-bold uppercase text-muted-foreground">
-                        Distancia
-                      </span>
-                      <strong className="text-xs font-bold text-foreground">
-                        {Math.round(validatedRoute.result.distanceMeters)} m
-                      </strong>
+                {effectiveRoute ? (
+                  <>
+                    <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
+                      <div className="rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
+                        <span className="block text-[9px] font-bold uppercase text-muted-foreground">
+                          Distancia
+                        </span>
+                        <strong className="text-xs font-bold text-foreground">
+                          {Math.round(effectiveRoute.result.distanceMeters)} m
+                        </strong>
+                      </div>
+                      <div className="rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
+                        <span className="block text-[9px] font-bold uppercase text-muted-foreground">
+                          Tiempo est.
+                        </span>
+                        <strong className="text-xs font-bold text-foreground">
+                          ~{estimatedMinutes} min
+                        </strong>
+                      </div>
+                      <div className="rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
+                        <span className="block text-[9px] font-bold uppercase text-muted-foreground">
+                          Modo
+                        </span>
+                        <strong className="text-xs font-bold text-foreground">
+                          {travelMode === "driving" ? "Vehículo" : "A pie"}
+                        </strong>
+                      </div>
                     </div>
-                    <div className="rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
-                      <span className="block text-[9px] font-bold uppercase text-muted-foreground">
-                        Tiempo est.
-                      </span>
-                      <strong className="text-xs font-bold text-foreground">
-                        ~{estimatedMinutes} min
-                      </strong>
+
+                    <div className="mt-2.5 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+                      <p className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-300">
+                        <span className="size-2 rounded-full bg-emerald-500" />
+                        Ruta trazada hacia {lotLabel}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        Trazado continuo por vías internas conectando el Acceso Principal con el
+                        frente del lote.
+                      </p>
                     </div>
-                    <div className="rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
-                      <span className="block text-[9px] font-bold uppercase text-muted-foreground">
-                        Tramos
-                      </span>
-                      <strong className="text-xs font-bold text-foreground">
-                        {validatedRoute.result.edgeIds.length}
-                      </strong>
-                    </div>
-                  </div>
+                  </>
                 ) : (
                   <div className="mt-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
                     <p className="flex items-center gap-1.5 font-semibold text-foreground">
@@ -477,13 +503,67 @@ export default function TerrainRouteView({
                       {navigation.message}
                     </p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      La <strong className="font-semibold text-foreground">Portería</strong> y el{" "}
-                      <strong className="font-semibold text-foreground">{lotLabel}</strong> ya están
-                      marcados en el plano. El trazado vial paso a paso se activará al publicar la
-                      calibración topográfica en campo.
+                      Selecciona un lote en el plano o en el buscador para trazar la ruta de
+                      recorrido.
                     </p>
                   </div>
                 )}
+
+                {/* Sección: Llegar al proyecto en carretera (Google Maps / Waze) */}
+                <div className="mt-3.5 flex flex-col gap-2 rounded-xl border border-border/70 bg-background/60 p-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <Compass className="size-3.5 text-accent" /> Cómo llegar al proyecto
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="border-accent/40 bg-accent/10 px-1.5 py-0 text-[9px] font-semibold text-accent"
+                    >
+                      Carretera
+                    </Badge>
+                  </div>
+
+                  <p className="text-[11px] leading-tight text-foreground font-medium">
+                    Santa Rosa de Lima a 1 km vía a Villanueva, Bolívar
+                  </p>
+                  <p className="font-mono text-[10px] text-muted-foreground">
+                    Coordenadas: 10.436829, -75.356179
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-lg border-blue-600/30 bg-blue-50/50 px-2 text-[10.5px] font-bold text-blue-700 hover:bg-blue-100/60 dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-300"
+                    >
+                      <a
+                        href="https://www.google.com/maps/dir/?api=1&destination=10.436829,-75.356179"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="mr-1 size-3 text-blue-600 dark:text-blue-400" />
+                        Google Maps
+                      </a>
+                    </Button>
+
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-lg border-cyan-600/30 bg-cyan-50/50 px-2 text-[10.5px] font-bold text-cyan-700 hover:bg-cyan-100/60 dark:border-cyan-500/40 dark:bg-cyan-950/40 dark:text-cyan-300"
+                    >
+                      <a
+                        href="https://waze.com/ul?ll=10.436829,-75.356179&navigate=yes"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Navigation className="mr-1 size-3 text-cyan-600 dark:text-cyan-400" />
+                        Waze
+                      </a>
+                    </Button>
+                  </div>
+                </div>
 
                 {/* Controles de GPS en terreno */}
                 <div className="mt-3 flex flex-col gap-2">
@@ -499,15 +579,28 @@ export default function TerrainRouteView({
                     </p>
                   )}
                   {location.distance !== null && (
-                    <p className="text-[11px] text-muted-foreground">
-                      Estás a{" "}
-                      <strong className="font-semibold text-foreground">
-                        {location.distance < 1000
-                          ? `${location.distance} m`
-                          : `${(location.distance / 1000).toFixed(1)} km`}
-                      </strong>{" "}
-                      de la referencia del proyecto.
-                    </p>
+                    <div className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-2 text-[11px] text-foreground">
+                      <p>
+                        Estás a{" "}
+                        <strong className="font-bold text-foreground">
+                          {location.distance < 1000
+                            ? `${location.distance} m`
+                            : `${(location.distance / 1000).toFixed(1)} km`}
+                        </strong>{" "}
+                        de Villa Paraíso.
+                      </p>
+                      {location.position && (
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&origin=${location.position.latitude},${location.position.longitude}&destination=10.436829,-75.356179`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 font-bold text-accent hover:underline text-[10.5px]"
+                        >
+                          <ExternalLink className="size-3" />
+                          Ruta en carretera desde mi GPS →
+                        </a>
+                      )}
+                    </div>
                   )}
                   <Button
                     type="button"
