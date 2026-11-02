@@ -17,6 +17,8 @@ import {
   PanelLeftOpen,
   Route,
   ShieldCheck,
+  Globe,
+  Map as MapIcon,
 } from "lucide-react";
 import { formatLotArea, formatLotPrice, formatManzanaLabel, type Lot } from "@/data/lots";
 import cadReference from "@/data/villa-paraiso-cad-reference.json";
@@ -31,6 +33,7 @@ import {
 } from "@/features/terrain-navigation/use-terrain-location";
 import { cn } from "@/lib/utils";
 import MasterplanSvgViewer from "./MasterplanSvgViewer";
+import ProjectLocationMap from "./ProjectLocationMap";
 import LotDestinationSearch from "./terrain/LotDestinationSearch";
 import TerrainRouteOverlay from "./terrain/TerrainRouteOverlay";
 import type { ProjectViewSettings } from "./types";
@@ -69,6 +72,7 @@ export default function TerrainRouteView({
   onPanelPercentChange,
 }: TerrainRouteViewProps) {
   const [expanded, setExpanded] = useState(false);
+  const [terrainViewMode, setTerrainViewMode] = useState<"satellite" | "vector">("satellite");
   const [detailsPercent, setDetailsPercent] = useState(50);
   const [focusRequest, setFocusRequest] = useState(1);
   const [isDesktopPanelOpen, setIsDesktopPanelOpen] = useState(true);
@@ -135,34 +139,86 @@ export default function TerrainRouteView({
           alternatePanel ? "lg:flex-row" : "md:flex-row",
         )}
       >
-        {/* Lienzo del plano maestro */}
+        {/* Lienzo del plano maestro / satélite */}
         <div
           className="relative order-1 min-h-[120px] flex-1 md:order-2"
           aria-label="Plano del proyecto"
         >
-          <MasterplanSvgViewer
-            settings={settings}
-            lots={lots}
-            selectedLotId={destination?.id ?? ""}
-            focusRequest={focusRequest}
-            focusContextSize={760}
-            selectedLotTone="gold"
-            onSelectLot={(id) => {
-              const lot = lots.find((item) => item.id.replace("L-", "") === id.replace("L-", ""));
-              if (lot) selectDestination(lot);
-            }}
-            isDesktopSidebarOpen={isDesktopPanelOpen}
-            isRightPanelOpen={isRightPanelOpen}
-            isDark={isDark}
-            overlay={
-              <TerrainRouteOverlay
-                destination={destination}
-                route={effectiveRoute}
-                entrancePoint={entrancePoint}
-                travelMode={travelMode}
-              />
-            }
-          />
+          {/* Selector de modo Satélite HD / Plano Vectorial */}
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 md:left-auto md:right-16 z-30 select-none">
+            <div className="flex items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1 shadow-xl backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={() => setTerrainViewMode("satellite")}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  terrainViewMode === "satellite"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Globe className="size-3.5" />
+                <span>Satélite HD</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTerrainViewMode("vector")}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  terrainViewMode === "vector"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MapIcon className="size-3.5" />
+                <span>Plano Vectorial</span>
+              </button>
+            </div>
+          </div>
+
+          {terrainViewMode === "satellite" ? (
+            <ProjectLocationMap
+              lat={projectAnchor.lat}
+              lng={projectAnchor.lng}
+              projectName="Villa Paraíso"
+              locationName="Santa Rosa · Villanueva, Bolívar"
+              isDark={isDark}
+              georeferenceStatus="validated"
+              projectSlug={projectSlug}
+              lots={lots}
+              selectedLotId={destination?.id}
+              destinationLot={destination}
+              onSelectLot={selectDestination}
+              route={effectiveRoute}
+              fromGps={navigation.fromGps}
+              userGpsPosition={location.position}
+              travelMode={travelMode}
+              focusRequest={focusRequest}
+              className="h-full w-full"
+            />
+          ) : (
+            <MasterplanSvgViewer
+              settings={settings}
+              lots={lots}
+              selectedLotId={destination?.id ?? ""}
+              focusRequest={focusRequest}
+              focusContextSize={760}
+              selectedLotTone="gold"
+              onSelectLot={(id) => {
+                const lot = lots.find((item) => item.id.replace("L-", "") === id.replace("L-", ""));
+                if (lot) selectDestination(lot);
+              }}
+              isDesktopSidebarOpen={isDesktopPanelOpen}
+              isRightPanelOpen={isRightPanelOpen}
+              isDark={isDark}
+              overlay={
+                <TerrainRouteOverlay
+                  destination={destination}
+                  route={effectiveRoute}
+                  entrancePoint={entrancePoint}
+                  travelMode={travelMode}
+                />
+              }
+            />
+          )}
 
           {/* Botón flotante para reabrir el panel lateral en escritorio cuando está oculto */}
           {!isDesktopPanelOpen && !alternatePanel && (

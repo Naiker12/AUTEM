@@ -1,11 +1,47 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Check, Eye, EyeOff, Layers, MapPin, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { Check, Eye, EyeOff, Hash, Layers, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatLotArea, formatLotDetail, formatLotPrice, type Lot } from "@/data/lots";
+import cadReference from "@/data/villa-paraiso-cad-reference.json";
 import villaParaisoGeoJson from "@/data/generated/villa-paraiso-geojson.json";
+import type { TravelMode } from "@/features/terrain-navigation/types";
+import type { RenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
+import proj4 from "proj4";
+
+// Setup EPSG:3116 (MAGNA-SIRGAS / Colombia Bogotá zone)
+proj4.defs(
+  "EPSG:3116",
+  "+proj=tmerc +lat_0=4.596200417 +lon_0=-74.07750791 +k=1 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+);
+
+const cadT = cadReference.transform;
+const cadDet = cadT.a * cadT.e - cadT.b * cadT.d;
+
+function svgToGpsLatLng(x: number, y: number): [number, number] {
+  const dx = x - cadT.c;
+  const dy = y - cadT.f;
+  const cadX = (cadT.e * dx - cadT.b * dy) / cadDet;
+  const cadY = (-cadT.d * dx + cadT.a * dy) / cadDet;
+  const [lon, lat] = proj4("EPSG:3116", "EPSG:4326", [cadX, cadY]);
+  return [lat, lon];
+}
+
+function parseSvgPathToLatLngs(pathStr: string): [number, number][] {
+  const points: [number, number][] = [];
+  const re = /([ML])\s*([\d.-]+)\s+([\d.-]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(pathStr)) !== null) {
+    const x = parseFloat(match[2]);
+    const y = parseFloat(match[3]);
+    if (!isNaN(x) && !isNaN(y)) {
+      points.push(svgToGpsLatLng(x, y));
+    }
+  }
+  return points;
+}
 
 export interface ProjectLocationMapProps {
   lat: number;
@@ -26,6 +62,12 @@ export interface ProjectLocationMapProps {
   selectedLotId?: string;
   onSelectLot?: (lot: Lot) => void;
   showMasterplanOverlayDefault?: boolean;
+  route?: RenderableInternalRoute | null;
+  fromGps?: boolean;
+  userGpsPosition?: GeolocationCoordinates | null;
+  travelMode?: TravelMode;
+  destinationLot?: Lot;
+  focusRequest?: number;
 }
 
 type MapLayerType = "satellite" | "streets" | "hybrid";
@@ -103,16 +145,24 @@ export default function ProjectLocationMap({
   selectedLotId,
   onSelectLot,
   showMasterplanOverlayDefault = true,
+  route,
+  fromGps = false,
+  userGpsPosition,
+  destinationLot,
+  focusRequest,
 }: ProjectLocationMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const labelsLayerRef = useRef<L.TileLayer | null>(null);
   const masterplanLayerRef = useRef<L.GeoJSON | null>(null);
+  const lotNumbersLayerRef = useRef<L.LayerGroup | null>(null);
+  const routeLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   const [activeLayer, setActiveLayer] = useState<MapLayerType>("satellite");
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
   const [showMasterplan, setShowMasterplan] = useState(showMasterplanOverlayDefault);
+  const [showLotNumbers, setShowLotNumbers] = useState(true);
   const [masterplanOpacity, setMasterplanOpacity] = useState<number>(0.85);
 
   const isParaiso =
@@ -150,77 +200,76 @@ export default function ProjectLocationMap({
   }, [lotsMap, onSelectLot]);
 
   // Helper to compute style for each feature
-  const getFeatureStyle = useMemo(
-    () =>
-      (
-        feature: GeoJSON.Feature<GeoJSON.Geometry, MasterplanProperties>,
-        isSelected: boolean,
-        opacityMultiplier: number,
-      ): L.PathOptions => {
-        const props = feature.properties;
-        if (props.kind === "water") {
-          return {
-            fillColor: "#0284c7",
-            fillOpacity: Math.min(1, 0.42 * opacityMultiplier),
-            color: "#38bdf8",
-            weight: 1.8,
-            opacity: Math.min(1, 0.9 * opacityMultiplier),
-          };
-        }
-
-        if (props.kind === "road") {
-          return {
-            fillColor: "#64748b",
-            fillOpacity: Math.min(1, 0.18 * opacityMultiplier),
-            color: "#f8fafc",
-            weight: 1.2,
-            opacity: Math.min(1, 0.75 * opacityMultiplier),
-            dashArray: "3, 4",
-          };
-        }
-
-        // Kind === "lot"
-        const lotId = props.id || "";
-        const liveLot = lotsMap.get(lotId);
-        const status = liveLot?.status ?? props.status ?? "Disponible";
-
-        if (isSelected) {
-          return {
-            fillColor: "#c5a059",
-            fillOpacity: Math.min(1, 0.65 * opacityMultiplier),
-            color: "#ffffff",
-            weight: 3.5,
-            opacity: 1,
-          };
-        }
-
-        const s = status.toLowerCase();
-        let fillColor = "#10b981"; // Disponible
-        let strokeColor = "#059669";
-        let fillOpacity = 0.22 * opacityMultiplier;
-
-        if (s.includes("vend")) {
-          fillColor = "#ef4444"; // Vendido
-          strokeColor = "#dc2626";
-          fillOpacity = 0.25 * opacityMultiplier;
-        } else if (s.includes("res")) {
-          fillColor = "#f59e0b"; // Reservado
-          strokeColor = "#d97706";
-          fillOpacity = 0.28 * opacityMultiplier;
-        } else if (s.includes("conf") || s.includes("hid")) {
-          fillColor = "#94a3b8"; // Por confirmar
-          strokeColor = "#64748b";
-          fillOpacity = 0.16 * opacityMultiplier;
-        }
-
+  const getFeatureStyle = useCallback(
+    (
+      feature: GeoJSON.Feature<GeoJSON.Geometry, MasterplanProperties>,
+      isSelected: boolean,
+      opacityMultiplier: number,
+    ): L.PathOptions => {
+      const props = feature.properties;
+      if (props.kind === "water") {
         return {
-          fillColor,
-          fillOpacity: Math.min(1, fillOpacity),
-          color: strokeColor,
-          weight: 1.3,
-          opacity: Math.min(1, 0.85 * opacityMultiplier),
+          fillColor: "#0284c7",
+          fillOpacity: Math.min(1, 0.42 * opacityMultiplier),
+          color: "#38bdf8",
+          weight: 1.8,
+          opacity: Math.min(1, 0.9 * opacityMultiplier),
         };
-      },
+      }
+
+      if (props.kind === "road") {
+        return {
+          fillColor: "#64748b",
+          fillOpacity: Math.min(1, 0.18 * opacityMultiplier),
+          color: "#f8fafc",
+          weight: 1.2,
+          opacity: Math.min(1, 0.75 * opacityMultiplier),
+          dashArray: "3, 4",
+        };
+      }
+
+      // Kind === "lot"
+      const lotId = props.id || "";
+      const liveLot = lotsMap.get(lotId);
+      const status = liveLot?.status ?? props.status ?? "Disponible";
+
+      if (isSelected) {
+        return {
+          fillColor: "#c5a059",
+          fillOpacity: Math.min(1, 0.65 * opacityMultiplier),
+          color: "#ffffff",
+          weight: 3.5,
+          opacity: 1,
+        };
+      }
+
+      const s = status.toLowerCase();
+      let fillColor = "#10b981"; // Disponible
+      let strokeColor = "#059669";
+      let fillOpacity = 0.22 * opacityMultiplier;
+
+      if (s.includes("vend")) {
+        fillColor = "#ef4444"; // Vendido
+        strokeColor = "#dc2626";
+        fillOpacity = 0.25 * opacityMultiplier;
+      } else if (s.includes("res")) {
+        fillColor = "#f59e0b"; // Reservado
+        strokeColor = "#d97706";
+        fillOpacity = 0.28 * opacityMultiplier;
+      } else if (s.includes("conf") || s.includes("hid")) {
+        fillColor = "#94a3b8"; // Por confirmar
+        strokeColor = "#64748b";
+        fillOpacity = 0.16 * opacityMultiplier;
+      }
+
+      return {
+        fillColor,
+        fillOpacity: Math.min(1, fillOpacity),
+        color: strokeColor,
+        weight: 1.3,
+        opacity: Math.min(1, 0.85 * opacityMultiplier),
+      };
+    },
     [lotsMap],
   );
 
@@ -455,6 +504,8 @@ export default function ProjectLocationMap({
       map.remove();
       mapInstanceRef.current = null;
       masterplanLayerRef.current = null;
+      lotNumbersLayerRef.current = null;
+      routeLayerGroupRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [centerLat, centerLng, projectName, locationName, boundsGeo, isParaiso, projectSlug]);
@@ -496,6 +547,202 @@ export default function ProjectLocationMap({
     });
   }, [selectedLotId, masterplanOpacity, getFeatureStyle]);
 
+  // Synchronize lot numbers overlay
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isParaiso || !villaParaisoGeoJson) return;
+
+    if (!lotNumbersLayerRef.current) {
+      lotNumbersLayerRef.current = L.layerGroup();
+    }
+    const group = lotNumbersLayerRef.current;
+    group.clearLayers();
+
+    if (showMasterplan && showLotNumbers) {
+      const features = (
+        villaParaisoGeoJson as {
+          features: GeoJSON.Feature<GeoJSON.Geometry, MasterplanProperties>[];
+        }
+      ).features;
+      for (const f of features) {
+        if (f.properties?.kind !== "lot" || !f.properties?.centroid) continue;
+        const [lon, lat] = f.properties.centroid;
+        const isSelected = f.properties.id === selectedLotId;
+        const num = f.properties.lotNumber;
+        if (!num) continue;
+
+        const icon = L.divIcon({
+          className: "autem-lot-number-marker",
+          html: `<span class="autem-lot-num ${isSelected ? "selected" : ""}">${num}</span>`,
+          iconSize: [26, 16],
+          iconAnchor: [13, 8],
+        });
+        L.marker([lat, lon], { icon, interactive: false }).addTo(group);
+      }
+
+      if (!map.hasLayer(group)) {
+        group.addTo(map);
+      }
+    } else {
+      if (map.hasLayer(group)) {
+        map.removeLayer(group);
+      }
+    }
+  }, [showMasterplan, showLotNumbers, selectedLotId, isParaiso]);
+
+  // Synchronize Navigation Route on the roads
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (!routeLayerGroupRef.current) {
+      routeLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
+    const group = routeLayerGroupRef.current;
+    group.clearLayers();
+
+    if (!route || !route.svgPaths || route.svgPaths.length === 0) return;
+
+    const allPts: [number, number][] = [];
+    for (const segStr of route.svgPaths) {
+      const segPts = parseSvgPathToLatLngs(segStr);
+      for (const pt of segPts) {
+        if (
+          allPts.length === 0 ||
+          allPts[allPts.length - 1][0] !== pt[0] ||
+          allPts[allPts.length - 1][1] !== pt[1]
+        ) {
+          allPts.push(pt);
+        }
+      }
+    }
+
+    if (allPts.length < 2) return;
+
+    // Connect from user GPS location if live GPS is active
+    if (fromGps && userGpsPosition) {
+      allPts.unshift([userGpsPosition.latitude, userGpsPosition.longitude]);
+    }
+
+    // 1. Outer Glow Polyline
+    L.polyline(allPts, {
+      color: "#1d4ed8",
+      weight: 9,
+      opacity: 0.5,
+      lineCap: "round",
+      lineJoin: "round",
+    }).addTo(group);
+
+    // 2. Main Navigation Blue Polyline
+    L.polyline(allPts, {
+      color: "#2563eb",
+      weight: 5.5,
+      opacity: 0.95,
+      lineCap: "round",
+      lineJoin: "round",
+    }).addTo(group);
+
+    // 3. Inner White Dashed Core
+    L.polyline(allPts, {
+      color: "#ffffff",
+      weight: 2.2,
+      dashArray: "6, 8",
+      opacity: 0.95,
+      lineCap: "round",
+      lineJoin: "round",
+    }).addTo(group);
+
+    // Start Marker (Origin: GPS Blue Dot or Portería)
+    const startPt = allPts[0];
+    if (fromGps && userGpsPosition) {
+      const gpsIcon = L.divIcon({
+        className: "autem-gps-marker",
+        html: `
+          <div style="position: relative; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+            <span class="autem-gps-ping" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6;"></span>
+            <span style="position: relative; width: 14px; height: 14px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></span>
+          </div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+      L.marker(startPt, { icon: gpsIcon, zIndexOffset: 1000 }).addTo(group);
+
+      if (userGpsPosition.accuracy && userGpsPosition.accuracy <= 40) {
+        L.circle(startPt, {
+          radius: userGpsPosition.accuracy,
+          color: "#3b82f6",
+          fillColor: "#3b82f6",
+          fillOpacity: 0.08,
+          weight: 1,
+        }).addTo(group);
+      }
+    } else {
+      const porteriaIcon = L.divIcon({
+        className: "autem-porteria-marker",
+        html: `
+          <div style="display: flex; align-items: center; gap: 5px; background: #0f172a; color: #f8fafc; border: 2px solid #ffffff; padding: 4px 9px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(0,0,0,0.45); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #38bdf8;"></span>
+            <span>Portería</span>
+          </div>
+        `,
+        iconSize: [86, 26],
+        iconAnchor: [43, 13],
+      });
+      L.marker(startPt, { icon: porteriaIcon, zIndexOffset: 900 }).addTo(group);
+    }
+
+    // Destination Marker
+    const endPt = allPts[allPts.length - 1];
+    const lotNum = destinationLot?.lotNumber ?? route.destination.label.replace("Lote ", "");
+    const distanceFormatted = `${Math.round(route.result.distanceMeters)} m`;
+    const destIcon = L.divIcon({
+      className: "autem-destination-marker",
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center; transform: translateY(-100%);">
+          <div style="display: flex; align-items: center; gap: 6px; background: #c5a059; color: #ffffff; border: 2px solid #ffffff; padding: 4px 10px; border-radius: 9999px; box-shadow: 0 6px 18px rgba(0,0,0,0.5); font-size: 11.5px; font-weight: 800; white-space: nowrap;">
+            <span>Lote ${lotNum}</span>
+            <span style="background: rgba(0,0,0,0.22); padding: 1px 6px; border-radius: 9999px; font-size: 10px; font-weight: 700;">${distanceFormatted}</span>
+          </div>
+          <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid #c5a059;"></div>
+        </div>
+      `,
+      iconSize: [120, 36],
+      iconAnchor: [60, 0],
+    });
+    L.marker(endPt, { icon: destIcon, zIndexOffset: 950 }).addTo(group);
+
+    // Frame the active route
+    const bounds = L.latLngBounds(allPts);
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 17.5 });
+    }
+  }, [route, fromGps, userGpsPosition, destinationLot]);
+
+  // Recenter / Focus handler
+  useEffect(() => {
+    if (!focusRequest) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (route && route.svgPaths && route.svgPaths.length > 0) {
+      const allPts: [number, number][] = [];
+      for (const segStr of route.svgPaths) {
+        const segPts = parseSvgPathToLatLngs(segStr);
+        for (const pt of segPts) allPts.push(pt);
+      }
+      if (allPts.length >= 2) {
+        map.fitBounds(L.latLngBounds(allPts), { padding: [60, 60], maxZoom: 17.5 });
+        return;
+      }
+    }
+
+    if (destinationLot?.centroid) {
+      const pt = svgToGpsLatLng(destinationLot.centroid[0], destinationLot.centroid[1]);
+      map.setView(pt, 17.5, { animate: true });
+    }
+  }, [focusRequest, route, destinationLot]);
+
   // Switch base tile layers
   const switchLayer = (type: MapLayerType) => {
     const map = mapInstanceRef.current;
@@ -529,7 +776,6 @@ export default function ProjectLocationMap({
       ).addTo(map);
     }
 
-    // Ensure masterplan stays on top of base tiles
     if (masterplanLayerRef.current && showMasterplan && map.hasLayer(masterplanLayerRef.current)) {
       masterplanLayerRef.current.bringToFront();
     }
@@ -548,6 +794,20 @@ export default function ProjectLocationMap({
 
   const handleRecenter = () => {
     if (!mapInstanceRef.current) return;
+    if (route && route.svgPaths && route.svgPaths.length > 0) {
+      const allPts: [number, number][] = [];
+      for (const segStr of route.svgPaths) {
+        const segPts = parseSvgPathToLatLngs(segStr);
+        for (const pt of segPts) allPts.push(pt);
+      }
+      if (allPts.length >= 2) {
+        mapInstanceRef.current.fitBounds(L.latLngBounds(allPts), {
+          padding: [60, 60],
+          maxZoom: 17.5,
+        });
+        return;
+      }
+    }
     if (masterplanLayerRef.current) {
       const bounds = masterplanLayerRef.current.getBounds();
       if (bounds.isValid()) {
@@ -600,7 +860,17 @@ export default function ProjectLocationMap({
           <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 shadow-md backdrop-blur-md text-emerald-700 dark:text-emerald-300">
             <span className="size-1.5 rounded-full bg-emerald-500" />
             <span className="text-[10px] font-semibold tracking-wide">
-              Plano de lotes activo (338 parcelas)
+              Plano activo (338 lotes)
+            </span>
+          </div>
+        )}
+
+        {/* Route active badge */}
+        {route && (
+          <div className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/15 px-2.5 py-1 shadow-md backdrop-blur-md text-blue-700 dark:text-blue-300">
+            <span className="size-1.5 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-wide">
+              Ruta: {Math.round(route.result.distanceMeters)} m
             </span>
           </div>
         )}
@@ -680,6 +950,23 @@ export default function ProjectLocationMap({
                   <span className="text-[10px] font-bold">{showMasterplan ? "ON" : "OFF"}</span>
                 </button>
 
+                {/* Lot numbers toggle in menu */}
+                <button
+                  type="button"
+                  onClick={() => setShowLotNumbers((prev) => !prev)}
+                  className={`mt-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    showLotNumbers
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold"
+                      : "hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Hash className="size-3.5" />
+                    <span>Números de lote</span>
+                  </span>
+                  <span className="text-[10px] font-bold">{showLotNumbers ? "ON" : "OFF"}</span>
+                </button>
+
                 {showMasterplan && (
                   <div className="mt-2 px-1">
                     <span className="block text-[10px] font-medium text-muted-foreground mb-1.5">
@@ -756,6 +1043,25 @@ export default function ProjectLocationMap({
             </Button>
           )}
 
+          {/* Quick toggle for lot numbers */}
+          {isParaiso && showMasterplan && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowLotNumbers((prev) => !prev)}
+              className={`size-8 rounded-full cursor-pointer transition-colors ${
+                showLotNumbers
+                  ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30"
+                  : "hover:bg-muted text-muted-foreground"
+              }`}
+              title={showLotNumbers ? "Ocultar números de lote" : "Mostrar números de lote"}
+              aria-label="Números de lote"
+            >
+              <Hash className="size-4" />
+            </Button>
+          )}
+
           <div className="h-px w-4 bg-border/60" />
 
           {/* Zoom controls */}
@@ -791,8 +1097,8 @@ export default function ProjectLocationMap({
             size="icon"
             onClick={handleRecenter}
             className="size-8 rounded-full hover:bg-muted cursor-pointer"
-            title="Centrar en el proyecto"
-            aria-label="Centrar en el proyecto"
+            title="Centrar en el recorrido"
+            aria-label="Centrar en el recorrido"
           >
             <RotateCcw className="size-3.5" />
           </Button>
