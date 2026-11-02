@@ -224,7 +224,7 @@ export default function TerrainRouteOverlay({
               fontSize="9"
               fontWeight="800"
             >
-              {distanceMeters} m
+              {Math.round(distanceMeters)} m
             </text>
           </g>
         )}

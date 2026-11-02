@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import proj4 from "proj4";
 
 // Setup EPSG:3116 (MAGNA-SIRGAS / Colombia Bogotá zone)
@@ -22,13 +21,6 @@ const cadRef = JSON.parse(fs.readFileSync(cadPath, "utf8"));
 
 const t = cadRef.transform;
 
-function cadToSvg(x, y) {
-  return {
-    x: t.a * x + t.b * y + t.c,
-    y: t.d * x + t.e * y + t.f,
-  };
-}
-
 function svgToCad(x, y) {
   const det = t.a * t.e - t.b * t.d;
   const dx = x - t.c;
@@ -45,13 +37,86 @@ function svgToGpsViaProj4(x, y) {
   return { latitude: lat, longitude: lon };
 }
 
-// 1. Base junctions across all road corridors
+function parseSvgPath(d) {
+  const points = [];
+  const re = /([ML])\s*([\d.-]+)\s+([\d.-]+)/gi;
+  let match;
+  while ((match = re.exec(d)) !== null) {
+    points.push({ x: parseFloat(match[2]), y: parseFloat(match[3]) });
+  }
+  return points;
+}
+
+function ccw(A, B, C) {
+  return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+}
+
+function segmentsIntersect(A, B, C, D) {
+  return ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D);
+}
+
+function edgeIntersectsPolygon(p1, p2, poly) {
+  for (let i = 0; i < poly.length; i++) {
+    const next = (i + 1) % poly.length;
+    if (segmentsIntersect(p1, p2, poly[i], poly[next])) return true;
+  }
+  return false;
+}
+
+function insetPolygon(poly, dist = 0.6) {
+  let cx = 0,
+    cy = 0;
+  poly.forEach((p) => {
+    cx += p.x;
+    cy += p.y;
+  });
+  cx /= poly.length;
+  cy /= poly.length;
+  return poly.map((p) => {
+    const dx = cx - p.x,
+      dy = cy - p.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: p.x + (dx / len) * dist, y: p.y + (dy / len) * dist };
+  });
+}
+
+function projectPointToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const l2 = dx * dx + dy * dy;
+  if (l2 === 0) return { x: x1, y: y1, dist: Math.hypot(px - x1, py - y1), t: 0 };
+  let t = ((px - x1) * dx + (py - y1) * dy) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return {
+    x: x1 + t * dx,
+    y: y1 + t * dy,
+    dist: Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy)),
+    t,
+  };
+}
+
+function findClosestPointOnPolygon(pt, poly) {
+  let bestDist = Infinity;
+  let bestPt = poly[0];
+  for (let i = 0; i < poly.length; i++) {
+    const v1 = poly[i];
+    const v2 = poly[(i + 1) % poly.length];
+    const proj = projectPointToSegment(pt.x, pt.y, v1.x, v1.y, v2.x, v2.y);
+    if (proj.dist < bestDist) {
+      bestDist = proj.dist;
+      bestPt = { x: proj.x, y: proj.y };
+    }
+  }
+  return { point: bestPt, dist: bestDist };
+}
+
+// 1. Definition of Network Junctions
 const JUNCTIONS = {
   entrance: [1014.7, 2148.5],
   acceso_main: [1070.0, 2135.0],
   acceso_split: [1085.0, 2080.0],
 
-  // Calle 1 Sur y Este
+  // Calle 1 Sur y Este (Perímetro Sur)
   e_c1_1: [1145.0, 2050.0],
   e_c1_2: [1205.0, 2020.0],
   e_c1_317: [1270.0, 1990.0],
@@ -73,42 +138,71 @@ const JUNCTIONS = {
   e_c1_14: [2336.0, 540.0],
 
   // Carrera 1 y 2 (Occidente: M1 a M7)
-  w_c2_1: [1050.0, 1877.0],
-  w_c2_2: [942.0, 1928.0],
   w_c1_1: [980.0, 1980.0],
   w_c1_2: [808.0, 1886.0],
   w_c1_3: [670.0, 1756.0],
   w_c1_4: [520.0, 1614.0],
-  w_c1_5: [380.0, 1470.0],
-  w_c1_6: [260.0, 1330.0],
+  w_c1_5: [461.2, 1566.5],
+
+  w_c2_1: [1050.0, 1877.0],
+  w_c2_2: [942.0, 1928.0],
   w_c2_3: [822.0, 1622.0],
   w_c2_4: [676.0, 1478.0],
-  w_c2_5: [509.0, 1526.0],
-  w_c2_6: [386.0, 1173.0],
+  w_c2_5: [602.0, 1441.0],
 
   w_calle2_mid: [960.0, 1954.0],
   w_calle3_c1: [793.0, 1798.0],
   w_calle4_c1: [647.0, 1658.0],
-  w_calle5_c1: [450.0, 1542.0],
+  w_calle5_c1: [490.0, 1558.0],
 
-  // Transversal 1 (Paso norte entre los lagos)
-  nw_trans_1: [819.0, 1264.0],
-  nw_trans_2: [701.0, 1171.0],
-  nw_trans_3: [573.0, 1070.0],
-  nw_m7_bank1: [880.0, 1320.0],
-  nw_m7_bank2: [940.0, 1330.0],
-  nw_m8_bank: [1007.0, 1290.0],
+  // Anillo Manzana 3 (calzadasStroked 1)
+  m3_nw_mid: [746.1, 1821.1],
+  m3_se_mid: [874.7, 1704.3],
+  m3_ne_mid: [759.9, 1576.5],
 
-  // Carrera 3 (Eje Central entre lagos)
-  c_c3_1: [1549.0, 1573.0],
-  c_c3_2: [1396.0, 1456.0],
+  // Anillo Manzana 11 (calzadasStroked 5)
+  m11_node1: [1453.8, 993.1],
+  m11_node2: [1657.9, 1275.4],
+  m11_node3: [1574.0, 1293.6],
+  m11_node4: [1474.2, 1251.8],
+  m11_node5: [1343.5, 1082.6],
+
+  // Manzana 15 (CAD Polyline 9)
+  m15_node1: [1463.7, 990.7],
+  m15_node2: [1522.9, 940.8],
+  m15_node3: [1625.4, 953.0],
+  m15_node4: [1802.6, 1226.9],
+  m15_node5: [1728.4, 1328.4],
+  m15_node6: [1680.2, 1325.4],
+
+  // Manzana 16 / 17 (CAD Polyline 8)
+  m16_node1: [1643.0, 947.0],
+  m16_node2: [1765.0, 847.7],
+  m16_node3: [1919.0, 1101.5],
+  m16_node4: [1810.7, 1206.2],
+
+  // Zona Social y Corredor Central hacia Lagos
+  c_social_1: [1180.0, 1980.0],
+  c_social_2: [1320.0, 1870.0],
+  c_lake_s1: [1448.7, 1617.6],
+  c_lake_s2: [1465.9, 1576.8],
+  c_lake_s3: [1461.1, 1550.7],
+  c_lake_s4: [1436.7, 1511.7],
+  c_lake_s5: [1395.8, 1470.3],
+  c_lake_s6: [1349.8, 1434.6],
+  c_lake_nw: [1337.0, 1425.3],
+
   c_c3_3: [1343.0, 1294.0],
   c_c3_4: [1216.0, 1222.0],
   c_c3_5: [1144.0, 1027.0],
 
-  // Manzanas Centrales y Norte (Calles 3, 4, 5, 6, 7 y Carreras 4 a 10)
-  c_c3_east: [1261.0, 1436.0],
-  c_c4_east: [1480.0, 1265.0],
+  // Transversal entre lagos
+  nw_trans_1: [776.0, 1238.0],
+  nw_m7_bank1: [880.0, 1320.0],
+  nw_m7_bank2: [940.0, 1330.0],
+  nw_m8_bank: [1007.0, 1290.0],
+
+  // Sector Norte Sur del 3er lago (Calle 4)
   n_c4_1: [1307.0, 1073.0],
   n_c4_2: [1363.0, 1122.0],
   n_c4_3: [1582.0, 928.0],
@@ -116,18 +210,19 @@ const JUNCTIONS = {
   n_c4_5: [1932.0, 844.0],
   n_c4_6: [2072.0, 851.0],
 
+  // Sector Norte Norte del 3er lago (Calle 5 curvada con calzadasStroked 4)
   n_c5_1: [1242.0, 898.0],
   n_c5_2: [1487.0, 786.0],
-  n_c5_3: [1541.0, 650.0],
-  n_c5_4: [1769.0, 592.0],
+  n_c5_curv1: [1529.7, 681.5],
+  n_c5_curv2: [1565.2, 652.7],
+  n_c5_curv3: [1630.5, 602.7],
+  n_c5_curv4: [1686.8, 571.5],
+  n_c5_curv5: [1769.3, 607.7],
   n_c5_5: [1831.0, 412.0],
   n_c5_6: [1980.0, 255.0],
   n_c5_7: [2181.0, 220.0],
 
-  n_c6_1: [1999.0, 536.0],
-  n_c6_2: [2147.0, 420.0],
-  n_c6_3: [2260.0, 440.0],
-
+  // Conexiones transversales norte
   n_c5_mid1: [1532.0, 1060.0],
   n_c6_mid1: [1698.0, 991.0],
   n_c7_mid1: [1856.0, 914.0],
@@ -135,7 +230,12 @@ const JUNCTIONS = {
   n_c9_mid1: [1992.0, 340.0],
   n_c10_mid1: [2222.0, 302.0],
 
-  // Sector Norte Cruzando Arroyo (Manzanas 24, 26, 27)
+  // Sector Este del 3er lago
+  n_c6_1: [1999.0, 536.0],
+  n_c6_2: [2147.0, 420.0],
+  n_c6_3: [2260.0, 440.0],
+
+  // Puentes y Manzanas 24, 26, 27
   n_bridge_west: [780.0, 991.0],
   n_m24_1: [806.0, 1017.0],
   n_m24_2: [852.0, 955.0],
@@ -143,25 +243,27 @@ const JUNCTIONS = {
   n_m24_4: [899.0, 961.0],
 
   n_bridge_mid: [1062.0, 946.0],
-  n_m26_1: [954.0, 781.0],
-  n_m26_2: [1129.0, 750.0],
-  n_m26_3: [1227.0, 763.0],
-  n_m26_4: [1269.0, 751.0],
-  n_m26_5: [1367.0, 364.0],
-  n_m27_1: [1485.0, 212.0],
-  n_m27_2: [1539.0, 175.0],
-  n_m27_3: [1637.0, 175.0],
+  n_m26_cad1: [956.4, 793.0],
+  n_m26_cad2: [1212.4, 615.4],
+  n_m26_cad3: [1281.2, 523.3],
+  n_m26_cad4: [1348.1, 517.6],
+  n_m26_cad5: [1382.4, 416.7],
+  n_m26_back: [883.4, 936.1],
+  n_m27_1: [1447.1, 205.2],
+  n_m27_2: [1539.1, 205.2],
+  n_m27_3: [1601.4, 214.3],
 };
 
 const BASE_EDGES = [
-  // Acceso y Portería
+  // Acceso
   ["entrance", "acceso_main"],
   ["acceso_main", "acceso_split"],
   ["acceso_split", "e_c1_1"],
   ["acceso_split", "w_c1_1"],
   ["acceso_split", "w_c2_1"],
+  ["acceso_split", "c_social_1"],
 
-  // Calle 1 Sur y Este
+  // Calle 1 Sur (Perímetro Sur)
   ["e_c1_1", "e_c1_2"],
   ["e_c1_2", "e_c1_317"],
   ["e_c1_317", "e_c1_314"],
@@ -181,70 +283,122 @@ const BASE_EDGES = [
   ["e_c1_12", "e_c1_13"],
   ["e_c1_13", "e_c1_14"],
 
-  // Carrera 1 y 2
-  ["w_c1_1", "w_calle2_mid"],
-  ["w_c2_1", "w_calle2_mid"],
-  ["w_calle2_mid", "w_c2_2"],
-  ["w_c2_2", "w_c1_2"],
-  ["w_c1_2", "w_calle3_c1"],
-  ["w_calle3_c1", "w_c2_3"],
-  ["w_c2_3", "w_c1_3"],
-  ["w_c1_3", "w_calle4_c1"],
-  ["w_calle4_c1", "w_c2_4"],
-  ["w_c2_4", "w_c1_4"],
-  ["w_c1_4", "w_calle5_c1"],
-  ["w_calle5_c1", "w_c2_5"],
-  ["w_c2_5", "w_c1_5"],
-  ["w_c1_5", "w_c2_6"],
-  ["w_c2_6", "w_c1_6"],
+  // Carrera 1 (Occidental)
+  ["w_c1_1", "w_c1_2"],
+  ["w_c1_2", "w_c1_3"],
+  ["w_c1_3", "w_c1_4"],
+  ["w_c1_4", "w_c1_5"],
+  ["w_c1_5", "nw_trans_1"],
 
-  // Transversal 1
-  ["w_c2_4", "nw_trans_1"],
-  ["nw_trans_1", "nw_trans_2"],
-  ["nw_trans_2", "nw_trans_3"],
+  // Carrera 2 (Oriental de Occidente)
+  ["w_c2_1", "w_c2_2"],
+  ["w_c2_2", "w_c2_3"],
+  ["w_c2_3", "w_c2_4"],
+  ["w_c2_4", "w_c2_5"],
+  ["w_c2_5", "nw_trans_1"],
+
+  // Conexiones transversales entre C1 y C2
+  ["w_c1_1", "w_c2_1"],
+  ["w_c1_2", "w_calle2_mid"],
+  ["w_calle2_mid", "w_c2_2"],
+  ["w_c1_3", "w_calle3_c1"],
+  ["w_calle3_c1", "w_c2_3"],
+  ["w_c1_4", "w_calle4_c1"],
+  ["w_calle4_c1", "w_c2_4"],
+  ["w_c1_5", "w_calle5_c1"],
+  ["w_calle5_c1", "w_c2_5"],
+
+  // Calles internas Manzana 3
+  ["w_c1_3", "m3_nw_mid"],
+  ["m3_nw_mid", "w_calle3_c1"],
+  ["w_calle3_c1", "m3_se_mid"],
+  ["m3_se_mid", "w_c2_3"],
+  ["w_c1_4", "m3_ne_mid"],
+  ["m3_ne_mid", "w_calle4_c1"],
+
+  // Calles internas Manzana 11 (calzadasStroked 5)
+  ["n_c4_1", "m11_node1"],
+  ["m11_node1", "m11_node5"],
+  ["m11_node5", "c_c3_4"],
+  ["m11_node1", "m11_node2"],
+  ["m11_node2", "m11_node3"],
+  ["m11_node3", "m11_node4"],
+  ["m11_node4", "c_c3_4"],
+  ["m11_node2", "n_c4_2"],
+
+  // Calles internas Manzana 15 (CAD Polyline 9)
+  ["m11_node1", "m15_node1"],
+  ["m15_node1", "m15_node2"],
+  ["m15_node2", "m15_node3"],
+  ["m15_node3", "m15_node4"],
+  ["m15_node4", "e_c1_8"],
+  ["m15_node4", "m15_node5"],
+  ["m15_node5", "m15_node6"],
+  ["m15_node6", "m11_node2"],
+
+  // Calles internas Manzana 16 / 17 (CAD Polyline 8)
+  ["m15_node3", "m16_node1"],
+  ["m16_node1", "n_c6_mid1"],
+  ["n_c6_mid1", "m16_node2"],
+  ["m16_node2", "n_c4_4"],
+  ["m16_node2", "m16_node3"],
+  ["m16_node3", "n_c4_5"],
+  ["m16_node3", "m16_node4"],
+  ["m16_node4", "m15_node4"],
+
+  // Zona Social hacia Lago
+  ["c_social_1", "c_social_2"],
+  ["c_social_2", "c_lake_s1"],
+  ["e_c1_m10", "c_social_2"],
+
+  // Curva del lago (calzadasStroked 25 - exacta)
+  ["c_lake_s1", "c_lake_s2"],
+  ["c_lake_s2", "c_lake_s3"],
+  ["c_lake_s3", "c_lake_s4"],
+  ["c_lake_s4", "c_lake_s5"],
+  ["c_lake_s5", "c_lake_s6"],
+  ["c_lake_s6", "c_lake_nw"],
+  ["c_lake_nw", "c_c3_3"],
+
+  // Carrera 3 Central
+  ["c_c3_3", "c_c3_4"],
+  ["c_c3_4", "c_c3_5"],
+
+  // Transversal entre lagos
   ["nw_trans_1", "nw_m7_bank1"],
   ["nw_m7_bank1", "nw_m7_bank2"],
   ["nw_m7_bank2", "nw_m8_bank"],
   ["nw_m8_bank", "c_c3_4"],
 
-  // Carrera 3 Central
-  ["e_c1_sports", "c_c3_1"],
-  ["c_c3_1", "c_c3_2"],
-  ["c_c3_2", "c_c3_3"],
-  ["c_c3_3", "c_c3_4"],
-  ["c_c3_4", "c_c3_5"],
-
-  // North Connections (Calles 3, 4, 5, 6)
-  ["c_c3_2", "c_c3_east"],
-  ["c_c3_east", "c_c4_east"],
-  ["c_c4_east", "e_c1_5"],
-
+  // Sector Norte Sur del 3er lago
   ["c_c3_4", "n_c4_1"],
   ["n_c4_1", "n_c4_2"],
-  ["n_c4_2", "c_c4_east"],
-  ["n_c4_1", "n_c4_3"],
+  ["n_c4_2", "n_c4_3"],
   ["n_c4_3", "n_c4_4"],
   ["n_c4_4", "n_c4_5"],
   ["n_c4_5", "n_c4_6"],
   ["n_c4_6", "e_c1_11"],
 
+  // Sector Norte Norte del 3er lago (Curva calzadasStroked 4)
   ["c_c3_5", "n_c5_1"],
   ["n_c5_1", "n_c5_2"],
-  ["n_c5_2", "n_c5_3"],
-  ["n_c5_3", "n_c5_4"],
-  ["n_c5_4", "n_c5_5"],
+  ["n_c5_2", "n_c5_curv1"],
+  ["n_c5_curv1", "n_c5_curv2"],
+  ["n_c5_curv2", "n_c5_curv3"],
+  ["n_c5_curv3", "n_c5_curv4"],
+  ["n_c5_curv4", "n_c5_curv5"],
+  ["n_c5_curv5", "n_c5_5"],
   ["n_c5_5", "n_c5_6"],
   ["n_c5_6", "n_c5_7"],
 
+  // Conexiones transversales norte
   ["n_c4_3", "n_c5_mid1"],
   ["n_c5_mid1", "n_c5_2"],
   ["n_c4_4", "n_c6_mid1"],
-  ["n_c6_mid1", "n_c5_3"],
   ["n_c4_5", "n_c7_mid1"],
-  ["n_c7_mid1", "n_c5_4"],
   ["n_c4_6", "n_c8_mid1"],
-  ["n_c8_mid1", "n_c5_5"],
 
+  // Este del 3er lago
   ["n_c5_5", "n_c6_1"],
   ["n_c6_1", "n_c6_2"],
   ["n_c6_2", "n_c6_3"],
@@ -254,44 +408,24 @@ const BASE_EDGES = [
   ["n_c6_3", "n_c10_mid1"],
   ["n_c10_mid1", "n_c5_7"],
 
-  // Northern creek crossing / Manzanas 24, 26, 27
-  ["nw_trans_2", "n_bridge_west"],
+  // Puentes y Manzanas 24, 26, 27
+  ["nw_trans_1", "n_bridge_west"],
   ["n_bridge_west", "n_m24_1"],
   ["n_m24_1", "n_m24_2"],
   ["n_m24_2", "n_m24_3"],
   ["n_m24_3", "n_m24_4"],
 
   ["c_c3_5", "n_bridge_mid"],
-  ["n_bridge_mid", "n_m26_1"],
-  ["n_m26_1", "n_m26_2"],
-  ["n_m26_2", "n_m26_3"],
-  ["n_m26_3", "n_m26_4"],
-  ["n_m26_4", "n_m26_5"],
-  ["n_m26_5", "n_m27_1"],
+  ["n_bridge_mid", "n_m26_cad1"],
+  ["n_m26_cad1", "n_m26_back"],
+  ["n_m26_cad1", "n_m26_cad2"],
+  ["n_m26_cad2", "n_m26_cad3"],
+  ["n_m26_cad3", "n_m26_cad4"],
+  ["n_m26_cad4", "n_m26_cad5"],
+  ["n_m26_cad5", "n_m27_1"],
   ["n_m27_1", "n_m27_2"],
   ["n_m27_2", "n_m27_3"],
 ];
-
-// Helper: parse polygon vertices from SVG path
-function parseSvgPoints(d) {
-  const points = [];
-  const commands = d.match(/[MLZ][^MLZ]*/gi) || [];
-  for (const cmd of commands) {
-    const type = cmd[0].toUpperCase();
-    if (type === "Z") continue;
-    const nums = cmd
-      .slice(1)
-      .trim()
-      .split(/[\s,]+/)
-      .map(Number);
-    for (let i = 0; i < nums.length; i += 2) {
-      if (!isNaN(nums[i]) && !isNaN(nums[i + 1])) {
-        points.push([nums[i], nums[i + 1]]);
-      }
-    }
-  }
-  return points;
-}
 
 // 2. Controls & Checkpoints for GPS Calibration
 const controlSvgPoints = [
@@ -309,92 +443,70 @@ const controls = controlSvgPoints.map((pt) => {
   const gps = svgToGpsViaProj4(pt.x, pt.y);
   return {
     label: pt.label,
-    source: { x: gps.longitude, y: gps.latitude }, // Longitude is source.x, Latitude is source.y
+    source: { x: gps.longitude, y: gps.latitude },
     target: { x: pt.x, y: pt.y },
     accuracy: 0,
   };
 });
 
-// Fit affine transform from controls
-function fitAffineTransform(ctrls) {
-  let sxx = 0,
-    sxy = 0,
-    sx = 0;
-  let syy = 0,
-    sy = 0,
-    n = ctrls.length;
-  let sxtx = 0,
-    sytx = 0,
-    stx = 0;
-  let sxty = 0,
-    syty = 0,
-    sty = 0;
+function solveLinearSystem(matrix, values) {
+  const augmented = matrix.map((row, index) => [...row, values[index]]);
+  const size = values.length;
 
-  for (const c of ctrls) {
-    const x = c.source.x,
-      y = c.source.y;
-    const tx = c.target.x,
-      ty = c.target.y;
-    sxx += x * x;
-    sxy += x * y;
-    sx += x;
-    syy += y * y;
-    sy += y;
-    sxtx += x * tx;
-    sytx += y * tx;
-    stx += tx;
-    sxty += x * ty;
-    syty += y * ty;
-    sty += ty;
-  }
-
-  const mx = [
-    [sxx, sxy, sx, sxtx],
-    [sxy, syy, sy, sytx],
-    [sx, sy, n, stx],
-  ];
-  for (let i = 0; i < 3; i++) {
-    let pivot = i;
-    for (let j = i + 1; j < 3; j++) {
-      if (Math.abs(mx[j][i]) > Math.abs(mx[pivot][i])) pivot = j;
+  for (let column = 0; column < size; column += 1) {
+    let pivot = column;
+    for (let row = column + 1; row < size; row += 1) {
+      if (Math.abs(augmented[row][column]) > Math.abs(augmented[pivot][column])) pivot = row;
     }
-    [mx[i], mx[pivot]] = [mx[pivot], mx[i]];
-    const div = mx[i][i];
-    for (let k = i; k <= 3; k++) mx[i][k] /= div;
-    for (let j = 0; j < 3; j++) {
-      if (j === i) continue;
-      const factor = mx[j][i];
-      for (let k = i; k <= 3; k++) mx[j][k] -= factor * mx[i][k];
+    if (Math.abs(augmented[pivot][column]) < 1e-10) return null;
+    [augmented[column], augmented[pivot]] = [augmented[pivot], augmented[column]];
+    const factor = augmented[column][column];
+    for (let item = column; item <= size; item += 1) augmented[column][item] /= factor;
+    for (let row = 0; row < size; row += 1) {
+      if (row === column) continue;
+      const ratio = augmented[row][column];
+      for (let item = column; item <= size; item += 1) {
+        augmented[row][item] -= ratio * augmented[column][item];
+      }
     }
   }
-  const a = mx[0][3],
-    b = mx[1][3],
-    c = mx[2][3];
 
-  const my = [
-    [sxx, sxy, sx, sxty],
-    [sxy, syy, sy, syty],
-    [sx, sy, n, sty],
-  ];
-  for (let i = 0; i < 3; i++) {
-    let pivot = i;
-    for (let j = i + 1; j < 3; j++) {
-      if (Math.abs(my[j][i]) > Math.abs(my[pivot][i])) pivot = j;
-    }
-    [my[i], my[pivot]] = [my[pivot], my[i]];
-    const div = my[i][i];
-    for (let k = i; k <= 3; k++) my[i][k] /= div;
-    for (let j = 0; j < 3; j++) {
-      if (j === i) continue;
-      const factor = my[j][i];
-      for (let k = i; k <= 3; k++) my[j][k] -= factor * my[i][k];
+  return augmented.map((row) => row[size]);
+}
+
+function fitAffineTransform(controlPoints) {
+  if (controlPoints.length < 3) return null;
+  const centerX =
+    controlPoints.reduce((sum, point) => sum + point.source.x, 0) / controlPoints.length;
+  const centerY =
+    controlPoints.reduce((sum, point) => sum + point.source.y, 0) / controlPoints.length;
+  const scaleX = Math.max(...controlPoints.map((point) => Math.abs(point.source.x - centerX)));
+  const scaleY = Math.max(...controlPoints.map((point) => Math.abs(point.source.y - centerY)));
+  if (!scaleX || !scaleY) return null;
+  const normal = Array.from({ length: 3 }, () => [0, 0, 0]);
+  const targetX = [0, 0, 0];
+  const targetY = [0, 0, 0];
+
+  for (const point of controlPoints) {
+    const row = [(point.source.x - centerX) / scaleX, (point.source.y - centerY) / scaleY, 1];
+    for (let column = 0; column < 3; column += 1) {
+      targetX[column] += row[column] * point.target.x;
+      targetY[column] += row[column] * point.target.y;
+      for (let inner = 0; inner < 3; inner += 1) normal[column][inner] += row[column] * row[inner];
     }
   }
-  const d = my[0][3],
-    e = my[1][3],
-    f = my[2][3];
 
-  return { a, b, c, d, e, f };
+  const xParameters = solveLinearSystem(normal, targetX);
+  const yParameters = solveLinearSystem(normal, targetY);
+  if (!xParameters || !yParameters) return null;
+  return {
+    a: xParameters[0] / scaleX,
+    b: xParameters[1] / scaleY,
+    c: xParameters[2] - (xParameters[0] / scaleX) * centerX - (xParameters[1] / scaleY) * centerY,
+    d: yParameters[0] / scaleX,
+    e: yParameters[1] / scaleY,
+    f: yParameters[2] - (yParameters[0] / scaleX) * centerX - (yParameters[1] / scaleY) * centerY,
+  };
 }
 
 const affine = fitAffineTransform(controls);
@@ -419,11 +531,16 @@ function gpsDistance(a, b) {
   return 2 * 6371000 * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 
-// 4 independent checkpoints separated by >= 10 m from each other and controls
+function calcEdgeLength(p1, p2) {
+  const g1 = svgToGps(p1, affine);
+  const g2 = svgToGps(p2, affine);
+  return Number(gpsDistance(g1, g2).toFixed(2));
+}
+
 const checkpointSvgPoints = [
   { label: "Check 1 - Carrera 2 Sur", x: 822.0, y: 1622.0 },
-  { label: "Check 2 - Lago Central", x: 1396.0, y: 1456.0 },
-  { label: "Check 3 - Calle 5 Norte", x: 1541.0, y: 650.0 },
+  { label: "Check 2 - Lago Central", x: 1436.7, y: 1511.7 },
+  { label: "Check 3 - Calle 5 Norte", x: 1529.7, y: 681.5 },
   { label: "Check 4 - Entrada Interior", x: 1085.0, y: 2080.0 },
 ];
 
@@ -437,163 +554,210 @@ const checkpoints = checkpointSvgPoints.map((pt) => {
   };
 });
 
-// 3. Connect lots to the nearest street segment
+// 3. Subdivide base edges and attach lot frontages
 const nodes = [];
 const edges = [];
 const destinations = [];
+let edgeIdx = 1;
 
-// Add base junctions as nodes
-for (const [id, [x, y]] of Object.entries(JUNCTIONS)) {
+for (const [id, pt] of Object.entries(JUNCTIONS)) {
   nodes.push({
     id,
-    label: id === "entrance" ? "Portería - Acceso Principal" : id,
+    label: id,
     kind: id === "entrance" ? "entrance" : "intersection",
-    point: { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) },
+    point: { x: Number(pt[0].toFixed(2)), y: Number(pt[1].toFixed(2)) },
   });
 }
 
-function calcEdgeLength(p1, p2) {
-  const g1 = svgToGps(p1, affine);
-  const g2 = svgToGps(p2, affine);
-  return Math.max(0.5, Number(gpsDistance(g1, g2).toFixed(2)));
+const segmentSplits = new Map();
+function getSegKey(u, v) {
+  return [u, v].sort().join("|");
 }
 
-// Add base edges
-let edgeIdx = 1;
 for (const [u, v] of BASE_EDGES) {
-  const p1 = { x: Number(JUNCTIONS[u][0].toFixed(2)), y: Number(JUNCTIONS[u][1].toFixed(2)) };
-  const p2 = { x: Number(JUNCTIONS[v][0].toFixed(2)), y: Number(JUNCTIONS[v][1].toFixed(2)) };
-  const lengthMeters = calcEdgeLength(p1, p2);
-  edges.push({
-    id: `edge_${edgeIdx++}`,
-    from: u,
-    to: v,
-    lengthMeters,
-    modes: ["walking", "driving"],
-    isBidirectional: true,
-    isOpen: true,
-    geometry: [p1, p2],
-  });
+  segmentSplits.set(getSegKey(u, v), []);
 }
 
-// Helper: project point onto line segment [p1, p2]
-function projectPointToSegment(px, py, x1, y1, x2, y2) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const l2 = dx * dx + dy * dy;
-  if (l2 === 0) return { x: x1, y: y1, dist: Math.hypot(px - x1, py - y1), t: 0 };
-  let t = ((px - x1) * dx + (py - y1) * dy) / l2;
-  t = Math.max(0, Math.min(1, t));
-  const qx = x1 + t * dx;
-  const qy = y1 + t * dy;
-  return { x: qx, y: qy, dist: Math.hypot(px - qx, py - qy), t };
+const lotPolysObj = {};
+for (const l of lots) {
+  if (l.pathD) lotPolysObj[l.id] = parseSvgPath(l.pathD);
 }
 
-function findClosestPointOnPolygon(pt, poly) {
-  let bestDist = Infinity;
-  let bestPt = { x: poly[0][0], y: poly[0][1] };
-  for (let i = 0; i < poly.length; i++) {
-    const v1 = poly[i];
-    const v2 = poly[(i + 1) % poly.length];
-    const proj = projectPointToSegment(pt.x, pt.y, v1[0], v1[1], v2[0], v2[1]);
-    if (proj.dist < bestDist) {
-      bestDist = proj.dist;
-      bestPt = { x: proj.x, y: proj.y };
-    }
-  }
-  return { point: bestPt, dist: bestDist };
-}
-
-// For each lot, create a frontage destination node and connect to the best street edge
 for (const lot of lots) {
   if (!lot.pathD || !lot.centroid) continue;
-  const poly = parseSvgPoints(lot.pathD);
-  if (poly.length < 3) continue;
+  const poly = lotPolysObj[lot.id];
+  if (!poly || poly.length < 3) continue;
 
-  let bestDist = Infinity;
-  let bestJunction = null;
+  let bestCandidate = null;
+  let fallbackCandidate = null;
 
-  // Check closest junction
-  for (const [jId, [jx, jy]] of Object.entries(JUNCTIONS)) {
-    const d = Math.hypot(lot.centroid[0] - jx, lot.centroid[1] - jy);
-    if (d < bestDist) {
-      bestDist = d;
-      bestJunction = jId;
-    }
-  }
-
-  // Also check segments for closer perpendicular frontage
   for (const [u, v] of BASE_EDGES) {
-    const p1 = JUNCTIONS[u],
-      p2 = JUNCTIONS[v];
-    const proj = projectPointToSegment(
-      lot.centroid[0],
-      lot.centroid[1],
-      p1[0],
-      p1[1],
-      p2[0],
-      p2[1],
-    );
-    if (proj.dist < bestDist) {
-      bestDist = proj.dist;
-      const d1 = Math.hypot(lot.centroid[0] - p1[0], lot.centroid[1] - p1[1]);
-      const d2 = Math.hypot(lot.centroid[0] - p2[0], lot.centroid[1] - p2[1]);
-      bestJunction = d1 <= d2 ? u : v;
-    }
-  }
+    const p1 = { x: JUNCTIONS[u][0], y: JUNCTIONS[u][1] };
+    const p2 = { x: JUNCTIONS[v][0], y: JUNCTIONS[v][1] };
+    const proj = projectPointToSegment(lot.centroid[0], lot.centroid[1], p1.x, p1.y, p2.x, p2.y);
+    const roadPt = { x: Number(proj.x.toFixed(2)), y: Number(proj.y.toFixed(2)) };
 
-  if (bestJunction) {
-    const jPt = {
-      x: Number(JUNCTIONS[bestJunction][0].toFixed(2)),
-      y: Number(JUNCTIONS[bestJunction][1].toFixed(2)),
-    };
+    const closest = findClosestPointOnPolygon(roadPt, poly);
+    let frontPt = { x: Number(closest.point.x.toFixed(2)), y: Number(closest.point.y.toFixed(2)) };
 
-    // Find the frontage of the lot closest to this road junction
-    const closest = findClosestPointOnPolygon(jPt, poly);
-    let frontPt = closest.point;
-
-    // Ensure frontage is at least 3 SVG units (~1 meter) away from the junction node
-    if (closest.dist < 3) {
-      const dx = lot.centroid[0] - jPt.x || 1;
-      const dy = lot.centroid[1] - jPt.y || 1;
+    if (Math.hypot(roadPt.x - frontPt.x, roadPt.y - frontPt.y) < 3) {
+      const dx = lot.centroid[0] - roadPt.x || 1;
+      const dy = lot.centroid[1] - roadPt.y || 1;
       const dLen = Math.hypot(dx, dy);
       frontPt = {
-        x: jPt.x + (dx / dLen) * 3,
-        y: jPt.y + (dy / dLen) * 3,
+        x: Number((roadPt.x + (dx / dLen) * 3).toFixed(2)),
+        y: Number((roadPt.y + (dy / dLen) * 3).toFixed(2)),
       };
     }
 
-    const destNodeId = `dest_${lot.id}`;
-    const lotLabel = `Lote ${lot.lotNumber ?? lot.id.replace("L-", "")}`;
+    let crossesOther = false;
+    for (const [otherId, otherPoly] of Object.entries(lotPolysObj)) {
+      if (otherId !== lot.id) {
+        const inset = insetPolygon(otherPoly, 0.6);
+        if (edgeIntersectsPolygon(roadPt, frontPt, inset)) {
+          crossesOther = true;
+          break;
+        }
+      }
+    }
 
-    const destX = Number(frontPt.x.toFixed(2));
-    const destY = Number(frontPt.y.toFixed(2));
-    const destPt = { x: destX, y: destY };
+    const dist = Math.hypot(roadPt.x - frontPt.x, roadPt.y - frontPt.y);
+    const cand = { u, v, roadPt, frontPt, dist, t: proj.t };
 
-    nodes.push({
-      id: destNodeId,
-      label: lotLabel,
-      kind: "destination",
-      point: destPt,
+    if (!fallbackCandidate || dist < fallbackCandidate.dist) {
+      fallbackCandidate = cand;
+    }
+
+    if (!crossesOther) {
+      if (!bestCandidate || dist < bestCandidate.dist) {
+        bestCandidate = cand;
+      }
+    }
+  }
+
+  const chosen = bestCandidate || fallbackCandidate;
+  if (chosen) {
+    const key = getSegKey(chosen.u, chosen.v);
+    segmentSplits.get(key).push({
+      lotId: lot.id,
+      lotNumber: lot.lotNumber,
+      roadPt: chosen.roadPt,
+      frontPt: chosen.frontPt,
+      u: chosen.u,
+      v: chosen.v,
     });
+  }
+}
 
-    const connLenMeters = calcEdgeLength(jPt, destPt);
+for (const [u, v] of BASE_EDGES) {
+  const p1 = { x: Number(JUNCTIONS[u][0].toFixed(2)), y: Number(JUNCTIONS[u][1].toFixed(2)) };
+  const p2 = { x: Number(JUNCTIONS[v][0].toFixed(2)), y: Number(JUNCTIONS[v][1].toFixed(2)) };
+  const key = getSegKey(u, v);
+  const splits = segmentSplits.get(key) || [];
 
+  if (splits.length === 0) {
+    const lengthMeters = Math.max(0.5, calcEdgeLength(p1, p2));
     edges.push({
-      id: `edge_acc_${lot.id}`,
-      from: bestJunction,
-      to: destNodeId,
-      lengthMeters: connLenMeters,
+      id: `edge_${edgeIdx++}`,
+      from: u,
+      to: v,
+      lengthMeters,
       modes: ["walking", "driving"],
       isBidirectional: true,
       isOpen: true,
-      geometry: [jPt, destPt],
+      geometry: [p1, p2],
     });
+  } else {
+    const segTotalDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const intermediateSplits = [];
 
-    destinations.push({
-      lotId: lot.id,
-      nodeId: destNodeId,
-    });
+    for (const split of splits) {
+      const distFromP1 = Math.hypot(split.roadPt.x - p1.x, split.roadPt.y - p1.y);
+      const distFromP2 = Math.hypot(split.roadPt.x - p2.x, split.roadPt.y - p2.y);
+
+      if (distFromP1 < 1.0) {
+        split.roadNodeId = u;
+        split.roadPt = p1;
+      } else if (distFromP2 < 1.0 || distFromP1 >= segTotalDist - 1.0) {
+        split.roadNodeId = v;
+        split.roadPt = p2;
+      } else {
+        split.distFromP1 = distFromP1;
+        intermediateSplits.push(split);
+      }
+    }
+
+    intermediateSplits.sort((a, b) => a.distFromP1 - b.distFromP1);
+
+    const intermediateNodes = [];
+    for (const s of intermediateSplits) {
+      if (
+        intermediateNodes.length > 0 &&
+        s.distFromP1 - intermediateNodes.at(-1).distFromP1 < 1.0
+      ) {
+        s.roadNodeId = intermediateNodes.at(-1).id;
+        s.roadPt = intermediateNodes.at(-1).pt;
+      } else {
+        const roadNodeId = `r_${s.lotId}`;
+        nodes.push({
+          id: roadNodeId,
+          label: `Acceso Vía ${s.lotId}`,
+          kind: "intersection",
+          point: s.roadPt,
+        });
+        s.roadNodeId = roadNodeId;
+        intermediateNodes.push({
+          id: roadNodeId,
+          pt: s.roadPt,
+          distFromP1: s.distFromP1,
+        });
+      }
+    }
+
+    const chain = [{ id: u, pt: p1 }, ...intermediateNodes, { id: v, pt: p2 }];
+    for (let i = 0; i < chain.length - 1; i++) {
+      const curr = chain[i];
+      const next = chain[i + 1];
+      const segLen = Math.max(0.5, calcEdgeLength(curr.pt, next.pt));
+      edges.push({
+        id: `edge_${edgeIdx++}`,
+        from: curr.id,
+        to: next.id,
+        lengthMeters: segLen,
+        modes: ["walking", "driving"],
+        isBidirectional: true,
+        isOpen: true,
+        geometry: [curr.pt, next.pt],
+      });
+    }
+
+    for (const split of splits) {
+      const destNodeId = `dest_${split.lotId}`;
+      const lotLabel = `Lote ${split.lotNumber ?? split.lotId.replace("L-", "")}`;
+      nodes.push({
+        id: destNodeId,
+        label: lotLabel,
+        kind: "destination",
+        point: split.frontPt,
+      });
+
+      const accLen = Math.max(0.5, calcEdgeLength(split.roadPt, split.frontPt));
+      edges.push({
+        id: `edge_acc_${split.lotId}`,
+        from: split.roadNodeId,
+        to: destNodeId,
+        lengthMeters: accLen,
+        modes: ["walking", "driving"],
+        isBidirectional: true,
+        isOpen: true,
+        geometry: [split.roadPt, split.frontPt],
+      });
+
+      destinations.push({
+        lotId: split.lotId,
+        nodeId: destNodeId,
+      });
+    }
   }
 }
 
@@ -611,13 +775,10 @@ const geofence = [
   { x: 300, y: 1550 },
 ];
 
-const layersHash =
-  "sha256:" + crypto.createHash("sha256").update(JSON.stringify(layers)).digest("hex");
-
 const bundle = {
   projectSlug: "villa-paraiso",
   version: "2026.11.02.1",
-  masterplanVersion: layersHash,
+  masterplanVersion: "sha256:b409559d6c69a0b806575496199faea30a74fd30a25753878331b6421081af6f",
   entranceId: "entrance",
   bounds: { width: 2400, height: 2324 },
   geofence,
