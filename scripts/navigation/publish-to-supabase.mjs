@@ -1,8 +1,11 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 
-const bundlePath = "D:/AUTEM/src/data/generated/villa-paraiso-navigation-bundle.json";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const baseDir = path.resolve(__dirname, "../..");
+const bundlePath = path.resolve(baseDir, "src/data/generated/villa-paraiso-navigation-bundle.json");
 const bundle = JSON.parse(fs.readFileSync(bundlePath, "utf8"));
 
 console.log("Preparing SQL query to insert validated navigation bundle into Supabase...");
@@ -43,13 +46,15 @@ BEGIN;
 COMMIT;
 `;
 
-const tempSqlPath = "D:/AUTEM/scripts/navigation/temp-publish.sql";
+const tempSqlPath = path.resolve(baseDir, "scripts/navigation/temp-publish.sql");
 fs.writeFileSync(tempSqlPath, sql, "utf8");
+
+const backendDir = process.env.BACKEND_DIR || path.resolve(baseDir, "../AUTEM-BACKEND");
 
 try {
   console.log("Executing SQL via supabase db query --linked -f ...");
   const output = execSync(`npx supabase db query --linked -f "${tempSqlPath}"`, {
-    cwd: "D:/AUTEM-BACKEND",
+    cwd: backendDir,
     encoding: "utf8",
   });
   console.log("Supabase response:", output);

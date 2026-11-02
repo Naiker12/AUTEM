@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import proj4 from "proj4";
 
 // Setup EPSG:3116 (MAGNA-SIRGAS / Colombia Bogotá zone)
@@ -10,7 +11,8 @@ proj4.defs(
 
 const UNITS_PER_METER = 3.0054;
 
-const baseDir = "D:/AUTEM";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const baseDir = path.resolve(__dirname, "../..");
 const layersPath = path.resolve(baseDir, "src/data/villa-paraiso-layers.json");
 const lotsPath = path.resolve(baseDir, "src/data/villa-paraiso-lots.json");
 const cadPath = path.resolve(baseDir, "src/data/villa-paraiso-cad-reference.json");

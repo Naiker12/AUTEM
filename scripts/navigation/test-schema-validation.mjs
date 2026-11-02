@@ -3,7 +3,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { validateNavigationBundle } from "../../src/features/terrain-navigation/navigation-schema.ts";
 
-const baseDir = path.resolve(fileURLToPath(import.meta.url), "../../..");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const baseDir = path.resolve(__dirname, "../..");
 const bundlePath = path.resolve(baseDir, "src/data/generated/villa-paraiso-navigation-bundle.json");
 
 const bundle = JSON.parse(fs.readFileSync(bundlePath, "utf8"));

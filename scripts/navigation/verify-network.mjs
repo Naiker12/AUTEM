@@ -1,8 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { z } from "zod";
 
-const baseDir = "D:/AUTEM";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const baseDir = path.resolve(__dirname, "../..");
 const bundlePath = path.resolve(baseDir, "src/data/generated/villa-paraiso-navigation-bundle.json");
 const layersPath = path.resolve(baseDir, "src/data/villa-paraiso-layers.json");
 const lotsPath = path.resolve(baseDir, "src/data/villa-paraiso-lots.json");
