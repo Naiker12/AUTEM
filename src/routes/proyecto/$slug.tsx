@@ -687,6 +687,7 @@ function ProjectView() {
               selectedLotId={selectedLot?.id}
               onSelectLot={selectLot}
               className="h-full w-full"
+              defaultShowSurroundings={true}
             />
           </div>
         ) : mode === "terrain" ? (

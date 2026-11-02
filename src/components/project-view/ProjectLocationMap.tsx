@@ -1,12 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Check, Eye, EyeOff, Hash, Layers, RotateCcw } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Compass,
+  Eye,
+  EyeOff,
+  Hash,
+  Layers,
+  MapPin,
+  RotateCcw,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatLotArea, formatLotDetail, formatLotPrice, type Lot } from "@/data/lots";
 import cadReference from "@/data/villa-paraiso-cad-reference.json";
 import villaParaisoGeoJson from "@/data/generated/villa-paraiso-geojson.json";
+import {
+  VILLA_PARAISO_SURROUNDINGS,
+  POI_CATEGORIES,
+  type PointOfInterest,
+  type PoiCategoryFilter,
+} from "@/data/villa-paraiso-surroundings";
 import type { TravelMode } from "@/features/terrain-navigation/types";
 import type { RenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
 import proj4 from "proj4";
@@ -62,12 +79,168 @@ export interface ProjectLocationMapProps {
   selectedLotId?: string;
   onSelectLot?: (lot: Lot) => void;
   showMasterplanOverlayDefault?: boolean;
+  defaultShowSurroundings?: boolean;
   route?: RenderableInternalRoute | null;
   fromGps?: boolean;
   userGpsPosition?: GeolocationCoordinates | null;
   travelMode?: TravelMode;
   destinationLot?: Lot;
   focusRequest?: number;
+}
+
+function getPoiCategoryMeta(category: PointOfInterest["category"]) {
+  switch (category) {
+    case "nature":
+      return {
+        color: "#10b981",
+        border: "rgba(16, 185, 129, 0.4)",
+        bg: "rgba(16, 185, 129, 0.15)",
+        emoji: "🌿",
+        label: "Naturaleza",
+      };
+    case "airport":
+      return {
+        color: "#0ea5e9",
+        border: "rgba(14, 165, 233, 0.4)",
+        bg: "rgba(14, 165, 233, 0.15)",
+        emoji: "✈️",
+        label: "Aeropuerto",
+      };
+    case "transport":
+      return {
+        color: "#6366f1",
+        border: "rgba(99, 102, 241, 0.4)",
+        bg: "rgba(99, 102, 241, 0.15)",
+        emoji: "🚗",
+        label: "Movilidad",
+      };
+    case "beach":
+      return {
+        color: "#f59e0b",
+        border: "rgba(245, 158, 11, 0.4)",
+        bg: "rgba(245, 158, 11, 0.15)",
+        emoji: "🏖️",
+        label: "Playas",
+      };
+    case "leisure":
+      return {
+        color: "#a855f7",
+        border: "rgba(168, 85, 247, 0.4)",
+        bg: "rgba(168, 85, 247, 0.15)",
+        emoji: "🛍️",
+        label: "Ocio & Club",
+      };
+    case "town":
+    default:
+      return {
+        color: "#94a3b8",
+        border: "rgba(148, 163, 184, 0.4)",
+        bg: "rgba(148, 163, 184, 0.15)",
+        emoji: "🏙️",
+        label: "Municipio",
+      };
+  }
+}
+
+function createPoiPopupHtml(poi: PointOfInterest, originLat: number, originLng: number) {
+  const meta = getPoiCategoryMeta(poi.category);
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${poi.lat},${poi.lng}`;
+  const benefitsHtml = poi.keyBenefits
+    .map(
+      (b) => `
+        <li style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; font-size: 11px; line-height: 1.35; color: #cbd5e1;">
+          <span style="color: ${meta.color}; font-weight: bold;">•</span>
+          <span>${b}</span>
+        </li>
+      `,
+    )
+    .join("");
+
+  return `
+    <div style="font-family: ui-sans-serif, system-ui, sans-serif; color: #f8fafc; padding: 2px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+        <span style="
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          padding: 2px 8px;
+          border-radius: 9999px;
+          background: ${meta.bg};
+          color: ${meta.color};
+          border: 1px solid ${meta.border};
+        ">
+          <span>${meta.emoji}</span>
+          <span>${poi.categoryLabel}</span>
+        </span>
+        <span style="
+          font-size: 10.5px;
+          font-weight: 700;
+          color: #facc15;
+          background: rgba(250, 204, 21, 0.12);
+          border: 1px solid rgba(250, 204, 21, 0.3);
+          padding: 2px 7px;
+          border-radius: 9999px;
+        ">
+          ${poi.travelTime}
+        </span>
+      </div>
+
+      <h3 style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">
+        ${poi.name}
+      </h3>
+
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+        <span style="font-size: 11px; font-weight: 600; color: #94a3b8;">
+          Distancia: <strong style="color: #e2e8f0;">${poi.distanceKm} km</strong>
+        </span>
+        <span style="font-size: 10px; color: #64748b;">•</span>
+        <span style="font-size: 10.5px; font-weight: 600; color: #38bdf8;">
+          ${poi.highlightTag}
+        </span>
+      </div>
+
+      <p style="margin: 0 0 10px; font-size: 11.5px; line-height: 1.45; color: #94a3b8;">
+        ${poi.description}
+      </p>
+
+      <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 8px; margin-bottom: 10px;">
+        <span style="display: block; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 5px;">
+          Ventajas y conectividad
+        </span>
+        <ul style="margin: 0; padding: 0; list-style: none;">
+          ${benefitsHtml}
+        </ul>
+      </div>
+
+      <a
+        href="${googleMapsUrl}"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          width: 100%;
+          padding: 7px 12px;
+          border-radius: 8px;
+          background: #2563eb;
+          color: #ffffff;
+          font-size: 11.5px;
+          font-weight: 600;
+          text-decoration: none;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+        "
+      >
+        <span>Cómo llegar con Google Maps</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+      </a>
+    </div>
+  `;
 }
 
 type MapLayerType = "satellite" | "streets" | "hybrid";
@@ -145,6 +318,7 @@ export default function ProjectLocationMap({
   selectedLotId,
   onSelectLot,
   showMasterplanOverlayDefault = true,
+  defaultShowSurroundings = false,
   route,
   fromGps = false,
   userGpsPosition,
@@ -158,12 +332,19 @@ export default function ProjectLocationMap({
   const masterplanLayerRef = useRef<L.GeoJSON | null>(null);
   const lotNumbersLayerRef = useRef<L.LayerGroup | null>(null);
   const routeLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const surroundingsLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const connectionLineLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   const [activeLayer, setActiveLayer] = useState<MapLayerType>("satellite");
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
   const [showMasterplan, setShowMasterplan] = useState(showMasterplanOverlayDefault);
   const [showLotNumbers, setShowLotNumbers] = useState(true);
   const [masterplanOpacity, setMasterplanOpacity] = useState<number>(0.85);
+
+  const [showSurroundings, setShowSurroundings] = useState(defaultShowSurroundings);
+  const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
+  const [poiCategory, setPoiCategory] = useState<PoiCategoryFilter>("all");
+  const [isPoiPanelCollapsed, setIsPoiPanelCollapsed] = useState(false);
 
   const isParaiso =
     projectSlug === "villa-paraiso" ||
@@ -173,6 +354,12 @@ export default function ProjectLocationMap({
   // Center coordinates fallback to Santa Rosa de Lima
   const centerLat = lat !== 0 ? lat : 10.436829;
   const centerLng = lng !== 0 ? lng : -75.356179;
+
+  const filteredPois = useMemo(() => {
+    return VILLA_PARAISO_SURROUNDINGS.filter((p) =>
+      poiCategory === "all" ? true : p.category === poiCategory,
+    );
+  }, [poiCategory]);
 
   // Map of live lots for dynamic price/status binding
   const lotsMap = useMemo(() => {
@@ -506,6 +693,8 @@ export default function ProjectLocationMap({
       masterplanLayerRef.current = null;
       lotNumbersLayerRef.current = null;
       routeLayerGroupRef.current = null;
+      surroundingsLayerGroupRef.current = null;
+      connectionLineLayerGroupRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [centerLat, centerLng, projectName, locationName, boundsGeo, isParaiso, projectSlug]);
@@ -743,6 +932,151 @@ export default function ProjectLocationMap({
     }
   }, [focusRequest, route, destinationLot]);
 
+  // Synchronize POIs / Surroundings layer
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (!surroundingsLayerGroupRef.current) {
+      surroundingsLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
+    if (!connectionLineLayerGroupRef.current) {
+      connectionLineLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
+
+    const group = surroundingsLayerGroupRef.current;
+    const lineGroup = connectionLineLayerGroupRef.current;
+    group.clearLayers();
+    lineGroup.clearLayers();
+
+    if (!showSurroundings || !isParaiso) {
+      return;
+    }
+
+    // Filter POIs by category
+    const listToRender = VILLA_PARAISO_SURROUNDINGS.filter((poi) =>
+      poiCategory === "all" ? true : poi.category === poiCategory,
+    );
+
+    for (const poi of listToRender) {
+      const isSelected = selectedPoi?.id === poi.id;
+      const meta = getPoiCategoryMeta(poi.category);
+
+      const poiIcon = L.divIcon({
+        className: "autem-poi-container",
+        html: `
+          <div class="autem-poi-marker ${isSelected ? "is-selected" : ""}" data-poi-id="${poi.id}">
+            <div class="autem-poi-badge" style="border-color: ${isSelected ? "#facc15" : meta.color};">
+              <span class="autem-poi-icon">${meta.emoji}</span>
+              <span class="autem-poi-label">${poi.shortName}</span>
+              <span class="autem-poi-tag">${poi.travelTime}</span>
+            </div>
+            <div class="autem-poi-pin" style="background: ${isSelected ? "#facc15" : meta.color};"></div>
+            <div class="autem-poi-dot" style="background: ${isSelected ? "#facc15" : meta.color};"></div>
+          </div>
+        `,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+      });
+
+      const marker = L.marker([poi.lat, poi.lng], {
+        icon: poiIcon,
+        zIndexOffset: isSelected ? 1200 : 800,
+      });
+
+      const popupContent = createPoiPopupHtml(poi, centerLat, centerLng);
+      marker.bindPopup(popupContent, {
+        className: "autem-leaflet-popup",
+        offset: [0, -28],
+        autoPan: true,
+        autoPanPaddingTopLeft: L.point(40, 100),
+        autoPanPaddingBottomRight: L.point(40, 40),
+        maxWidth: 320,
+      });
+
+      marker.on("click", () => {
+        setSelectedPoi(poi);
+      });
+
+      marker.addTo(group);
+
+      if (isSelected) {
+        marker.openPopup();
+      }
+    }
+
+    // If a POI is selected, draw direct geodesic line with distance pill
+    if (selectedPoi) {
+      const meta = getPoiCategoryMeta(selectedPoi.category);
+      const startPt: [number, number] = [centerLat, centerLng];
+      const endPt: [number, number] = [selectedPoi.lat, selectedPoi.lng];
+
+      const polyline = L.polyline([startPt, endPt], {
+        color: meta.color,
+        weight: 2.5,
+        opacity: 0.85,
+        dashArray: "6, 8",
+      });
+      polyline.addTo(lineGroup);
+
+      // Midpoint distance pill
+      const midLat = (startPt[0] + endPt[0]) / 2;
+      const midLng = (startPt[1] + endPt[1]) / 2;
+      const midIcon = L.divIcon({
+        className: "autem-poi-line-container",
+        html: `
+          <div style="transform: translate(-50%, -50%); pointer-events: none;">
+            <div style="display: flex; align-items: center; gap: 4px; background: rgba(15, 23, 42, 0.94); color: #f8fafc; border: 1.5px solid ${meta.color}; padding: 2px 8px; border-radius: 9999px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 10px; font-weight: 700; white-space: nowrap;">
+              <span>${selectedPoi.distanceKm} km directos</span>
+              <span style="opacity: 0.5;">·</span>
+              <span style="color: #facc15;">${selectedPoi.travelTime}</span>
+            </div>
+          </div>
+        `,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+      });
+      L.marker([midLat, midLng], { icon: midIcon, zIndexOffset: 850 }).addTo(lineGroup);
+    }
+  }, [showSurroundings, isParaiso, poiCategory, selectedPoi, centerLat, centerLng]);
+
+  const handleSelectPoi = (poi: PointOfInterest) => {
+    setSelectedPoi(poi);
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const bounds = L.latLngBounds([
+      [centerLat, centerLng],
+      [poi.lat, poi.lng],
+    ]);
+    map.fitBounds(bounds, {
+      padding: [100, 100],
+      maxZoom: 14,
+      animate: true,
+      duration: 1.2,
+    });
+  };
+
+  const handleFitAllSurroundings = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const coords: [number, number][] = [
+      [centerLat, centerLng],
+      ...VILLA_PARAISO_SURROUNDINGS.map((p) => [p.lat, p.lng] as [number, number]),
+    ];
+    map.fitBounds(L.latLngBounds(coords), {
+      padding: [60, 60],
+      animate: true,
+      duration: 1.2,
+    });
+  };
+
+  const handleFocusVillaParaiso = () => {
+    setSelectedPoi(null);
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.setView([centerLat, centerLng], 17, { animate: true, duration: 1 });
+  };
+
   // Switch base tile layers
   const switchLayer = (type: MapLayerType) => {
     const map = mapInstanceRef.current;
@@ -874,6 +1208,16 @@ export default function ProjectLocationMap({
             </span>
           </div>
         )}
+
+        {/* Surroundings active badge */}
+        {isParaiso && showSurroundings && (
+          <div className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/15 px-2.5 py-1 shadow-md backdrop-blur-md text-purple-700 dark:text-purple-300">
+            <Compass className="size-3" />
+            <span className="text-[10px] font-bold tracking-wide">
+              Lugares cercanos ({filteredPois.length})
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Map floating controls (right side) */}
@@ -965,6 +1309,23 @@ export default function ProjectLocationMap({
                     <span>Números de lote</span>
                   </span>
                   <span className="text-[10px] font-bold">{showLotNumbers ? "ON" : "OFF"}</span>
+                </button>
+
+                {/* Surroundings toggle in menu */}
+                <button
+                  type="button"
+                  onClick={() => setShowSurroundings((prev) => !prev)}
+                  className={`mt-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    showSurroundings
+                      ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 font-semibold"
+                      : "hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Compass className="size-3.5" />
+                    <span>Lugares cercanos</span>
+                  </span>
+                  <span className="text-[10px] font-bold">{showSurroundings ? "ON" : "OFF"}</span>
                 </button>
 
                 {showMasterplan && (
@@ -1062,6 +1423,29 @@ export default function ProjectLocationMap({
             </Button>
           )}
 
+          {/* Quick toggle for surroundings */}
+          {isParaiso && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSurroundings((prev) => !prev)}
+              className={`size-8 rounded-full cursor-pointer transition-colors ${
+                showSurroundings
+                  ? "bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/30"
+                  : "hover:bg-muted text-muted-foreground"
+              }`}
+              title={
+                showSurroundings
+                  ? "Ocultar lugares cercanos y atractivos"
+                  : "Mostrar lugares cercanos y puntos de interés"
+              }
+              aria-label="Lugares cercanos y puntos de interés"
+            >
+              <Compass className="size-4" />
+            </Button>
+          )}
+
           <div className="h-px w-4 bg-border/60" />
 
           {/* Zoom controls */}
@@ -1104,6 +1488,140 @@ export default function ProjectLocationMap({
           </Button>
         </div>
       </div>
+
+      {/* Surroundings interactive explorer drawer */}
+      {isParaiso && showSurroundings && (
+        <div
+          className={`absolute z-30 transition-all duration-300 ${
+            route
+              ? "bottom-24 left-3 right-3 sm:left-6 sm:right-20 md:left-96 md:right-16"
+              : "bottom-3 left-3 right-3 sm:left-6 sm:right-6 lg:left-8 lg:right-8"
+          }`}
+        >
+          <div className="rounded-2xl border border-border/80 bg-background/92 p-3 shadow-2xl backdrop-blur-2xl">
+            {/* Drawer header */}
+            <div className="flex items-center justify-between gap-2 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-purple-500/20 text-purple-500">
+                  <Compass className="size-4" />
+                </div>
+                <div className="min-w-0">
+                  <strong className="block truncate text-xs sm:text-sm font-bold text-foreground">
+                    Lugares cercanos y puntos de interés
+                  </strong>
+                  <span className="text-[10.5px] text-muted-foreground">
+                    {filteredPois.length} sitios clave alrededor de Villa Paraíso
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFitAllSurroundings}
+                  className="hidden sm:inline-flex h-7 px-2.5 text-[10.5px] font-semibold rounded-lg"
+                >
+                  Ver todo el mapa
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFocusVillaParaiso}
+                  className="hidden sm:inline-flex h-7 px-2.5 text-[10.5px] font-semibold rounded-lg"
+                >
+                  Volver a Villa Paraíso
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsPoiPanelCollapsed((prev) => !prev)}
+                  className="size-7 rounded-lg text-muted-foreground hover:text-foreground"
+                  aria-label={
+                    isPoiPanelCollapsed ? "Expandir lugares cercanos" : "Colapsar lugares cercanos"
+                  }
+                >
+                  {isPoiPanelCollapsed ? (
+                    <ChevronUp className="size-4" />
+                  ) : (
+                    <ChevronDown className="size-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {!isPoiPanelCollapsed && (
+              <>
+                {/* Category filter pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                  {POI_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setPoiCategory(cat.id)}
+                      className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-medium transition-all ${
+                        poiCategory === cat.id
+                          ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                          : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <span>{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Cards carousel */}
+                <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+                  {filteredPois.map((poi) => {
+                    const meta = getPoiCategoryMeta(poi.category);
+                    const isSelected = selectedPoi?.id === poi.id;
+                    return (
+                      <button
+                        key={poi.id}
+                        type="button"
+                        onClick={() => handleSelectPoi(poi)}
+                        className={`group flex min-w-[210px] sm:min-w-[230px] max-w-[260px] shrink-0 flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "border-amber-400/80 bg-amber-500/10 shadow-lg ring-1 ring-amber-400/50"
+                            : "border-border/60 bg-muted/30 hover:border-border hover:bg-muted/60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 w-full">
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
+                            style={{ background: meta.bg, color: meta.color }}
+                          >
+                            <span>{meta.emoji}</span>
+                            <span>{meta.label}</span>
+                          </span>
+                          <span className="rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-bold text-amber-500">
+                            {poi.travelTime}
+                          </span>
+                        </div>
+
+                        <strong className="mt-1.5 line-clamp-1 text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                          {poi.shortName}
+                        </strong>
+
+                        <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <span>{poi.distanceKm} km</span>
+                          <span>•</span>
+                          <span className="truncate text-foreground/80 font-medium">
+                            {poi.highlightTag}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

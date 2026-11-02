@@ -339,3 +339,84 @@
 .autem-gps-ping {
   animation: autem-gps-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
+
+/* Points of Interest (Surroundings) styling */
+.autem-poi-container {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.autem-poi-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.autem-poi-marker:hover,
+.autem-poi-marker.is-selected {
+  transform: translate(-50%, -108%) scale(1.08);
+  z-index: 9999 !important;
+}
+
+.autem-poi-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(18, 18, 20, 0.92);
+  backdrop-filter: blur(12px);
+  padding: 4px 9px 4px 6px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.autem-poi-marker.is-selected .autem-poi-badge {
+  border-color: #facc15 !important;
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.55), 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.autem-poi-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.autem-poi-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f8fafc;
+}
+
+.autem-poi-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+
+.autem-poi-pin {
+  width: 2px;
+  height: 7px;
+  background: #ffffff;
+  margin-top: -1px;
+}
+
+.autem-poi-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  margin-top: -1px;
+}
