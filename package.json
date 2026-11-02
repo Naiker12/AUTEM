@@ -14,6 +14,7 @@
     "navigation:extract": "node scripts/extract-villa-paraiso-navigation.mjs \"cad/VILLA PARAISO_05092026_CAMPO.dxf\" cad/villa-paraiso-navigation-candidates.json",
     "images:home": "node scripts/optimize-home-images.mjs",
     "images:project": "node scripts/optimize-project-images.mjs",
+    "geojson:generate": "node scripts/generate-lots-geojson.mjs",
     "test:navigation": "node scripts/navigation/verify-network.mjs && npx tsx scripts/navigation/test-schema-validation.mjs"
   },
   "dependencies": {

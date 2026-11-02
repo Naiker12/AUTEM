@@ -476,6 +476,10 @@ function ProjectView() {
                   isDark={isDark}
                   georeferenceStatus={georeference?.status}
                   boundsGeo={georeference?.bounds_geo}
+                  projectSlug={property?.slug ?? slug}
+                  lots={projectLots}
+                  selectedLotId={selectedLot?.id}
+                  onSelectLot={selectLot}
                 />
               ) : (
                 <MasterplanSvgViewer
@@ -678,6 +682,10 @@ function ProjectView() {
               isDark={isDark}
               georeferenceStatus={georeference?.status}
               boundsGeo={georeference?.bounds_geo}
+              projectSlug={property?.slug ?? slug}
+              lots={projectLots}
+              selectedLotId={selectedLot?.id}
+              onSelectLot={selectLot}
               className="h-full w-full"
             />
           </div>
