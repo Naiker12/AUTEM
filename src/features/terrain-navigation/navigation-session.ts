@@ -39,7 +39,7 @@ export function resolveTerrainNavigation(
     Math.abs(position.longitude) > 180
   )
     return invalid("Posición GPS inválida.");
-  if (!Number.isFinite(position.accuracy) || position.accuracy < 0 || position.accuracy > 15)
+  if (!Number.isFinite(position.accuracy) || position.accuracy < 0 || position.accuracy > 25)
     return invalid("Precisión insuficiente para distinguir vías. Esperando mejor señal.");
   if (!insideGeofence(gpsToSvg(position, loaded.transform), loaded.bundle.geofence))
     return invalid("Estás fuera del proyecto. Acércate al acceso principal.");

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import type { Lot } from "@/data/lots";
 import type { RenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
-import { createFallbackInternalRoute } from "@/features/terrain-navigation/road-pathfinder";
 
 export default function TerrainRouteOverlay({
   destination,
@@ -31,14 +30,8 @@ export default function TerrainRouteOverlay({
     return { x: entranceX, y: entranceY };
   }, [routeOriginX, routeOriginY, entranceX, entranceY]);
 
-  // Genera la ruta interna efectiva sobre la red vial CAD cuando aún no hay bundle publicado
-  const effectiveRoute = useMemo(() => {
-    if (!centroid) return null;
-    if (route && route.svgPaths && route.svgPaths.length > 0) {
-      return route;
-    }
-    return createFallbackInternalRoute(originPoint, centroid, lotLabel, travelMode);
-  }, [route, originPoint, centroid, lotLabel, travelMode]);
+  // Usa la ruta interna validada sobre la red caminable/vial
+  const effectiveRoute = route && route.svgPaths && route.svgPaths.length > 0 ? route : null;
 
   if (!destination || !centroid || !effectiveRoute) return null;
 

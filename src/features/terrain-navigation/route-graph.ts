@@ -1,3 +1,62 @@
+class MinHeap {
+  private data: { id: string; priority: number }[] = [];
+
+  push(id: string, priority: number) {
+    this.data.push({ id, priority });
+    this.bubbleUp(this.data.length - 1);
+  }
+
+  pop(): string | undefined {
+    if (this.data.length === 0) return undefined;
+    const top = this.data[0];
+    const bottom = this.data.pop()!;
+    if (this.data.length > 0) {
+      this.data[0] = bottom;
+      this.sinkDown(0);
+    }
+    return top.id;
+  }
+
+  get size(): number {
+    return this.data.length;
+  }
+
+  private bubbleUp(idx: number) {
+    const item = this.data[idx];
+    while (idx > 0) {
+      const parentIdx = (idx - 1) >> 1;
+      const parent = this.data[parentIdx];
+      if (item.priority >= parent.priority) break;
+      this.data[idx] = parent;
+      idx = parentIdx;
+    }
+    this.data[idx] = item;
+  }
+
+  private sinkDown(idx: number) {
+    const len = this.data.length;
+    const item = this.data[idx];
+    while (true) {
+      const leftIdx = (idx << 1) + 1;
+      const rightIdx = leftIdx + 1;
+      let swapIdx: number | null = null;
+      let minPriority = item.priority;
+
+      if (leftIdx < len && this.data[leftIdx].priority < minPriority) {
+        minPriority = this.data[leftIdx].priority;
+        swapIdx = leftIdx;
+      }
+      if (rightIdx < len && this.data[rightIdx].priority < minPriority) {
+        swapIdx = rightIdx;
+      }
+      if (swapIdx === null) break;
+      this.data[idx] = this.data[swapIdx];
+      idx = swapIdx;
+    }
+    this.data[idx] = item;
+  }
+}
+
 import type {
   NavigationEdge,
   NavigationGraph,

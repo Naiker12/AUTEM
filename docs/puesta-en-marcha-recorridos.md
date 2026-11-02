@@ -57,6 +57,7 @@ pnpm build
 Los tests del piloto usan mediciones sintéticas identificadas como test-project; no se suben a Supabase. PostgreSQL se prueba localmente con PGlite, incluyendo RLS, rechazo de publicaciones incorrectas, permisos, borradores privados y reemplazo atómico. Esa prueba no sustituye la comprobación del esquema remoto ni la aceptación física en terreno.
 
 El piloto implementa ruta, distancia, actualización y llegada. No incluye aún navegación por voz, maniobras detalladas, mapas externos hasta la entrada ni navegación sin conexión.
+
 ## Referencia CAD preparada automáticamente
 
 Se registraron 2.311 vértices de A-VIA, A-CALZADA y A-SENDEROS contra el SVG actual. El ajuste CAD→SVG tiene un RMS de 0,0406 unidades SVG. La anotación ACCESO PRINCIPAL se sitúa aproximadamente en X 1014,73 / Y 2148,51 del SVG y aparece como referencia ámbar en el panel administrativo.

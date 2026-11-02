@@ -140,7 +140,7 @@ export const properties: Property[] = [
       "Vías internas en zahorra compactada con cunetas y bordillos",
       "A 10 min del futuro Aeropuerto de Cartagena (sin peajes)",
     ],
-    floorPlan: "Reserva Campestre · 340 lotes · 25,45 ha",
+    floorPlan: "340 lotes · 25,45 ha",
     year: 2026,
     floorPlanImage: undefined,
     lotViewImage: undefined,

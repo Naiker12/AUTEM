@@ -6,7 +6,7 @@ export interface ProjectAnchor {
   lat: number;
   lng: number;
 }
-const MAX_ACCURACY_METERS = 60;
+const MAX_ACCURACY_METERS = 25;
 
 export function distanceToAnchor(latitude: number, longitude: number, anchor: ProjectAnchor) {
   const rad = Math.PI / 180;

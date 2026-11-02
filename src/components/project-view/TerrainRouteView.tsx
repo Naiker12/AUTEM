@@ -21,7 +21,7 @@ import {
 import { formatLotArea, formatLotPrice, formatManzanaLabel, type Lot } from "@/data/lots";
 import cadReference from "@/data/villa-paraiso-cad-reference.json";
 import { useTerrainNavigation } from "@/features/terrain-navigation/use-terrain-navigation";
-import { createFallbackInternalRoute } from "@/features/terrain-navigation/road-pathfinder";
+import { estimateMinutes, PROJECT_ANCHOR } from "@/features/terrain-navigation/geo-constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -94,15 +94,11 @@ export default function TerrainRouteView({
   const entrancePoint =
     projectSlug === "villa-paraiso" ? cadReference.entranceAnnotation.svg : null;
 
-  // Ruta activa completa por red vial interna (calculada dinámicamente con centroides CAD)
-  const effectiveRoute = useMemo(() => {
-    if (validatedRoute && validatedRoute.svgPaths && validatedRoute.svgPaths.length > 0) {
-      return validatedRoute;
-    }
-    if (!destination?.centroid) return null;
-    const origin = entrancePoint ?? { x: 1014.7, y: 2148.5 };
-    return createFallbackInternalRoute(origin, destination.centroid, lotLabel, travelMode);
-  }, [validatedRoute, destination, entrancePoint, lotLabel, travelMode]);
+  // Ruta activa sobre la red caminable/vial validada
+  const effectiveRoute =
+    validatedRoute && validatedRoute.svgPaths && validatedRoute.svgPaths.length > 0
+      ? validatedRoute
+      : null;
 
   const selectDestination = (lot: Lot) => {
     if (!lot.centroid || lot.isReserve) return;
@@ -124,10 +120,7 @@ export default function TerrainRouteView({
   const statusDotClass = isSold ? "bg-rose-500" : isReserved ? "bg-orange-500" : "bg-emerald-500";
 
   const estimatedMinutes = effectiveRoute
-    ? Math.max(
-        1,
-        Math.round(effectiveRoute.result.distanceMeters / (travelMode === "driving" ? 350 : 75)),
-      )
+    ? estimateMinutes(effectiveRoute.result.distanceMeters, travelMode)
     : null;
 
   return (
@@ -450,7 +443,7 @@ export default function TerrainRouteView({
                       <p className="truncate text-[11px] text-muted-foreground">
                         {navigation.fromGps
                           ? "Origen dinámico en terreno"
-                          : "Entrada principal del proyecto (CAD 1014, 2148)"}
+                          : "Entrada principal del proyecto"}
                       </p>
                     </div>
                   </div>

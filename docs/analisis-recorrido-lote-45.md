@@ -50,12 +50,12 @@ El recorrido más corto debe ser el más corto entre los caminos permitidos para
 
 ## Interfaz por dispositivo
 
-| Dispositivo | Preparar recorrido | Durante navegación |
-| --- | --- | --- |
-| Computador | Panel de 320–360 px a la izquierda; plano en el espacio restante; origen, destino y perfil visibles | Resumen compacto, pasos desplegables y ruta completa encuadrada |
-| Tablet horizontal | Panel lateral compacto si el ancho útil lo permite | Mantener mapa y próxima indicación simultáneamente visibles |
-| Tablet vertical | Hoja inferior similar a móvil; detalles expandibles | Panel reducido y controles fuera de su área |
-| Móvil | Buscador arriba y hoja inferior de aproximadamente 25–30 %, ajustada al contenido | Mapa prioritario, próxima indicación arriba y destino/distancia/terminar abajo |
+| Dispositivo       | Preparar recorrido                                                                                  | Durante navegación                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Computador        | Panel de 320–360 px a la izquierda; plano en el espacio restante; origen, destino y perfil visibles | Resumen compacto, pasos desplegables y ruta completa encuadrada                |
+| Tablet horizontal | Panel lateral compacto si el ancho útil lo permite                                                  | Mantener mapa y próxima indicación simultáneamente visibles                    |
+| Tablet vertical   | Hoja inferior similar a móvil; detalles expandibles                                                 | Panel reducido y controles fuera de su área                                    |
+| Móvil             | Buscador arriba y hoja inferior de aproximadamente 25–30 %, ajustada al contenido                   | Mapa prioritario, próxima indicación arriba y destino/distancia/terminar abajo |
 
 Hoy el panel móvil parte de 56 % de altura y permite 34–70 %. Deja poco espacio para orientarse. Recomiendo estados discretos: compacto, resumen y detalles, con arrastre y botones accesibles. Al abrir el teclado, preservar el buscador y los resultados; al elegir un lote, cerrar el selector y volver al resumen.
 

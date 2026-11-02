@@ -43,8 +43,7 @@ export function matchRoad(
     })
     .sort((a, b) => a.distance - b.distance);
   const best = candidates[0];
-  if (!best || best.distance > Math.min(20, Math.max(8, accuracy)))
-    return { status: "off_road" as const };
+  if (!best || best.distance > Math.max(30, accuracy)) return { status: "off_road" as const };
   const other = candidates.find(
     (c) =>
       c.edge.id !== best.edge.id &&

@@ -10,18 +10,32 @@ export async function loadPublishedNavigation(
   slug: string,
   masterplanVersion?: string,
 ) {
-  const { data, error } = await requireSupabase()
-    .from("project_navigation_versions")
-    .select("payload")
-    .eq("project_id", projectId)
-    .eq("status", "published")
-    .maybeSingle();
-  if (error) {
-    if (["42P01", "PGRST205"].includes(error.code)) return null;
-    throw new Error("No fue posible consultar la red publicada.");
+  const targetSlug = slug === "lotes-360" ? "villa-paraiso" : slug;
+  let payload: unknown = null;
+
+  try {
+    const { data, error } = await requireSupabase()
+      .from("project_navigation_versions")
+      .select("payload")
+      .eq("project_id", projectId)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (!error && data?.payload) {
+      payload = data.payload;
+    }
+  } catch {
+    // If Supabase is unreachable or not configured, gracefully fall through
   }
-  if (!data) return null;
-  const result = validateNavigationBundle(data.payload, slug);
+
+  if (!payload && targetSlug === "villa-paraiso") {
+    const bundled = await import("@/data/generated/villa-paraiso-navigation-bundle.json");
+    payload = bundled.default ?? bundled;
+  }
+
+  if (!payload) return null;
+
+  const result = validateNavigationBundle(payload, targetSlug);
   const currentRenderedVersion = await renderedMasterplanVersion();
   const hasStrictProjectHash = Boolean(
     masterplanVersion && masterplanVersion.startsWith("sha256:"),
@@ -31,8 +45,9 @@ export async function loadPublishedNavigation(
     result.bundle.masterplanVersion !== currentRenderedVersion ||
     result.bundle.bounds.width !== masterplanBounds.width ||
     result.bundle.bounds.height !== masterplanBounds.height
-  )
+  ) {
     throw new Error("La red y el plano tienen versiones distintas.");
+  }
   return result;
 }
 export async function auditNavigation(projectId: string) {

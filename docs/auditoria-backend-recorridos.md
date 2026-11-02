@@ -10,14 +10,14 @@ El catálogo público funciona. La navegación operativa todavía no está conec
 
 ### Evidencia de la consulta pública
 
-| Recurso | Resultado | Interpretación |
-| --- | --- | --- |
-| projects, villa-paraiso | HTTP 200, proyecto publicado | El proyecto está disponible públicamente |
-| Coordenada del proyecto | 10.436829, -75.356179 | Referencia general, no una calibración de todo el plano |
-| masterplan_version | null | No hay versión de plano registrada en este campo del proyecto |
-| lots | HTTP 200, 343 filas, 343 con centroides | Se puede buscar y señalar cada lote en el SVG |
-| project_navigation_nodes | HTTP 200, 0 filas visibles | No hay nodos accesibles para el visitante en esta consulta |
-| project_navigation_edges | HTTP 200, 0 filas visibles | No hay tramos accesibles para el visitante en esta consulta |
+| Recurso                  | Resultado                               | Interpretación                                                |
+| ------------------------ | --------------------------------------- | ------------------------------------------------------------- |
+| projects, villa-paraiso  | HTTP 200, proyecto publicado            | El proyecto está disponible públicamente                      |
+| Coordenada del proyecto  | 10.436829, -75.356179                   | Referencia general, no una calibración de todo el plano       |
+| masterplan_version       | null                                    | No hay versión de plano registrada en este campo del proyecto |
+| lots                     | HTTP 200, 343 filas, 343 con centroides | Se puede buscar y señalar cada lote en el SVG                 |
+| project_navigation_nodes | HTTP 200, 0 filas visibles              | No hay nodos accesibles para el visitante en esta consulta    |
+| project_navigation_edges | HTTP 200, 0 filas visibles              | No hay tramos accesibles para el visitante en esta consulta   |
 
 Las respuestas vacías de navegación no prueban que las tablas estén vacías: las políticas RLS pueden ocultar las filas. Las migraciones del repositorio permiten lectura a miembros de la organización, pero no contienen una política pública equivalente para navegación validada. No se inspeccionaron las políticas efectivas con credenciales administrativas.
 
