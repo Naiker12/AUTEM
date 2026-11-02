@@ -669,50 +669,17 @@ function ProjectView() {
             </div>
           )
         ) : mode === "perspective" ? (
-          <div className="relative flex h-full w-full items-center justify-center bg-black/80">
-            {property.image && (
-              <img
-                src={property.image}
-                alt={`Localización ${property.name}`}
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-35 filter blur-[2px] transition-all duration-700"
-              />
-            )}
-            <div className="relative z-20 mx-4 max-w-lg rounded-[28px] border border-border/80 bg-background/95 p-8 sm:p-10 text-center shadow-2xl backdrop-blur-2xl">
-              <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-                <MapPinned size={32} />
-              </span>
-              <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
-                Localización · Próximamente
-              </Badge>
-              <h2 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                Localización geográfica en preparación
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Estamos preparando la experiencia ampliada de localización geográfica y entorno de{" "}
-                {property.name}. Mientras tanto, puedes explorar todos los lotes y manzanas en el
-                Plano Urbanístico interactivo.
-              </p>
-              <div className="mt-5 flex flex-wrap justify-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
-                  Santa Rosa de Lima
-                </span>
-                <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
-                  Vía a Villanueva
-                </span>
-                <span className="rounded-full border border-border/80 bg-muted/40 px-3 py-1">
-                  Georreferenciación GPS
-                </span>
-              </div>
-              <Button
-                type="button"
-                onClick={() => handleModeChange("lot")}
-                className="mt-6 w-full rounded-xl bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
-              >
-                Ver Plano Urbanístico
-              </Button>
-            </div>
+          <div className="relative h-full w-full pt-14 sm:pt-16 lg:pt-0">
+            <ProjectLocationMap
+              lat={property.lat}
+              lng={property.lng}
+              projectName={property.name}
+              locationName={property.location}
+              isDark={isDark}
+              georeferenceStatus={georeference?.status}
+              boundsGeo={georeference?.bounds_geo}
+              className="h-full w-full"
+            />
           </div>
         ) : mode === "terrain" ? (
           <TerrainRouteView

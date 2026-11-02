@@ -48,8 +48,7 @@ export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
     label: "Localización",
     shortLabel: "Ubicación",
     icon: MapPinned,
-    badge: "Próx.",
-    available: false,
+    available: true,
   },
   {
     id: "terrain",
