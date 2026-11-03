@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+if (typeof window !== "undefined") {
+  (window as unknown as { L: typeof L }).L = L;
+}
+import "leaflet-rotate";
 import {
   Check,
   ChevronDown,
@@ -83,6 +87,10 @@ export interface ProjectLocationMapProps {
   route?: RenderableInternalRoute | null;
   fromGps?: boolean;
   userGpsPosition?: GeolocationCoordinates | null;
+  userHeading?: number | null;
+  enableHeadingRotation?: boolean;
+  showRouteLine?: boolean;
+  hideSurroundingsDrawer?: boolean;
   travelMode?: TravelMode;
   destinationLot?: Lot;
   focusRequest?: number;
@@ -322,6 +330,10 @@ export default function ProjectLocationMap({
   route,
   fromGps = false,
   userGpsPosition,
+  userHeading = null,
+  enableHeadingRotation = true,
+  showRouteLine = false,
+  hideSurroundingsDrawer = false,
   destinationLot,
   focusRequest,
 }: ProjectLocationMapProps) {
@@ -345,6 +357,10 @@ export default function ProjectLocationMap({
   const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
   const [poiCategory, setPoiCategory] = useState<PoiCategoryFilter>("all");
   const [isPoiPanelCollapsed, setIsPoiPanelCollapsed] = useState(false);
+
+  const [navBearingMode, setNavBearingMode] = useState<"heading" | "north">("heading");
+  const [isUserPanning, setIsUserPanning] = useState(false);
+  const currentBearingRef = useRef<number>(0);
 
   const isParaiso =
     projectSlug === "villa-paraiso" ||
@@ -467,10 +483,28 @@ export default function ProjectLocationMap({
     const map = L.map(mapContainerRef.current, {
       center: [centerLat, centerLng],
       zoom: 16.5,
+      minZoom: 14,
+      maxZoom: 19,
+      maxBounds: [
+        [10.415, -75.385],
+        [10.46, -75.33],
+      ],
+      maxBoundsViscosity: 0.8,
+      preferCanvas: true,
+      rotate: true,
+      bearing: 0,
+      rotateControl: false,
+      touchRotate: true,
       zoomControl: false,
       attributionControl: false,
+      zoomSnap: 0.25,
+      zoomDelta: 0.5,
     });
     mapInstanceRef.current = map;
+
+    map.on("dragstart", () => {
+      setIsUserPanning(true);
+    });
 
     // Default base layer: Esri World Imagery (High-res satellite)
     const baseTile = L.tileLayer(
@@ -813,47 +847,67 @@ export default function ProjectLocationMap({
       allPts.unshift([userGpsPosition.latitude, userGpsPosition.longitude]);
     }
 
-    // 1. Outer Glow Polyline
-    L.polyline(allPts, {
-      color: "#1d4ed8",
-      weight: 9,
-      opacity: 0.5,
-      lineCap: "round",
-      lineJoin: "round",
-    }).addTo(group);
+    if (showRouteLine) {
+      // 1. Outer Glow Polyline
+      L.polyline(allPts, {
+        color: "#1d4ed8",
+        weight: 9,
+        opacity: 0.5,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(group);
 
-    // 2. Main Navigation Blue Polyline
-    L.polyline(allPts, {
-      color: "#2563eb",
-      weight: 5.5,
-      opacity: 0.95,
-      lineCap: "round",
-      lineJoin: "round",
-    }).addTo(group);
+      // 2. Main Navigation Blue Polyline
+      L.polyline(allPts, {
+        color: "#2563eb",
+        weight: 5.5,
+        opacity: 0.95,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(group);
 
-    // 3. Inner White Dashed Core
-    L.polyline(allPts, {
-      color: "#ffffff",
-      weight: 2.2,
-      dashArray: "6, 8",
-      opacity: 0.95,
-      lineCap: "round",
-      lineJoin: "round",
-    }).addTo(group);
+      // 3. Inner White Dashed Core
+      L.polyline(allPts, {
+        color: "#ffffff",
+        weight: 2.2,
+        dashArray: "6, 8",
+        opacity: 0.95,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(group);
+    }
 
     // Start Marker (Origin: GPS Blue Dot or Portería)
     const startPt = allPts[0];
     if (fromGps && userGpsPosition) {
+      const headingConeHtml =
+        userHeading !== null && userHeading !== undefined
+          ? `<div style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              width: 0;
+              height: 0;
+              border-left: 18px solid transparent;
+              border-right: 18px solid transparent;
+              border-top: 42px solid rgba(37, 99, 235, 0.42);
+              transform-origin: 50% 0%;
+              transform: translate(-50%, -50%) rotate(${userHeading}deg) translateY(-22px);
+              pointer-events: none;
+            "></div>`
+          : "";
+
       const gpsIcon = L.divIcon({
         className: "autem-gps-marker",
         html: `
-          <div style="position: relative; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
-            <span class="autem-gps-ping" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6;"></span>
-            <span style="position: relative; width: 14px; height: 14px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></span>
+          <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+            ${headingConeHtml}
+            <span class="autem-gps-ping" style="position: absolute; width: 32px; height: 32px; border-radius: 50%; background: rgba(59, 130, 246, 0.45);"></span>
+            <span style="position: relative; width: 15px; height: 15px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.5);"></span>
           </div>
         `,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
       });
       L.marker(startPt, { icon: gpsIcon, zIndexOffset: 1000 }).addTo(group);
 
@@ -901,12 +955,53 @@ export default function ProjectLocationMap({
     });
     L.marker(endPt, { icon: destIcon, zIndexOffset: 950 }).addTo(group);
 
-    // Frame the active route
-    const bounds = L.latLngBounds(allPts);
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 17.5 });
+    // Frame the active route if not user panning
+    if (!isUserPanning) {
+      const bounds = L.latLngBounds(allPts);
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 17.5 });
+      }
     }
-  }, [route, fromGps, userGpsPosition, destinationLot]);
+  }, [route, fromGps, userGpsPosition, userHeading, destinationLot, showRouteLine, isUserPanning]);
+
+  // Uber-style auto-rotation (heading up) or fixed north
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (navBearingMode === "north") {
+      if (currentBearingRef.current !== 0) {
+        currentBearingRef.current = 0;
+        map.setBearing(0);
+      }
+      return;
+    }
+
+    if (
+      enableHeadingRotation &&
+      !isUserPanning &&
+      userHeading !== null &&
+      userHeading !== undefined &&
+      Number.isFinite(userHeading)
+    ) {
+      const targetBearing = (-userHeading + 360) % 360;
+      const diff = Math.abs(currentBearingRef.current - targetBearing);
+      if (diff > 2 && diff < 358) {
+        currentBearingRef.current = targetBearing;
+        map.setBearing(targetBearing);
+      }
+    }
+  }, [userHeading, navBearingMode, isUserPanning, enableHeadingRotation]);
+
+  // Auto-center on live GPS position while user is walking
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || isUserPanning || !fromGps || !userGpsPosition) return;
+    map.panTo([userGpsPosition.latitude, userGpsPosition.longitude], {
+      animate: true,
+      duration: 0.6,
+    });
+  }, [userGpsPosition, fromGps, isUserPanning]);
 
   // Recenter / Focus handler
   useEffect(() => {
@@ -1220,8 +1315,33 @@ export default function ProjectLocationMap({
         )}
       </div>
 
+      {/* Floating pill to recenter when user manually panned away */}
+      {isUserPanning && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-top-2">
+          <Button
+            type="button"
+            onClick={() => {
+              setIsUserPanning(false);
+              if (fromGps && userGpsPosition && mapInstanceRef.current) {
+                mapInstanceRef.current.setView(
+                  [userGpsPosition.latitude, userGpsPosition.longitude],
+                  17.5,
+                  { animate: true },
+                );
+              } else {
+                handleRecenter();
+              }
+            }}
+            className="flex items-center gap-2 rounded-full bg-slate-900/90 text-white dark:bg-white/90 dark:text-slate-950 px-4 py-1.5 text-xs font-bold shadow-2xl backdrop-blur-md hover:opacity-90 transition-all border border-white/20 cursor-pointer"
+          >
+            <Compass className="size-3.5 text-blue-400" />
+            <span>Recentrar navegación</span>
+          </Button>
+        </div>
+      )}
+
       {/* Map floating controls (right side) */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 lg:top-20 lg:translate-y-0 z-20 flex flex-col items-center gap-2 select-none">
+      <div className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 lg:top-20 lg:translate-y-0 z-20 flex flex-col items-center gap-2 select-none">
         {/* Layer picker popover */}
         {isLayerMenuOpen && (
           <div className="absolute right-12 top-0 w-56 rounded-2xl border border-border bg-background/95 p-3 text-foreground shadow-2xl backdrop-blur-2xl">
@@ -1312,21 +1432,23 @@ export default function ProjectLocationMap({
                 </button>
 
                 {/* Surroundings toggle in menu */}
-                <button
-                  type="button"
-                  onClick={() => setShowSurroundings((prev) => !prev)}
-                  className={`mt-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                    showSurroundings
-                      ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 font-semibold"
-                      : "hover:bg-muted text-muted-foreground"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Compass className="size-3.5" />
-                    <span>Lugares cercanos</span>
-                  </span>
-                  <span className="text-[10px] font-bold">{showSurroundings ? "ON" : "OFF"}</span>
-                </button>
+                {!hideSurroundingsDrawer && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSurroundings((prev) => !prev)}
+                    className={`mt-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                      showSurroundings
+                        ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 font-semibold"
+                        : "hover:bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Compass className="size-3.5" />
+                      <span>Lugares cercanos</span>
+                    </span>
+                    <span className="text-[10px] font-bold">{showSurroundings ? "ON" : "OFF"}</span>
+                  </button>
+                )}
 
                 {showMasterplan && (
                   <div className="mt-2 px-1">
@@ -1362,19 +1484,46 @@ export default function ProjectLocationMap({
 
         {/* Toolbar buttons */}
         <div
-          className={`flex flex-col items-center gap-1 rounded-full p-1.5 shadow-2xl backdrop-blur-xl transition-colors ${
+          className={`flex flex-col items-center gap-1 rounded-full p-1 sm:p-1.5 shadow-2xl backdrop-blur-xl transition-colors ${
             isDark
               ? "border border-white/10 bg-stone-900/85 text-stone-200"
               : "border border-white/35 bg-white/70 text-foreground/80"
           }`}
         >
+          {/* Compass / Heading toggle (Uber mode vs North up) */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setIsUserPanning(false);
+              setNavBearingMode((prev) => (prev === "heading" ? "north" : "heading"));
+            }}
+            className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
+              navBearingMode === "heading"
+                ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                : "hover:bg-muted text-muted-foreground"
+            }`}
+            title={
+              navBearingMode === "heading"
+                ? "Rumbo arriba (rotación con tu marcha) · Clic para fijar Norte arriba"
+                : "Norte arriba · Clic para girar con tu rumbo"
+            }
+            aria-label="Orientación del mapa"
+          >
+            <Compass
+              className="size-4 transition-transform duration-300"
+              style={{ transform: `rotate(${-currentBearingRef.current}deg)` }}
+            />
+          </Button>
+
           {/* Base layers toggle button */}
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={() => setIsLayerMenuOpen((prev) => !prev)}
-            className="size-8 rounded-full hover:bg-muted cursor-pointer"
+            className="size-7 sm:size-8 rounded-full hover:bg-muted cursor-pointer"
             title="Capas del mapa"
             aria-label="Capas del mapa"
           >
@@ -1388,7 +1537,7 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={() => setShowMasterplan((prev) => !prev)}
-              className={`size-8 rounded-full cursor-pointer transition-colors ${
+              className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
                 showMasterplan
                   ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30"
                   : "hover:bg-muted text-muted-foreground"
@@ -1411,7 +1560,7 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={() => setShowLotNumbers((prev) => !prev)}
-              className={`size-8 rounded-full cursor-pointer transition-colors ${
+              className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
                 showLotNumbers
                   ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30"
                   : "hover:bg-muted text-muted-foreground"
@@ -1424,13 +1573,13 @@ export default function ProjectLocationMap({
           )}
 
           {/* Quick toggle for surroundings */}
-          {isParaiso && (
+          {isParaiso && !hideSurroundingsDrawer && (
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={() => setShowSurroundings((prev) => !prev)}
-              className={`size-8 rounded-full cursor-pointer transition-colors ${
+              className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
                 showSurroundings
                   ? "bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/30"
                   : "hover:bg-muted text-muted-foreground"
@@ -1446,31 +1595,32 @@ export default function ProjectLocationMap({
             </Button>
           )}
 
-          <div className="h-px w-4 bg-border/60" />
-
-          {/* Zoom controls */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleZoomIn}
-            className="size-8 rounded-full hover:bg-muted cursor-pointer"
-            title="Acercar"
-            aria-label="Acercar mapa"
-          >
-            <span className="text-base font-bold">+</span>
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleZoomOut}
-            className="size-8 rounded-full hover:bg-muted cursor-pointer"
-            title="Alejar"
-            aria-label="Alejar mapa"
-          >
-            <span className="text-base font-bold">−</span>
-          </Button>
+          {/* Zoom controls (hidden on mobile to keep interface ultra clean) */}
+          <div className="hidden md:flex flex-col items-center gap-1">
+            <div className="h-px w-4 bg-border/60" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomIn}
+              className="size-8 rounded-full hover:bg-muted cursor-pointer"
+              title="Acercar"
+              aria-label="Acercar mapa"
+            >
+              <span className="text-base font-bold">+</span>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomOut}
+              className="size-8 rounded-full hover:bg-muted cursor-pointer"
+              title="Alejar"
+              aria-label="Alejar mapa"
+            >
+              <span className="text-base font-bold">−</span>
+            </Button>
+          </div>
 
           <div className="h-px w-4 bg-border/60" />
 
@@ -1479,8 +1629,11 @@ export default function ProjectLocationMap({
             type="button"
             variant="ghost"
             size="icon"
-            onClick={handleRecenter}
-            className="size-8 rounded-full hover:bg-muted cursor-pointer"
+            onClick={() => {
+              setIsUserPanning(false);
+              handleRecenter();
+            }}
+            className="size-7 sm:size-8 rounded-full hover:bg-muted cursor-pointer"
             title="Centrar en el recorrido"
             aria-label="Centrar en el recorrido"
           >
@@ -1490,7 +1643,7 @@ export default function ProjectLocationMap({
       </div>
 
       {/* Surroundings interactive explorer drawer */}
-      {isParaiso && showSurroundings && (
+      {!hideSurroundingsDrawer && isParaiso && showSurroundings && (
         <div
           className={`absolute z-30 transition-all duration-300 ${
             route

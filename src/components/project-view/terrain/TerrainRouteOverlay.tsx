@@ -81,56 +81,6 @@ export default function TerrainRouteOverlay({
         }
       `}</style>
 
-      {/* Trazo completo de la ruta interna conectando origen y lote */}
-      {effectiveRoute?.svgPaths.map((path: string, index: number) => (
-        <g key={`route-segment-${index}-${path}`}>
-          {/* 1. Sombra amplia para separación sobre vegetación o lagos */}
-          <path
-            d={path}
-            fill="none"
-            stroke="#0b0f19"
-            strokeWidth="11"
-            vectorEffect="non-scaling-stroke"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.4"
-          />
-          {/* 2. Borde blanco brillante para máximo contraste */}
-          <path
-            d={path}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="7.5"
-            vectorEffect="non-scaling-stroke"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.95"
-          />
-          {/* 3. Línea central azul de navegación */}
-          <path
-            d={path}
-            fill="none"
-            stroke="#1677ff"
-            strokeWidth="4.5"
-            vectorEffect="non-scaling-stroke"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* 4. Efecto de flujo animado guiando visualmente al visitante */}
-          <path
-            d={path}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="2.2"
-            strokeDasharray="7 9"
-            vectorEffect="non-scaling-stroke"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="route-dash-animated"
-          />
-        </g>
-      ))}
-
       {/* Marcador del punto de partida (Portería o GPS) */}
       {originPoint && (
         <g transform={`translate(${originPoint.x} ${originPoint.y})`} filter="url(#route-shadow)">

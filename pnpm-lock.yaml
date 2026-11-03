@@ -141,6 +141,9 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
+      leaflet-rotate:
+        specifier: 0.5.3
+        version: 0.5.3(leaflet@1.9.4)
       lenis:
         specifier: ^1.3.26
         version: 1.3.26(react@19.2.7)
@@ -2685,6 +2688,11 @@ packages:
 
   launch-editor@2.14.1:
     resolution: {integrity: sha512-QWBrQsMpH7gPr965dsKD/3cKWiNoTjpATQf++Xq63N6sKRGMwlVXz41O1IZTMfZQgBctD/K5Zt06+/I6pP6+HA==}
+
+  leaflet-rotate@0.5.3:
+    resolution: {integrity: sha512-nWUaqI9pu90dLzov3s3CjTmdUIkm+zM8oJh53jovG6w1RELYjYjxSKoKcI2ZmavvM9ehKA5b/TLe/Mq+bDmqXA==}
+    peerDependencies:
+      leaflet: ^1.9.3 || ^2.0.0-alpha.1
 
   leaflet@1.9.4:
     resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
@@ -5842,6 +5850,10 @@ snapshots:
     dependencies:
       picocolors: 1.1.1
       shell-quote: 1.10.0
+
+  leaflet-rotate@0.5.3(leaflet@1.9.4):
+    dependencies:
+      leaflet: 1.9.4
 
   leaflet@1.9.4: {}
 

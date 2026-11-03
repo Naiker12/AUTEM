@@ -129,10 +129,6 @@ export default function TerrainRouteView({
 
   return (
     <div className="terrain-navigation relative flex h-full min-h-0 flex-col overflow-hidden bg-background pt-14 sm:pt-16 lg:pt-0">
-      <div className="flex shrink-0 flex-col gap-2 border-b bg-background/95 px-3 py-2 backdrop-blur-md md:hidden">
-        <LotDestinationSearch lots={lots} destination={destination} onSelect={selectDestination} />
-      </div>
-
       <div
         className={cn(
           "relative flex min-h-0 flex-1 flex-col",
@@ -145,7 +141,7 @@ export default function TerrainRouteView({
           aria-label="Plano del proyecto"
         >
           {/* Selector de modo Satélite HD / Plano Vectorial */}
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 md:left-auto md:right-16 z-30 select-none">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 md:top-20 md:left-auto md:right-16 z-30 select-none">
             <div className="flex items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1 shadow-xl backdrop-blur-xl">
               <button
                 type="button"
@@ -190,6 +186,10 @@ export default function TerrainRouteView({
               route={effectiveRoute}
               fromGps={navigation.fromGps}
               userGpsPosition={location.position}
+              userHeading={location.heading}
+              enableHeadingRotation={true}
+              showRouteLine={false}
+              hideSurroundingsDrawer={true}
               travelMode={travelMode}
               focusRequest={focusRequest}
               className="h-full w-full"
@@ -233,11 +233,11 @@ export default function TerrainRouteView({
             </div>
           )}
 
-          {/* HUD flotante inferior en el plano */}
+          {/* HUD flotante inferior en el plano (solo en escritorio para no obstruir en móvil) */}
           {destination && (
             <div
               className={cn(
-                "pointer-events-auto absolute bottom-3 z-20 flex max-w-[calc(100%-5rem)] items-center gap-2.5 rounded-full border border-border/80 bg-background/95 px-3.5 py-2 text-xs shadow-lg backdrop-blur-xl transition-all",
+                "pointer-events-auto absolute bottom-3 z-20 hidden md:flex max-w-[calc(100%-5rem)] items-center gap-2.5 rounded-full border border-border/80 bg-background/95 px-3.5 py-2 text-xs shadow-lg backdrop-blur-xl transition-all",
                 isDesktopPanelOpen ? "left-3 md:left-[388px] lg:left-[404px]" : "left-3",
               )}
             >
@@ -256,7 +256,7 @@ export default function TerrainRouteView({
               <button
                 type="button"
                 onClick={() => setFocusRequest((value) => value + 1)}
-                className="ml-1 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/25"
+                className="ml-1 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/25 cursor-pointer"
                 title="Centrar lote en el plano"
               >
                 <LocateFixed className="size-3" />
@@ -283,29 +283,93 @@ export default function TerrainRouteView({
         <aside
           style={
             {
-              "--terrain-panel-height": `${expanded ? detailsPercent : Math.min(detailsPercent, 50)}%`,
+              "--terrain-panel-height": expanded ? `${detailsPercent}%` : "auto",
             } as CSSProperties
           }
           aria-labelledby="terrain-title"
           className={cn(
             alternatePanel && "!hidden",
             !isDesktopPanelOpen && "md:hidden",
-            "relative order-2 flex shrink-0 flex-col",
-            "max-h-[var(--terrain-panel-height)] rounded-t-3xl border-t bg-background/95 shadow-2xl backdrop-blur-2xl",
+            "relative order-2 flex shrink-0 flex-col transition-all duration-300",
+            expanded
+              ? "max-h-[var(--terrain-panel-height)] rounded-t-3xl border-t bg-background/95 shadow-2xl backdrop-blur-2xl"
+              : "rounded-t-2xl border-t bg-background/95 shadow-xl backdrop-blur-xl",
             "md:absolute md:bottom-3 md:left-3 md:top-[76px] md:z-30 md:order-1 md:max-h-none md:w-[356px] md:rounded-[22px] md:border md:border-border md:bg-background/94 md:shadow-[20px_20px_70px_rgba(0,0,0,.32)] lg:w-[376px]",
           )}
         >
-          <div className="md:hidden px-4 pt-2">
-            <PanelResizeHandle
-              label="Detalles del recorrido"
-              value={detailsPercent}
-              max={65}
-              onChange={(value) => {
-                setDetailsPercent(value);
-                setExpanded(value > 50);
-              }}
-            />
-          </div>
+          {/* Mobile compact header bar when collapsed */}
+          {!expanded && (
+            <div className="flex md:hidden items-center justify-between gap-2.5 px-3.5 py-2.5">
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="flex items-center gap-2.5 min-w-0 text-left flex-1 cursor-pointer"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent">
+                  <MapPin className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-foreground truncate">{lotLabel}</span>
+                    {destination && (
+                      <span className={`size-2 rounded-full shrink-0 ${statusDotClass}`} />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate">
+                    {effectiveRoute ? (
+                      <>
+                        <span className="font-semibold text-accent">
+                          {Math.round(effectiveRoute.result.distanceMeters)} m
+                        </span>
+                        <span>•</span>
+                        <span>{estimatedMinutes} min</span>
+                      </>
+                    ) : (
+                      <span>Toca para elegir lote y ver ruta</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFocusRequest((v) => v + 1)}
+                  className="size-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                  title="Centrar en el mapa"
+                >
+                  <LocateFixed className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setExpanded(true)}
+                  className="size-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                  aria-label="Expandir detalles"
+                >
+                  <ChevronUp className="size-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Expanded mobile panel resize handle */}
+          {expanded && (
+            <div className="md:hidden px-4 pt-2">
+              <PanelResizeHandle
+                label="Detalles del recorrido"
+                value={detailsPercent}
+                max={65}
+                onChange={(value) => {
+                  setDetailsPercent(value);
+                  setExpanded(value > 25);
+                }}
+              />
+            </div>
+          )}
 
           <Button
             type="button"
@@ -319,7 +383,36 @@ export default function TerrainRouteView({
             <PanelLeftClose className="size-4" />
           </Button>
 
-          <div className="terrain-panel-scroll flex flex-1 flex-col gap-3.5 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 md:p-5">
+          {/* Full content (always visible on desktop, or on mobile when expanded) */}
+          <div
+            className={cn(
+              "terrain-panel-scroll flex-1 flex-col gap-3.5 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 md:p-5",
+              expanded ? "flex" : "hidden md:flex",
+            )}
+          >
+            {/* Search and header inside mobile expanded sheet */}
+            <div className="flex flex-col gap-2 md:hidden pb-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-accent flex items-center gap-1.5">
+                  <Navigation className="size-3.5" /> Buscar Lote
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setExpanded(false)}
+                  className="h-6 px-2 text-[10.5px] text-muted-foreground"
+                >
+                  <ChevronDown className="size-3.5 mr-1" /> Minimizar
+                </Button>
+              </div>
+              <LotDestinationSearch
+                lots={lots}
+                destination={destination}
+                onSelect={selectDestination}
+              />
+            </div>
+
             {/* Cabecera en escritorio */}
             <div className="hidden flex-col gap-1.5 md:flex">
               <div className="flex items-center justify-between">
