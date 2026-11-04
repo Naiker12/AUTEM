@@ -403,7 +403,8 @@ function MediaLibraryPage() {
                     Recorrido Virtual 360° ({selectedProject.name})
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Vincula un tour 360° interactivo (3DVista, Boris Topógrafo, Matterport o URL interna).
+                    Vincula un tour 360° interactivo (3DVista, Boris Topógrafo, Matterport o URL
+                    interna).
                   </CardDescription>
                 </div>
               </div>
@@ -429,7 +430,11 @@ function MediaLibraryPage() {
                 disabled={isSavingTourUrl}
                 className="shrink-0 rounded-xl"
               >
-                {isSavingTourUrl ? <Spinner data-icon="inline-start" /> : <CheckCircle2 data-icon="inline-start" />}
+                {isSavingTourUrl ? (
+                  <Spinner data-icon="inline-start" />
+                ) : (
+                  <CheckCircle2 data-icon="inline-start" />
+                )}
                 Guardar enlace 360°
               </Button>
             </div>
