@@ -73,11 +73,10 @@ export default function PanelResizeHandle({
         event.preventDefault();
         onChange(Math.max(30, Math.min(max, next)));
       }}
-      className="flex h-10 shrink-0 cursor-row-resize touch-none select-none items-center justify-center gap-2 border-t bg-card text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-5 shrink-0 cursor-row-resize touch-none select-none items-center justify-center border-t border-border/80 bg-background/95 text-xs text-muted-foreground outline-none backdrop-blur-xl hover:bg-muted/30 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
       title="Arrastra hacia arriba o abajo para ajustar el panel"
     >
-      <span className="h-1.5 w-10 rounded-full bg-muted-foreground/40" />
-      {label} ↕
+      <span className="h-1 w-9 rounded-full bg-muted-foreground/35 hover:w-12 hover:bg-accent transition-all" />
     </div>
   );
 }

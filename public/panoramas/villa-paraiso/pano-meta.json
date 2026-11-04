@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-11-04T16:25:04.754Z",
+  "source": "public/tours/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
+  "cameraExif": {
+    "lat": 10.437897,
+    "lng": -75.356053,
+    "gpsAltitudeM": 236
+  },
+  "scenePitchDeg": -28.18,
+  "vfovDeg": 122.62,
+  "elevationRangeDeg": {
+    "maxPitch": 33.12,
+    "minPitch": -89.5
+  },
+  "variants": {
+    "desktop": {
+      "url": "/panoramas/villa-paraiso/pano-8192.v1.webp",
+      "bytes": 4140972,
+      "panoData": {
+        "fullWidth": 8192,
+        "fullHeight": 4096,
+        "croppedWidth": 8192,
+        "croppedHeight": 2790,
+        "croppedX": 0,
+        "croppedY": 1294
+      }
+    },
+    "mobile": {
+      "url": "/panoramas/villa-paraiso/pano-4096.v1.webp",
+      "bytes": 863326,
+      "panoData": {
+        "fullWidth": 4096,
+        "fullHeight": 2048,
+        "croppedWidth": 4096,
+        "croppedHeight": 1395,
+        "croppedX": 0,
+        "croppedY": 647
+      }
+    },
+    "preview": {
+      "url": "/panoramas/villa-paraiso/pano-preview.v1.webp",
+      "bytes": 48272,
+      "panoData": {
+        "fullWidth": 1024,
+        "fullHeight": 512,
+        "croppedWidth": 1024,
+        "croppedHeight": 349,
+        "croppedX": 0,
+        "croppedY": 162
+      }
+    }
+  }
+}

@@ -1,16 +1,29 @@
-import { Expand, ExternalLink } from "lucide-react";
+import { Expand } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import type { Lot } from "@/data/lots";
+import PanoramaViewer from "./PanoramaViewer";
 
 interface InteractivePanoramaProps {
   sourceUrl?: string;
   projectName?: string;
+  projectSlug?: string;
+  lots?: Lot[];
+  selectedLotId?: string;
+  onSelectLot?: (lotId: string) => void;
+  onInspectLot?: (lot?: Lot) => void;
   onSwitchToPlan?: () => void;
 }
 
 export default function InteractivePanorama({
   sourceUrl,
   projectName = "Villa Paraíso",
+  projectSlug,
+  lots = [],
+  selectedLotId,
+  onSelectLot,
+  onInspectLot,
+  onSwitchToPlan,
 }: InteractivePanoramaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasHostRef = useRef<HTMLDivElement>(null);
@@ -19,8 +32,31 @@ export default function InteractivePanorama({
     return sourceUrl || "/tours/villa-paraiso/index.htm";
   }, [sourceUrl]);
 
+  const forceLegacy3DVista = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("legacy3dvista") === "1";
+  }, []);
+
+  // Decision order per Section 3.6:
+  // Use native PSV PanoramaViewer with interactive lot polygons for Villa Paraíso
+  // unless an external third-party URL (Matterport, Kuula, etc.) is configured
+  // or ?legacy3dvista=1 is present.
+  const useNativePsvViewer = useMemo(() => {
+    if (forceLegacy3DVista) return false;
+    const clean = activeSource.toLowerCase().trim();
+    if (clean.includes("/panoramas/villa-paraiso/")) return true;
+    if (clean.includes("/tours/villa-paraiso/")) return true;
+    if (
+      (projectSlug === "villa-paraiso" || projectSlug === "lotes-360") &&
+      (!clean.startsWith("http") || clean.includes("villa-paraiso"))
+    ) {
+      return true;
+    }
+    return false;
+  }, [activeSource, forceLegacy3DVista, projectSlug]);
+
   const isHtmlTour = useMemo(() => {
-    if (!activeSource) return false;
+    if (!activeSource || useNativePsvViewer) return false;
     const clean = activeSource.toLowerCase().trim();
     return (
       clean.endsWith(".htm") ||
@@ -28,13 +64,13 @@ export default function InteractivePanorama({
       clean.includes("/tours/") ||
       (clean.startsWith("http") && !clean.match(/\.(jpg|jpeg|png|webp|hdr)(\?|$)/i))
     );
-  }, [activeSource]);
+  }, [activeSource, useNativePsvViewer]);
 
   const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
 
-  // THREE.JS SPHERE RENDERER (Para imágenes equirrectangulares 360 si se pasa JPG/PNG)
+  // THREE.JS SPHERE RENDERER (Para imágenes equirrectangulares 360 genéricas de otros proyectos)
   useEffect(() => {
-    if (isHtmlTour) {
+    if (useNativePsvViewer || isHtmlTour) {
       setStatus("ready");
       return;
     }
@@ -191,7 +227,20 @@ export default function InteractivePanorama({
       renderer.dispose();
       host.replaceChildren();
     };
-  }, [activeSource, isHtmlTour]);
+  }, [activeSource, isHtmlTour, useNativePsvViewer]);
+
+  if (useNativePsvViewer) {
+    return (
+      <PanoramaViewer
+        projectName={projectName}
+        lots={lots}
+        selectedLotId={selectedLotId}
+        onSelectLot={onSelectLot}
+        onInspectLot={onInspectLot}
+        onSwitchToPlan={onSwitchToPlan}
+      />
+    );
+  }
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -207,7 +256,6 @@ export default function InteractivePanorama({
       className="relative size-full overflow-hidden bg-[#121811] select-none"
       aria-label={`Vista 360 de ${projectName}`}
     >
-      {/* VISOR PRINCIPAL (Limpio, 100% Pantalla completa sin objetos flotantes encima) */}
       {isHtmlTour ? (
         <iframe
           src={activeSource}
@@ -221,7 +269,6 @@ export default function InteractivePanorama({
         <div ref={canvasHostRef} className="size-full cursor-grab active:cursor-grabbing" />
       )}
 
-      {/* Indicador de carga discreto */}
       {status === "loading" && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-[#121811]/90 backdrop-blur-sm text-xs font-bold uppercase tracking-[0.24em] text-accent">
           <div className="flex flex-col items-center gap-3">
@@ -231,8 +278,7 @@ export default function InteractivePanorama({
         </div>
       )}
 
-      {/* Botón discreto de pantalla completa en la esquina */}
-      <div className="absolute right-4 top-18 sm:top-20 lg:top-[80px] z-20">
+      <div className="absolute right-3 top-3 sm:right-4 sm:top-4 z-20">
         <button
           type="button"
           onClick={toggleFullscreen}

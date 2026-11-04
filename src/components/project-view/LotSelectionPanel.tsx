@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import {
   Box,
+  FileText,
   MessageCircle,
   PanelLeftClose,
   Ruler,
@@ -28,6 +29,7 @@ interface LotSelectionPanelProps {
   selectedId: string;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
+  onInspectLot?: (lot: Lot) => void;
   onHide: () => void;
   mobileOpen?: boolean;
   isMobileSplit?: boolean;
@@ -49,6 +51,7 @@ export default function LotSelectionPanel({
   selectedId,
   onSelect,
   onView3D,
+  onInspectLot,
   onHide,
   mobileOpen = false,
   isMobileSplit = false,
@@ -127,6 +130,7 @@ export default function LotSelectionPanel({
             onClearAdvanced={handleClearAdvanced}
             onSelect={onSelect}
             onView3D={onView3D}
+            onInspectLot={onInspectLot}
             contactUrl={contactUrl}
             isMobile
           />
@@ -181,6 +185,7 @@ interface LotCardItemProps {
   isSelected: boolean;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
+  onInspectLot?: (lot: Lot) => void;
   isMobile?: boolean;
 }
 
@@ -190,6 +195,7 @@ const LotCardItem = memo(
     isSelected,
     onSelect,
     onView3D,
+    onInspectLot,
     isMobile = false,
   }: LotCardItemProps) {
     const isSold = lot.status === "Vendido";
@@ -243,7 +249,7 @@ const LotCardItem = memo(
         <button
           type="button"
           onClick={() => onSelect(lot)}
-          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5" : "py-2 px-3"} ${isSelected ? (isMobile ? "pr-[36px]" : "pr-[40px]") : ""}`}
+          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5" : "py-2 px-3"} ${isSelected ? (isMobile ? (onInspectLot ? "pr-[68px]" : "pr-[36px]") : "pr-[40px]") : ""}`}
         >
           {/* Fila 1: ID, Estado y Precio en una sola línea compacta */}
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -289,12 +295,28 @@ const LotCardItem = memo(
           </div>
         </button>
 
-        {/* Acciones de lote: botón 3D activo cuando el lote está seleccionado */}
+        {/* Acciones de lote: ficha técnica y botón 3D activos cuando el lote está seleccionado */}
         {isSelected && (
           <div
-            className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center animate-in fade-in duration-150`}
+            className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center gap-1 animate-in fade-in duration-150`}
             onClick={(e) => e.stopPropagation()}
           >
+            {isMobile && onInspectLot && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(lot);
+                  onInspectLot(lot);
+                }}
+                title={`Ver ficha y cuotas de ${lot.id}`}
+                aria-label={`Ver ficha y cuotas de ${lot.id}`}
+                className="flex h-6 items-center gap-1 rounded-md border border-border bg-background/95 px-1.5 text-[8.5px] font-bold text-foreground shadow-xs transition-all hover:bg-muted active:scale-90 cursor-pointer"
+              >
+                <FileText size={10} className="text-accent" />
+                <span>Ficha</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={(e) => {
@@ -342,6 +364,7 @@ function LotCatalog({
   onClearAdvanced,
   onSelect,
   onView3D,
+  onInspectLot,
   contactUrl,
   isMobile = false,
 }: {
@@ -361,6 +384,7 @@ function LotCatalog({
   onClearAdvanced: () => void;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
+  onInspectLot?: (lot: Lot) => void;
   contactUrl: string;
   isMobile?: boolean;
 }) {
@@ -387,35 +411,53 @@ function LotCatalog({
     <>
       <header
         className={`border-b border-border dark:border-white/10 ${
-          isMobile ? "px-3.5 pb-1.5 pt-2" : "px-4 pb-2.5 pt-3"
+          isMobile ? "px-3 pb-1.5 pt-1" : "px-4 pb-2.5 pt-3"
         }`}
       >
-        <div className="flex items-center gap-2">
-          <Trees className="size-4 sm:size-4.5 text-accent shrink-0" />
-          <div className="min-w-0 flex-1">
-            <h2 className="text-xs sm:text-sm font-semibold tracking-tight text-foreground leading-tight">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Trees className="size-3.5 sm:size-4.5 text-accent shrink-0" />
+          <div className="min-w-0 flex items-center gap-1.5 sm:block sm:flex-1">
+            <h2 className="text-xs sm:text-sm font-semibold tracking-tight text-foreground leading-tight truncate">
               Plano Urbanístico
             </h2>
-            <p className="text-[9.5px] sm:text-[10px] text-muted-foreground leading-tight truncate mt-0.5">
+            <p className="hidden sm:block text-[10px] text-muted-foreground leading-tight truncate mt-0.5">
               Compara ubicación, área y precio.
             </p>
+            <Badge
+              variant="outline"
+              className="sm:hidden rounded-full border-accent/40 bg-accent/10 text-[7.5px] font-semibold text-accent uppercase tracking-wider py-0 px-1.5 shrink-0"
+            >
+              {filteredLots.length} lotes
+            </Badge>
           </div>
-          <Badge
-            variant="outline"
-            className="ml-auto rounded-full border-accent/40 bg-accent/10 text-[8px] font-semibold text-accent uppercase tracking-wider py-0 px-1.5 shrink-0"
-          >
-            {filteredLots.length} lotes
-          </Badge>
+          {isMobile ? (
+            <a
+              href={contactUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto inline-flex h-6 items-center gap-1 rounded-full border border-[#403a34] bg-[#403a34] px-2.5 text-[8.5px] font-semibold uppercase tracking-[0.06em] text-[#f6f1eb] shadow-xs transition-all active:scale-95 dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold shrink-0"
+            >
+              <MessageCircle className="size-2.5" />
+              <span>Solicitar asesoría</span>
+            </a>
+          ) : (
+            <Badge
+              variant="outline"
+              className="ml-auto rounded-full border-accent/40 bg-accent/10 text-[8px] font-semibold text-accent uppercase tracking-wider py-0 px-1.5 shrink-0"
+            >
+              {filteredLots.length} lotes
+            </Badge>
+          )}
         </div>
 
         {/* Pestañas de Filtro por Estado Comercial */}
         <Tabs
           value={status}
           onValueChange={onStatusChange}
-          className={`${isMobile ? "mt-1.5" : "mt-2"}`}
+          className={`${isMobile ? "mt-1" : "mt-2"}`}
         >
           <TabsList
-            className={`grid ${isMobile ? "h-7" : "h-9"} w-full grid-cols-4 bg-[#403a34]/[0.06] p-0.5 text-muted-foreground dark:bg-stone-900/90 dark:border dark:border-white/10`}
+            className={`grid ${isMobile ? "h-6.5" : "h-9"} w-full grid-cols-4 bg-[#403a34]/[0.06] p-0.5 text-muted-foreground dark:bg-stone-900/90 dark:border dark:border-white/10`}
           >
             {["Todos", "Disponibles", "Reservados", "Vendidos"].map((item) => (
               <TabsTrigger
@@ -430,12 +472,12 @@ function LotCatalog({
         </Tabs>
 
         {/* Barra de Filtros: Botón Lupa de Búsqueda Directa + Filtros Avanzados */}
-        <div className={`flex items-center gap-1.5 ${isMobile ? "mt-1.5" : "mt-2.5"}`}>
+        <div className={`flex items-center gap-1.5 ${isMobile ? "mt-1" : "mt-2.5"}`}>
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-accent/40 bg-accent/10 font-bold text-accent transition-all hover:bg-accent hover:text-accent-foreground dark:bg-accent/15 dark:hover:bg-accent dark:hover:text-[#151413] active:scale-95 shadow-xs cursor-pointer ${
-              isMobile ? "h-6.5 text-[8.5px] px-2" : "h-8 text-[10px] px-3"
+              isMobile ? "h-6 text-[8.5px] px-2" : "h-8 text-[10px] px-3"
             }`}
             title="Buscar lote por número específico (Lupa)"
           >
@@ -449,7 +491,7 @@ function LotCatalog({
             size="sm"
             onClick={onAdvancedOpenChange}
             className={`${
-              isMobile ? "h-6.5 text-[8px] px-2" : "h-8 text-[9px] px-2.5"
+              isMobile ? "h-6 text-[8px] px-2" : "h-8 text-[9px] px-2.5"
             } rounded-xl border border-border/70 bg-muted/40 uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground dark:border-white/10 dark:bg-stone-900/60 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-white`}
             title="Filtros avanzados de área, precio y orden"
           >
@@ -526,9 +568,9 @@ function LotCatalog({
         </span>
       </div>
 
-      <ScrollArea className={`min-h-0 flex-1 ${isMobile ? "px-2" : "px-3"}`}>
+      <ScrollArea className={`min-h-0 flex-1 ${isMobile ? "px-2.5 pt-1.5" : "px-3"}`}>
         <div
-          className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-2.5 max-w-4xl mx-auto" : "space-y-1.5 pb-2.5"}`}
+          className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-w-4xl mx-auto" : "space-y-1.5 pb-2.5"}`}
         >
           {filteredLots.length === 0 && (
             <p className="col-span-full rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs leading-5 text-muted-foreground">
@@ -542,23 +584,24 @@ function LotCatalog({
               isSelected={lot.id === selectedId}
               onSelect={onSelect}
               onView3D={onView3D}
+              onInspectLot={onInspectLot}
               isMobile={isMobile}
             />
           ))}
         </div>
       </ScrollArea>
-      <div
-        className={`border-t border-border dark:border-white/10 ${isMobile ? "p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]" : "p-2.5 sm:px-3 sm:py-2.5"}`}
-      >
-        <Button
-          asChild
-          className={`${isMobile ? "h-7.5 text-[9.5px]" : "h-8.5 sm:h-9 text-[10px] sm:text-[10.5px]"} w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold dark:shadow-[0_4px_16px_rgba(197,160,89,0.3)] dark:hover:brightness-110`}
-        >
-          <a href={contactUrl} target="_blank" rel="noopener noreferrer">
-            <MessageCircle className="size-3.5 mr-1.5" /> Solicitar asesoría
-          </a>
-        </Button>
-      </div>
+      {!isMobile && (
+        <div className="border-t border-border dark:border-white/10 p-2.5 sm:px-3 sm:py-2.5">
+          <Button
+            asChild
+            className="h-8.5 sm:h-9 text-[10px] sm:text-[10.5px] w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold dark:shadow-[0_4px_16px_rgba(197,160,89,0.3)] dark:hover:brightness-110"
+          >
+            <a href={contactUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="size-3.5 mr-1.5" /> Solicitar asesoría
+            </a>
+          </Button>
+        </div>
+      )}
 
       <LotSearchDialog
         open={isSearchOpen}

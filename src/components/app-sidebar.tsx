@@ -1,7 +1,6 @@
 import * as React from "react";
 import {
   Boxes,
-  ClipboardList,
   FileImage,
   LayoutDashboard,
   MapPinned,
@@ -63,6 +62,7 @@ const navBase = [
     icon: Boxes,
     items: [
       { title: "Masterplan interactivo", url: "/admin/experiencias/masterplan" },
+      { title: "Visor 360°", url: "/admin/experiencias/panorama-360" },
       { title: "Tour de terreno y GPS", url: "/admin/experiencias/recorrido-terreno" },
     ],
   },

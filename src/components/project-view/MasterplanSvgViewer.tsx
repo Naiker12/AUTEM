@@ -651,19 +651,22 @@ export default function MasterplanSvgViewer({
     if (!cWidth || !cHeight) return { scale: 0.9, offset: { x: 0, y: 0 } };
 
     const isDesktop = cWidth >= 1280;
+    const isMobileView = cWidth < 768;
     const desktopShift =
       (isDesktop && isDesktopSidebarOpen ? 90 : 0) - (isDesktop && isRightPanelOpen ? 85 : 0);
 
     // Adaptar escala y centroide según la rotación activa (a ~48° el plano se visualiza horizontal apaisado)
     const isRotated48 = Math.abs(rotationRef.current - 48) < 15;
-    const boundingW = isRotated48 ? 2450 : 2550;
-    const boundingH = isRotated48 ? 1420 : 2450;
+    const boundingW = isRotated48 ? 2450 : isMobileView ? 1820 : 2550;
+    const boundingH = isRotated48 ? 1420 : isMobileView ? 2080 : 2450;
     const fitScale =
-      Math.min(cWidth / boundingW, cHeight / boundingH) * 0.9 * initialScaleMultiplier;
+      Math.min(cWidth / boundingW, cHeight / boundingH) *
+      (isMobileView ? 0.94 : 0.9) *
+      initialScaleMultiplier;
 
     // Sin rotación (norte arriba, como el plano oficial) se centra en el lindero completo
-    const targetCenterX = isRotated48 ? 1558 : 1260;
-    const targetCenterY = isRotated48 ? 1154 : 1150;
+    const targetCenterX = isRotated48 ? 1558 : isMobileView ? 1310 : 1260;
+    const targetCenterY = isRotated48 ? 1154 : isMobileView ? 1135 : 1150;
 
     return {
       scale: fitScale,
@@ -1477,7 +1480,7 @@ export default function MasterplanSvgViewer({
       {/* Píldora Flotante Informativa de Filtros Activos con botón de restablecer */}
       {isFilterActive && filteredLots && (
         <div
-          className="no-drag absolute top-14 left-2.5 lg:left-4 lg:top-4 z-20 flex items-center gap-2 rounded-full border border-white/35 dark:border-white/15 bg-white/50 dark:bg-stone-900/50 px-2.5 py-1 lg:px-3 shadow-lg backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200"
+          className="no-drag absolute top-11 left-2.5 lg:left-4 lg:top-4 z-20 flex items-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-2.5 py-0.5 lg:px-3 lg:py-1 shadow-md backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <span className="relative flex size-2">

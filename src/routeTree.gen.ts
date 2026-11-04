@@ -29,6 +29,7 @@ import { Route as AdminConfiguracionRouteImport } from "./routes/admin/configura
 import { Route as AdminAuditoriaRouteImport } from "./routes/admin/auditoria"
 import { Route as AdminConfiguracionIndexRouteImport } from "./routes/admin/configuracion/index"
 import { Route as AdminExperienciasRecorridoTerrenoRouteImport } from "./routes/admin/experiencias/recorrido-terreno"
+import { Route as AdminExperienciasPanorama360RouteImport } from "./routes/admin/experiencias/panorama-360"
 import { Route as AdminExperienciasMasterplanRouteImport } from "./routes/admin/experiencias/masterplan"
 import { Route as AdminContenidoPortadaRouteImport } from "./routes/admin/contenido/portada"
 import { Route as AdminContenidoSectionRouteImport } from "./routes/admin/contenido/$section"
@@ -140,6 +141,12 @@ const AdminExperienciasRecorridoTerrenoRoute =
     path: "/experiencias/recorrido-terreno",
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminExperienciasPanorama360Route =
+  AdminExperienciasPanorama360RouteImport.update({
+    id: "/experiencias/panorama-360",
+    path: "/experiencias/panorama-360",
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminExperienciasMasterplanRoute =
   AdminExperienciasMasterplanRouteImport.update({
     id: "/experiencias/masterplan",
@@ -214,6 +221,7 @@ export interface FileRoutesByFullPath {
   "/admin/contenido/$section": typeof AdminContenidoSectionRoute
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
+  "/admin/experiencias/panorama-360": typeof AdminExperienciasPanorama360Route
   "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
@@ -242,6 +250,7 @@ export interface FileRoutesByTo {
   "/admin/contenido/$section": typeof AdminContenidoSectionRoute
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
+  "/admin/experiencias/panorama-360": typeof AdminExperienciasPanorama360Route
   "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
   "/admin/configuracion": typeof AdminConfiguracionIndexRoute
 }
@@ -273,6 +282,7 @@ export interface FileRoutesById {
   "/admin/contenido/$section": typeof AdminContenidoSectionRoute
   "/admin/contenido/portada": typeof AdminContenidoPortadaRoute
   "/admin/experiencias/masterplan": typeof AdminExperienciasMasterplanRoute
+  "/admin/experiencias/panorama-360": typeof AdminExperienciasPanorama360Route
   "/admin/experiencias/recorrido-terreno": typeof AdminExperienciasRecorridoTerrenoRoute
   "/admin/configuracion/": typeof AdminConfiguracionIndexRoute
 }
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | "/admin/contenido/$section"
     | "/admin/contenido/portada"
     | "/admin/experiencias/masterplan"
+    | "/admin/experiencias/panorama-360"
     | "/admin/experiencias/recorrido-terreno"
     | "/admin/configuracion/"
   fileRoutesByTo: FileRoutesByTo
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | "/admin/contenido/$section"
     | "/admin/contenido/portada"
     | "/admin/experiencias/masterplan"
+    | "/admin/experiencias/panorama-360"
     | "/admin/experiencias/recorrido-terreno"
     | "/admin/configuracion"
   id:
@@ -363,6 +375,7 @@ export interface FileRouteTypes {
     | "/admin/contenido/$section"
     | "/admin/contenido/portada"
     | "/admin/experiencias/masterplan"
+    | "/admin/experiencias/panorama-360"
     | "/admin/experiencias/recorrido-terreno"
     | "/admin/configuracion/"
   fileRoutesById: FileRoutesById
@@ -522,6 +535,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AdminExperienciasRecorridoTerrenoRouteImport
       parentRoute: typeof AdminRoute
     }
+    "/admin/experiencias/panorama-360": {
+      id: "/admin/experiencias/panorama-360"
+      path: "/experiencias/panorama-360"
+      fullPath: "/admin/experiencias/panorama-360"
+      preLoaderRoute: typeof AdminExperienciasPanorama360RouteImport
+      parentRoute: typeof AdminRoute
+    }
     "/admin/experiencias/masterplan": {
       id: "/admin/experiencias/masterplan"
       path: "/experiencias/masterplan"
@@ -614,6 +634,7 @@ interface AdminRouteChildren {
   AdminContenidoSectionRoute: typeof AdminContenidoSectionRoute
   AdminContenidoPortadaRoute: typeof AdminContenidoPortadaRoute
   AdminExperienciasMasterplanRoute: typeof AdminExperienciasMasterplanRoute
+  AdminExperienciasPanorama360Route: typeof AdminExperienciasPanorama360Route
   AdminExperienciasRecorridoTerrenoRoute: typeof AdminExperienciasRecorridoTerrenoRoute
 }
 
@@ -629,6 +650,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContenidoSectionRoute: AdminContenidoSectionRoute,
   AdminContenidoPortadaRoute: AdminContenidoPortadaRoute,
   AdminExperienciasMasterplanRoute: AdminExperienciasMasterplanRoute,
+  AdminExperienciasPanorama360Route: AdminExperienciasPanorama360Route,
   AdminExperienciasRecorridoTerrenoRoute:
     AdminExperienciasRecorridoTerrenoRoute,
 }

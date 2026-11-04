@@ -15,11 +15,16 @@
     "images:home": "node scripts/optimize-home-images.mjs",
     "images:project": "node scripts/optimize-project-images.mjs",
     "geojson:generate": "node scripts/generate-lots-geojson.mjs",
+    "panorama:build": "node scripts/build-panorama-from-3dvista.mjs",
+    "panorama:project": "node scripts/project-lots-to-panorama.mjs",
     "test:navigation": "node scripts/navigation/verify-network.mjs && npx tsx scripts/navigation/test-schema-validation.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",
     "@hookform/resolvers": "^5.2.2",
+    "@photo-sphere-viewer/core": "^5.15.1",
+    "@photo-sphere-viewer/gyroscope-plugin": "^5.15.1",
+    "@photo-sphere-viewer/markers-plugin": "^5.15.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",

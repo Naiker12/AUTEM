@@ -302,7 +302,7 @@ export default function Navbar({ variant }: NavbarProps) {
         <div
           ref={menuRef}
           id="mobile-navigation"
-          className="menu-enter fixed inset-0 z-50 flex h-screen w-screen flex-col bg-[#f0ebe6] p-6 md:hidden overflow-y-auto"
+          className="menu-enter fixed inset-0 z-50 flex h-[100dvh] w-full flex-col bg-[#f0ebe6] p-6 md:hidden overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="Menú de navegación"

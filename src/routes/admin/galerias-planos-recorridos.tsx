@@ -454,6 +454,12 @@ function MediaLibraryPage() {
               >
                 Boris Topógrafo
               </button>
+              <a
+                href="/admin/experiencias/panorama-360"
+                className="ml-auto inline-flex items-center gap-1 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-0.5 font-semibold text-accent hover:bg-accent/20 transition-colors"
+              >
+                Visor 360° →
+              </a>
             </div>
           </CardContent>
         </Card>

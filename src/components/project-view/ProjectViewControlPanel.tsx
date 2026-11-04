@@ -779,18 +779,19 @@ export function ProjectViewControlPanelContent({
         </div>
       </ScrollArea>
 
-      {/* Pie de acción fijado al fondo: siempre visible */}
+      {/* Pie de acción fijado al fondo: compacto en móvil para no quitar espacio */}
       {isMobile ? (
-        <div className="flex shrink-0 flex-col gap-2 border-t bg-card px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
+        <div className="flex shrink-0 items-center gap-1.5 border-t bg-card px-3 py-2 pb-[max(.5rem,env(safe-area-inset-bottom))]">
           {hasSelectedLot && lotDoc && (
             <Button
               asChild
               variant="outline"
-              className="h-9 w-full rounded-xl border border-primary/40 bg-primary/5 font-medium uppercase tracking-[0.08em] text-foreground hover:bg-primary/10 text-[10px]"
+              size="icon"
+              className="size-8.5 shrink-0 rounded-xl border border-primary/40 bg-primary/5 text-foreground hover:bg-primary/10"
+              title={`Descargar Ficha Técnica (${formatFileSize(lotDoc.size_bytes)})`}
             >
               <a href={lotDoc.url} target="_blank" rel="noopener noreferrer" download>
-                <FileDown size={14} className="mr-1.5 text-primary" />
-                Descargar Ficha Técnica ({formatFileSize(lotDoc.size_bytes)})
+                <FileDown size={14} className="text-primary" />
               </a>
             </Button>
           )}
@@ -801,21 +802,19 @@ export function ProjectViewControlPanelContent({
                 if (onSelectMode) onSelectMode("terrain");
                 if (onClose) onClose();
               }}
-              className="h-10 w-full rounded-xl bg-accent text-accent-foreground font-bold text-xs flex items-center justify-center gap-2 hover:bg-accent/90 shadow-sm transition-all active:scale-[0.98]"
+              className="h-8.5 flex-1 rounded-xl bg-accent text-accent-foreground font-bold text-[10.5px] flex items-center justify-center gap-1.5 hover:bg-accent/90 shadow-xs transition-all active:scale-[0.98]"
             >
-              <Navigation size={15} />
-              Recorrer hacia este lote
+              <Navigation size={13} />
+              <span>Recorrer lote</span>
             </Button>
           )}
           <Button
             asChild
-            className="h-10 w-full rounded-xl border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold text-[10.5px]"
+            className="h-8.5 flex-1 rounded-xl border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.06em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold text-[10px]"
           >
             <a href={contactUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle size={15} className="mr-1.5" />
-              {hasSelectedLot
-                ? `Solicitar asesoría para Lote ${selectedLot?.id}`
-                : "Solicitar asesoría por WhatsApp"}
+              <MessageCircle size={13} className="mr-1" />
+              {hasSelectedLot ? `Asesoría ${selectedLot?.id}` : "Solicitar asesoría"}
             </a>
           </Button>
         </div>

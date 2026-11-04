@@ -1482,6 +1482,11 @@ function ProjectDialog({
                     <FieldDescription>
                       Introduce el enlace a Matterport, visor 360° o experiencia interactiva.
                     </FieldDescription>
+                    <div className="pt-1.5">
+                      <Button asChild variant="outline" size="sm">
+                        <a href="/admin/experiencias/panorama-360">Visor 360°</a>
+                      </Button>
+                    </div>
                   </Field>
                 </FieldGroup>
                 <Alert>

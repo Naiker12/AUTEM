@@ -222,12 +222,12 @@ function ProjectView() {
     }
   }, []);
 
-  const [sheetPercent, setSheetPercent] = useState(48);
-  const [controlPanelPercent, setControlPanelPercent] = useState(48);
+  const [sheetPercent, setSheetPercent] = useState(50);
+  const [controlPanelPercent, setControlPanelPercent] = useState(50);
   const [isDraggingSheet, setIsDraggingSheet] = useState(false);
   const dragStartYRef = useRef(0);
-  const dragStartPercentRef = useRef(48);
-  const currentDragPercentRef = useRef(48);
+  const dragStartPercentRef = useRef(50);
+  const currentDragPercentRef = useRef(50);
   const containerHeightRef = useRef(0);
   const sheetRafPendingRef = useRef(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
@@ -256,7 +256,7 @@ function ProjectView() {
     // Arrastrar hacia arriba (clientY disminuye) aumenta la altura del catálogo
     const deltaY = dragStartYRef.current - e.clientY;
     const deltaPercent = (deltaY / totalHeight) * 100 * PANEL_DRAG_SENSITIVITY;
-    const nextPercent = Math.min(84, Math.max(34, dragStartPercentRef.current + deltaPercent));
+    const nextPercent = Math.min(84, Math.max(32, dragStartPercentRef.current + deltaPercent));
     currentDragPercentRef.current = nextPercent;
 
     // Rendimiento extremo 60-120fps alineado con RAF sin layout thrashing
@@ -266,9 +266,6 @@ function ProjectView() {
         sheetRafPendingRef.current = false;
         if (mapWrapperRef.current) {
           mapWrapperRef.current.style.height = `${100 - currentDragPercentRef.current}%`;
-        }
-        if (sheetWrapperRef.current) {
-          sheetWrapperRef.current.style.height = `calc(${currentDragPercentRef.current}% - 32px)`;
         }
       });
     }
@@ -381,7 +378,7 @@ function ProjectView() {
     <main
       data-theme={isDark ? "dark" : "light"}
       data-ready={introReady}
-      className="project-editorial h-[100svh] overflow-hidden bg-background font-sans text-foreground"
+      className="project-editorial fixed inset-0 h-[100dvh] w-full overflow-hidden bg-background font-sans text-foreground"
     >
       <ProjectLoadingScreen
         key={slug}
@@ -431,15 +428,15 @@ function ProjectView() {
                     ? "none"
                     : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
-              className="relative w-full min-h-[140px] lg:!h-full lg:absolute lg:inset-0"
+              className="relative w-full min-h-[130px] shrink-0 lg:!h-full lg:absolute lg:inset-0"
             >
               {/* Selector de capa: Plano Vectorial vs Mapa Satelital */}
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 select-none">
-                <div className="flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-lg backdrop-blur-xl">
+              <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-30 select-none">
+                <div className="flex items-center gap-0.5 sm:gap-1 rounded-full border border-border/80 bg-background/90 p-0.5 sm:p-1 shadow-lg backdrop-blur-xl">
                   <button
                     type="button"
                     onClick={() => setMapLayer("vector")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                       mapLayer === "vector"
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
@@ -450,7 +447,7 @@ function ProjectView() {
                   <button
                     type="button"
                     onClick={() => setMapLayer("satellite")}
-                    className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                       mapLayer === "satellite"
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
@@ -525,26 +522,18 @@ function ProjectView() {
                 onPointerUp={handleSheetDragEnd}
                 onPointerCancel={handleSheetDragEnd}
                 onClick={handleToggleSheetSize}
-                className="relative z-30 flex h-7 w-full shrink-0 cursor-row-resize touch-none items-center justify-center bg-background/95 border-t border-border/80 shadow-xs backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
+                className="relative z-30 flex h-5 w-full shrink-0 cursor-row-resize touch-none items-center justify-center bg-background/95 border-t border-border/80 shadow-xs backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
                 title="Desliza para ajustar la vista del catálogo de lotes"
               >
-                <span className="h-1 w-10 rounded-full bg-muted-foreground/35 hover:w-14 hover:bg-accent transition-all" />
+                <span className="h-1 w-9 rounded-full bg-muted-foreground/35 hover:w-12 hover:bg-accent transition-all" />
               </div>
             )}
 
-            {/* Mitad inferior en móvil: Catálogo de lotes dinámico con altura mínima segura */}
+            {/* Mitad inferior en móvil: Catálogo de lotes dinámico que llena hasta el borde inferior real */}
             {((hasLots && viewSettings.showLotCatalog) || mobileControlOpen) && (
               <div
                 ref={sheetWrapperRef}
-                style={{
-                  height: `calc(${effectiveSheetPercent}% - ${mobileControlOpen ? 40 : 32}px)`,
-                  minHeight: "175px",
-                  transition:
-                    isDraggingSheet || mobileControlOpen
-                      ? "none"
-                      : "height 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
-                }}
-                className="relative w-full overflow-hidden lg:hidden"
+                className="relative min-h-0 w-full flex-1 overflow-hidden lg:hidden"
               >
                 {mobileControlOpen && controlPanel}
                 <div className={mobileControlOpen ? "hidden" : "h-full"}>
@@ -563,6 +552,10 @@ function ProjectView() {
                     selectedId={selectedLot?.id ?? ""}
                     onSelect={selectLot}
                     onView3D={handleView3D}
+                    onInspectLot={(lot) => {
+                      selectLot(lot);
+                      setIsPanelOpen(true);
+                    }}
                     onHide={() => {}}
                     isMobileSplit
                   />
@@ -594,24 +587,37 @@ function ProjectView() {
             )}
           </div>
         ) : mode === "perspective" || mode === "tour" ? (
-          <Suspense
-            fallback={
-              <div className="grid h-full place-items-center bg-[#121811] text-sm text-white/70">
-                Cargando localización 360°…
-              </div>
-            }
-          >
-            <InteractivePanorama
-              sourceUrl={
-                property.tourUrl ||
-                (property.slug === "villa-paraiso"
-                  ? "/tours/villa-paraiso/index.htm"
-                  : property.tourImage || "/images/villa-paraiso-360.jpg")
+          <div className="h-full w-full pt-14 sm:pt-16 lg:pt-[72px]">
+            <Suspense
+              fallback={
+                <div className="grid h-full place-items-center bg-[#121811] text-sm text-white/70">
+                  Cargando localización 360°…
+                </div>
               }
-              projectName={property.name}
-              onSwitchToPlan={() => handleModeChange("lot")}
-            />
-          </Suspense>
+            >
+              <InteractivePanorama
+                sourceUrl={
+                  property.tourUrl ||
+                  (property.slug === "villa-paraiso"
+                    ? "/tours/villa-paraiso/index.htm"
+                    : property.tourImage || "/images/villa-paraiso-360.jpg")
+                }
+                projectName={property.name}
+                projectSlug={property.slug}
+                lots={projectLots}
+                selectedLotId={selectedLot?.id}
+                onSelectLot={(lotId) => {
+                  const found = projectLots.find((l) => l.id === lotId);
+                  if (found) selectLot(found);
+                }}
+                onInspectLot={(lot) => {
+                  if (lot) selectLot(lot);
+                  setIsPanelOpen(true);
+                }}
+                onSwitchToPlan={() => handleModeChange("lot")}
+              />
+            </Suspense>
+          </div>
         ) : mode === "terrain" ? (
           <TerrainRouteView
             lots={projectLots}
@@ -749,7 +755,7 @@ function ProjectView() {
               onClick={() =>
                 setGalleryIndex((index) => (index - 1 + images.length) % images.length)
               }
-              className="absolute left-5 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground"
+              className="absolute left-2.5 sm:left-5 top-1/2 z-20 size-9 sm:size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground"
               aria-label="Imagen anterior"
             >
               <ChevronLeft />
@@ -759,7 +765,7 @@ function ProjectView() {
               variant="ghost"
               size="icon"
               onClick={() => setGalleryIndex((index) => (index + 1) % images.length)}
-              className="absolute right-5 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground"
+              className="absolute right-2.5 sm:right-5 top-1/2 z-20 size-9 sm:size-11 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white hover:bg-accent hover:text-accent-foreground"
               aria-label="Imagen siguiente"
             >
               <ChevronRight />
@@ -768,21 +774,21 @@ function ProjectView() {
         )}
 
         {mode === "gallery" && !mobileControlOpen && (
-          <section className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 lg:px-10 lg:pb-6">
-            <div className="mx-auto flex max-w-6xl flex-col justify-between gap-5 lg:flex-row lg:items-end">
+          <section className="absolute inset-x-0 bottom-0 z-20 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-6">
+            <div className="mx-auto flex max-w-6xl flex-col justify-between gap-3.5 sm:gap-5 lg:flex-row lg:items-end">
               <div className="drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
                 {images.length > 1 && (
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3 py-1 text-[11px] font-medium text-white/90 backdrop-blur-md">
+                  <div className="mb-1.5 sm:mb-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10.5px] sm:text-[11px] font-medium text-white/90 backdrop-blur-md">
                     <span>
                       {safeGalleryIndex + 1} / {images.length}
                     </span>
                     <span className="hidden sm:inline text-white/60">· Usa ← → para recorrer</span>
                   </div>
                 )}
-                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
+                <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
                   {property.name}
                 </h1>
-                <p className="mt-2 text-sm text-white/85">
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-white/85">
                   {property.location} ·{" "}
                   {property.metadata?.metrics?.totalAreaHa
                     ? `${property.metadata.metrics.totalAreaHa} hectáreas`
