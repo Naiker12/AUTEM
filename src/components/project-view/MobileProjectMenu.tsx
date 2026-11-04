@@ -56,24 +56,31 @@ export default function MobileProjectMenu({
       >
         {showViews && (
           <DropdownMenuGroup>
-            <DropdownMenuLabel className="px-3 py-2">Vistas del proyecto</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={activeMode}
-              onValueChange={(value) => onModeChange(value as ViewMode)}
-            >
-              {PROJECT_VIEW_MODES.map(({ id, label, icon: Icon, badge }) => (
-                <DropdownMenuRadioItem
+            <DropdownMenuLabel className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Vistas del proyecto
+            </DropdownMenuLabel>
+            {PROJECT_VIEW_MODES.map(({ id, label, icon: Icon, badge }) => {
+              const isCurrent = activeMode === id;
+              return (
+                <DropdownMenuItem
                   key={id}
-                  value={id}
-                  onSelect={() => setOpen(false)}
-                  className="min-h-12 gap-3 rounded-xl py-3 pr-3 data-[state=checked]:bg-accent/15"
+                  onSelect={() => {
+                    onModeChange(id as ViewMode);
+                    setOpen(false);
+                  }}
+                  className={`min-h-12 gap-3 rounded-xl py-3 px-3 cursor-pointer transition-colors ${
+                    isCurrent
+                      ? "bg-accent/15 text-accent font-bold"
+                      : "text-foreground hover:bg-muted"
+                  }`}
                 >
-                  <Icon />
+                  <Icon className="size-5 shrink-0" />
                   <span className="flex-1">{label}</span>
+                  {isCurrent && <span className="size-2 rounded-full bg-accent shrink-0" />}
                   {badge && <span className="text-[10px] text-muted-foreground">Próximamente</span>}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuGroup>
         )}
         {showViews && <DropdownMenuSeparator />}

@@ -1,0 +1,14 @@
+#: locale=es
+
+## Media
+
+### Título
+panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0.label = Vista Panorámica Aérea 360°
+
+## Tour
+
+### Descripción
+Recorrido 360° oficial del proyecto campestre Villa Paraíso · AUTEM
+
+### Título
+tour.name = Villa Paraíso

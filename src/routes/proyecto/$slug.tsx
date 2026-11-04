@@ -480,6 +480,8 @@ function ProjectView() {
                   lots={projectLots}
                   selectedLotId={selectedLot?.id}
                   onSelectLot={selectLot}
+                  hideSurroundingsDrawer={true}
+                  hideGeoreferenceBadge={true}
                 />
               ) : (
                 <MasterplanSvgViewer
@@ -522,46 +524,11 @@ function ProjectView() {
                 onPointerMove={handleSheetDragMove}
                 onPointerUp={handleSheetDragEnd}
                 onPointerCancel={handleSheetDragEnd}
-                className="relative z-30 flex h-8 w-full shrink-0 cursor-row-resize touch-none items-center justify-between px-3 bg-background/95 border-t border-border/80 shadow-md backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
-                title="Desliza para ajustar la división entre mapa y catálogo"
+                onClick={handleToggleSheetSize}
+                className="relative z-30 flex h-7 w-full shrink-0 cursor-row-resize touch-none items-center justify-center bg-background/95 border-t border-border/80 shadow-xs backdrop-blur-xl select-none hover:bg-muted/30 transition-colors lg:hidden"
+                title="Desliza para ajustar la vista del catálogo de lotes"
               >
-                {/* Botón rápido: Más Mapa (con límite seguro para no cortar el catálogo) */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSheetPercent(36);
-                  }}
-                  className={`rounded-full px-2 py-0.5 text-[8px] font-semibold transition-all ${sheetPercent <= 40 ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
-                >
-                  Más mapa
-                </button>
-
-                {/* Tirador central táctil con etiqueta destacada de Plano Urbanístico */}
-                <div
-                  className="flex items-center justify-center py-1 cursor-row-resize px-2 gap-1.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleSheetSize();
-                  }}
-                >
-                  <div className="h-1 w-6 rounded-full bg-muted-foreground/40 hover:w-9 hover:bg-accent transition-all" />
-                  <span className="text-[8px] font-bold uppercase tracking-wider text-foreground/80">
-                    Plano Urbanístico ↕
-                  </span>
-                </div>
-
-                {/* Botón rápido: Más Lotes */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSheetPercent(76);
-                  }}
-                  className={`rounded-full px-2 py-0.5 text-[8px] font-semibold transition-all ${sheetPercent >= 65 ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
-                >
-                  Más lotes
-                </button>
+                <span className="h-1 w-10 rounded-full bg-muted-foreground/35 hover:w-14 hover:bg-accent transition-all" />
               </div>
             )}
 
@@ -626,70 +593,25 @@ function ProjectView() {
               </div>
             )}
           </div>
-        ) : mode === "tour" ? (
-          property.tourImage ? (
-            <Suspense
-              fallback={
-                <div className="grid h-full place-items-center bg-black text-sm text-white/70">
-                  Cargando recorrido 360°…
-                </div>
-              }
-            >
-              <InteractivePanorama sourceUrl={property.tourImage} />
-            </Suspense>
-          ) : (
-            <div className="relative flex h-full w-full items-center justify-center bg-black/75">
-              {property.image && (
-                <img
-                  src={property.image}
-                  alt={property.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm"
-                />
-              )}
-              <div className="relative z-20 mx-4 max-w-md rounded-[24px] border border-border bg-background/95 p-8 text-center shadow-2xl backdrop-blur-2xl">
-                <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-                  <RouteIcon size={30} />
-                </span>
-                <Badge className="mt-4 border border-accent/40 bg-accent/10 text-[9px] font-semibold uppercase tracking-wider text-accent">
-                  Próximamente
-                </Badge>
-                <h2 className="mt-3 text-2xl font-bold tracking-tight text-foreground">
-                  Tour 360° en creación
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Estamos preparando la experiencia inmersiva en 360° para este proyecto. Puedes
-                  explorar todos los lotes en el Plano Urbanístico.
-                </p>
-                <Button
-                  type="button"
-                  onClick={() => handleModeChange("lot")}
-                  className="mt-6 w-full rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
-                >
-                  Ver Plano Urbanístico
-                </Button>
+        ) : mode === "perspective" || mode === "tour" ? (
+          <Suspense
+            fallback={
+              <div className="grid h-full place-items-center bg-[#121811] text-sm text-white/70">
+                Cargando localización 360°…
               </div>
-            </div>
-          )
-        ) : mode === "perspective" ? (
-          <div className="relative h-full w-full pt-14 sm:pt-16 lg:pt-0">
-            <ProjectLocationMap
-              lat={property.lat}
-              lng={property.lng}
+            }
+          >
+            <InteractivePanorama
+              sourceUrl={
+                property.tourUrl ||
+                (property.slug === "villa-paraiso"
+                  ? "/tours/villa-paraiso/index.htm"
+                  : property.tourImage || "/images/villa-paraiso-360.jpg")
+              }
               projectName={property.name}
-              locationName={property.location}
-              isDark={isDark}
-              georeferenceStatus={georeference?.status}
-              boundsGeo={georeference?.bounds_geo}
-              projectSlug={property?.slug ?? slug}
-              lots={projectLots}
-              selectedLotId={selectedLot?.id}
-              onSelectLot={selectLot}
-              className="h-full w-full"
-              defaultShowSurroundings={true}
+              onSwitchToPlan={() => handleModeChange("lot")}
             />
-          </div>
+          </Suspense>
         ) : mode === "terrain" ? (
           <TerrainRouteView
             lots={projectLots}
@@ -861,7 +783,13 @@ function ProjectView() {
                   {property.name}
                 </h1>
                 <p className="mt-2 text-sm text-white/85">
-                  {property.location} · {property.m2} m² · {property.price}
+                  {property.location} ·{" "}
+                  {property.metadata?.metrics?.totalAreaHa
+                    ? `${property.metadata.metrics.totalAreaHa} hectáreas`
+                    : property.m2 < 100
+                      ? `${property.m2} hectáreas`
+                      : `${property.m2.toLocaleString("es-CO")} m²`}{" "}
+                  · {property.price}
                 </p>
               </div>
               {images.length > 0 && (

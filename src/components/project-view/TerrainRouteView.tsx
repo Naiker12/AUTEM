@@ -190,6 +190,7 @@ export default function TerrainRouteView({
               enableHeadingRotation={true}
               showRouteLine={false}
               hideSurroundingsDrawer={true}
+              hideGeoreferenceBadge={true}
               travelMode={travelMode}
               focusRequest={focusRequest}
               className="h-full w-full"
@@ -230,38 +231,6 @@ export default function TerrainRouteView({
               >
                 <PanelLeftOpen className="mr-1.5 size-4" /> Mostrar panel de recorrido
               </Button>
-            </div>
-          )}
-
-          {/* HUD flotante inferior en el plano (solo en escritorio para no obstruir en móvil) */}
-          {destination && (
-            <div
-              className={cn(
-                "pointer-events-auto absolute bottom-3 z-20 hidden md:flex max-w-[calc(100%-5rem)] items-center gap-2.5 rounded-full border border-border/80 bg-background/95 px-3.5 py-2 text-xs shadow-lg backdrop-blur-xl transition-all",
-                isDesktopPanelOpen ? "left-3 md:left-[388px] lg:left-[404px]" : "left-3",
-              )}
-            >
-              <span className="inline-flex items-center gap-1.5 font-medium text-muted-foreground">
-                <span className="size-2 rounded-full bg-[#1677ff]" />
-                {navigation.fromGps ? "Tu GPS" : "Portería"}
-              </span>
-              <span className="text-muted-foreground/60">→</span>
-              <span className="inline-flex items-center gap-1.5 font-bold text-foreground">
-                <MapPin className="size-3.5 shrink-0 text-accent" />
-                <span className="truncate">
-                  {lotLabel}
-                  {manzanaLabel ? ` · ${manzanaLabel}` : ""}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setFocusRequest((value) => value + 1)}
-                className="ml-1 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent transition-colors hover:bg-accent/25 cursor-pointer"
-                title="Centrar lote en el plano"
-              >
-                <LocateFixed className="size-3" />
-                <span className="hidden sm:inline">Centrar</span>
-              </button>
             </div>
           )}
         </div>

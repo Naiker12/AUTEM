@@ -41,7 +41,7 @@ VALUES (
   'Proyecto campestre exclusivo en Santa Rosa de Lima con 343 lotes urbanizados, vías pavimentadas y amenidades de primera categoría.',
   'Villa Paraíso es un desarrollo territorial campestre de alta valorización situado en Santa Rosa de Lima, Bolívar. Ofrece 343 parcelas urbanizadas distribuidas en manzanas planificadas, con senderos ecológicos, zonas recreativas, club house y seguridad permanente.',
   ARRAY['Vías pavimentadas', 'Red eléctrica subterránea', 'Acueducto propio', 'Zonas verdes y senderos', 'Club house campestre', 'Portería y vigilancia 24/7', 'Escrituración individual']::text[],
-  '00000000-0000-0000-0000-000000000101/cover/autem-villa-paraiso-aerial-v2.png',
+  '00000000-0000-0000-0000-000000000101/cover/dc6d1d67-a0cf-4959-915e-b3474a05edc5-whatsapp-image-2026-10-30-at-11-01-46-am.jpeg',
   '00000000-0000-0000-0000-000000000101/masterplan/masterplan-clean.svg',
   '2026.03',
   'https://my.matterport.com/show/?m=sample-autem-villa-paraiso',
@@ -83,7 +83,7 @@ VALUES
   (
     '00000000-0000-0000-0000-000000000101',
     'project-media',
-    '00000000-0000-0000-0000-000000000101/cover/autem-villa-paraiso-aerial-v2.png',
+    '00000000-0000-0000-0000-000000000101/cover/dc6d1d67-a0cf-4959-915e-b3474a05edc5-whatsapp-image-2026-10-30-at-11-01-46-am.jpeg',
     'cover',
     'Vista aérea principal Villa Paraíso',
     'image/png',

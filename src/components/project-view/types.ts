@@ -1,4 +1,4 @@
-import { Images, MapPinned, Navigation, Orbit, type LucideIcon } from "lucide-react";
+import { Compass, Images, MapPinned, Navigation, Orbit, type LucideIcon } from "lucide-react";
 
 export type ViewMode = "lot" | "perspective" | "tour" | "terrain" | "gallery";
 
@@ -46,8 +46,8 @@ export const PROJECT_VIEW_MODES: ProjectViewMode[] = [
   {
     id: "perspective",
     label: "Localización",
-    shortLabel: "Ubicación",
-    icon: MapPinned,
+    shortLabel: "360°",
+    icon: Compass,
     available: true,
   },
   {

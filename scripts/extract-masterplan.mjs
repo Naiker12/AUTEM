@@ -463,13 +463,36 @@ async function extract() {
     .filter((p) => !p.closed)
     .map((p) => pointsToPath(p.points, false));
 
-  const viaPaths = filterValidPoints(viaPolylines).map((p) => pointsToPath(p.points, false));
+  // La vía externa (Santa Rosa - Villanueva) queda fuera del lindero y se dibujaba como
+  // dos líneas sueltas fuera del plano: se separa en externalRoads y no se pinta.
+  const linderoRings = filterValidPoints(linderoPolylines).map((p) => p.points);
+  const isInsideLindero = (pt) => linderoRings.some((ring) => pointInPolygon(pt, ring));
+  const validVias = filterValidPoints(viaPolylines);
+  const isInternalVia = (p) => p.points.filter(isInsideLindero).length / p.points.length >= 0.5;
+  const viaPaths = validVias.filter(isInternalVia).map((p) => pointsToPath(p.points, false));
+  const externalRoadPaths = validVias
+    .filter((p) => !isInternalVia(p))
+    .map((p) => pointsToPath(p.points, false));
   const senderoPaths = filterValidPoints(senderoPolylines).map((p) =>
     pointsToPath(p.points, false),
   );
 
   // Cuerpos de agua: 2 lagos + río meándrico + canales
-  const waterPaths = filterValidPoints(waterPolylines).map((p) => pointsToPath(p.points, true));
+  // Algunas polilíneas CAD unen dos lagos con un salto largo: se separan en anillos independientes
+  const waterPaths = filterValidPoints(waterPolylines).map((p) => {
+    const rings = [[]];
+    p.points.forEach((pt, i) => {
+      rings[rings.length - 1].push(pt);
+      const next = p.points[i + 1];
+      if (next && Math.hypot(toSvgX(pt.x) - toSvgX(next.x), toSvgY(pt.y) - toSvgY(next.y)) > 300) {
+        rings.push([]);
+      }
+    });
+    return rings
+      .filter((r) => r.length > 2)
+      .map((r) => pointsToPath(r, true))
+      .join(" ");
+  });
 
   // Áreas verdes (incluye los grandes parques centrales y corredores ecológicos)
   const greenPaths = filterValidPoints(greenPolylines).map((p) => pointsToPath(p.points, true));
@@ -497,6 +520,7 @@ async function extract() {
     linderos: linderoPaths,
     greenAreas: greenPaths,
     roads: viaPaths,
+    externalRoads: externalRoadPaths,
     calzadas: [...calzadasFilled, ...calzadasStroked],
     calzadasFilled,
     calzadasStroked,

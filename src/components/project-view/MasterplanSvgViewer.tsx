@@ -17,7 +17,6 @@ import {
   RotateCcw,
   RotateCw,
   Shrink,
-  Sparkles,
   CheckCircle2,
   Clock,
   MapPin,
@@ -26,6 +25,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import type { Lot } from "@/data/lots";
 import { formatLotArea, formatLotPrice } from "@/data/lots";
 import layersData from "@/data/villa-paraiso-layers.json";
+import cadTiersData from "@/data/villa-paraiso-cad-tiers.json";
 import type { ProjectViewSettings } from "./types";
 
 interface MasterplanSvgViewerProps {
@@ -84,7 +84,7 @@ export default function MasterplanSvgViewer({
   disableWheelZoom = false,
   overlay,
   onPlanPointSelect,
-  initialRotation = 48,
+  initialRotation = 0,
 }: MasterplanSvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -196,8 +196,8 @@ export default function MasterplanSvgViewer({
             <path
               key={`lindero-${i}`}
               d={d}
-              fill={isDark ? "#181614" : "#ede4cf"}
-              stroke={isDark ? "#383229" : "#9e8d72"}
+              fill={isDark ? "#181614" : "#6f7f56"}
+              stroke={isDark ? "#383229" : "#4a5638"}
               strokeWidth={3.5}
               className="pointer-events-none transition-colors duration-500"
             />
@@ -210,8 +210,8 @@ export default function MasterplanSvgViewer({
             <path
               key={`green-${i}`}
               d={d}
-              fill={isDark ? "#12281a" : "#b8e0a2"}
-              stroke={isDark ? "#1d472c" : "#5e8f42"}
+              fill={isDark ? "#12281a" : "#5d7a44"}
+              stroke={isDark ? "#1d472c" : "#3f5a2e"}
               strokeWidth={1.8}
               className="pointer-events-none transition-colors duration-500"
             />
@@ -225,7 +225,7 @@ export default function MasterplanSvgViewer({
               key={`road-${i}`}
               d={d}
               fill="none"
-              stroke={isDark ? "#3d352b" : "#998a72"}
+              stroke={isDark ? "#3d352b" : "#6b6862"}
               strokeWidth={2.5}
               className="pointer-events-none transition-colors duration-500"
             />
@@ -237,8 +237,8 @@ export default function MasterplanSvgViewer({
                 <path
                   key={`calzada-f-${i}`}
                   d={d}
-                  fill={isDark ? "#1f1b17" : "#ded6c2"}
-                  stroke={isDark ? "#383129" : "#8f7e65"}
+                  fill={isDark ? "#1f1b17" : "#8c8a84"}
+                  stroke={isDark ? "#383129" : "#5f5c56"}
                   strokeWidth={1.5}
                   className="pointer-events-none transition-colors duration-500"
                 />
@@ -262,7 +262,7 @@ export default function MasterplanSvgViewer({
                 key={`calzada-s-${i}`}
                 d={d}
                 fill="none"
-                stroke={isDark ? "#383129" : "#8f7e65"}
+                stroke={isDark ? "#383129" : "#5f5c56"}
                 strokeWidth={1.8}
                 className="pointer-events-none transition-colors duration-500"
               />
@@ -462,6 +462,66 @@ export default function MasterplanSvgViewer({
                   strokeWidth={1.2}
                 />
               ))}
+
+            {/* Geometría CAD detallada del Club House y Amenidades */}
+            {"cadAmenities" in layersData &&
+              Array.isArray(
+                (
+                  layersData as unknown as {
+                    cadAmenities: Array<{
+                      d: string;
+                      closed: boolean;
+                      layer: string;
+                      color: number | null;
+                    }>;
+                  }
+                ).cadAmenities,
+              ) &&
+              (
+                layersData as unknown as {
+                  cadAmenities: Array<{
+                    d: string;
+                    closed: boolean;
+                    layer: string;
+                    color: number | null;
+                  }>;
+                }
+              ).cadAmenities.map((item, i: number) => {
+                if (item.layer === "0") {
+                  return (
+                    <path
+                      key={`cad-amenity-0-${i}`}
+                      d={item.d}
+                      fill={
+                        item.closed
+                          ? isDark
+                            ? "rgba(255,255,255,0.06)"
+                            : "rgba(0,0,0,0.04)"
+                          : "none"
+                      }
+                      stroke={isDark ? "#78716c" : "#57534e"}
+                      strokeWidth={1.2}
+                      opacity={0.85}
+                    />
+                  );
+                }
+                return (
+                  <path
+                    key={`cad-amenity-${i}`}
+                    d={item.d}
+                    fill={
+                      item.closed
+                        ? isDark
+                          ? "rgba(255,255,255,0.05)"
+                          : "rgba(0,0,0,0.03)"
+                        : "none"
+                    }
+                    stroke={isDark ? "#854d0e" : "#78350f"}
+                    strokeWidth={1.2}
+                    opacity={0.8}
+                  />
+                );
+              })}
           </g>
         )}
 
@@ -474,12 +534,25 @@ export default function MasterplanSvgViewer({
                 <path
                   key={`water-${i}`}
                   d={d}
-                  fill={isDark ? "#0c2438" : "#99d5f7"}
-                  stroke={isDark ? "#174668" : "#2ba6df"}
+                  fill={isDark ? "#0c2438" : "#4f86b0"}
+                  stroke={isDark ? "#174668" : "#2f5f86"}
                   strokeWidth={2.2}
                   className="pointer-events-none transition-colors duration-500"
                 />
               ))}
+              {/* Islas dentro de los lagos (M 28 y M 29 del plano oficial) */}
+              {"islands" in layersData &&
+                Array.isArray(layersData.islands) &&
+                layersData.islands.map((d: string, i: number) => (
+                  <path
+                    key={`island-${i}`}
+                    d={d}
+                    fill={isDark ? "#1a2e1f" : "#7d9a5c"}
+                    stroke={isDark ? "#2c4a33" : "#4a6236"}
+                    strokeWidth={1.8}
+                    className="pointer-events-none transition-colors duration-500"
+                  />
+                ))}
             </g>
           )}
 
@@ -583,13 +656,14 @@ export default function MasterplanSvgViewer({
 
     // Adaptar escala y centroide según la rotación activa (a ~48° el plano se visualiza horizontal apaisado)
     const isRotated48 = Math.abs(rotationRef.current - 48) < 15;
-    const boundingW = isRotated48 ? 2450 : 2100;
-    const boundingH = isRotated48 ? 1420 : 2050;
+    const boundingW = isRotated48 ? 2450 : 2550;
+    const boundingH = isRotated48 ? 1420 : 2450;
     const fitScale =
-      Math.min(cWidth / boundingW, cHeight / boundingH) * 0.95 * initialScaleMultiplier;
+      Math.min(cWidth / boundingW, cHeight / boundingH) * 0.9 * initialScaleMultiplier;
 
-    const targetCenterX = isRotated48 ? 1558 : LOTS_CENTER_X;
-    const targetCenterY = isRotated48 ? 1154 : LOTS_CENTER_Y;
+    // Sin rotación (norte arriba, como el plano oficial) se centra en el lindero completo
+    const targetCenterX = isRotated48 ? 1558 : 1260;
+    const targetCenterY = isRotated48 ? 1154 : 1150;
 
     return {
       scale: fitScale,
@@ -1131,7 +1205,7 @@ export default function MasterplanSvgViewer({
             </g>
 
             {/* Capa 4: Rótulos de Manzanas */}
-            <g id="svg-manzanas" className="pointer-events-none">
+            <g id="svg-manzanas" className="pointer-events-none" display="none">
               {layersData.manzanas.map((m, i) => (
                 <text
                   key={`mz-${i}`}
@@ -1205,59 +1279,34 @@ export default function MasterplanSvgViewer({
                   );
                 }
 
-                // Estilos por estado según especificación:
-                // - Vendido: ROJO
-                // - Disponible: VERDE CLARO
-                // - Reservado: NARANJA
-                // - Seleccionado: AZUL CIELO
-                let fill = isDark
-                  ? isHovered
-                    ? "#1b5232"
-                    : "#0f331f"
-                  : isHovered
-                    ? "#bbf7d0"
-                    : "#dcfce7";
-                let stroke = isDark ? "#22c55e" : "#16a34a";
-                let strokeWidth = isFilterActive ? 2.2 : 1.5;
+                // Color exacto oficial por categoría CAD o por estado si no hay capa CAD
+                const cadTier = (
+                  cadTiersData as Record<
+                    string,
+                    { color: string; tierName: string; priceM2: number; presalePriceM2: number }
+                  >
+                )[lot.id];
+                const baseCadColor = cadTier?.color;
 
-                if (isSold) {
-                  fill = isDark
+                let fill =
+                  baseCadColor ||
+                  (isDark
                     ? isHovered
-                      ? "#54191e"
-                      : "#361114"
+                      ? "#1b5232"
+                      : "#0f331f"
                     : isHovered
-                      ? "#fca5a5"
-                      : "#fee2e2";
-                  stroke = isDark ? "#ef4444" : "#dc2626";
-                  strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
-                } else if (isReserved) {
-                  fill = isDark
-                    ? isHovered
-                      ? "#5c2e0e"
-                      : "#381c08"
-                    : isHovered
-                      ? "#fdba74"
-                      : "#ffedd5";
-                  stroke = isDark ? "#f97316" : "#ea580c";
-                  strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
-                } else if (isLastUnits) {
-                  fill = isDark
-                    ? isHovered
-                      ? "#543f0c"
-                      : "#332707"
-                    : isHovered
-                      ? "#fde047"
-                      : "#fef9c3";
-                  stroke = isDark ? "#eab308" : "#ca8a04";
-                  strokeWidth = isHovered ? 2.8 : isFilterActive ? 2.4 : 1.5;
-                } else if (isHovered) {
-                  fill = isDark ? "#1e603b" : "#bbf7d0";
-                  stroke = isDark ? "#4ade80" : "#15803d";
-                  strokeWidth = 2.8;
+                      ? "#bbf7d0"
+                      : "#dcfce7");
+                let stroke = isDark ? "rgba(0,0,0,0.4)" : "#333333";
+                let strokeWidth = 1.0;
+
+                if (isHovered) {
+                  stroke = "#000000";
+                  strokeWidth = 2.5;
                 }
 
                 if (isSelected) {
-                  fill = selectedLotTone === "gold" ? "#f4d99c" : isDark ? "#0284c7" : "#7dd3fc";
+                  fill = selectedLotTone === "gold" ? "#f4d99c" : isDark ? "#0284c7" : "#38bdf8";
                   stroke = selectedLotTone === "gold" ? "#c5a059" : isDark ? "#38bdf8" : "#0284c7";
                   strokeWidth = 3.6;
                 }
@@ -1554,7 +1603,7 @@ export default function MasterplanSvgViewer({
             title="Girar plano 360°"
             aria-expanded={rotationOpen}
             onClick={() => setRotationOpen((value) => !value)}
-            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full hover:bg-muted"
+            className="hidden md:flex size-7 lg:size-8.5 items-center justify-center rounded-full hover:bg-muted cursor-pointer"
           >
             <RotateCw className="size-4" />
           </button>
@@ -1576,7 +1625,7 @@ export default function MasterplanSvgViewer({
               e.stopPropagation();
               toggleFullscreen();
             }}
-            className="flex size-7 lg:size-8.5 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
+            className="hidden md:flex size-7 lg:size-8.5 items-center justify-center rounded-full text-foreground/80 transition-all hover:bg-muted hover:text-foreground active:scale-90 cursor-pointer"
             title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
             aria-label="Pantalla completa"
           >

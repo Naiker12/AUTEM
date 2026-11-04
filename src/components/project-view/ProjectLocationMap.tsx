@@ -64,6 +64,25 @@ function parseSvgPathToLatLngs(pathStr: string): [number, number][] {
   return points;
 }
 
+function getLotGpsLatLng(lot: Lot): [number, number] | null {
+  if (!lot.centroid) return null;
+  const [c0, c1] = lot.centroid;
+  // If already GPS [lat, lon]: lat is ~10.4, lon is ~-75.3
+  if (Math.abs(c0) <= 90 && Math.abs(c1) <= 180) {
+    return [c0, c1];
+  }
+  // Otherwise, it's SVG CAD coordinates [x, y], so convert with svgToGpsLatLng:
+  try {
+    const [lat, lon] = svgToGpsLatLng(c0, c1);
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      return [lat, lon];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export interface ProjectLocationMapProps {
   lat: number;
   lng: number;
@@ -91,6 +110,7 @@ export interface ProjectLocationMapProps {
   enableHeadingRotation?: boolean;
   showRouteLine?: boolean;
   hideSurroundingsDrawer?: boolean;
+  hideGeoreferenceBadge?: boolean;
   travelMode?: TravelMode;
   destinationLot?: Lot;
   focusRequest?: number;
@@ -334,6 +354,7 @@ export default function ProjectLocationMap({
   enableHeadingRotation = true,
   showRouteLine = false,
   hideSurroundingsDrawer = false,
+  hideGeoreferenceBadge = false,
   destinationLot,
   focusRequest,
 }: ProjectLocationMapProps) {
@@ -356,7 +377,7 @@ export default function ProjectLocationMap({
   const [showSurroundings, setShowSurroundings] = useState(defaultShowSurroundings);
   const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
   const [poiCategory, setPoiCategory] = useState<PoiCategoryFilter>("all");
-  const [isPoiPanelCollapsed, setIsPoiPanelCollapsed] = useState(false);
+  const [isPoiPanelCollapsed, setIsPoiPanelCollapsed] = useState(true);
 
   const [navBearingMode, setNavBearingMode] = useState<"heading" | "north">("heading");
   const [isUserPanning, setIsUserPanning] = useState(false);
@@ -483,13 +504,13 @@ export default function ProjectLocationMap({
     const map = L.map(mapContainerRef.current, {
       center: [centerLat, centerLng],
       zoom: 16.5,
-      minZoom: 14,
+      minZoom: 11,
       maxZoom: 19,
       maxBounds: [
-        [10.415, -75.385],
-        [10.46, -75.33],
+        [10.2, -75.65],
+        [10.65, -75.15],
       ],
-      maxBoundsViscosity: 0.8,
+      maxBoundsViscosity: 0.5,
       preferCanvas: true,
       rotate: true,
       bearing: 0,
@@ -502,18 +523,27 @@ export default function ProjectLocationMap({
     });
     mapInstanceRef.current = map;
 
+    // Observe container resizing to keep tiles sharp and coordinates perfectly synced
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    });
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     map.on("dragstart", () => {
       setIsUserPanning(true);
     });
 
-    // Default base layer: Esri World Imagery (High-res satellite)
-    const baseTile = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 19,
-        attribution: "Esri, Maxar, Earthstar Geographics",
-      },
-    ).addTo(map);
+    // Default base layer: Satélite de alta resolución con soporte de zoom profundo hasta nivel 20
+    const baseTile = L.tileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
+      subdomains: ["0", "1", "2", "3"],
+      maxZoom: 20,
+      maxNativeZoom: 19,
+      attribution: "Google Satellite",
+    }).addTo(map);
     tileLayerRef.current = baseTile;
 
     // Custom marker icon with AUTEM gold styling
@@ -625,6 +655,7 @@ export default function ProjectLocationMap({
               );
             },
             click: () => {
+              setIsUserPanning(false);
               const lotToSelect: Lot = liveLot ?? {
                 id: lotId,
                 projectSlug,
@@ -722,6 +753,7 @@ export default function ProjectLocationMap({
     }
 
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
       masterplanLayerRef.current = null;
@@ -1009,6 +1041,8 @@ export default function ProjectLocationMap({
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    setIsUserPanning(false);
+
     if (route && route.svgPaths && route.svgPaths.length > 0) {
       const allPts: [number, number][] = [];
       for (const segStr of route.svgPaths) {
@@ -1021,9 +1055,11 @@ export default function ProjectLocationMap({
       }
     }
 
-    if (destinationLot?.centroid) {
-      const pt = svgToGpsLatLng(destinationLot.centroid[0], destinationLot.centroid[1]);
-      map.setView(pt, 17.5, { animate: true });
+    if (destinationLot) {
+      const pt = getLotGpsLatLng(destinationLot);
+      if (pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1])) {
+        map.setView(pt, 17.5, { animate: true });
+      }
     }
   }, [focusRequest, route, destinationLot]);
 
@@ -1186,23 +1222,21 @@ export default function ProjectLocationMap({
     }
 
     if (type === "satellite") {
-      tileLayerRef.current = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        { maxZoom: 19 },
-      ).addTo(map);
+      tileLayerRef.current = L.tileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
+        subdomains: ["0", "1", "2", "3"],
+        maxZoom: 20,
+        maxNativeZoom: 19,
+      }).addTo(map);
     } else if (type === "streets") {
       tileLayerRef.current = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
       }).addTo(map);
     } else if (type === "hybrid") {
-      tileLayerRef.current = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        { maxZoom: 19 },
-      ).addTo(map);
-      labelsLayerRef.current = L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
-        { maxZoom: 19 },
-      ).addTo(map);
+      tileLayerRef.current = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        subdomains: ["0", "1", "2", "3"],
+        maxZoom: 20,
+        maxNativeZoom: 19,
+      }).addTo(map);
     }
 
     if (masterplanLayerRef.current && showMasterplan && map.hasLayer(masterplanLayerRef.current)) {
@@ -1253,71 +1287,73 @@ export default function ProjectLocationMap({
       <div ref={mapContainerRef} className="h-full w-full z-0" />
 
       {/* Georeference & Layer status badge (top-left) */}
-      <div className="absolute top-4 left-4 z-20 pointer-events-none flex flex-wrap items-center gap-2 max-w-[calc(100%-80px)]">
-        <div className="flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 shadow-lg backdrop-blur-md">
-          <span className="relative flex size-2">
-            <span
-              className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
-                georeferenceStatus === "validated" ? "bg-emerald-400" : "bg-amber-400"
-              }`}
-            />
-            <span
-              className={`relative inline-flex size-2 rounded-full ${
-                georeferenceStatus === "validated" ? "bg-emerald-500" : "bg-amber-500"
-              }`}
-            />
-          </span>
-          <span className="text-[11px] font-medium text-foreground">
-            {georeferenceStatus === "validated"
-              ? "Georreferenciación validada (SRID 3116)"
-              : "Ubicación satelital del proyecto"}
-          </span>
-          <Badge
-            variant="outline"
-            className="text-[9px] uppercase tracking-wider py-0 px-1.5 border-border"
-          >
-            {activeLayer === "satellite"
-              ? "Satélite"
-              : activeLayer === "hybrid"
-                ? "Híbrido"
-                : "Calles"}
-          </Badge>
+      {!hideGeoreferenceBadge && !hideSurroundingsDrawer && (
+        <div className="absolute top-4 left-4 z-20 pointer-events-none hidden sm:flex flex-wrap items-center gap-2 max-w-[calc(100%-80px)]">
+          <div className="flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 shadow-lg backdrop-blur-md">
+            <span className="relative flex size-2">
+              <span
+                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
+                  georeferenceStatus === "validated" ? "bg-emerald-400" : "bg-amber-400"
+                }`}
+              />
+              <span
+                className={`relative inline-flex size-2 rounded-full ${
+                  georeferenceStatus === "validated" ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+              />
+            </span>
+            <span className="text-[11px] font-medium text-foreground">
+              {georeferenceStatus === "validated"
+                ? "Georreferenciación validada"
+                : "Ubicación satelital del proyecto"}
+            </span>
+            <Badge
+              variant="outline"
+              className="text-[9px] uppercase tracking-wider py-0 px-1.5 border-border"
+            >
+              {activeLayer === "satellite"
+                ? "Satélite"
+                : activeLayer === "hybrid"
+                  ? "Híbrido"
+                  : "Calles"}
+            </Badge>
+          </div>
+
+          {/* Masterplan overlay active pill */}
+          {isParaiso && showMasterplan && (
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 shadow-md backdrop-blur-md text-emerald-700 dark:text-emerald-300">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-semibold tracking-wide">
+                Plano activo (338 lotes)
+              </span>
+            </div>
+          )}
+
+          {/* Route active badge */}
+          {route && (
+            <div className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/15 px-2.5 py-1 shadow-md backdrop-blur-md text-blue-700 dark:text-blue-300">
+              <span className="size-1.5 rounded-full bg-blue-500 animate-pulse" />
+              <span className="text-[10px] font-bold tracking-wide">
+                Ruta: {Math.round(route.result.distanceMeters)} m
+              </span>
+            </div>
+          )}
+
+          {/* Surroundings active badge */}
+          {isParaiso && showSurroundings && (
+            <div className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/15 px-2.5 py-1 shadow-md backdrop-blur-md text-purple-700 dark:text-purple-300">
+              <Compass className="size-3" />
+              <span className="text-[10px] font-bold tracking-wide">
+                Lugares cercanos ({filteredPois.length})
+              </span>
+            </div>
+          )}
         </div>
-
-        {/* Masterplan overlay active pill */}
-        {isParaiso && showMasterplan && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 shadow-md backdrop-blur-md text-emerald-700 dark:text-emerald-300">
-            <span className="size-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[10px] font-semibold tracking-wide">
-              Plano activo (338 lotes)
-            </span>
-          </div>
-        )}
-
-        {/* Route active badge */}
-        {route && (
-          <div className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/15 px-2.5 py-1 shadow-md backdrop-blur-md text-blue-700 dark:text-blue-300">
-            <span className="size-1.5 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-[10px] font-bold tracking-wide">
-              Ruta: {Math.round(route.result.distanceMeters)} m
-            </span>
-          </div>
-        )}
-
-        {/* Surroundings active badge */}
-        {isParaiso && showSurroundings && (
-          <div className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/15 px-2.5 py-1 shadow-md backdrop-blur-md text-purple-700 dark:text-purple-300">
-            <Compass className="size-3" />
-            <span className="text-[10px] font-bold tracking-wide">
-              Lugares cercanos ({filteredPois.length})
-            </span>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Floating pill to recenter when user manually panned away */}
       {isUserPanning && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 md:bottom-6 z-30 animate-in fade-in slide-in-from-bottom-2">
           <Button
             type="button"
             onClick={() => {
@@ -1332,7 +1368,7 @@ export default function ProjectLocationMap({
                 handleRecenter();
               }
             }}
-            className="flex items-center gap-2 rounded-full bg-slate-900/90 text-white dark:bg-white/90 dark:text-slate-950 px-4 py-1.5 text-xs font-bold shadow-2xl backdrop-blur-md hover:opacity-90 transition-all border border-white/20 cursor-pointer"
+            className="flex items-center gap-2 rounded-full bg-slate-900/95 text-white dark:bg-white/95 dark:text-slate-950 px-4 py-2 text-xs font-bold shadow-2xl backdrop-blur-md hover:opacity-90 transition-all border border-white/20 cursor-pointer"
           >
             <Compass className="size-3.5 text-blue-400" />
             <span>Recentrar navegación</span>

@@ -79,6 +79,7 @@ export interface Property {
   floorPlanImage?: string;
   lotViewImage?: string;
   tourImage?: string;
+  tourUrl?: string;
   images?: string[];
   metadata?: ProjectDossierMetadata;
 }
@@ -144,6 +145,8 @@ export const properties: Property[] = [
     year: 2026,
     floorPlanImage: undefined,
     lotViewImage: undefined,
+    tourUrl: "/tours/villa-paraiso/index.htm",
+    tourImage: "/tours/villa-paraiso/index.htm",
     floorPlanPdf: undefined,
     images: [],
     metadata: {

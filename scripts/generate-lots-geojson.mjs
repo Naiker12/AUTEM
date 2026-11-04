@@ -62,29 +62,35 @@ for (const item of cuadroAreas) {
 const features = [];
 
 // 1. Water areas (lakes)
-layers.waterAreas.forEach((w, index) => {
-  const pts = parseSvgPath(w);
-  if (pts.length < 3) return;
-  const coords = pts.map((p) => svgToGps(p.x, p.y));
-  // Ensure closed ring
-  if (
-    coords[0][0] !== coords[coords.length - 1][0] ||
-    coords[0][1] !== coords[coords.length - 1][1]
-  ) {
-    coords.push(coords[0]);
+let waterFeatureIndex = 0;
+layers.waterAreas.forEach((w) => {
+  // Soporte para caminos multi-polígono (ej. varios lagos separados por 'M')
+  const commands = w.split(/(?=[M])/gi);
+  for (const cmd of commands) {
+    const pts = parseSvgPath(cmd);
+    if (pts.length < 3) continue;
+    const coords = pts.map((p) => svgToGps(p.x, p.y));
+    // Ensure closed ring
+    if (
+      coords[0][0] !== coords[coords.length - 1][0] ||
+      coords[0][1] !== coords[coords.length - 1][1]
+    ) {
+      coords.push(coords[0]);
+    }
+    waterFeatureIndex++;
+    features.push({
+      type: "Feature",
+      id: `water-${waterFeatureIndex}`,
+      geometry: {
+        type: "Polygon",
+        coordinates: [coords],
+      },
+      properties: {
+        kind: "water",
+        name: waterFeatureIndex === 1 ? "Lago Principal" : `Lago ${waterFeatureIndex}`,
+      },
+    });
   }
-  features.push({
-    type: "Feature",
-    id: `water-${index + 1}`,
-    geometry: {
-      type: "Polygon",
-      coordinates: [coords],
-    },
-    properties: {
-      kind: "water",
-      name: index === 0 ? "Lago Principal" : `Lago ${index + 1}`,
-    },
-  });
 });
 
 // 2. Calzadas (roads/streets)

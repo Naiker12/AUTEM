@@ -1,0 +1,2368 @@
+{
+  "L-01": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-02": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-03": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-04": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-05": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-06": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-07": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-08": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-09": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-10": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-11": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-12": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-13": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-14": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-15": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-16": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-17": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-18": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-19": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-20": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-21": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-22": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-23": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-24": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-25": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-26": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-27": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-28": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-29": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-30": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-31": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-32": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-33": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-34": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-35": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-36": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-37": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-38": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-39": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-40": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-41": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-42": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-43": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-44": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-45": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-45-A": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-46": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-47": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-48": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-49": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-50": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-51": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-52": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-53": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-54": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-55": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-56": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-57": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-58": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-59": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-60": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-61": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-62": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-63": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-64": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-65": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-66": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-67": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-68": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-69": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-70": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-71": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-72": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-73": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-74": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-75": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-76": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-77": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-78": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-79": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-80": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-81": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-82": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-83": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-84": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-85": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-86": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-87": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-88": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-89": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-90": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-92": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-93": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-94": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-95": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-96": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-97": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-98": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-99": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-100": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-101": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-102": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-103": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-104": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-105": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-106": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-107": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-108": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-109": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-110": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-111": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-112": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-113": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-114": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-115": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-116": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-117": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-118": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-119": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-120": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-121": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-122": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-123": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-124": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-125": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-126": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-127": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-128": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-129": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-130": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-131": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-132": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-133": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-133-A": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-134": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-135": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-136": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-137": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-138": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-139": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-140": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-141": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-142": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-143": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-144": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-145": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-146": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-147": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-148": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-149": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-150": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-151": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-152": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-153": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-154": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-155": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-156": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-157": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-158": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-159": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-160": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-161": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-162": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-163": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-164": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-165": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-166": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-167": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-168": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-169": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-170": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-171": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-172": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-173": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-174": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-175": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-176": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-177": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-178": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-179": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-180": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-181": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-182": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-183": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-184": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-185": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-186": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-187": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-188": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-189": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-190": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-191": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-192": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-193": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-194": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-195": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-196": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-197": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-198": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-199": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-200": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-201": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-202": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-203": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-204": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-205": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-206": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-207": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-208": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-209": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-210": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-211": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-212": {
+    "layer": "A-AZUL",
+    "color": "#33ccff",
+    "priceM2": 260000,
+    "presalePriceM2": 240000,
+    "tierName": "Azul (/m²)"
+  },
+  "L-213": {
+    "layer": "A-AZUL",
+    "color": "#33ccff",
+    "priceM2": 260000,
+    "presalePriceM2": 240000,
+    "tierName": "Azul (/m²)"
+  },
+  "L-214": {
+    "layer": "A-AZUL",
+    "color": "#33ccff",
+    "priceM2": 260000,
+    "presalePriceM2": 240000,
+    "tierName": "Azul (/m²)"
+  },
+  "L-215": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-216": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-217": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-218": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-219": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-220": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-221": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-222": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-223": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-224": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-225": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-226": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-227": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-228": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-229": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-230": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-231": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-232": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-233": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-234": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-235": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-236": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-237": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-238": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-239": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-240": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-241": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-242": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-243": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-244": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-245": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-246": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-247": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-248": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-249": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-250": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-251": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-252": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-253": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-254": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-255": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-256": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-257": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-258": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-259": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-260": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-261": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-262": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-263": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-264": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-265": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-266": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-267": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-268": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-269": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-270": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-271": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-272": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-273": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-274": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-275": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-276": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-277": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-278": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-279": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-280": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-281": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-282": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-283": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-284": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-285": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-286": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-287": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-288": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-289": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-290": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-291": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-292": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-293": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-294": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-295": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-296": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-297": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-298": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-299": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-300": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-301": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-302": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-303": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-304": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-305": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-306": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-307": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-308": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-309": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-310": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-311": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-312": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-313": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-314": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-315": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-316": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-317": {
+    "layer": "A-ROJO",
+    "color": "#e60000",
+    "priceM2": 350000,
+    "presalePriceM2": 325000,
+    "tierName": "Rojo (/m²)"
+  },
+  "L-320": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-321": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-322": {
+    "layer": "A-AMARILLO",
+    "color": "#ffff00",
+    "priceM2": 310000,
+    "presalePriceM2": 280000,
+    "tierName": "Amarillo (/m²)"
+  },
+  "L-323": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-324": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-325": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-326": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-327": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-328": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-329": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  },
+  "L-330": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-331": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-332": {
+    "layer": "A-ROSADO",
+    "color": "#ff66ff",
+    "priceM2": 290000,
+    "presalePriceM2": 270000,
+    "tierName": "Rosado (/m²)"
+  },
+  "L-333": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-334": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-335": {
+    "layer": "A-NARANJA",
+    "color": "#ff8000",
+    "priceM2": 275000,
+    "presalePriceM2": 255000,
+    "tierName": "Naranja (/m²)"
+  },
+  "L-336": {
+    "layer": "A-AZUL",
+    "color": "#33ccff",
+    "priceM2": 260000,
+    "presalePriceM2": 240000,
+    "tierName": "Azul (/m²)"
+  },
+  "L-337": {
+    "layer": "A-AZUL",
+    "color": "#33ccff",
+    "priceM2": 260000,
+    "presalePriceM2": 240000,
+    "tierName": "Azul (/m²)"
+  },
+  "L-338": {
+    "layer": "A-AZUL",
+    "color": "#33ccff",
+    "priceM2": 260000,
+    "presalePriceM2": 240000,
+    "tierName": "Azul (/m²)"
+  },
+  "L-91": {
+    "layer": "A-VERDE",
+    "color": "#00e600",
+    "priceM2": 330000,
+    "presalePriceM2": 300000,
+    "tierName": "Verde (/m²)"
+  }
+}

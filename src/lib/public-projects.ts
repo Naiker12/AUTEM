@@ -49,25 +49,48 @@ function areaFromLabel(areaLabel: string | null, fallback: number) {
   return Number(match[0].replace(",", ".")) || fallback;
 }
 
+const DEPRECATED_MEDIA_PATTERNS = ["autem-villa-paraiso-aerial-v2.png"];
+
+function isDeprecatedOrDeletedMedia(path?: string | null): boolean {
+  if (!path) return false;
+  return DEPRECATED_MEDIA_PATTERNS.some((pattern) => path.includes(pattern));
+}
+
 function toProperty(row: PublicProjectRow): Property {
-  const media = [...(row.project_media ?? [])].sort((a, b) => a.sort_order - b.sort_order);
-  const cover =
-    mediaUrl(row.cover_path) ?? media.find((item) => item.media_type === "cover")?.storage_path;
+  const media = [...(row.project_media ?? [])]
+    .filter((item) => !isDeprecatedOrDeletedMedia(item.storage_path))
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  const rawCover =
+    (row.cover_path && !isDeprecatedOrDeletedMedia(row.cover_path)
+      ? mediaUrl(row.cover_path)
+      : null) ?? mediaUrl(media.find((item) => item.media_type === "cover")?.storage_path ?? null);
+
   const image =
-    typeof cover === "string" && cover.startsWith("http") ? cover : mediaUrl(cover ?? null);
+    typeof rawCover === "string" && rawCover.startsWith("http")
+      ? rawCover
+      : mediaUrl(rawCover ?? null);
+
   const gallery = [
     ...new Set(
       media
-        .filter((item) => item.media_type === "gallery" || item.media_type === "cover")
+        .filter((item) => item.media_type === "gallery")
         .map((item) => mediaUrl(item.storage_path))
-        .filter((url): url is string => Boolean(url)),
+        .filter((url): url is string => Boolean(url) && !isDeprecatedOrDeletedMedia(url)),
     ),
   ];
   const masterplan =
     mediaUrl(row.masterplan_path) ??
     mediaUrl(media.find((item) => item.media_type === "masterplan")?.storage_path ?? null);
-  const tour = mediaUrl(media.find((item) => item.media_type === "tour")?.storage_path ?? null);
+  const fallbackTour = row.slug === "villa-paraiso" ? "/tours/villa-paraiso/index.htm" : undefined;
+  const tour =
+    row.tour_url?.trim() ||
+    fallbackTour ||
+    mediaUrl(media.find((item) => item.media_type === "tour")?.storage_path ?? null);
   const price = row.price_label ?? "Consultar precio";
+
+  const safeImages =
+    gallery.length > 0 ? gallery : image && !isDeprecatedOrDeletedMedia(image) ? [image] : [];
 
   return {
     id: row.id,
@@ -81,7 +104,7 @@ function toProperty(row: PublicProjectRow): Property {
     bedrooms: 0,
     bathrooms: 0,
     type: row.property_type,
-    tags: row.tour_url ? ["3D Tour"] : [],
+    tags: tour ? ["3D Tour"] : [],
     image: image ?? "",
     lat: row.latitude ?? 0,
     lng: row.longitude ?? 0,
@@ -93,8 +116,9 @@ function toProperty(row: PublicProjectRow): Property {
     masterplanVersion: row.masterplan_version ?? undefined,
     floorPlanImage: masterplan ?? undefined,
     lotViewImage: masterplan ?? undefined,
+    tourUrl: tour ?? undefined,
     tourImage: tour ?? undefined,
-    images: gallery.length ? gallery : image ? [image] : [],
+    images: safeImages,
     metadata:
       row.metadata ??
       properties.find(
@@ -158,8 +182,11 @@ type PublicLotRow = {
   metadata: LotMetadata | null;
 };
 
+// Solo se publican los lotes que existen como polígono en el plano CAD vigente (338).
+const villaParaisoMappedCadLots = villaParaisoCadLots.filter((cadLot) => Boolean(cadLot.pathD));
+
 function getInitialVillaParaisoLots(projectSlug: string): Lot[] {
-  return villaParaisoCadLots.map((cadLot) => {
+  return villaParaisoMappedCadLots.map((cadLot) => {
     const normalizedManzana = cadLot.manzana ? cadLot.manzana.replace(/^M\s*/i, "") : undefined;
     return {
       id: cadLot.id,
@@ -205,7 +232,7 @@ export function usePublishedLots(projectId: string | undefined, projectSlug: str
 
         if (isVillaParaiso && villaParaisoCadLots.length > 0) {
           const rowMap = new Map((data as PublicLotRow[]).map((r) => [r.external_id, r]));
-          const mappedLots: Lot[] = villaParaisoCadLots.map((cadLot) => {
+          const mappedLots: Lot[] = villaParaisoMappedCadLots.map((cadLot) => {
             const row = rowMap.get(cadLot.id);
             const sanitizedMeta = sanitizePublicLotMetadata(row?.metadata);
             const isReserve = Boolean(sanitizedMeta?.isReserve);

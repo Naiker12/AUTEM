@@ -381,7 +381,9 @@
 
 .autem-poi-marker.is-selected .autem-poi-badge {
   border-color: #facc15 !important;
-  box-shadow: 0 0 18px rgba(250, 204, 21, 0.55), 0 4px 16px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 0 18px rgba(250, 204, 21, 0.55),
+    0 4px 16px rgba(0, 0, 0, 0.6);
 }
 
 .autem-poi-icon {

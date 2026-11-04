@@ -243,7 +243,7 @@ const LotCardItem = memo(
         <button
           type="button"
           onClick={() => onSelect(lot)}
-          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5 pr-[36px]" : "py-2 px-3 pr-[40px]"}`}
+          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5" : "py-2 px-3"} ${isSelected ? (isMobile ? "pr-[36px]" : "pr-[40px]") : ""}`}
         >
           {/* Fila 1: ID, Estado y Precio en una sola línea compacta */}
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -289,25 +289,27 @@ const LotCardItem = memo(
           </div>
         </button>
 
-        {/* Acciones de lote compactas */}
-        <div
-          className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(lot);
-              onView3D();
-            }}
-            title={`Ver ${lot.id} en 3D`}
-            aria-label={`Ver ${lot.id} en 3D`}
-            className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center bg-[#403a34] text-[#f6f1eb] dark:bg-stone-800 dark:text-stone-200 dark:border dark:border-white/10 shadow-xs transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-[#151413] active:scale-90 cursor-pointer`}
+        {/* Acciones de lote: botón 3D activo cuando el lote está seleccionado */}
+        {isSelected && (
+          <div
+            className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center animate-in fade-in duration-150`}
+            onClick={(e) => e.stopPropagation()}
           >
-            <Box size={isMobile ? 11 : 12.5} />
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(lot);
+                onView3D();
+              }}
+              title={`Ver ${lot.id} en 3D`}
+              aria-label={`Ver ${lot.id} en 3D`}
+              className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center bg-accent text-accent-foreground shadow-xs transition-all hover:bg-accent/90 active:scale-90 cursor-pointer`}
+            >
+              <Box size={isMobile ? 11 : 12.5} />
+            </button>
+          </div>
+        )}
       </article>
     );
   },
@@ -507,9 +509,7 @@ function LotCatalog({
         )}
       </header>
 
-      <div
-        className={`flex items-center justify-between ${isMobile ? "px-3.5 py-1" : "px-5 pb-2 pt-3"}`}
-      >
+      <div className="hidden lg:flex items-center justify-between px-5 pb-2 pt-3">
         <strong className={isMobile ? "text-xs font-bold" : "text-sm"}>
           {filteredLots.length} lotes
         </strong>
@@ -548,7 +548,7 @@ function LotCatalog({
         </div>
       </ScrollArea>
       <div
-        className={`border-t border-border dark:border-white/10 ${isMobile ? "p-2" : "p-2.5 sm:px-3 sm:py-2.5"}`}
+        className={`border-t border-border dark:border-white/10 ${isMobile ? "p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]" : "p-2.5 sm:px-3 sm:py-2.5"}`}
       >
         <Button
           asChild

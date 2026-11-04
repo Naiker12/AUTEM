@@ -1,219 +1,248 @@
-import { Compass, Expand, Minus, Plus, RotateCcw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Expand, ExternalLink } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
-type PanoramaControls = { reset: () => void; zoom: (delta: number) => void };
+interface InteractivePanoramaProps {
+  sourceUrl?: string;
+  projectName?: string;
+  onSwitchToPlan?: () => void;
+}
 
-export default function InteractivePanorama({ sourceUrl }: { sourceUrl: string }) {
+export default function InteractivePanorama({
+  sourceUrl,
+  projectName = "Villa Paraíso",
+}: InteractivePanoramaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const controlsRef = useRef<PanoramaControls | null>(null);
-  const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
-  const [heading, setHeading] = useState(0);
+  const canvasHostRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      70,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      100,
-    );
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    container.appendChild(renderer.domElement);
-
-    const material = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-    const sphere = new THREE.Mesh(new THREE.SphereGeometry(18, 96, 64), material);
-    scene.add(sphere);
-    let disposed = false;
-    let longitude = 0;
-    let latitude = 0;
-    const render = () => {
-      camera.lookAt(
-        -Math.sin(longitude) * Math.cos(latitude),
-        Math.sin(latitude),
-        Math.cos(longitude) * Math.cos(latitude),
-      );
-      renderer.render(scene, camera);
-    };
-    const updateHeading = () => setHeading(((longitude * 180) / Math.PI + 360) % 360);
-    const setFov = (nextFov: number) => {
-      camera.fov = THREE.MathUtils.clamp(nextFov, 38, 90);
-      camera.updateProjectionMatrix();
-      render();
-    };
-    controlsRef.current = {
-      reset: () => {
-        longitude = 0;
-        latitude = 0;
-        setFov(70);
-        updateHeading();
-      },
-      zoom: (delta) => setFov(camera.fov + delta),
-    };
-
-    if (sourceUrl.endsWith(".hdr")) {
-      new RGBELoader().load(
-        sourceUrl,
-        (loaded) => {
-          if (disposed) return loaded.dispose();
-          loaded.mapping = THREE.EquirectangularReflectionMapping;
-          material.map = loaded;
-          material.needsUpdate = true;
-          setStatus("ready");
-          render();
-        },
-        undefined,
-        () => !disposed && setStatus("error"),
-      );
-    } else {
-      new THREE.TextureLoader().load(
-        sourceUrl,
-        (loaded) => {
-          if (disposed) return loaded.dispose();
-          loaded.mapping = THREE.EquirectangularReflectionMapping;
-          loaded.colorSpace = THREE.SRGBColorSpace;
-          material.map = loaded;
-          material.needsUpdate = true;
-          setStatus("ready");
-          render();
-        },
-        undefined,
-        () => !disposed && setStatus("error"),
-      );
-    }
-
-    let dragging = false;
-    let previousX = 0;
-    let previousY = 0;
-    const down = (event: PointerEvent) => {
-      dragging = true;
-      previousX = event.clientX;
-      previousY = event.clientY;
-      renderer.domElement.setPointerCapture(event.pointerId);
-    };
-    const move = (event: PointerEvent) => {
-      if (!dragging) return;
-      longitude -= (event.clientX - previousX) * 0.006;
-      latitude = THREE.MathUtils.clamp(latitude + (event.clientY - previousY) * 0.006, -1.35, 1.35);
-      previousX = event.clientX;
-      previousY = event.clientY;
-      updateHeading();
-      render();
-    };
-    const up = (event: PointerEvent) => {
-      dragging = false;
-      if (renderer.domElement.hasPointerCapture(event.pointerId))
-        renderer.domElement.releasePointerCapture(event.pointerId);
-    };
-    const wheel = (event: WheelEvent) => {
-      event.preventDefault();
-      setFov(camera.fov + event.deltaY * 0.04);
-    };
-    const resize = () => {
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      render();
-    };
-    renderer.domElement.addEventListener("pointerdown", down);
-    renderer.domElement.addEventListener("pointermove", move);
-    renderer.domElement.addEventListener("pointerup", up);
-    renderer.domElement.addEventListener("pointercancel", up);
-    renderer.domElement.addEventListener("wheel", wheel, { passive: false });
-    window.addEventListener("resize", resize);
-    render();
-    return () => {
-      disposed = true;
-      controlsRef.current = null;
-      window.removeEventListener("resize", resize);
-      renderer.dispose();
-      sphere.geometry.dispose();
-      material.map?.dispose();
-      material.dispose();
-      container.replaceChildren();
-    };
+  const activeSource = useMemo(() => {
+    return sourceUrl || "/tours/villa-paraiso/index.htm";
   }, [sourceUrl]);
 
-  const fullscreen = () => containerRef.current?.requestFullscreen?.();
+  const isHtmlTour = useMemo(() => {
+    if (!activeSource) return false;
+    const clean = activeSource.toLowerCase().trim();
+    return (
+      clean.endsWith(".htm") ||
+      clean.endsWith(".html") ||
+      clean.includes("/tours/") ||
+      (clean.startsWith("http") && !clean.match(/\.(jpg|jpeg|png|webp|hdr)(\?|$)/i))
+    );
+  }, [activeSource]);
+
+  const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
+
+  // THREE.JS SPHERE RENDERER (Para imágenes equirrectangulares 360 si se pasa JPG/PNG)
+  useEffect(() => {
+    if (isHtmlTour) {
+      setStatus("ready");
+      return;
+    }
+
+    const host = canvasHostRef.current;
+    if (!host) return;
+
+    setStatus("loading");
+
+    const scene = new THREE.Scene();
+    const width = host.clientWidth || window.innerWidth;
+    const height = host.clientHeight || window.innerHeight;
+
+    const camera = new THREE.PerspectiveCamera(75, width / height, 1, 1100);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(width, height);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    host.replaceChildren(renderer.domElement);
+
+    const geometry = new THREE.SphereGeometry(500, 60, 40);
+    geometry.scale(-1, 1, 1);
+
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+
+    let isDisposed = false;
+    let material: THREE.MeshBasicMaterial | null = null;
+    let mesh: THREE.Mesh | null = null;
+
+    loader.load(
+      activeSource,
+      (texture) => {
+        if (isDisposed) {
+          texture.dispose();
+          return;
+        }
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.minFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+
+        material = new THREE.MeshBasicMaterial({ map: texture });
+        mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        setStatus("ready");
+      },
+      undefined,
+      (err) => {
+        console.warn("Fallo al cargar textura 360 primaria:", err);
+        loader.load("/images/villa-paraiso-360.jpg", (fallbackTex) => {
+          if (isDisposed) return fallbackTex.dispose();
+          fallbackTex.colorSpace = THREE.SRGBColorSpace;
+          fallbackTex.generateMipmaps = false;
+          material = new THREE.MeshBasicMaterial({ map: fallbackTex });
+          mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+          setStatus("ready");
+        });
+      },
+    );
+
+    let lon = 0;
+    let lat = 0;
+    let phi = 0;
+    let theta = 0;
+
+    let isUserInteracting = false;
+    let onPointerDownPointerX = 0;
+    let onPointerDownPointerY = 0;
+    let onPointerDownLon = 0;
+    let onPointerDownLat = 0;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.isPrimary === false) return;
+      isUserInteracting = true;
+      onPointerDownPointerX = event.clientX;
+      onPointerDownPointerY = event.clientY;
+      onPointerDownLon = lon;
+      onPointerDownLat = lat;
+      host.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!isUserInteracting) return;
+      lon = (onPointerDownPointerX - event.clientX) * 0.15 + onPointerDownLon;
+      lat = (event.clientY - onPointerDownPointerY) * 0.15 + onPointerDownLat;
+      lat = Math.max(-85, Math.min(85, lat));
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      isUserInteracting = false;
+      try {
+        if (host.hasPointerCapture(event.pointerId)) {
+          host.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        // Ignorar
+      }
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      camera.fov = THREE.MathUtils.clamp(camera.fov + event.deltaY * 0.05, 35, 95);
+      camera.updateProjectionMatrix();
+    };
+
+    const onResize = () => {
+      if (!host) return;
+      const w = host.clientWidth || window.innerWidth;
+      const h = host.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+
+    host.addEventListener("pointerdown", onPointerDown);
+    host.addEventListener("pointermove", onPointerMove);
+    host.addEventListener("pointerup", onPointerUp);
+    host.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("resize", onResize);
+
+    let animationFrameId: number;
+    const animate = () => {
+      if (isDisposed) return;
+      animationFrameId = requestAnimationFrame(animate);
+
+      lat = Math.max(-85, Math.min(85, lat));
+      phi = THREE.MathUtils.degToRad(90 - lat);
+      theta = THREE.MathUtils.degToRad(lon);
+
+      const x = 500 * Math.sin(phi) * Math.cos(theta);
+      const y = 500 * Math.cos(phi);
+      const z = 500 * Math.sin(phi) * Math.sin(theta);
+
+      camera.lookAt(x, y, z);
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    return () => {
+      isDisposed = true;
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", onResize);
+      host.removeEventListener("pointerdown", onPointerDown);
+      host.removeEventListener("pointermove", onPointerMove);
+      host.removeEventListener("pointerup", onPointerUp);
+      host.removeEventListener("wheel", onWheel);
+      geometry.dispose();
+      material?.map?.dispose();
+      material?.dispose();
+      renderer.dispose();
+      host.replaceChildren();
+    };
+  }, [activeSource, isHtmlTour]);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  };
 
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
-      aria-label="Tour 360 del proyecto"
+      className="relative size-full overflow-hidden bg-[#121811] select-none"
+      aria-label={`Vista 360 de ${projectName}`}
     >
+      {/* VISOR PRINCIPAL (Limpio, 100% Pantalla completa sin objetos flotantes encima) */}
+      {isHtmlTour ? (
+        <iframe
+          src={activeSource}
+          title={`Recorrido 360° - ${projectName}`}
+          className="size-full border-0 bg-[#121811]"
+          allow="accelerometer; gyroscope; magnetometer; fullscreen; xr-spatial-tracking"
+          loading="eager"
+          onLoad={() => setStatus("ready")}
+        />
+      ) : (
+        <div ref={canvasHostRef} className="size-full cursor-grab active:cursor-grabbing" />
+      )}
+
+      {/* Indicador de carga discreto */}
       {status === "loading" && (
-        <div className="absolute inset-0 z-10 grid place-items-center bg-[#121811] text-xs font-bold uppercase tracking-[0.24em] text-accent">
-          Cargando tour 360°
+        <div className="absolute inset-0 z-30 grid place-items-center bg-[#121811]/90 backdrop-blur-sm text-xs font-bold uppercase tracking-[0.24em] text-accent">
+          <div className="flex flex-col items-center gap-3">
+            <div className="size-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            <span>Cargando vista 360°</span>
+          </div>
         </div>
       )}
-      {status === "error" && (
-        <div className="absolute inset-0 z-10 grid place-items-center bg-[#121811] px-6 text-center text-sm text-white/70">
-          No fue posible cargar el tour 360.
-        </div>
-      )}
-      {status === "ready" && (
-        <>
-          <div className="absolute right-5 top-24 z-20 flex flex-col items-center gap-3 md:right-8">
-            <button
-              type="button"
-              onClick={() => controlsRef.current?.reset()}
-              className="relative flex size-20 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-xl backdrop-blur-xl"
-              aria-label="Centrar vista"
-            >
-              <Compass
-                className="size-9 text-accent"
-                style={{ transform: `rotate(${-heading}deg)` }}
-              />
-              <span className="absolute top-1.5 text-[8px] font-bold">N</span>
-            </button>
-            <div className="grid overflow-hidden rounded-2xl border border-white/20 bg-black/45 shadow-xl backdrop-blur-xl">
-              <button
-                type="button"
-                onClick={() => controlsRef.current?.zoom(-8)}
-                className="grid size-11 place-items-center border-b border-white/15 text-white hover:bg-white/15"
-                aria-label="Acercar"
-              >
-                <Plus size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => controlsRef.current?.zoom(8)}
-                className="grid size-11 place-items-center border-b border-white/15 text-white hover:bg-white/15"
-                aria-label="Alejar"
-              >
-                <Minus size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => controlsRef.current?.reset()}
-                className="grid size-11 place-items-center border-b border-white/15 text-white hover:bg-white/15"
-                aria-label="Restablecer vista"
-              >
-                <RotateCcw size={17} />
-              </button>
-              <button
-                type="button"
-                onClick={fullscreen}
-                className="grid size-11 place-items-center text-white hover:bg-white/15"
-                aria-label="Pantalla completa"
-              >
-                <Expand size={17} />
-              </button>
-            </div>
-          </div>
-          <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 rounded-full border border-white/15 bg-black/45 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/70 backdrop-blur-xl md:block">
-            Arrastra para recorrer · Rueda para acercar
-          </div>
-        </>
-      )}
+
+      {/* Botón discreto de pantalla completa en la esquina */}
+      <div className="absolute right-4 top-18 sm:top-20 lg:top-[80px] z-20">
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="flex size-9 sm:size-10 items-center justify-center rounded-xl border border-white/20 bg-black/60 text-white shadow-xl backdrop-blur-xl hover:bg-white/20 transition-colors cursor-pointer"
+          aria-label="Pantalla completa"
+          title="Pantalla completa"
+        >
+          <Expand size={16} />
+        </button>
+      </div>
     </div>
   );
 }

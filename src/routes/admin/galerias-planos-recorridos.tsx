@@ -63,6 +63,7 @@ import {
   listProjectMedia,
   type ManagedProjectRecord,
   type ProjectMediaRecord,
+  updateManagedProject,
   uploadProjectMedia,
 } from "@/lib/project-repository";
 
@@ -127,6 +128,45 @@ function MediaLibraryPage() {
     () => projects.find((item) => item.id === projectId) ?? projects[0] ?? null,
     [projectId, projects],
   );
+
+  const [tourUrlInput, setTourUrlInput] = useState("");
+  const [isSavingTourUrl, setIsSavingTourUrl] = useState(false);
+
+  useEffect(() => {
+    if (selectedProject) {
+      setTourUrlInput(selectedProject.tour_url ?? "");
+    }
+  }, [selectedProject]);
+
+  const handleSaveTourUrl = async () => {
+    if (!selectedProject) return;
+    setIsSavingTourUrl(true);
+    try {
+      const updated = await updateManagedProject(selectedProject.id, {
+        name: selectedProject.name,
+        slug: selectedProject.slug,
+        propertyType: selectedProject.property_type,
+        location: selectedProject.location,
+        status: selectedProject.status,
+        priceLabel: selectedProject.price_label,
+        areaLabel: selectedProject.area_label,
+        description: selectedProject.description,
+        longDescription: selectedProject.long_description,
+        tourUrl: tourUrlInput.trim() || null,
+        metadata: selectedProject.metadata,
+      });
+      setProjects((prev) =>
+        prev.map((p) => (p.id === selectedProject.id ? { ...p, tour_url: updated.tour_url } : p)),
+      );
+      toast.success("Enlace del recorrido 360° guardado con éxito.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Error al guardar el enlace del recorrido 360°.",
+      );
+    } finally {
+      setIsSavingTourUrl(false);
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -349,6 +389,70 @@ function MediaLibraryPage() {
         <MediaMetric icon={Map} label="Planos" value={metrics.plans} />
         <MediaMetric icon={Play} label="Recorridos" value={metrics.tours} />
       </section>
+
+      {selectedProject && (
+        <Card className="mt-6 rounded-2xl border-accent/30 bg-accent/5">
+          <CardHeader className="gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-accent/20 text-accent">
+                  <Play className="size-4" />
+                </span>
+                <div>
+                  <CardTitle className="text-base sm:text-lg">
+                    Recorrido Virtual 360° ({selectedProject.name})
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Vincula un tour 360° interactivo (3DVista, Boris Topógrafo, Matterport o URL interna).
+                  </CardDescription>
+                </div>
+              </div>
+              {selectedProject.tour_url && (
+                <Button asChild variant="outline" size="sm" className="rounded-xl shrink-0">
+                  <a href={selectedProject.tour_url} target="_blank" rel="noopener noreferrer">
+                    Probar enlace <ExternalLink className="ml-1 size-3" />
+                  </a>
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Input
+                value={tourUrlInput}
+                onChange={(e) => setTourUrlInput(e.target.value)}
+                placeholder="Ej. /tours/villa-paraiso/index.htm o https://www.boristopografo.com/villaparaiso/"
+                className="bg-background text-sm font-mono"
+              />
+              <Button
+                onClick={handleSaveTourUrl}
+                disabled={isSavingTourUrl}
+                className="shrink-0 rounded-xl"
+              >
+                {isSavingTourUrl ? <Spinner data-icon="inline-start" /> : <CheckCircle2 data-icon="inline-start" />}
+                Guardar enlace 360°
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <span>Sugerencias rápidas:</span>
+              <button
+                type="button"
+                onClick={() => setTourUrlInput("/tours/villa-paraiso/index.htm")}
+                className="rounded-lg bg-background px-2 py-0.5 border hover:bg-muted text-accent font-mono transition-colors cursor-pointer"
+              >
+                /tours/villa-paraiso/index.htm
+              </button>
+              <button
+                type="button"
+                onClick={() => setTourUrlInput("https://www.boristopografo.com/villaparaiso/")}
+                className="rounded-lg bg-background px-2 py-0.5 border hover:bg-muted font-mono transition-colors cursor-pointer"
+              >
+                Boris Topógrafo
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {libraryError && (
         <Alert className="mt-6" variant="destructive">
           <AlertTitle>No fue posible completar la operación</AlertTitle>
