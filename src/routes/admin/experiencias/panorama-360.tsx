@@ -32,6 +32,7 @@ import {
   mergePanoramaLotsWithOverrides,
   projectCadPointToPanoramaRad,
   projectGpsPointToPanoramaRad,
+  projectMasterplanLots,
   radToDegPair,
   roundRad,
   type PanoramaCameraConfig,
@@ -107,29 +108,66 @@ function PanoramaCalibrationAdminPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSavingDb, setIsSavingDb] = useState<boolean>(false);
 
-  const projectedLots = useMemo((): ProjectedPanoramaLot[] => {
-    return masterplanLots.map((lot) => {
-      const svgPts = parseSvgPath(lot.pathD);
-      const cadPts = svgPts.map(([x, y]) => {
-        const c = svgToCad(x, y);
-        return [c.x, c.y] as [number, number];
-      });
-      const verticesRad = cadPts.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config));
-      const denseCad = densifyCadPolygon(cadPts, 14);
-      const polygonRad = denseCad.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config));
-      const centroidCad = svgToCad(lot.centroid[0], lot.centroid[1]);
-      const labelRad = projectCadPointToPanoramaRad(centroidCad.x, centroidCad.y, config);
+  useEffect(() => {
+    let active = true;
 
-      return {
-        id: lot.id,
-        lotNumber: lot.lotNumber,
-        label: lot.label || String(lot.lotNumber),
-        manzana: lot.manzana,
-        polygonRad,
-        verticesRad,
-        labelRad,
-      };
-    });
+    async function loadFromSupabase() {
+      if (!supabase) return;
+      try {
+        const { data, error } = await supabase
+          .from("project_panoramas")
+          .select("*")
+          .eq("slug", "main")
+          .limit(1)
+          .maybeSingle();
+
+        if (error || !data || !active) return;
+
+        setConfig((prev) => ({
+          ...prev,
+          camera: {
+            ...prev.camera,
+            lat: data.camera_lat ?? prev.camera.lat,
+            lng: data.camera_lng ?? prev.camera.lng,
+            heightAboveGroundM: data.height_above_ground_m ?? prev.camera.heightAboveGroundM,
+            offsetEastM: data.offset_east_m ?? prev.camera.offsetEastM ?? 0,
+            offsetNorthM: data.offset_north_m ?? prev.camera.offsetNorthM ?? 0,
+          },
+          yawOffsetDeg: data.yaw_offset_deg ?? prev.yawOffsetDeg,
+          tilt: {
+            pitchDeg: data.pitch_tilt_deg ?? prev.tilt.pitchDeg,
+            rollDeg: data.roll_tilt_deg ?? prev.tilt.rollDeg,
+          },
+          limits: {
+            ...prev.limits,
+            minPitchDeg: data.min_pitch_deg ?? prev.limits.minPitchDeg,
+            maxPitchDeg: data.max_pitch_deg ?? prev.limits.maxPitchDeg,
+            defaultYawDeg: data.default_yaw_deg ?? prev.limits.defaultYawDeg,
+            defaultPitchDeg: data.default_pitch_deg ?? prev.limits.defaultPitchDeg,
+          },
+        }));
+
+        if (Array.isArray(data.control_points) && data.control_points.length > 0) {
+          setControlPoints(data.control_points as PanoramaControlPoint[]);
+        }
+
+        if (data.lot_overrides && typeof data.lot_overrides === "object") {
+          setOverrides(data.lot_overrides as PanoramaLotOverridesMap);
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar la calibración de Supabase:", err);
+      }
+    }
+
+    loadFromSupabase();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const projectedLots = useMemo((): ProjectedPanoramaLot[] => {
+    return projectMasterplanLots(masterplanLots, config);
   }, [config]);
 
   const mergedLots = useMemo(
@@ -293,6 +331,26 @@ function PanoramaCalibrationAdminPage() {
         return;
       }
 
+      // Comprobar si hay overrides en la base de datos que no están en pantalla
+      const { data: existingRow } = await supabase
+        .from("project_panoramas")
+        .select("lot_overrides")
+        .eq("project_id", projectRow.id)
+        .eq("slug", "main")
+        .maybeSingle();
+
+      const remoteOverrides = (existingRow?.lot_overrides ?? {}) as PanoramaLotOverridesMap;
+      const missingKeys = Object.keys(remoteOverrides).filter((k) => !overrides[k]);
+      if (missingKeys.length > 0) {
+        const proceed = window.confirm(
+          `Aviso: En la base de datos existen ajustes manuales para ${missingKeys.length} lote(s) (${missingKeys.slice(0, 5).join(", ")}${missingKeys.length > 5 ? "…" : ""}) que no están presentes en tu pantalla. ¿Deseas continuar y sobrescribirlos?`,
+        );
+        if (!proceed) {
+          setIsSavingDb(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.from("project_panoramas").upsert(
         {
           project_id: projectRow.id,
@@ -311,6 +369,8 @@ function PanoramaCalibrationAdminPage() {
           camera_lat: config.camera.lat,
           camera_lng: config.camera.lng,
           height_above_ground_m: config.camera.heightAboveGroundM,
+          offset_east_m: config.camera.offsetEastM ?? 0,
+          offset_north_m: config.camera.offsetNorthM ?? 0,
           yaw_offset_deg: config.yawOffsetDeg,
           pitch_tilt_deg: config.tilt.pitchDeg,
           roll_tilt_deg: config.tilt.rollDeg,

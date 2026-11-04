@@ -5,11 +5,11 @@
  * and drone horizontal refinement) and outputs:
  *   src/data/generated/villa-paraiso-panorama-lots.json
  *
- * Uses adaptive angular densification: edges are only subdivided when their
- * spherical angle subtended from the drone exceeds ~3.5° (0.06 rad), keeping
- * distant lots lightweight (4–6 vertices) while curving edges smoothly near nadir.
+ * Uses the unified projection & adaptive densification logic from:
+ *   src/features/panorama-360/project-lots.ts
  */
 
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,52 +20,49 @@ proj4.defs(
   "+proj=tmerc +lat_0=4.596200417 +lon_0=-74.07750791 +k=1 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
 );
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 
-const cadRef = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-cad-reference.json"), "utf8"),
-);
+// If executed by plain `node` without TypeScript loader, delegate transparently to `npx tsx`
+if (!process.env.AUTEM_TSX_ACTIVE && !process.execArgv.some((a) => a.includes("tsx"))) {
+  const result = spawnSync("npx", ["tsx", __filename, ...process.argv.slice(2)], {
+    stdio: "inherit",
+    shell: true,
+    env: { ...process.env, AUTEM_TSX_ACTIVE: "1" },
+  });
+  process.exit(result.status ?? 0);
+}
+
+const {
+  projectMasterplanLots,
+  projectMasterplanLayers,
+  projectGpsPointToPanoramaRad,
+  radToDegPair,
+  roundRad,
+} = await import("../src/features/panorama-360/project-lots.ts");
+
 const lots = JSON.parse(
   fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-lots.json"), "utf8"),
 );
 const rawLayers = JSON.parse(
   fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-layers.json"), "utf8"),
 );
+const cadRef = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-cad-reference.json"), "utf8"),
+);
 const outPath = path.join(ROOT, "src/data/generated/villa-paraiso-panorama-lots.json");
 
 const t = cadRef.transform;
 const det = t.a * t.e - t.b * t.d;
-const DEG_TO_RAD = Math.PI / 180;
-
-function roundRad(v) {
-  return Math.round(v * 1e4) / 1e4;
-}
-
-function round6(v) {
-  return Math.round(v * 1e6) / 1e6;
-}
-
-function svgToCad(x, y) {
-  const dx = x - t.c;
-  const dy = y - t.f;
-  return [(t.e * dx - t.b * dy) / det, (-t.d * dx + t.a * dy) / det];
-}
 
 function svgToGps(x, y) {
-  const [e, n] = svgToCad(x, y);
-  const [lng, lat] = proj4("EPSG:3116", "EPSG:4326", [e, n]);
-  return [round6(lng), round6(lat)];
-}
-
-function parseSvgPath(d) {
-  const pts = [];
-  const re = /([ML])\s*([\d.-]+)\s+([\d.-]+)/gi;
-  let m;
-  while ((m = re.exec(d)) !== null) {
-    pts.push([parseFloat(m[2]), parseFloat(m[3])]);
-  }
-  return pts;
+  const dx = x - t.c;
+  const dy = y - t.f;
+  const cadX = (t.e * dx - t.b * dy) / det;
+  const cadY = (-t.d * dx + t.a * dy) / det;
+  const [lng, lat] = proj4("EPSG:3116", "EPSG:4326", [cadX, cadY]);
+  return [Math.round(lng * 1e6) / 1e6, Math.round(lat * 1e6) / 1e6];
 }
 
 const config = {
@@ -106,114 +103,7 @@ const config = {
   },
 };
 
-const [camBaseE, camBaseN] = proj4("EPSG:4326", "EPSG:3116", [
-  config.camera.lng,
-  config.camera.lat,
-]);
-
-function smoothstep(edge0, edge1, x) {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
-
-function projectCadToRad(eastM, northM) {
-  const camE = camBaseE + (config.camera.offsetEastM || 0);
-  const camN = camBaseN + (config.camera.offsetNorthM || 0);
-  let dE = eastM - camE;
-  let dN = northM - camN;
-  let dU = -config.camera.heightAboveGroundM;
-
-  // SW Entrance & Lago Principal shoreline terrain/radial elongation correction
-  const ux = -0.661;
-  const uy = -0.751;
-  const tx = -0.751;
-  const ty = 0.661;
-  const s = dE * ux + dN * uy;
-  const t = dE * tx + dN * ty;
-
-  if (s > 215 && t > -260 && t < 185) {
-    const wSE = smoothstep(-255, -195, t);
-    const wNW = 1 - 0.42 * smoothstep(-15, 75, t) - 0.58 * smoothstep(75, 175, t);
-    const wT = wSE * Math.max(0, wNW);
-
-    const u = Math.max(0, (s - 215) / (365 - 215));
-    const stretchS = (24 * Math.pow(u, 1.35) + 46 * Math.pow(u, 2.5)) * wT;
-    const riseU = (12 * Math.pow(u, 1.35) + 25 * Math.pow(u, 2.35)) * wT;
-    const seBoost = smoothstep(-70, -195, t) * Math.pow(u, 1.15) * wSE;
-    const stretchT = -18 * seBoost;
-
-    dE += ux * stretchS + tx * stretchT;
-    dN += uy * stretchS + ty * stretchT;
-    dU += riseU;
-  }
-
-  const az0 = config.yawOffsetDeg * DEG_TO_RAD;
-  let fwd = dE * Math.sin(az0) + dN * Math.cos(az0);
-  let right = dE * Math.cos(az0) - dN * Math.sin(az0);
-  let up = dU;
-
-  const pitchRad = (config.tilt.pitchDeg || 0) * DEG_TO_RAD;
-  const rollRad = (config.tilt.rollDeg || 0) * DEG_TO_RAD;
-
-  if (pitchRad !== 0) {
-    const f1 = fwd * Math.cos(pitchRad) - up * Math.sin(pitchRad);
-    const u1 = fwd * Math.sin(pitchRad) + up * Math.cos(pitchRad);
-    fwd = f1;
-    up = u1;
-  }
-  if (rollRad !== 0) {
-    const r1 = right * Math.cos(rollRad) - up * Math.sin(rollRad);
-    const u1 = right * Math.sin(rollRad) + up * Math.cos(rollRad);
-    right = r1;
-    up = u1;
-  }
-
-  const yaw = Math.atan2(right, fwd);
-  const horiz = Math.hypot(right, fwd);
-  const pitch = Math.atan2(up, horiz);
-  return [roundRad(yaw), roundRad(pitch)];
-}
-
-/**
- * Adaptive densification: only subdivides edges based on their 3D distance to the
- * camera so distant lots stay at 4-6 vertices and nadir lots get smooth curves.
- */
-function densifyCadRingAdaptive(ringEN) {
-  if (ringEN.length < 3) return ringEN;
-  const camE = camBaseE + (config.camera.offsetEastM || 0);
-  const camN = camBaseN + (config.camera.offsetNorthM || 0);
-  const H = config.camera.heightAboveGroundM;
-
-  const pts =
-    ringEN.length > 3 &&
-    Math.hypot(
-      ringEN[0][0] - ringEN[ringEN.length - 1][0],
-      ringEN[0][1] - ringEN[ringEN.length - 1][1],
-    ) < 1e-3
-      ? ringEN.slice(0, -1)
-      : ringEN;
-
-  const out = [];
-  for (let i = 0; i < pts.length; i++) {
-    const p1 = pts[i];
-    const p2 = pts[(i + 1) % pts.length];
-    out.push(p1);
-
-    const edgeLen = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
-    const midE = (p1[0] + p2[0]) * 0.5 - camE;
-    const midN = (p1[1] + p2[1]) * 0.5 - camN;
-    const dist3D = Math.hypot(midE, midN, H);
-
-    // Subdivide only if the edge subtends > ~0.085 rad (~5 deg) on the sphere
-    const maxStepM = Math.max(8, dist3D * 0.085);
-    const steps = Math.min(4, Math.max(1, Math.ceil(edgeLen / maxStepM)));
-    for (let s = 1; s < steps; s++) {
-      const f = s / steps;
-      out.push([p1[0] + (p2[0] - p1[0]) * f, p1[1] + (p2[1] - p1[1]) * f]);
-    }
-  }
-  return out;
-}
+const DEG_TO_RAD = Math.PI / 180;
 
 const controlPointsRaw = [
   {
@@ -326,52 +216,13 @@ const controlPoints = controlPointsRaw.map((cp) => ({
   weight: cp.weight,
 }));
 
-const projectedLots = [];
+// Project lots using unified logic (same densification as admin and runtime visitor)
+const projectedLots = projectMasterplanLots(lots, config);
+const layers = projectMasterplanLayers(rawLayers, config);
+
 let totalVertices = 0;
-
-for (const lot of lots) {
-  if (!lot.pathD) continue;
-  const svgPts = parseSvgPath(lot.pathD);
-  if (svgPts.length < 3) continue;
-
-  const cadPts = svgPts.map(([x, y]) => svgToCad(x, y));
-  const verticesRad = cadPts.map(([e, n]) => projectCadToRad(e, n));
-  const denseCad = densifyCadRingAdaptive(cadPts);
-  const polygonRad = denseCad.map(([e, n]) => projectCadToRad(e, n));
-  totalVertices += polygonRad.length;
-
-  const [cE, cN] = lot.centroid ? svgToCad(lot.centroid[0], lot.centroid[1]) : cadPts[0];
-  const labelRad = projectCadToRad(cE, cN);
-
-  projectedLots.push({
-    id: lot.id,
-    lotNumber: lot.lotNumber,
-    label: lot.id === "L-45-A" ? "45-A" : lot.label || String(lot.lotNumber),
-    manzana: lot.manzana,
-    polygonRad,
-    verticesRad,
-    labelRad,
-  });
-}
-
-// Project water and road context polygons (matching Recorrido de Terreno / ProjectLocationMap)
-const waterPolygonsRad = [];
-for (const w of rawLayers.waterAreas || []) {
-  const subPaths = String(w).split(/(?=[M])/gi);
-  for (const sp of subPaths) {
-    const svgPts = parseSvgPath(sp);
-    if (svgPts.length < 3) continue;
-    const cadPts = svgPts.map(([x, y]) => svgToCad(x, y));
-    waterPolygonsRad.push(cadPts.map(([e, n]) => projectCadToRad(e, n)));
-  }
-}
-
-const roadPolygonsRad = [];
-for (const r of rawLayers.calzadas || []) {
-  const svgPts = parseSvgPath(r);
-  if (svgPts.length < 3) continue;
-  const cadPts = svgPts.map(([x, y]) => svgToCad(x, y));
-  roadPolygonsRad.push(cadPts.map(([e, n]) => projectCadToRad(e, n)));
+for (const l of projectedLots) {
+  totalVertices += l.polygonRad.length;
 }
 
 const payload = {
@@ -381,10 +232,7 @@ const payload = {
   config,
   controlPoints,
   lots: projectedLots,
-  layers: {
-    water: waterPolygonsRad,
-    roads: roadPolygonsRad,
-  },
+  layers,
 };
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true });

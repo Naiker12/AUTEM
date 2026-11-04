@@ -1,5 +1,10 @@
-import { gpsToCad, svgToCad } from "@/features/terrain-navigation/cad-gps";
-import type { PanoramaCameraConfig, PanoramaLotOverridesMap, ProjectedPanoramaLot } from "./types";
+import { gpsToCad, svgToCad } from "../terrain-navigation/cad-gps";
+import type {
+  PanoramaCameraConfig,
+  PanoramaContextLayers,
+  PanoramaLotOverridesMap,
+  ProjectedPanoramaLot,
+} from "./types";
 
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
@@ -25,25 +30,17 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 }
 
 /**
- * Projects a ground point in EPSG:3116 (East, North) meters to spherical
- * panorama coordinates [yawRad, pitchRad] in radians:
- *   - yawRad in [-PI, PI] (0 at panorama center, positive to the right/clockwise)
- *   - pitchRad in [-PI/2, PI/2] (0 at horizon, negative looking down)
+ * Parche temporal para la entrada suroeste (L-1..L-45-A) y la orilla suroccidental del Lago Principal.
+ * Aplica una corrección continua de elevación y elongación normal hacia el acceso vial.
+ * TODO: Reemplazar cuando se agreguen más puntos de control fotogramétricos en este sector.
  */
-export function projectCadPointToPanoramaRad(
-  eastM: number,
-  northM: number,
-  config: PanoramaCameraConfig,
-): [number, number] {
-  const camCad = gpsToCad(config.camera.lat, config.camera.lng);
-  const camE = camCad.x + (config.camera.offsetEastM ?? 0);
-  const camN = camCad.y + (config.camera.offsetNorthM ?? 0);
-
-  let dE = eastM - camE;
-  let dN = northM - camN;
-  let dU = -Math.max(1, config.camera.heightAboveGroundM);
-
-  // SW Entrance & Lago Principal shoreline terrain/radial elongation correction
+export function applySouthwestEntranceTerrainPatch(
+  dE: number,
+  dN: number,
+  dU: number,
+): { dE: number; dN: number; dU: number } {
+  // Outward normal U = (-0.661, -0.751) pointing across L-1..L-45 toward the SW entrance road
+  // Tangent T = (-0.751, +0.661) running from L-1 (t ~ -198m) to L-43 (t ~ +85m)
   const ux = -0.661;
   const uy = -0.751;
   const tx = -0.751;
@@ -62,10 +59,39 @@ export function projectCadPointToPanoramaRad(
     const seBoost = smoothstep(-70, -195, t) * Math.pow(u, 1.15) * wSE;
     const stretchT = -18 * seBoost;
 
-    dE += ux * stretchS + tx * stretchT;
-    dN += uy * stretchS + ty * stretchT;
-    dU += riseU;
+    return {
+      dE: dE + ux * stretchS + tx * stretchT,
+      dN: dN + uy * stretchS + ty * stretchT,
+      dU: dU + riseU,
+    };
   }
+
+  return { dE, dN, dU };
+}
+
+/**
+ * Projects a ground point in EPSG:3116 (East, North) meters to spherical
+ * panorama coordinates [yawRad, pitchRad] in radians:
+ *   - yawRad in [-PI, PI] (0 at panorama center, positive to the right/clockwise)
+ *   - pitchRad in [-PI/2, PI/2] (0 at horizon, negative looking down)
+ */
+export function projectCadPointToPanoramaRad(
+  eastM: number,
+  northM: number,
+  config: PanoramaCameraConfig,
+): [number, number] {
+  const camCad = gpsToCad(config.camera.lat, config.camera.lng);
+  const camE = camCad.x + (config.camera.offsetEastM ?? 0);
+  const camN = camCad.y + (config.camera.offsetNorthM ?? 0);
+
+  let dE = eastM - camE;
+  let dN = northM - camN;
+  let dU = -Math.max(1, config.camera.heightAboveGroundM);
+
+  const patched = applySouthwestEntranceTerrainPatch(dE, dN, dU);
+  dE = patched.dE;
+  dN = patched.dN;
+  dU = patched.dU;
 
   const az0 = config.yawOffsetDeg * DEG_TO_RAD;
   let fwd = dE * Math.sin(az0) + dN * Math.cos(az0);
@@ -128,7 +154,6 @@ export function projectSvgPointToPanoramaRad(
 export function densifyCadPolygon(ringEN: [number, number][], maxStepM = 2.5): [number, number][] {
   if (ringEN.length < 3) return ringEN;
 
-  // Remove duplicate closing vertex if present
   const pts =
     ringEN.length > 3 &&
     Math.hypot(
@@ -151,6 +176,155 @@ export function densifyCadPolygon(ringEN: [number, number][], maxStepM = 2.5): [
     }
   }
   return out;
+}
+
+/**
+ * Adaptive densification: only subdivides edges based on their 3D distance to the
+ * camera so distant lots stay at 4-6 vertices and nadir lots get smooth curves.
+ */
+export function densifyCadPolygonAdaptive(
+  ringEN: [number, number][],
+  config: PanoramaCameraConfig,
+): [number, number][] {
+  if (ringEN.length < 3) return ringEN;
+  const camCad = gpsToCad(config.camera.lat, config.camera.lng);
+  const camE = camCad.x + (config.camera.offsetEastM ?? 0);
+  const camN = camCad.y + (config.camera.offsetNorthM ?? 0);
+  const H = Math.max(1, config.camera.heightAboveGroundM);
+
+  const pts =
+    ringEN.length > 3 &&
+    Math.hypot(
+      ringEN[0][0] - ringEN[ringEN.length - 1][0],
+      ringEN[0][1] - ringEN[ringEN.length - 1][1],
+    ) < 1e-3
+      ? ringEN.slice(0, -1)
+      : ringEN;
+
+  const out: [number, number][] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % pts.length];
+    out.push(p1);
+
+    const edgeLen = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    const midE = (p1[0] + p2[0]) * 0.5 - camE;
+    const midN = (p1[1] + p2[1]) * 0.5 - camN;
+    const dist3D = Math.hypot(midE, midN, H);
+
+    // Subdivide only if the edge subtends > ~0.085 rad (~5 deg) on the sphere
+    const maxStepM = Math.max(8, dist3D * 0.085);
+    const steps = Math.min(4, Math.max(1, Math.ceil(edgeLen / maxStepM)));
+    for (let s = 1; s < steps; s++) {
+      const f = s / steps;
+      out.push([p1[0] + (p2[0] - p1[0]) * f, p1[1] + (p2[1] - p1[1]) * f]);
+    }
+  }
+  return out;
+}
+
+/**
+ * Parses SVG path data string (commands M and L) into [[x, y], ...] coordinates.
+ */
+export function parseSvgPath(d: string): [number, number][] {
+  const pts: [number, number][] = [];
+  const re = /([ML])\s*([\d.-]+)\s+([\d.-]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    pts.push([parseFloat(m[2]), parseFloat(m[3])]);
+  }
+  return pts;
+}
+
+export interface RawMasterplanLotInput {
+  id: string;
+  lotNumber: number;
+  label?: string;
+  manzana?: string;
+  pathD?: string;
+  centroid?: [number, number] | number[];
+}
+
+/**
+ * Projects an array of raw masterplan lots into equirectangular spherical lots.
+ */
+export function projectMasterplanLots(
+  rawLots: RawMasterplanLotInput[],
+  config: PanoramaCameraConfig,
+): ProjectedPanoramaLot[] {
+  const projectedLots: ProjectedPanoramaLot[] = [];
+
+  for (const lot of rawLots) {
+    if (!lot.pathD) continue;
+    const svgPts = parseSvgPath(lot.pathD);
+    if (svgPts.length < 3) continue;
+
+    const cadPts = svgPts.map(([x, y]) => {
+      const c = svgToCad(x, y);
+      return [c.x, c.y] as [number, number];
+    });
+    const verticesRad = cadPts.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config));
+    const denseCad = densifyCadPolygonAdaptive(cadPts, config);
+    const polygonRad = denseCad.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config));
+
+    let labelRad: [number, number];
+    if (lot.centroid) {
+      const cCad = svgToCad(lot.centroid[0], lot.centroid[1]);
+      labelRad = projectCadPointToPanoramaRad(cCad.x, cCad.y, config);
+    } else {
+      labelRad = verticesRad[0];
+    }
+
+    projectedLots.push({
+      id: lot.id,
+      lotNumber: lot.lotNumber,
+      label: lot.id === "L-45-A" ? "45-A" : lot.label || String(lot.lotNumber),
+      manzana: lot.manzana,
+      polygonRad,
+      verticesRad,
+      labelRad,
+    });
+  }
+
+  return projectedLots;
+}
+
+/**
+ * Projects masterplan context layers (water areas and roads) into spherical coordinates.
+ */
+export function projectMasterplanLayers(
+  rawLayers: { waterAreas?: string[]; calzadas?: string[] },
+  config: PanoramaCameraConfig,
+): PanoramaContextLayers {
+  const waterPolygonsRad: [number, number][][] = [];
+  for (const w of rawLayers.waterAreas || []) {
+    const subPaths = String(w).split(/(?=[M])/gi);
+    for (const sp of subPaths) {
+      const svgPts = parseSvgPath(sp);
+      if (svgPts.length < 3) continue;
+      const cadPts = svgPts.map(([x, y]) => {
+        const c = svgToCad(x, y);
+        return [c.x, c.y] as [number, number];
+      });
+      waterPolygonsRad.push(cadPts.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config)));
+    }
+  }
+
+  const roadPolygonsRad: [number, number][][] = [];
+  for (const r of rawLayers.calzadas || []) {
+    const svgPts = parseSvgPath(r);
+    if (svgPts.length < 3) continue;
+    const cadPts = svgPts.map(([x, y]) => {
+      const c = svgToCad(x, y);
+      return [c.x, c.y] as [number, number];
+    });
+    roadPolygonsRad.push(cadPts.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config)));
+  }
+
+  return {
+    water: waterPolygonsRad,
+    roads: roadPolygonsRad,
+  };
 }
 
 /**
@@ -208,7 +382,6 @@ export function mergePanoramaLotsWithOverrides(
     const polygonRad = densifySphericalVerticesRad(ov.verticesRad, 2);
     let labelRad = ov.labelRad;
     if (!labelRad) {
-      // Compute spherical centroid via unit vectors on horizontal plane
       let sumX = 0;
       let sumY = 0;
       let sumZ = 0;

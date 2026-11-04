@@ -19,6 +19,8 @@ import type { MarkerConfig, MarkersPlugin } from "@photo-sphere-viewer/markers-p
 import type { GyroscopePlugin } from "@photo-sphere-viewer/gyroscope-plugin";
 import type { Lot, LotStatus } from "@/data/lots";
 import { formatLotPrice } from "@/data/lots";
+import rawLots from "@/data/villa-paraiso-lots.json";
+import rawLayers from "@/data/villa-paraiso-layers.json";
 import rawPanoramaLotsData from "@/data/generated/villa-paraiso-panorama-lots.json";
 import rawPanoramaOverrides from "@/data/villa-paraiso-panorama-overrides.json";
 import {
@@ -26,6 +28,8 @@ import {
   mergePanoramaLotsWithOverrides,
   prepareCanvasContextLayers,
   prepareCanvasLots,
+  projectMasterplanLayers,
+  projectMasterplanLots,
   radToDegPair,
   renderPanoramaLotsCanvas,
   type PanoramaCameraConfig,
@@ -105,7 +109,12 @@ export default function PanoramaViewer({
   const [isCssFullscreen, setIsCssFullscreen] = useState(false);
   const [gyroSupported, setGyroSupported] = useState(false);
   const [gyroEnabled, setGyroEnabled] = useState(false);
+  const [remoteConfig, setRemoteConfig] = useState<PanoramaCameraConfig | null>(null);
   const [remoteOverrides, setRemoteOverrides] = useState<PanoramaLotOverridesMap | null>(null);
+  const [remoteImageUrls, setRemoteImageUrls] = useState<{
+    desktop?: string;
+    mobile?: string;
+  } | null>(null);
   const [hoveredLot, setHoveredLot] = useState<{
     id: string;
     label: string;
@@ -117,35 +126,104 @@ export default function PanoramaViewer({
   } | null>(null);
 
   useEffect(() => {
-    if (overrides || !supabase) return;
+    // Si viene configuración explícita por props (ej. modo calibración admin), no consultar Supabase
+    if (cameraConfig && projectedLots) return;
     let active = true;
-    supabase
-      .from("project_panoramas")
-      .select("lot_overrides")
-      .eq("slug", "main")
-      .eq("enabled", true)
-      .limit(1)
-      .maybeSingle()
-      .then(
-        ({ data }) => {
-          if (active && data?.lot_overrides && typeof data.lot_overrides === "object") {
-            setRemoteOverrides(data.lot_overrides as PanoramaLotOverridesMap);
-          }
-        },
-        () => {},
-      );
+
+    async function loadPublicPanoramaSettings() {
+      if (!supabase) return;
+      try {
+        const { data, error } = await supabase
+          .from("project_panoramas")
+          .select("*")
+          .eq("slug", "main")
+          .eq("enabled", true)
+          .limit(1)
+          .maybeSingle();
+
+        if (error || !data || !active) return;
+
+        const dbConfig: PanoramaCameraConfig = {
+          camera: {
+            lat: data.camera_lat ?? defaultPanoramaData.config.camera.lat,
+            lng: data.camera_lng ?? defaultPanoramaData.config.camera.lng,
+            heightAboveGroundM:
+              data.height_above_ground_m ?? defaultPanoramaData.config.camera.heightAboveGroundM,
+            offsetEastM: data.offset_east_m ?? defaultPanoramaData.config.camera.offsetEastM ?? 0,
+            offsetNorthM:
+              data.offset_north_m ?? defaultPanoramaData.config.camera.offsetNorthM ?? 0,
+          },
+          yawOffsetDeg: data.yaw_offset_deg ?? defaultPanoramaData.config.yawOffsetDeg,
+          tilt: {
+            pitchDeg: data.pitch_tilt_deg ?? defaultPanoramaData.config.tilt.pitchDeg,
+            rollDeg: data.roll_tilt_deg ?? defaultPanoramaData.config.tilt.rollDeg,
+          },
+          panoDataDesktop: {
+            fullWidth: data.full_width ?? defaultPanoramaData.config.panoDataDesktop.fullWidth,
+            fullHeight: data.full_height ?? defaultPanoramaData.config.panoDataDesktop.fullHeight,
+            croppedWidth:
+              data.cropped_width ?? defaultPanoramaData.config.panoDataDesktop.croppedWidth,
+            croppedHeight:
+              data.cropped_height ?? defaultPanoramaData.config.panoDataDesktop.croppedHeight,
+            croppedX: data.cropped_x ?? defaultPanoramaData.config.panoDataDesktop.croppedX,
+            croppedY: data.cropped_y ?? defaultPanoramaData.config.panoDataDesktop.croppedY,
+          },
+          panoDataMobile: defaultPanoramaData.config.panoDataMobile,
+          limits: {
+            minPitchDeg: data.min_pitch_deg ?? defaultPanoramaData.config.limits.minPitchDeg,
+            maxPitchDeg: data.max_pitch_deg ?? defaultPanoramaData.config.limits.maxPitchDeg,
+            defaultYawDeg: data.default_yaw_deg ?? defaultPanoramaData.config.limits.defaultYawDeg,
+            defaultPitchDeg:
+              data.default_pitch_deg ?? defaultPanoramaData.config.limits.defaultPitchDeg,
+            defaultZoomLvl: defaultPanoramaData.config.limits.defaultZoomLvl ?? 22,
+          },
+        };
+
+        setRemoteConfig(dbConfig);
+
+        if (data.desktop_image_path || data.mobile_image_path) {
+          setRemoteImageUrls({
+            desktop: data.desktop_image_path || undefined,
+            mobile: data.mobile_image_path || undefined,
+          });
+        }
+
+        if (data.lot_overrides && typeof data.lot_overrides === "object") {
+          setRemoteOverrides(data.lot_overrides as PanoramaLotOverridesMap);
+        }
+      } catch (err) {
+        console.warn("Fallo al obtener configuración remota 360°, usando respaldo local:", err);
+      }
+    }
+
+    loadPublicPanoramaSettings();
+
     return () => {
       active = false;
     };
-  }, [overrides]);
+  }, [cameraConfig, projectedLots]);
 
-  const activeConfig = cameraConfig ?? defaultPanoramaData.config;
+  const activeConfig = cameraConfig ?? remoteConfig ?? defaultPanoramaData.config;
 
   const mergedPanoramaLots = useMemo(() => {
-    const base = projectedLots ?? defaultPanoramaData.lots;
+    // Si el contenedor padre ya pasó lotes proyectados (ej. admin preview), los usamos directamente
+    if (projectedLots) {
+      const activeOverrides = overrides ?? remoteOverrides ?? defaultOverrides;
+      return mergePanoramaLotsWithOverrides(projectedLots, activeOverrides);
+    }
+
+    // Si leímos configuración remota desde Supabase, reproyectamos dinámicamente en el cliente
+    if (remoteConfig) {
+      const liveLots = projectMasterplanLots(rawLots, remoteConfig);
+      const activeOverrides = overrides ?? remoteOverrides ?? defaultOverrides;
+      return mergePanoramaLotsWithOverrides(liveLots, activeOverrides);
+    }
+
+    // Respaldo estático: si no hay datos de Supabase o la consulta falló, usar JSON generado
+    const base = defaultPanoramaData.lots;
     const activeOverrides = overrides ?? remoteOverrides ?? defaultOverrides;
     return mergePanoramaLotsWithOverrides(base, activeOverrides);
-  }, [projectedLots, overrides, remoteOverrides]);
+  }, [projectedLots, remoteConfig, overrides, remoteOverrides]);
 
   const lotById = useMemo(() => {
     const map = new Map<string, Lot>();
@@ -163,10 +241,13 @@ export default function PanoramaViewer({
     [mergedPanoramaLots, lotById],
   );
 
-  const preparedContextLayers = useMemo(
-    () => prepareCanvasContextLayers(defaultPanoramaData.layers),
-    [],
-  );
+  const preparedContextLayers = useMemo(() => {
+    if (remoteConfig) {
+      const liveLayers = projectMasterplanLayers(rawLayers, remoteConfig);
+      return prepareCanvasContextLayers(liveLayers);
+    }
+    return prepareCanvasContextLayers(defaultPanoramaData.layers);
+  }, [remoteConfig]);
 
   const renderStateRef = useRef({
     preparedLots,
@@ -240,7 +321,13 @@ export default function PanoramaViewer({
         }
 
         const isMobile = window.innerWidth <= 900;
-        const initialUrl = isMobile ? mobileImageUrl : desktopImageUrl;
+        const initialUrl = isMobile
+          ? (mobileImageUrl ??
+            remoteImageUrls?.mobile ??
+            "/panoramas/villa-paraiso/pano-4096.v1.webp")
+          : (desktopImageUrl ??
+            remoteImageUrls?.desktop ??
+            "/panoramas/villa-paraiso/pano-8192.v1.webp");
         const initialPanoData = isMobile
           ? activeConfig.panoDataMobile
           : activeConfig.panoDataDesktop;
