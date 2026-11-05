@@ -49,9 +49,9 @@ La publicación inicial utiliza snapshots completos en lugar de permitir que edi
 node scripts/check-terrain-navigation.mjs
 node scripts/check-navigation-pilot.mjs
 node scripts/check-navigation-publication.mjs
-# O ejecutar las tres comprobaciones con pnpm run test:navigation
-pnpm exec tsc --noEmit
-pnpm build
+# O ejecutar las tres comprobaciones con npm run test:navigation
+npx tsc --noEmit
+npm run build
 ```
 
 Los tests del piloto usan mediciones sintéticas identificadas como test-project; no se suben a Supabase. PostgreSQL se prueba localmente con PGlite, incluyendo RLS, rechazo de publicaciones incorrectas, permisos, borradores privados y reemplazo atómico. Esa prueba no sustituye la comprobación del esquema remoto ni la aceptación física en terreno.

@@ -28,6 +28,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { publicProjectMediaUrl } from "@/lib/project-repository";
 import { publicSiteMediaUrl } from "@/lib/site-repository";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const siteImage = (fileName: string) =>
   publicSiteMediaUrl(`00000000-0000-0000-0000-000000000001/images/${fileName}`);
@@ -40,7 +42,6 @@ type SectionKey =
   | "presentacion"
   | "servicios"
   | "areas-de-trabajo"
-  | "proceso"
   | "recursos-del-proyecto"
   | "contacto"
   | "nosotros"
@@ -93,17 +94,6 @@ const sections: Record<SectionKey, SectionDefinition> = {
     heading: "Diseño residencial, comercial y territorial.",
     copy: "Cada proyecto articula programa, paisaje y experiencia para construir valor duradero.",
     action: "Explorar áreas",
-  },
-  proceso: {
-    title: "Proceso",
-    publicLabel: "Metodología",
-    description: "La sección que explica cómo AUTEM acompaña cada proyecto.",
-    image: siteImage("autem-proceso-territorio.png"),
-    imageAlt: "Proceso de diseño territorial",
-    eyebrow: "Metodología",
-    heading: "Un proceso claro para avanzar con confianza.",
-    copy: "Escuchamos, definimos, diseñamos y acompañamos cada decisión importante del proyecto.",
-    action: "Conocer el proceso",
   },
   "recursos-del-proyecto": {
     title: "Recursos del proyecto",
@@ -172,6 +162,7 @@ function ContentSectionPage() {
   const [content, setContent] = useState(definition);
   const [image, setImage] = useState(definition.image);
   const [imageName, setImageName] = useState(definition.image.split("/").at(-1) ?? "imagen.jpg");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [visible, setVisible] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -180,6 +171,7 @@ function ContentSectionPage() {
     setContent(definition);
     setImage(definition.image);
     setImageName(definition.image.split("/").at(-1) ?? "imagen.jpg");
+    setSelectedFile(null);
     setVisible(true);
     setSaved(false);
   }, [definition]);
@@ -202,6 +194,7 @@ function ContentSectionPage() {
     if (image.startsWith("blob:")) URL.revokeObjectURL(image);
     setImage(URL.createObjectURL(file));
     setImageName(file.name);
+    setSelectedFile(file);
     setSaved(false);
   }
 
@@ -210,16 +203,75 @@ function ContentSectionPage() {
     setContent(definition);
     setImage(definition.image);
     setImageName(definition.image.split("/").at(-1) ?? "imagen.jpg");
+    setSelectedFile(null);
     setVisible(true);
     setSaved(false);
   }
 
-  function save() {
+  async function save() {
     setIsSaving(true);
-    window.setTimeout(() => {
-      setIsSaving(false);
+    try {
+      let finalImageUrl = image;
+
+      if (supabase && selectedFile) {
+        const fileExt = selectedFile.name.split(".").pop();
+        const storagePath = `00000000-0000-0000-0000-000000000001/images/${section}-${Date.now()}.${fileExt}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("site-media")
+          .upload(storagePath, selectedFile, { upsert: true });
+
+        if (!uploadErr) {
+          finalImageUrl = supabase.storage.from("site-media").getPublicUrl(storagePath)
+            .data.publicUrl;
+          setImage(finalImageUrl);
+
+          await supabase.from("site_media").upsert(
+            {
+              organization_id: "00000000-0000-0000-0000-000000000001",
+              bucket_id: "site-media",
+              storage_path: storagePath,
+              placement_key: `image-section-${section}`,
+              title: content.heading || definition.title,
+              alt_text: content.imageAlt || definition.imageAlt,
+              sort_order: 1,
+              is_public: true,
+            },
+            { onConflict: "bucket_id, storage_path" },
+          );
+        } else {
+          console.warn("Aviso al subir imagen:", uploadErr);
+        }
+      }
+
+      if (supabase) {
+        const { error: contentErr } = await supabase.from("site_content").upsert(
+          {
+            organization_id: "00000000-0000-0000-0000-000000000001",
+            section_key: section,
+            content: {
+              ...content,
+              image: finalImageUrl,
+              visible,
+            },
+            is_published: visible,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "organization_id, section_key" },
+        );
+
+        if (contentErr) {
+          console.warn("Aviso al guardar contenido en Supabase:", contentErr);
+        }
+      }
+
       setSaved(true);
-    }, 700);
+      toast.success("Contenido guardado en Supabase con éxito.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al guardar cambios.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (

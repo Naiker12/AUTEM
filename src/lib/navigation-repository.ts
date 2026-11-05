@@ -42,7 +42,6 @@ export async function loadPublishedNavigation(
   );
   if (
     (hasStrictProjectHash && result.bundle.masterplanVersion !== masterplanVersion) ||
-    result.bundle.masterplanVersion !== currentRenderedVersion ||
     result.bundle.bounds.width !== masterplanBounds.width ||
     result.bundle.bounds.height !== masterplanBounds.height
   ) {

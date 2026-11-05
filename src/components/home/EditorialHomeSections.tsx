@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useScrollFrame } from "@/hooks/useScrollFrame";
 import { AnimatedHeading, Reveal } from "./EditorialMotion";
 import { usePublishedProjects } from "@/lib/public-projects";
-import { usePublicSiteMedia } from "@/lib/site-repository";
+import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/site-repository";
 import "./editorial.css";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, Search, Box as CubeIcon, Lightbulb, Check } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 
 // 1. INTRO / ABOUT SECTION (Left Image, Center Heading & Subtext, Right Image + Ticker)
@@ -276,6 +276,19 @@ function OurServicesSection() {
 
 // 4. PROJECT EXPERTISE SECTION (2 Large Image Cards)
 function ProjectExpertiseSection() {
+  const { byPlacement } = usePublicSiteMedia();
+
+  const commercialImage =
+    byPlacement("image-expertise-commercial") ||
+    byPlacement("image-carousel-modern-lounge") ||
+    publicSiteMediaUrl("00000000-0000-0000-0000-000000000001/images/carousel-modern-lounge.jpg");
+
+  const residentialImage =
+    byPlacement("image-expertise-residential") ||
+    byPlacement("image-carousel-sunset-terrace") ||
+    byPlacement("image-provencal-architecture") ||
+    publicSiteMediaUrl("00000000-0000-0000-0000-000000000001/images/carousel-sunset-terrace.jpg");
+
   return (
     <section
       data-section-reveal
@@ -300,8 +313,9 @@ function ProjectExpertiseSection() {
             className="expertise-card relative h-[480px] sm:h-[560px] rounded-[10px] overflow-hidden group shadow-sm flex flex-col justify-end p-8 md:p-10"
           >
             <img
-              src="https://framerusercontent.com/images/UqMqhHYfcJfkq2yOeOBnNWsjEmQ.jpg"
+              src={commercialImage}
               alt="Diseño comercial"
+              loading="lazy"
               className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
@@ -322,8 +336,9 @@ function ProjectExpertiseSection() {
           {/* Diseño residencial Card */}
           <div className="relative h-[480px] sm:h-[560px] rounded-[10px] overflow-hidden group shadow-sm flex flex-col justify-end p-8 md:p-10">
             <img
-              src="https://framerusercontent.com/images/ecG0oXxVciB6YeEscSE3BDzmk.jpg"
+              src={residentialImage}
               alt="Diseño residencial"
+              loading="lazy"
               className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
@@ -341,117 +356,6 @@ function ProjectExpertiseSection() {
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-// 5. CLEAR DESIGN PROCESS SECTION (4 Cards with Icons & Photos)
-function ClearDesignProcessSection() {
-  const { byPlacement } = usePublicSiteMedia();
-  const steps = [
-    {
-      num: "01",
-      tag: "INVESTIGACIÓN",
-      title: "ENTENDER EL TERRENO",
-      desc: "Revisamos objetivos, contexto y planos disponibles para definir el punto de partida.",
-      result: "Resultado: necesidades y criterios de diseño.",
-      img: byPlacement("image-territory-masterplan"),
-      icon: Search,
-    },
-    {
-      num: "02",
-      tag: "IDEACIÓN",
-      title: "ORGANIZAR EL ESPACIO",
-      desc: "Estudiamos distribución, accesos y recorridos para comparar alternativas contigo.",
-      result: "Resultado: esquema de implantación y distribución.",
-      img: byPlacement("image-territory-masterplan"),
-      icon: CubeIcon,
-    },
-    {
-      num: "03",
-      tag: "MODELADO",
-      title: "VISUALIZAR LA PROPUESTA",
-      desc: "Pasamos del plano al modelo para revisar volúmenes y la relación con el paisaje.",
-      result: "Resultado: visualización del proyecto antes de construir.",
-      img: byPlacement("image-villa-paraiso-aerial"),
-      icon: Lightbulb,
-    },
-    {
-      num: "04",
-      tag: "ENTREGA",
-      title: "DEFINIR LOS SIGUIENTES PASOS",
-      desc: "Revisamos la propuesta y organizamos la documentación y el acompañamiento acordados.",
-      result: "Resultado: entregables y alcance de la siguiente etapa.",
-      img: byPlacement("image-process-territory"),
-      icon: Check,
-    },
-  ];
-
-  return (
-    <section
-      data-section-reveal
-      id="design-process"
-      className="bg-[#f0ebe6] text-[#4f4742] py-24 md:py-28 border-t border-[#4f4742]/15"
-    >
-      <div className="w-[93%] max-w-[1360px] mx-auto">
-        {/* Section Heading */}
-        <div className="text-center mb-16">
-          <AnimatedHeading className="text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.15] tracking-[-1.2px] text-[#4f4742] uppercase font-sans">
-            PROCESO DE DISEÑO CLARO
-          </AnimatedHeading>
-          <p className="mt-3 text-[13px] sm:text-[14px] leading-[1.6] tracking-[0.04em] text-[#57504b] uppercase max-w-lg mx-auto font-normal">
-            UN PROCESO COLABORATIVO, DESDE LA IDEA HASTA LA EJECUCIÓN.
-          </p>
-        </div>
-
-        {/* 4 Cards Row */}
-        <div className="process-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((step) => {
-            const Icon = step.icon;
-            return (
-              <div
-                key={step.num}
-                tabIndex={0}
-                data-motion-card
-                className="process-card group relative h-[380px] rounded-[10px] overflow-hidden shadow-sm flex flex-col justify-end p-6"
-              >
-                <img
-                  src={step.img}
-                  alt={step.title}
-                  className="absolute inset-0 w-full h-full object-cover object-center bg-[#d6cfc2] transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-
-                {/* Top Floating Icon Pill */}
-                <span className="absolute top-6 left-6 rounded-full bg-black/50 px-3 py-1.5 text-white text-xs tracking-wider">
-                  {step.num} · {step.tag}
-                </span>
-                <div className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center text-[#4f4742] shadow-sm">
-                  <Icon size={18} />
-                </div>
-
-                {/* Content at Bottom */}
-                <div className="relative z-10 text-white space-y-2">
-                  <h3 className="text-[17px] font-medium leading-tight uppercase tracking-[-0.01em]">
-                    {step.title}
-                  </h3>
-                  <p className="text-[12px] leading-relaxed text-white/80 font-light">
-                    {step.desc}
-                  </p>
-                  <p className="text-[11px] leading-relaxed text-white border-t border-white/25 pt-2">
-                    {step.result}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-5 text-center text-xs text-[#57504b]">
-          Imágenes de referencia y visualizaciones conceptuales; no representan obras ejecutadas.
-          Los entregables se definen según cada proyecto.
-        </p>
       </div>
     </section>
   );
@@ -533,12 +437,20 @@ function ProjectResourcesSection() {
 
 // 7. QUOTE BANNER ("Architecture should speak of its time...")
 function QuoteBannerSection() {
+  const { byPlacement } = usePublicSiteMedia();
+
+  const quoteBannerImage =
+    byPlacement("image-quote-banner") ||
+    byPlacement("image-carousel-forest-pavilion") ||
+    byPlacement("image-carousel-sunset-terrace") ||
+    publicSiteMediaUrl("00000000-0000-0000-0000-000000000001/images/carousel-forest-pavilion.jpg");
+
   return (
     <section data-section-reveal className="bg-[#f0ebe6] text-white py-8">
       <div className="w-[93%] max-w-[1360px] mx-auto">
         <div className="relative min-h-[380px] sm:min-h-[440px] rounded-[12px] overflow-hidden shadow-sm flex flex-col justify-between p-8 sm:p-12 lg:p-16">
           <img
-            src="https://framerusercontent.com/images/Vot4TfNdPciaGO0nbBK36oh4ec.png"
+            src={quoteBannerImage}
             alt="Arquitectura al atardecer"
             className="absolute inset-0 w-full h-full object-cover object-center"
             loading="lazy"
@@ -802,8 +714,7 @@ export default function EditorialHomeSections() {
   const cards = useRef<HTMLElement[]>([]);
   useEffect(() => {
     cards.current = Array.from(
-      root.current?.querySelectorAll<HTMLElement>(".expertise-card, .process-card, #about img") ??
-        [],
+      root.current?.querySelectorAll<HTMLElement>(".expertise-card, #about img") ?? [],
     );
   }, []);
   useScrollFrame(() => {
@@ -824,7 +735,6 @@ export default function EditorialHomeSections() {
       <FeaturedProjectsSection />
       <OurServicesSection />
       <ProjectExpertiseSection />
-      <ClearDesignProcessSection />
       <ProjectResourcesSection />
       <QuoteBannerSection />
       <ContactUsSection />

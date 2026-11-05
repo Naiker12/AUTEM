@@ -27,6 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { publicSiteMediaUrl } from "@/lib/site-repository";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/contenido/portada")({ component: CoverPage });
 
@@ -48,6 +50,7 @@ function CoverPage() {
   const [cover, setCover] = useState(defaultCover);
   const [image, setImage] = useState(defaultImage);
   const [imageName, setImageName] = useState("autem-hero-approved-scene-v2.png");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -69,6 +72,7 @@ function CoverPage() {
     if (image.startsWith("blob:")) URL.revokeObjectURL(image);
     setImage(URL.createObjectURL(file));
     setImageName(file.name);
+    setSelectedFile(file);
     setSaved(false);
   }
 
@@ -77,17 +81,75 @@ function CoverPage() {
     setCover(defaultCover);
     setImage(defaultImage);
     setImageName("autem-hero-approved-scene-v2.png");
+    setSelectedFile(null);
     setSaved(false);
   }
 
-  function saveCover() {
+  async function saveCover() {
     setIsSaving(true);
-    window.setTimeout(() => {
-      setIsSaving(false);
-      setSaved(true);
-    }, 700);
-  }
+    try {
+      let finalImageUrl = image;
 
+      if (supabase && selectedFile) {
+        const fileExt = selectedFile.name.split(".").pop();
+        const storagePath = `00000000-0000-0000-0000-000000000001/images/portada-${Date.now()}.${fileExt}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("site-media")
+          .upload(storagePath, selectedFile, { upsert: true });
+
+        if (!uploadErr) {
+          finalImageUrl = supabase.storage.from("site-media").getPublicUrl(storagePath)
+            .data.publicUrl;
+          setImage(finalImageUrl);
+
+          await supabase.from("site_media").upsert(
+            {
+              organization_id: "00000000-0000-0000-0000-000000000001",
+              bucket_id: "site-media",
+              storage_path: storagePath,
+              placement_key: "image-hero",
+              title: cover.title,
+              alt_text: cover.description,
+              sort_order: 1,
+              is_public: true,
+            },
+            { onConflict: "bucket_id, storage_path" },
+          );
+        } else {
+          console.warn("Aviso al subir imagen:", uploadErr);
+        }
+      }
+
+      if (supabase) {
+        const { error: contentErr } = await supabase.from("site_content").upsert(
+          {
+            organization_id: "00000000-0000-0000-0000-000000000001",
+            section_key: "portada",
+            content: {
+              ...cover,
+              image: finalImageUrl,
+              imageName,
+            },
+            is_published: cover.visible,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "organization_id, section_key" },
+        );
+
+        if (contentErr) {
+          console.warn("Aviso al guardar contenido en Supabase:", contentErr);
+        }
+      }
+
+      setSaved(true);
+      toast.success("Portada guardada en Supabase con éxito.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al guardar la portada.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
   return (
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
       <section className="flex flex-col gap-4 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">

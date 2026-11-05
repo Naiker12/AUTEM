@@ -61,14 +61,6 @@ export default function PiePagina() {
               </li>
               <li>
                 <a
-                  href={`${import.meta.env.BASE_URL}#design-process`}
-                  className="hover:text-black transition-colors"
-                >
-                  PROCESO
-                </a>
-              </li>
-              <li>
-                <a
                   href={`${import.meta.env.BASE_URL}#contacto`}
                   className="hover:text-black transition-colors"
                 >

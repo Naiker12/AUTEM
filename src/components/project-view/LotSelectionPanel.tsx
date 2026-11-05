@@ -390,6 +390,28 @@ function LotCatalog({
 }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const totalLotsCount = lots.length || 340;
+  const [visibleLimit, setVisibleLimit] = useState(30);
+
+  // Reiniciar límite visible cuando cambian los filtros
+  useEffect(() => {
+    setVisibleLimit(30);
+  }, [status, minArea, maxPrice, sort, filteredLots.length]);
+
+  // Si se selecciona un lote que está más allá del límite en móvil, expandir para mostrarlo
+  useEffect(() => {
+    if (!selectedId || !isMobile) return;
+    const targetIndex = filteredLots.findIndex(
+      (l) => l.id === selectedId || l.id === `L-${selectedId}`,
+    );
+    if (targetIndex >= visibleLimit) {
+      setVisibleLimit(Math.ceil((targetIndex + 15) / 30) * 30);
+    }
+  }, [selectedId, isMobile, filteredLots, visibleLimit]);
+
+  const displayedLots = useMemo(() => {
+    if (!isMobile) return filteredLots;
+    return filteredLots.slice(0, visibleLimit);
+  }, [filteredLots, isMobile, visibleLimit]);
 
   const handleSelectFromSearch = (lot: Lot) => {
     // Si el lote tiene un estado comercial diferente al filtro activo, cambiar a "Todos"
@@ -577,7 +599,7 @@ function LotCatalog({
               No hay lotes que cumplan estos filtros.
             </p>
           )}
-          {filteredLots.map((lot) => (
+          {displayedLots.map((lot) => (
             <LotCardItem
               key={lot.id}
               lot={lot}
@@ -588,6 +610,19 @@ function LotCatalog({
               isMobile={isMobile}
             />
           ))}
+          {isMobile && filteredLots.length > visibleLimit && (
+            <div className="col-span-full pt-1.5 pb-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setVisibleLimit((prev) => prev + 30)}
+                className="w-full h-8 text-[11px] font-semibold rounded-xl border-accent/40 text-accent hover:bg-accent hover:text-accent-foreground"
+              >
+                Cargar más lotes ({filteredLots.length - visibleLimit} restantes)
+              </Button>
+            </div>
+          )}
         </div>
       </ScrollArea>
       {!isMobile && (

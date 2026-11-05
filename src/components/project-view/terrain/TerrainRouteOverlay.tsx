@@ -6,7 +6,6 @@ export default function TerrainRouteOverlay({
   destination,
   route,
   entrancePoint,
-  travelMode = "walking",
 }: {
   destination?: Lot;
   route: RenderableInternalRoute | null;
@@ -30,20 +29,17 @@ export default function TerrainRouteOverlay({
     return { x: entranceX, y: entranceY };
   }, [routeOriginX, routeOriginY, entranceX, entranceY]);
 
-  // Usa la ruta interna validada sobre la red caminable/vial
-  const effectiveRoute = route && route.svgPaths && route.svgPaths.length > 0 ? route : null;
+  if (!destination || !centroid) return null;
 
-  if (!destination || !centroid || !effectiveRoute) return null;
-
-  const end = effectiveRoute.destination.point ?? {
+  const end = route?.destination?.point ?? {
     x: centroid[0],
     y: centroid[1],
   };
 
-  const distanceMeters = effectiveRoute.result.distanceMeters ?? 0;
+  const distanceMeters = route?.result?.distanceMeters ?? 0;
 
   return (
-    <g className="pointer-events-none" aria-label={`Ruta hacia ${lotLabel}`}>
+    <g className="pointer-events-none" aria-label={`Marcadores de GPS hacia ${lotLabel}`}>
       <defs>
         <filter id="route-shadow" x="-30%" y="-30%" width="160%" height="160%">
           <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000000" floodOpacity="0.45" />
@@ -51,17 +47,6 @@ export default function TerrainRouteOverlay({
       </defs>
 
       <style>{`
-        @keyframes dashFlow {
-          from {
-            stroke-dashoffset: 0;
-          }
-          to {
-            stroke-dashoffset: -32;
-          }
-        }
-        .route-dash-animated {
-          animation: dashFlow 1.2s linear infinite;
-        }
         @keyframes rippleRing {
           0% {
             r: 16px;

@@ -100,8 +100,8 @@ cd AUTEM
 
 ```bash
 npm install
-# o con pnpm / bun
-pnpm install
+# con npm
+npm install
 ```
 
 ### 3. Iniciar servidor de desarrollo

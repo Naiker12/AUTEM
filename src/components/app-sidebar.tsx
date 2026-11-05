@@ -48,7 +48,6 @@ const navBase = [
       { title: "Presentación", url: "/admin/contenido/presentacion" },
       { title: "Servicios", url: "/admin/contenido/servicios" },
       { title: "Áreas de trabajo", url: "/admin/contenido/areas-de-trabajo" },
-      { title: "Proceso", url: "/admin/contenido/proceso" },
       { title: "Recursos del proyecto", url: "/admin/contenido/recursos-del-proyecto" },
       { title: "Contacto", url: "/admin/contenido/contacto" },
       { title: "Nosotros", url: "/admin/contenido/nosotros" },

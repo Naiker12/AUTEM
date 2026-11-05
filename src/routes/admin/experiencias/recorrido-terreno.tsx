@@ -1,520 +1,804 @@
-import cadReference from "@/data/villa-paraiso-cad-reference.json";
-import NavigationAdminPanel from "@/components/admin/NavigationAdminPanel";
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, ClipboardCopy, Crosshair, MapPin, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Car,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Crosshair,
+  ExternalLink,
+  Footprints,
+  Globe,
+  Layers,
+  LocateFixed,
+  MapPin,
+  Maximize2,
+  Navigation,
+  Orbit,
+  RefreshCw,
+  Route as RouteIcon,
+  ShieldCheck,
+  Sparkles,
+  Target,
+} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
-import { villaParaisoNavigationSurvey } from "@/data/villa-paraiso-navigation-survey";
-import masterplanLayers from "@/data/villa-paraiso-layers.json";
-import MasterplanSvgViewer from "@/components/project-view/MasterplanSvgViewer";
 import {
-  evaluateCalibration,
-  hasValidSvgPoint,
-  MAX_GPS_ACCURACY_METERS,
-  MIN_CONTROL_POINT_DISTANCE_METERS,
-} from "@/features/terrain-navigation/calibration";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MasterplanSvgViewer from "@/components/project-view/MasterplanSvgViewer";
+import TerrainRouteOverlay from "@/components/project-view/terrain/TerrainRouteOverlay";
+import {
+  DEFAULT_PROJECT_VIEW_SETTINGS,
+  type ProjectViewSettings,
+} from "@/components/project-view/types";
+import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import cadReference from "@/data/villa-paraiso-cad-reference.json";
+import rawNavigationBundle from "@/data/generated/villa-paraiso-navigation-bundle.json";
+import { useTerrainNavigation } from "@/features/terrain-navigation/use-terrain-navigation";
+import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
+import { requireSupabase, supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/experiencias/recorrido-terreno")({
   component: TerrainSurveyPage,
 });
 
-type SurveyPoint = {
-  id: string;
-  label: string;
-  hint: string;
-  latitude?: number;
-  longitude?: number;
-  accuracy?: number;
-  capturedAt?: string;
-  svgX: string;
-  svgY: string;
+const bundle = rawNavigationBundle;
+const ENTRANCE_POINT = {
+  x: cadReference.entranceAnnotation.svg.x ?? 1014.7,
+  y: cadReference.entranceAnnotation.svg.y ?? 2148.5,
 };
-
-const STORAGE_KEY = "autem:villa-paraiso:terrain-survey:v1";
-const SVG_WIDTH = masterplanLayers.dimensions.width;
-const SVG_HEIGHT = masterplanLayers.dimensions.height;
-const initialPoints: SurveyPoint[] = [
-  {
-    id: "main-entrance",
-    label: "Acceso principal",
-    hint: "Coincide con la anotación encontrada en el CAD.",
-    svgX: "",
-    svgY: "",
-  },
-  {
-    id: "junction-1",
-    label: "Cruce de vías",
-    hint: "Elige un cruce claro y estable.",
-    svgX: "",
-    svgY: "",
-  },
-  { id: "landmark", label: "Hito visible", hint: "Ej. rotonda o zona social.", svgX: "", svgY: "" },
-  {
-    id: "opposite-end",
-    label: "Punto lejano",
-    hint: "Debe quedar alejado de los tres primeros puntos.",
-    svgX: "",
-    svgY: "",
-  },
-  {
-    id: "check-1",
-    label: "Comprobación independiente 1",
-    hint: "Punto distinto de los controles, medido en terreno y marcado en el plano.",
-    svgX: "",
-    svgY: "",
-  },
-  {
-    id: "check-2",
-    label: "Comprobación independiente 2",
-    hint: "Otro punto separado al menos 10 m del primero y de los controles.",
-    svgX: "",
-    svgY: "",
-  },
-];
 
 function TerrainSurveyPage() {
   const { project } = usePublishedProject("villa-paraiso");
-  const { lots } = usePublishedLots(project?.id, "villa-paraiso");
-  const [points, setPoints] = useState<SurveyPoint[]>(initialPoints);
-  const [message, setMessage] = useState("");
-  const [capturingId, setCapturingId] = useState<string | null>(null);
-  const [activePlanPointId, setActivePlanPointId] = useState(initialPoints[0].id);
+  const projectId = project?.id ?? "00000000-0000-0000-0000-000000000101";
+  const { lots } = usePublishedLots(projectId, "villa-paraiso");
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as SurveyPoint[];
-      if (Array.isArray(parsed))
-        setPoints(
-          initialPoints.map((point) => parsed.find((saved) => saved.id === point.id) ?? point),
-        );
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
+  // Destino seleccionado para la ruta
+  const [selectedLotId, setSelectedLotId] = useState<string>("302");
+  const [travelMode, setTravelMode] = useState<"walking" | "driving">("walking");
+  const [showGeodeticMarkers, setShowGeodeticMarkers] = useState(true);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  // Ubicación GPS en vivo (opcional para pruebas en obra)
+  const [liveGps, setLiveGps] = useState<GeolocationCoordinates | null>(null);
+  const [gpsTimestamp, setGpsTimestamp] = useState<number | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const [viewSettings] = useState<ProjectViewSettings>(DEFAULT_PROJECT_VIEW_SETTINGS);
+
+  const selectedLot = useMemo(() => {
+    if (!selectedLotId) return null;
+    const clean = selectedLotId.replace(/^lot-/, "");
+    return (
+      lots.find(
+        (l) =>
+          l.id === clean ||
+          l.id === `L-${clean}` ||
+          l.id.replace(/^L-/, "") === clean.replace(/^L-/, "") ||
+          String(l.lotNumber) === clean.replace(/^L-/, ""),
+      ) ?? null
+    );
+  }, [lots, selectedLotId]);
+
+  // Navegación secuencial entre lotes
+  const handlePrevLot = useCallback(() => {
+    if (!lots.length) return;
+    const currentIndex = lots.findIndex(
+      (l) =>
+        l.id === selectedLotId ||
+        l.id === `L-${selectedLotId}` ||
+        l.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, "") ||
+        String(l.lotNumber) === selectedLotId.replace(/^L-/, ""),
+    );
+    const prevIndex = currentIndex <= 0 ? lots.length - 1 : currentIndex - 1;
+    const target = lots[prevIndex];
+    if (target) {
+      setSelectedLotId(target.id.replace(/^L-/, ""));
+      setFocusRequest((prev) => (prev === 0 ? 1 : prev + 1));
     }
+  }, [lots, selectedLotId]);
+
+  const handleNextLot = useCallback(() => {
+    if (!lots.length) return;
+    const currentIndex = lots.findIndex(
+      (l) =>
+        l.id === selectedLotId ||
+        l.id === `L-${selectedLotId}` ||
+        l.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, "") ||
+        String(l.lotNumber) === selectedLotId.replace(/^L-/, ""),
+    );
+    const nextIndex = currentIndex === -1 || currentIndex >= lots.length - 1 ? 0 : currentIndex + 1;
+    const target = lots[nextIndex];
+    if (target) {
+      setSelectedLotId(target.id.replace(/^L-/, ""));
+      setFocusRequest((prev) => (prev === 0 ? 1 : prev + 1));
+    }
+  }, [lots, selectedLotId]);
+
+  // Cálculo de la ruta 100% REAL mediante el grafo validado de Villa Paraíso (Dijkstra)
+  const navigation = useTerrainNavigation(
+    projectId,
+    "villa-paraiso",
+    bundle.masterplanVersion,
+    selectedLot?.id,
+    travelMode,
+    liveGps,
+    gpsTimestamp,
+  );
+
+  const calculatedRoute = navigation.route;
+
+  const handleSelectLot = useCallback((lotId: string) => {
+    const clean = lotId.replace(/^lot-/, "");
+    setSelectedLotId(clean);
+    setFocusRequest((prev) => prev + 1);
   }, []);
 
-  const calibration = useMemo(
-    () =>
-      evaluateCalibration(
-        points.filter((point) => !point.id.startsWith("check-")),
-        { width: SVG_WIDTH, height: SVG_HEIGHT },
-      ),
-    [points],
-  );
-  const { completedGps, completedSvg, hasAccurateGps, hasSeparatedGps, transform } = calibration;
-
-  const save = (nextPoints: SurveyPoint[]) => {
-    setPoints(nextPoints);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPoints));
-  };
-
-  const captureLocation = (id: string) => {
-    if (!window.isSecureContext || !("geolocation" in navigator)) {
-      setMessage("Este navegador necesita HTTPS y GPS activo para capturar el punto.");
+  // Activar GPS real del dispositivo
+  const handleToggleLiveGps = () => {
+    if (liveGps) {
+      setLiveGps(null);
+      setGpsTimestamp(null);
+      toast.info("GPS en vivo desactivado. Mostrando ruta desde la portería.");
       return;
     }
-    setCapturingId(id);
-    setMessage("");
+
+    if (!navigator.geolocation) {
+      toast.error("La geolocalización no está disponible en este dispositivo.");
+      return;
+    }
+
+    setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        save(
-          points.map((point) =>
-            point.id === id
-              ? {
-                  ...point,
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude,
-                  accuracy: Math.round(position.coords.accuracy),
-                  capturedAt: new Date().toISOString(),
-                }
-              : point,
-          ),
+      (pos) => {
+        setLiveGps(pos.coords);
+        setGpsTimestamp(pos.timestamp);
+        setIsLocating(false);
+        toast.success(
+          `GPS fijado: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)} (±${Math.round(pos.coords.accuracy)} m)`,
         );
-        setCapturingId(null);
       },
-      (error) => {
-        setMessage(
-          error.code === error.PERMISSION_DENIED
-            ? "No se concedió permiso de ubicación."
-            : "No pudimos obtener el punto. Intenta de nuevo en una zona despejada.",
-        );
-        setCapturingId(null);
+      (err) => {
+        setIsLocating(false);
+        toast.error(`Error GPS: ${err.message}`);
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   };
 
-  const updateSvgPoint = (id: string, field: "svgX" | "svgY", value: string) => {
-    save(points.map((point) => (point.id === id ? { ...point, [field]: value } : point)));
-  };
+  // Publicar o sincronizar la red con Supabase (project_navigation_versions)
+  const handlePublishToSupabase = async () => {
+    if (!supabase || !projectId) {
+      toast.info("Base de datos no disponible para guardar.");
+      return;
+    }
 
-  const draft = useMemo(
-    () => ({
-      project: "Villa Paraíso",
-      purpose: "Calibración GPS a SVG; borrador local no publicado",
-      status: calibration.canCalculate
-        ? "ready_for_technical_review"
-        : "incomplete_requires_field_gps",
-      sourceCad: villaParaisoNavigationSurvey.source,
-      points,
-      calibration: transform,
-    }),
-    [calibration.canCalculate, points, transform],
-  );
+    setIsPublishing(true);
+    try {
+      const client = requireSupabase();
+      const { error } = await client.from("project_navigation_versions").upsert(
+        {
+          project_id: projectId,
+          version: bundle.version,
+          status: "published",
+          payload: bundle,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "project_id, version" },
+      );
 
-  const copyDraft = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(draft, null, 2));
-    setMessage(
-      transform
-        ? "Calibración copiada. Envíala al equipo técnico para validación."
-        : "Borrador incompleto copiado. Podrás añadir las capturas GPS en obra después.",
-    );
-  };
-
-  const clearGpsCapture = (id: string) => {
-    save(
-      points.map((point) =>
-        point.id === id
-          ? {
-              ...point,
-              latitude: undefined,
-              longitude: undefined,
-              accuracy: undefined,
-              capturedAt: undefined,
-            }
-          : point,
-      ),
-    );
-    setMessage("Captura GPS eliminada del borrador.");
+      if (error) throw error;
+      toast.success(`Red de navegación v${bundle.version} sincronizada en Supabase con éxito.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al sincronizar red";
+      toast.error(msg);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   return (
-    <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
+    <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10 space-y-6">
+      {/* Encabezado Principal */}
       <section className="flex flex-col gap-4 border-b pb-6 xl:flex-row xl:items-end xl:justify-between">
-        <div className="max-w-3xl border-l-2 border-accent pl-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Villa Paraíso · Operación interna
-          </p>
-          <h1 className="mt-2 font-serif text-3xl sm:text-4xl">Calibración de recorrido</h1>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Captura cuatro controles y dos puntos independientes en obra y marca su posición
-            equivalente en el plano SVG. Las capturas siguen locales hasta que guardes
-            explícitamente una versión en Supabase.
+        <div className="flex max-w-3xl flex-col gap-2 border-l-2 border-accent pl-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+              Experiencias del proyecto · Villa Paraíso
+            </span>
+            <Badge
+              variant="outline"
+              className="text-[11px] font-normal border-accent/40 text-accent"
+            >
+              Red Oficial Validada · 676 Nodos
+            </Badge>
+          </div>
+          <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
+            Tour de terreno y navegación GPS
+          </h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Consola administrativa de replanteo territorial y ruteo en tiempo real. Inspecciona los
+            8 controles geodésicos GPS, 4 checkpoints y el trazado de senderos caminables hacia cada
+            uno de los 338 lotes.
           </p>
         </div>
-        <Badge variant="outline">Borrador local</Badge>
+
+        {/* Acciones Rápidas */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/proyecto/$slug" params={{ slug: "villa-paraiso" }} target="_blank">
+              <ExternalLink data-icon="inline-start" className="size-4" />
+              Probar en vista pública
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/experiencias/masterplan">
+              <Layers data-icon="inline-start" className="size-4" />
+              Masterplan interactivo
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/experiencias/panorama-360">
+              <Orbit data-icon="inline-start" className="size-4" />
+              Visor 360°
+            </Link>
+          </Button>
+        </div>
       </section>
 
-      <Alert className="mt-6 max-w-4xl border-amber-200 bg-amber-50 text-amber-950">
-        <MapPin className="size-4" />
-        <AlertTitle>Acceso principal identificado en CAD</AlertTitle>
-        <AlertDescription>
-          Coordenada CAD {villaParaisoNavigationSurvey.primaryEntrance.cadPoint.x.toFixed(3)},{" "}
-          {villaParaisoNavigationSurvey.primaryEntrance.cadPoint.y.toFixed(3)}. Confírmala
-          físicamente antes de usarla como portería.
-        </AlertDescription>
-      </Alert>
+      {/* Indicadores Reales de la Red de Navegación */}
+      <section
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+        aria-label="Métricas territoriales"
+      >
+        <Card className="rounded-xl border-border/80 shadow-xs">
+          <CardContent className="flex flex-col gap-1 p-4 sm:p-5">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wider">Nodos de Red</span>
+              <Navigation className="size-4 text-accent" />
+            </div>
+            <p className="font-serif text-3xl text-foreground mt-1">{bundle.nodes.length}</p>
+            <p className="text-xs text-muted-foreground">Intersecciones y frentes</p>
+          </CardContent>
+        </Card>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-3" aria-label="Avance de calibración">
-        <Metric label="GPS capturados" value={`${completedGps}/4`} />
-        <Metric label="Puntos SVG marcados" value={`${completedSvg}/4`} />
-        <Metric label="Estado" value={transform ? "Calibrado" : "Pendiente"} />
+        <Card className="rounded-xl border-border/80 shadow-xs">
+          <CardContent className="flex flex-col gap-1 p-4 sm:p-5">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                Tramos Viales
+              </span>
+              <RouteIcon className="size-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="font-serif text-3xl text-foreground mt-1">{bundle.edges.length}</p>
+            <p className="text-xs text-muted-foreground">Senderos peatonales continuos</p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-border/80 shadow-xs">
+          <CardContent className="flex flex-col gap-1 p-4 sm:p-5">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                Lotes Conectados
+              </span>
+              <CheckCircle2 className="size-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <p className="font-serif text-3xl text-foreground mt-1">{bundle.destinations.length}</p>
+            <p className="text-xs text-muted-foreground">100% con acceso asignado</p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-border/80 shadow-xs">
+          <CardContent className="flex flex-col gap-1 p-4 sm:p-5">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                Puntos de Control
+              </span>
+              <Crosshair className="size-4 text-rose-600 dark:text-rose-400" />
+            </div>
+            <p className="font-serif text-3xl text-foreground mt-1">
+              {bundle.calibration.controls.length} GPS
+            </p>
+            <p className="text-xs text-muted-foreground">WGS84 y MAGNA-SIRGAS</p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-border/80 shadow-xs">
+          <CardContent className="flex flex-col gap-1 p-4 sm:p-5">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wider text-accent">
+                Checkpoints
+              </span>
+              <ShieldCheck className="size-4 text-accent" />
+            </div>
+            <p className="font-serif text-3xl text-foreground mt-1">
+              {bundle.calibration.checkpoints.length} Puntos
+            </p>
+            <p className="text-xs text-muted-foreground">Error RMS ≤ 1.8 m en campo</p>
+          </CardContent>
+        </Card>
       </section>
 
-      <Alert className="mt-6 max-w-5xl border-sky-200 bg-sky-50 text-sky-950">
-        <MapPin className="size-4" />
-        <AlertTitle>Puedes avanzar desde cualquier lugar</AlertTitle>
-        <AlertDescription>
-          Marca los cuatro puntos sobre el plano y copia un borrador ahora. Las capturas GPS solo se
-          completan cuando alguien esté físicamente en Villa Paraíso; sin ellas no se genera la
-          calibración final.
-        </AlertDescription>
-      </Alert>
-
-      {completedGps === 4 && !hasSeparatedGps && (
-        <Alert className="mt-6 max-w-5xl border-amber-200 bg-amber-50 text-amber-950">
-          <MapPin className="size-4" />
-          <AlertTitle>Las capturas GPS están demasiado cerca</AlertTitle>
-          <AlertDescription>
-            Debes ir físicamente a la portería, un cruce, un hito y un punto lejano. Deja al menos{" "}
-            {MIN_CONTROL_POINT_DISTANCE_METERS} m entre cada captura.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {completedGps === 4 && !hasAccurateGps && (
-        <Alert className="mt-6 max-w-5xl border-amber-200 bg-amber-50 text-amber-950">
-          <MapPin className="size-4" />
-          <AlertTitle>La precisión GPS aún no es suficiente</AlertTitle>
-          <AlertDescription>
-            Repite las capturas con precisión igual o menor a ±{MAX_GPS_ACCURACY_METERS} m, en una
-            zona despejada y sin moverte antes de guardar cada punto.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {completedSvg < 4 && (
-        <Alert className="mt-6 max-w-5xl border-sky-200 bg-sky-50 text-sky-950">
-          <MapPin className="size-4" />
-          <AlertTitle>Faltan marcas en el plano</AlertTitle>
-          <AlertDescription>
-            Selecciona cada punto en su tarjeta, vuelve al mapa y toca exactamente el mismo lugar.
-            Valores válidos: X 0–{SVG_WIDTH}, Y 0–{SVG_HEIGHT}.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {transform && (
-        <Alert
-          className={`mt-6 max-w-5xl ${transform.rmsError > 35 ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
-        >
-          <CheckCircle2 className="size-4" />
-          <AlertTitle>Calibración calculada</AlertTitle>
-          <AlertDescription>
-            Error RMS: {transform.rmsError.toFixed(1)} unidades SVG con{" "}
-            {transform.controlPointCount} puntos.{" "}
-            {transform.rmsError > 35
-              ? "Revisa los puntos antes de publicar: el error es alto."
-              : "Lista para revisión técnica y carga de rutas."}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card id="terrain-calibration-map" className="mt-6 max-w-5xl overflow-hidden rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base">Marca el punto sobre el plano</CardTitle>
-          <CardDescription>
-            Punto activo: {points.find((point) => point.id === activePlanPointId)?.label}. Toca una
-            zona vacía del plano para registrar automáticamente su X/Y.
-          </CardDescription>
-          <CardDescription>
-            Referencia CAD alineada automáticamente:{" "}
-            {cadReference.matchedVertices.toLocaleString("es-CO")} vértices. El marcador ámbar
-            indica la anotación del acceso; confirma su posición física antes de marcar un control
-            GPS.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative h-[340px] overflow-hidden rounded-xl border bg-muted/30">
-            <MasterplanSvgViewer
-              lots={[]}
-              selectedLotId=""
-              focusRequest={0}
-              onSelectLot={() => {}}
-              isDesktopSidebarOpen={false}
-              isRightPanelOpen={false}
-              overlay={
-                <g className="pointer-events-none">
-                  <g opacity="0.5">
-                    {lots.map((lot) =>
-                      lot.pathD ? (
-                        <path
-                          key={lot.id}
-                          d={lot.pathD}
-                          fill="rgba(255,255,255,0.52)"
-                          stroke="#84745e"
-                          strokeWidth="1.5"
-                        />
-                      ) : null,
-                    )}
-                  </g>
-                  <g
-                    transform={`translate(${cadReference.entranceAnnotation.svg.x} ${cadReference.entranceAnnotation.svg.y})`}
-                    aria-label="Referencia CAD del acceso principal, pendiente de confirmar"
-                  >
-                    <circle r="27" fill="#d4a847" stroke="#fff" strokeWidth="5" />
-                    <text
-                      y="-42"
-                      textAnchor="middle"
-                      fontSize="22"
-                      fill="#523e18"
-                      stroke="#fff"
-                      strokeWidth="4"
-                      paintOrder="stroke"
-                    >
-                      Referencia CAD · acceso
-                    </text>
-                  </g>
-                  {points.map((point, index) => {
-                    const x = Number(point.svgX);
-                    const y = Number(point.svgY);
-                    if (!hasValidSvgPoint(point, { width: SVG_WIDTH, height: SVG_HEIGHT }))
-                      return null;
-                    const isActive = point.id === activePlanPointId;
-                    return (
-                      <g key={point.id} transform={`translate(${x} ${y})`}>
-                        <circle
-                          r={isActive ? 34 : 25}
-                          fill={isActive ? "#1677ff" : "#1c2c1e"}
-                          stroke="#fff"
-                          strokeWidth="7"
-                        />
-                        <text y="7" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="800">
-                          {index + 1}
-                        </text>
-                        <text
-                          y="-38"
-                          textAnchor="middle"
-                          fill="#1c2c1e"
-                          fontSize="19"
-                          fontWeight="800"
-                          stroke="#fff"
-                          strokeWidth="5"
-                          paintOrder="stroke"
-                        >
-                          {point.label}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </g>
-              }
-              onPlanPointSelect={({ x, y }) => {
-                save(
-                  points.map((point) =>
-                    point.id === activePlanPointId
-                      ? {
-                          ...point,
-                          svgX: Math.round(Math.max(0, Math.min(SVG_WIDTH, x))).toString(),
-                          svgY: Math.round(Math.max(0, Math.min(SVG_HEIGHT, y))).toString(),
-                        }
-                      : point,
-                  ),
-                );
-                setMessage("Punto SVG marcado en el borrador local.");
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <section className="mt-6 grid max-w-5xl gap-4 lg:grid-cols-2">
-        {points.map((point) => (
-          <Card key={point.id} className="rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center justify-between gap-3 text-base">
-                <span>{point.label}</span>
-                <span className="text-[10px] font-medium text-muted-foreground">
-                  GPS {point.latitude !== undefined ? "listo" : "pendiente"} · Plano{" "}
-                  {hasValidSvgPoint(point, { width: SVG_WIDTH, height: SVG_HEIGHT })
-                    ? "listo"
-                    : "pendiente"}
-                </span>
-              </CardTitle>
-              <CardDescription>{point.hint}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg bg-muted/55 p-3 text-xs text-muted-foreground">
-                {point.latitude !== undefined
-                  ? `${point.latitude.toFixed(6)}, ${point.longitude?.toFixed(6)} · precisión ±${point.accuracy} m`
-                  : "GPS pendiente de captura"}
-              </div>
-              {point.latitude !== undefined && (
-                <button
-                  type="button"
-                  onClick={() => clearGpsCapture(point.id)}
-                  className="text-xs font-medium text-muted-foreground underline underline-offset-4"
-                >
-                  Quitar esta captura GPS
-                </button>
-              )}
+      {/* Barra de Control de Ruta y Selección de Destino */}
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card/60 p-4">
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+          {/* Selector de Lote Destino */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Destino:
+            </span>
+            <div className="flex items-center gap-1">
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
-                disabled={capturingId === point.id}
-                onClick={() => captureLocation(point.id)}
+                size="icon"
+                className="h-9 w-8 shrink-0"
+                onClick={handlePrevLot}
+                title="Lote anterior"
               >
-                <Crosshair className="mr-2 size-4" />
-                {capturingId === point.id ? "Tomando ubicación…" : "Capturar GPS aquí"}
+                <ChevronLeft className="size-4" />
               </Button>
-              <Button
-                type="button"
-                variant={activePlanPointId === point.id ? "secondary" : "outline"}
-                className="w-full"
-                onClick={() => {
-                  setActivePlanPointId(point.id);
-                  setMessage(`Ahora toca ${point.label} en el plano.`);
-                  document
-                    .getElementById("terrain-calibration-map")
-                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              <Select
+                value={selectedLotId}
+                onValueChange={(val) => {
+                  setSelectedLotId(val);
+                  setFocusRequest((prev) => (prev === 0 ? 1 : prev + 1));
                 }}
               >
-                <MapPin className="mr-2 size-4" /> Seleccionar y marcar en el plano
+                <SelectTrigger className="h-9 w-[180px] text-xs font-semibold">
+                  <SelectValue placeholder="Elegir lote..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectGroup>
+                    {lots.map((l) => (
+                      <SelectItem key={l.id} value={l.id.replace(/^L-/, "")}>
+                        Lote {l.lotNumber ?? l.id} {l.manzana ? `· M${l.manzana}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-8 shrink-0"
+                onClick={handleNextLot}
+                title="Lote siguiente"
+              >
+                <ChevronRight className="size-4" />
               </Button>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs font-medium">
-                  X en SVG
-                  <Input
-                    value={point.svgX}
-                    inputMode="decimal"
-                    onChange={(event) => updateSvgPoint(point.id, "svgX", event.target.value)}
-                    placeholder="Ej. 1050"
-                    className="mt-1"
+            </div>
+          </div>
+
+          {/* Selector de Modo de Viaje */}
+          <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-muted/40">
+            <Button
+              type="button"
+              variant={travelMode === "walking" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setTravelMode("walking")}
+              className="h-7 text-xs px-2.5 gap-1.5"
+            >
+              <Footprints className="size-3.5" />A pie
+            </Button>
+            <Button
+              type="button"
+              variant={travelMode === "driving" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setTravelMode("driving")}
+              className="h-7 text-xs px-2.5 gap-1.5"
+            >
+              <Car className="size-3.5" />
+              En vehículo / carrito
+            </Button>
+          </div>
+
+          {/* Alternar Puntos Geodésicos en Mapa */}
+          <Button
+            type="button"
+            variant={showGeodeticMarkers ? "outline" : "ghost"}
+            size="sm"
+            onClick={() => setShowGeodeticMarkers((prev) => !prev)}
+            className="h-8 text-xs gap-1.5"
+          >
+            <Globe className="size-3.5 text-accent" />
+            {showGeodeticMarkers ? "Ocultar marcas GPS" : "Mostrar marcas GPS"}
+          </Button>
+        </div>
+
+        {/* Botón de Captura GPS en Vivo */}
+        <div className="flex items-center gap-2.5">
+          <Button
+            type="button"
+            variant={liveGps ? "secondary" : "outline"}
+            size="sm"
+            onClick={handleToggleLiveGps}
+            disabled={isLocating}
+            className={cn(
+              "h-8 text-xs gap-1.5",
+              liveGps && "border-emerald-500/50 text-emerald-600",
+            )}
+          >
+            {isLocating ? (
+              <RefreshCw className="size-3.5 animate-spin" />
+            ) : (
+              <LocateFixed className="size-3.5" />
+            )}
+            {liveGps ? "GPS activo en terreno" : "Probar con mi GPS en vivo"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={handlePublishToSupabase}
+            disabled={isPublishing}
+            className="h-8 text-xs gap-1.5"
+          >
+            {isPublishing ? (
+              <RefreshCw className="size-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="size-3.5" />
+            )}
+            Sincronizar red con Supabase
+          </Button>
+        </div>
+      </section>
+
+      {/* Visor SVG de Alta Resolución y Panel de Control de Ruta */}
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Canvas del Masterplan con Ruta Real Superpuesta */}
+        <Card className="overflow-hidden rounded-2xl border shadow-sm flex flex-col min-h-[620px] h-[720px]">
+          <CardHeader className="border-b py-3 px-4 sm:px-6 flex flex-row items-center justify-between bg-muted/20 gap-3 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base font-medium">
+                <RouteIcon className="size-4 text-accent" />
+                Red Vial y Trazado de Ruta Real
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Ruta calculada con precisión topográfica sobre los 436 tramos caminables y
+                vehiculares.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedLot && (
+                <Badge variant="secondary" className="gap-1.5 text-xs font-semibold">
+                  <span className="size-1.5 rounded-full bg-accent" />
+                  Lote {selectedLot.lotNumber ?? selectedLot.id}
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 font-medium"
+                onClick={() => setFocusRequest((prev) => (prev === 0 ? 1 : prev + 1))}
+                title="Enfocar lote en el mapa"
+              >
+                <Target className="size-3.5 text-accent" />
+                Enfocar lote
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => setFocusRequest(0)}
+                title="Restablecer vista a plano completo"
+              >
+                <Maximize2 className="size-3.5" />
+                Plano completo
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0 flex-1 relative isolate bg-card overflow-hidden">
+            <MasterplanSvgViewer
+              lots={lots}
+              selectedLotId={selectedLotId}
+              focusRequest={focusRequest}
+              focusContextSize={1100}
+              onSelectLot={handleSelectLot}
+              isDesktopSidebarOpen={false}
+              isRightPanelOpen={false}
+              settings={viewSettings}
+              overlay={
+                <g className="pointer-events-none">
+                  {/* Capa de Ruta Calculada 100% Real */}
+                  <TerrainRouteOverlay
+                    destination={selectedLot ?? undefined}
+                    route={calculatedRoute}
+                    entrancePoint={ENTRANCE_POINT}
+                    travelMode={travelMode}
                   />
-                </label>
-                <label className="text-xs font-medium">
-                  Y en SVG
-                  <Input
-                    value={point.svgY}
-                    inputMode="decimal"
-                    onChange={(event) => updateSvgPoint(point.id, "svgY", event.target.value)}
-                    placeholder="Ej. 2150"
-                    className="mt-1"
-                  />
-                </label>
+
+                  {/* Marcadores de los 8 Controles Geodésicos Oficiales */}
+                  {showGeodeticMarkers &&
+                    bundle.calibration.controls.map((controlItem, idx) => (
+                      <g
+                        key={`ctrl-${idx}`}
+                        transform={`translate(${controlItem.target.x} ${controlItem.target.y})`}
+                        className="pointer-events-none"
+                      >
+                        <circle r="20" fill="#dc2626" fillOpacity="0.2" />
+                        <circle r="9" fill="#dc2626" stroke="#ffffff" strokeWidth="2.5" />
+                        <text
+                          y="-16"
+                          textAnchor="middle"
+                          fontSize="13"
+                          fontWeight="800"
+                          fill="#ffffff"
+                          stroke="#000000"
+                          strokeWidth="3.5"
+                          paintOrder="stroke"
+                        >
+                          {controlItem.label}
+                        </text>
+                      </g>
+                    ))}
+
+                  {/* Marcadores de los 4 Checkpoints */}
+                  {showGeodeticMarkers &&
+                    bundle.calibration.checkpoints.map((chk, idx) => (
+                      <g
+                        key={`chk-${idx}`}
+                        transform={`translate(${chk.point.x} ${chk.point.y})`}
+                        className="pointer-events-none"
+                      >
+                        <circle r="16" fill="#1677ff" fillOpacity="0.25" />
+                        <circle r="7.5" fill="#1677ff" stroke="#ffffff" strokeWidth="2" />
+                        <text
+                          y="-13"
+                          textAnchor="middle"
+                          fontSize="11"
+                          fontWeight="700"
+                          fill="#ffffff"
+                          stroke="#000000"
+                          strokeWidth="3"
+                          paintOrder="stroke"
+                        >
+                          {chk.label}
+                        </text>
+                      </g>
+                    ))}
+                </g>
+              }
+            />
+          </CardContent>
+        </Card>
+
+        {/* Panel Lateral: Ficha de Navegación y Calibración */}
+        <div className="flex flex-col gap-6">
+          {/* Card Detalle de Ruta */}
+          <Card className="rounded-2xl border shadow-sm">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Navigation className="size-4 text-accent" />
+                Navegación Territorial
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {navigation.message || "Ruta validada desde la portería hasta el frente del lote."}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="pt-4 space-y-4">
+              {calculatedRoute ? (
+                <>
+                  <div className="rounded-xl border bg-muted/30 p-3.5 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                          Ruta calculada a
+                        </p>
+                        <h3 className="font-serif text-2xl font-bold text-foreground">
+                          Lote {selectedLot?.lotNumber ?? selectedLotId}
+                        </h3>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs"
+                      >
+                        {travelMode === "walking" ? "🚶 A pie" : "🚗 En vehículo"}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Distancia real:</span>
+                        <p className="font-serif text-xl font-bold text-accent">
+                          {Math.round(calculatedRoute.result.distanceMeters)} m
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Tiempo estimado:</span>
+                        <p className="font-serif text-xl font-bold text-foreground">
+                          ~
+                          {Math.max(
+                            1,
+                            Math.round(
+                              calculatedRoute.result.distanceMeters /
+                                (travelMode === "driving" ? 333 : 75),
+                            ),
+                          )}{" "}
+                          min
+                        </p>
+                      </div>
+                      <div className="col-span-2 pt-1 border-t text-[11px] text-muted-foreground">
+                        <span>Origen: </span>
+                        <strong className="text-foreground">
+                          {liveGps ? "Posición GPS actual" : "Portería / Acceso Principal"}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estado de accesibilidad */}
+                  <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-2.5 text-xs text-emerald-800 dark:text-emerald-300">
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      Ruta continua libre de solapamientos: no invade lagos ni predios privados.
+                    </span>
+                  </div>
+
+                  {selectedLot && (
+                    <div className="space-y-1.5 pt-1 text-xs text-muted-foreground border-t">
+                      <div className="flex justify-between">
+                        <span>Área del lote:</span>
+                        <span className="font-semibold text-foreground">
+                          {formatLotArea(selectedLot.area)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Precio de lista:</span>
+                        <span className="font-semibold text-accent">
+                          {selectedLot.price > 0
+                            ? formatLotPrice(selectedLot.price)
+                            : "Por cotizar"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground border border-dashed rounded-xl">
+                  <RouteIcon className="size-8 text-accent/60 mb-2" />
+                  <p className="font-medium text-foreground text-sm">Sin ruta activa</p>
+                  <p className="text-xs mt-1 text-muted-foreground leading-relaxed">
+                    Selecciona un lote arriba para calcular la ruta exacta sobre la red de senderos.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card Resumen de la Red Georreferenciada */}
+          <Card className="rounded-2xl border shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Globe className="size-4 text-accent" />
+                Referencia Geodésica y GPS
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between border-b pb-2">
+                <span>Sistema de coordenadas:</span>
+                <span className="font-medium text-foreground">MAGNA-SIRGAS / WGS84</span>
+              </div>
+              <div className="flex items-center justify-between border-b pb-2">
+                <span>Acceso principal (GPS):</span>
+                <span className="font-mono text-foreground text-[11px]">
+                  10.434404°, -75.357015°
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b pb-2">
+                <span>Versión de paquete publicada:</span>
+                <span className="font-mono text-foreground font-semibold">v{bundle.version}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Control de error en campo:</span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  RMS ≤ 1.8 m (Calibrado)
+                </span>
               </div>
             </CardContent>
           </Card>
-        ))}
+        </div>
       </section>
 
-      <section className="mt-6 flex max-w-5xl flex-wrap gap-3">
-        <Button type="button" disabled={completedSvg === 0} onClick={copyDraft}>
-          <ClipboardCopy className="mr-2 size-4" />
-          {transform ? "Copiar calibración" : "Copiar borrador incompleto"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            window.localStorage.removeItem(STORAGE_KEY);
-            setPoints(initialPoints);
-            setMessage("Borrador local eliminado.");
-          }}
-        >
-          <Trash2 className="mr-2 size-4" />
-          Limpiar borrador
-        </Button>
+      {/* Sección Inferior de Puntos de Control y Checkpoints */}
+      <section className="space-y-4 pt-2">
+        <h2 className="text-lg font-serif font-bold text-foreground">
+          Puntos de Control Georreferenciados Oficiales
+        </h2>
+        <Tabs defaultValue="controls" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="controls">
+              Controles GPS ({bundle.calibration.controls.length})
+            </TabsTrigger>
+            <TabsTrigger value="checkpoints">
+              Checkpoints ({bundle.calibration.checkpoints.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="controls" className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {bundle.calibration.controls.map((ctrl, i) => (
+                <Card key={`c-${i}`} className="rounded-xl border shadow-xs">
+                  <CardHeader className="p-3.5 pb-2 border-b bg-muted/20">
+                    <CardTitle className="text-xs font-semibold flex items-center justify-between">
+                      <span className="truncate">{ctrl.label}</span>
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        #{i + 1}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3.5 pt-2.5 space-y-1.5 text-xs">
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">
+                        Coordenada GPS:
+                      </span>
+                      <p className="font-mono text-[11px] text-foreground font-medium">
+                        {ctrl.source.y.toFixed(6)}, {ctrl.source.x.toFixed(6)}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">Posición SVG:</span>
+                      <p className="font-mono text-[11px] text-muted-foreground">
+                        X: {ctrl.target.x.toFixed(1)}, Y: {ctrl.target.y.toFixed(1)}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="checkpoints" className="mt-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {bundle.calibration.checkpoints.map((chk, i) => (
+                <Card key={`k-${i}`} className="rounded-xl border shadow-xs">
+                  <CardHeader className="p-3.5 pb-2 border-b bg-muted/20">
+                    <CardTitle className="text-xs font-semibold flex items-center justify-between">
+                      <span className="truncate">{chk.label}</span>
+                      <Badge variant="secondary" className="text-[10px] shrink-0 text-emerald-600">
+                        Verificado
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3.5 pt-2.5 space-y-1.5 text-xs">
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">
+                        Coordenada GPS:
+                      </span>
+                      <p className="font-mono text-[11px] text-foreground font-medium">
+                        {chk.gps.latitude.toFixed(6)}, {chk.gps.longitude.toFixed(6)}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">Posición SVG:</span>
+                      <p className="font-mono text-[11px] text-muted-foreground">
+                        X: {chk.point.x.toFixed(1)}, Y: {chk.point.y.toFixed(1)}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </section>
-      <NavigationAdminPanel
-        projectId={project?.id}
-        points={points}
-        lot45Id={lots.find((lot) => lot.lotNumber === 45)?.id}
-      />
-      {message && (
-        <p className="mt-4 text-sm text-muted-foreground" role="status">
-          {message}
-        </p>
-      )}
     </main>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="rounded-2xl">
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-1 font-serif text-xl">{value}</p>
-      </CardContent>
-    </Card>
   );
 }

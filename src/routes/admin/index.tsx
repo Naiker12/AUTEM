@@ -80,8 +80,8 @@ const spaceStatusConfig = {
 const moduleRows = [
   {
     area: "Contenido público",
-    detail: "Portada, presentación, servicios, proceso, contacto y nosotros.",
-    modules: 9,
+    detail: "Portada, presentación, servicios, áreas de trabajo, contacto y nosotros.",
+    modules: 8,
     status: "Mapeado",
   },
   {

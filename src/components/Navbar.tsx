@@ -20,7 +20,6 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: "nosotros", href: `${import.meta.env.BASE_URL}nosotros`, label: "NOSOTROS", page: true },
-  { id: "design-process", href: `${import.meta.env.BASE_URL}#design-process`, label: "PROCESO" },
   { id: "proyectos", href: `${import.meta.env.BASE_URL}#proyectos`, label: "PROYECTOS" },
   { id: "servicios", href: `${import.meta.env.BASE_URL}#servicios`, label: "SERVICIOS" },
 ];
@@ -51,7 +50,7 @@ export default function Navbar({ variant }: NavbarProps) {
       return;
     }
 
-    const sectionIds = ["about", "proyectos", "servicios", "design-process", "contacto"];
+    const sectionIds = ["about", "proyectos", "servicios", "contacto"];
 
     const scrollPosition = window.scrollY + 220;
 

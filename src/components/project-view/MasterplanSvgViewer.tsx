@@ -130,7 +130,9 @@ export default function MasterplanSvgViewer({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const isDraggingRef = useRef(false);
   const cachedContainerRectRef = useRef<DOMRect | null>(null);
-  const isTouchDeviceRef = useRef(false);
+  const isTouchDeviceRef = useRef(
+    typeof window !== "undefined" ? window.matchMedia("(pointer: coarse)").matches : false,
+  );
   const rafPendingRef = useRef(false);
   const latestTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
   const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
@@ -199,7 +201,7 @@ export default function MasterplanSvgViewer({
               fill={isDark ? "#181614" : "#6f7f56"}
               stroke={isDark ? "#383229" : "#4a5638"}
               strokeWidth={3.5}
-              className="pointer-events-none transition-colors duration-500"
+              className="pointer-events-none"
             />
           ))}
         </g>
@@ -213,7 +215,7 @@ export default function MasterplanSvgViewer({
               fill={isDark ? "#12281a" : "#5d7a44"}
               stroke={isDark ? "#1d472c" : "#3f5a2e"}
               strokeWidth={1.8}
-              className="pointer-events-none transition-colors duration-500"
+              className="pointer-events-none"
             />
           ))}
         </g>
@@ -227,7 +229,7 @@ export default function MasterplanSvgViewer({
               fill="none"
               stroke={isDark ? "#3d352b" : "#6b6862"}
               strokeWidth={2.5}
-              className="pointer-events-none transition-colors duration-500"
+              className="pointer-events-none"
             />
           ))}
 
@@ -240,7 +242,7 @@ export default function MasterplanSvgViewer({
                   fill={isDark ? "#1f1b17" : "#8c8a84"}
                   stroke={isDark ? "#383129" : "#5f5c56"}
                   strokeWidth={1.5}
-                  className="pointer-events-none transition-colors duration-500"
+                  className="pointer-events-none"
                 />
               ))
             : layersData.calzadas.map((d, i) => (
@@ -250,7 +252,7 @@ export default function MasterplanSvgViewer({
                   fill="none"
                   stroke={isDark ? "#332c24" : "#8f7e65"}
                   strokeWidth={2}
-                  className="pointer-events-none transition-colors duration-500"
+                  className="pointer-events-none"
                 />
               ))}
 
@@ -264,7 +266,7 @@ export default function MasterplanSvgViewer({
                 fill="none"
                 stroke={isDark ? "#383129" : "#5f5c56"}
                 strokeWidth={1.8}
-                className="pointer-events-none transition-colors duration-500"
+                className="pointer-events-none"
               />
             ))}
 
@@ -277,7 +279,7 @@ export default function MasterplanSvgViewer({
               stroke={isDark ? "#c5a059" : "#8a7a63"}
               strokeWidth={2.2}
               strokeDasharray="6 4"
-              className="pointer-events-none transition-colors duration-500"
+              className="pointer-events-none"
             />
           ))}
         </g>
@@ -293,7 +295,7 @@ export default function MasterplanSvgViewer({
                   fill={item.closed ? (isDark ? "#28231c" : "#ebdcc3") : "none"}
                   stroke={isDark ? "#4d4032" : "#8d795b"}
                   strokeWidth={1.5}
-                  className="pointer-events-none transition-colors duration-500"
+                  className="pointer-events-none"
                 />
               ),
             )}
@@ -537,7 +539,7 @@ export default function MasterplanSvgViewer({
                   fill={isDark ? "#0c2438" : "#4f86b0"}
                   stroke={isDark ? "#174668" : "#2f5f86"}
                   strokeWidth={2.2}
-                  className="pointer-events-none transition-colors duration-500"
+                  className="pointer-events-none"
                 />
               ))}
               {/* Islas dentro de los lagos (M 28 y M 29 del plano oficial) */}
@@ -550,7 +552,7 @@ export default function MasterplanSvgViewer({
                     fill={isDark ? "#1a2e1f" : "#7d9a5c"}
                     stroke={isDark ? "#2c4a33" : "#4a6236"}
                     strokeWidth={1.8}
-                    className="pointer-events-none transition-colors duration-500"
+                    className="pointer-events-none"
                   />
                 ))}
             </g>
@@ -711,8 +713,7 @@ export default function MasterplanSvgViewer({
         };
         transformRef.current = { scale: nextScale, offset: nextOffset };
         if (viewportGroupRef.current) {
-          viewportGroupRef.current.style.transition =
-            "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)";
+          viewportGroupRef.current.style.transition = "transform 0.1s ease-out";
           viewportGroupRef.current.style.transform = `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${nextScale})`;
         }
         return nextOffset;
@@ -1053,14 +1054,13 @@ export default function MasterplanSvgViewer({
       transformRef.current = { scale: nextScale, offset: nextOffset };
       latestTransformRef.current = { x: nextOffset.x, y: nextOffset.y, scale: nextScale };
 
-      if (!rafPendingRef.current) {
-        rafPendingRef.current = true;
-        requestAnimationFrame(applyPendingTransform);
+      if (viewportGroupRef.current) {
+        viewportGroupRef.current.style.transform = `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${nextScale})`;
       }
       return;
     }
 
-    // Arrastre simple (pan) optimizado en RAF directamente en GPU mediante CSS translate3d
+    // Arrastre simple (pan) ultra rápido y directo en GPU mediante CSS translate3d (0 latencia)
     if (dragRef.current && pointersMapRef.current.size === 1) {
       const dx = event.clientX - dragRef.current.startX;
       const dy = event.clientY - dragRef.current.startY;
@@ -1077,9 +1077,8 @@ export default function MasterplanSvgViewer({
         scale: transformRef.current.scale,
       };
 
-      if (!rafPendingRef.current) {
-        rafPendingRef.current = true;
-        requestAnimationFrame(applyPendingTransform);
+      if (viewportGroupRef.current) {
+        viewportGroupRef.current.style.transform = `translate3d(${nextOffset.x}px, ${nextOffset.y}px, 0) scale(${transformRef.current.scale})`;
       }
     }
   };
@@ -1169,7 +1168,7 @@ export default function MasterplanSvgViewer({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 overflow-hidden touch-none select-none transition-colors duration-500 ${
+      className={`absolute inset-0 overflow-hidden touch-none select-none ${
         transparentCanvas
           ? "bg-transparent"
           : isDark
@@ -1196,14 +1195,25 @@ export default function MasterplanSvgViewer({
           style={{
             transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
             transformOrigin: "0 0",
-            transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
             willChange: "transform",
           }}
           className="pointer-events-auto"
+          onTransitionEnd={() => {
+            if (viewportGroupRef.current) {
+              viewportGroupRef.current.style.transition = "none";
+            }
+          }}
         >
           {/* Capas 1, 2 y 3: Linderos, Zonas Verdes y Red Vial (Memorizadas para rendimiento nativo) */}
           <g transform={`rotate(${rotation} ${SVG_WIDTH / 2} ${SVG_HEIGHT / 2})`}>
-            <g style={{ filter: `brightness(${1 - (settings?.mapShade ?? 0) / 100})` }}>
+            <g
+              style={{
+                filter:
+                  (settings?.mapShade ?? 0) > 0
+                    ? `brightness(${1 - (settings?.mapShade ?? 0) / 100})`
+                    : undefined,
+              }}
+            >
               {staticBackgroundElements}
             </g>
 
@@ -1221,7 +1231,7 @@ export default function MasterplanSvgViewer({
                   fontSize={scale < 1 ? 32 : 24}
                   fontWeight={900}
                   fontFamily="system-ui, -apple-system, sans-serif"
-                  className="transition-colors duration-500"
+                  className=""
                 >
                   {m.name}
                 </text>
@@ -1269,7 +1279,6 @@ export default function MasterplanSvgViewer({
                       strokeWidth={isHovered ? 1.8 : 1.15}
                       opacity={1}
                       style={{
-                        transition: "fill 0.15s ease, stroke 0.15s ease",
                         cursor: "pointer",
                       }}
                       onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}
@@ -1328,7 +1337,6 @@ export default function MasterplanSvgViewer({
                       isSelected ? Math.max(0.1, (settings?.selectionOpacity ?? 100) / 100) : 1
                     }
                     style={{
-                      transition: "fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease",
                       cursor: "pointer",
                     }}
                     onPointerEnter={(e) => handleLotPointerEnter(e, lot.id)}

@@ -94,8 +94,10 @@ function ProjectView() {
   }, []);
 
   useEffect(() => {
-    setIsPanelOpen(!isMobile && mode === "lot");
-  }, [isMobile, mode]);
+    if (mode !== "lot") {
+      setIsPanelOpen(false);
+    }
+  }, [mode]);
 
   const galleryImages = useMemo(() => {
     const list =
@@ -113,16 +115,22 @@ function ProjectView() {
     setGalleryIndex(0);
   }, [slug]);
 
-  // Precargar todas las imágenes de la galería en segundo plano para transiciones instantáneas sin parpadeo
+  // Precargar imágenes de la galería de forma diferida para no saturar el CPU/red del móvil al abrir el plano
   useEffect(() => {
     if (galleryImages.length <= 1) return;
-    for (const url of galleryImages) {
-      if (!url) continue;
-      const img = new Image();
-      img.decoding = "async";
-      img.src = url;
-    }
-  }, [galleryImages]);
+    const timer = window.setTimeout(
+      () => {
+        for (const url of galleryImages) {
+          if (!url) continue;
+          const img = new Image();
+          img.decoding = "async";
+          img.src = url;
+        }
+      },
+      mode === "gallery" ? 0 : 2500,
+    );
+    return () => window.clearTimeout(timer);
+  }, [galleryImages, mode]);
 
   // Navegación por teclado (← / → / Inicio / Fin) en modo "Conoce el proyecto" (gallery)
   useEffect(() => {
@@ -299,13 +307,10 @@ function ProjectView() {
     [isMobile, mode],
   );
 
-  const handleModeChange = useCallback(
-    (nextMode: ViewMode) => {
-      setMode(nextMode);
-      setIsPanelOpen((prev) => (nextMode === "lot" ? prev || !isMobile : false));
-    },
-    [isMobile],
-  );
+  const handleModeChange = useCallback((nextMode: ViewMode) => {
+    setMode(nextMode);
+    setIsPanelOpen(false);
+  }, []);
   const handleView3D = useCallback(() => handleModeChange("perspective"), [handleModeChange]);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
 
@@ -386,7 +391,7 @@ function ProjectView() {
         projectLocation={property.location}
         onFinish={finishIntro}
         variant={property.id === "lotes-360" ? "dark-compact" : "default"}
-        minDuration={property.id === "lotes-360" ? 2000 : 650}
+        minDuration={property.id === "lotes-360" ? 450 : 350}
       />
 
       {/* Header fijo e intacto al 100% de ancho de la pantalla, sin encogerse ni moverse */}
@@ -435,7 +440,10 @@ function ProjectView() {
                 <div className="flex items-center gap-0.5 sm:gap-1 rounded-full border border-border/80 bg-background/90 p-0.5 sm:p-1 shadow-lg backdrop-blur-xl">
                   <button
                     type="button"
-                    onClick={() => setMapLayer("vector")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMapLayer("vector");
+                    }}
                     className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                       mapLayer === "vector"
                         ? "bg-accent text-accent-foreground shadow-sm"
@@ -446,7 +454,10 @@ function ProjectView() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMapLayer("satellite")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMapLayer("satellite");
+                    }}
                     className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                       mapLayer === "satellite"
                         ? "bg-accent text-accent-foreground shadow-sm"
