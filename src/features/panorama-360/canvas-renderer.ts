@@ -48,10 +48,14 @@ interface LandmarkPin {
 }
 
 const LANDMARKS: LandmarkPin[] = [
-  { title: "Lago Principal", vec3: sphericalToVec3(22 * DEG_TO_RAD, -40 * DEG_TO_RAD) },
-  { title: "Lago Oriental", vec3: sphericalToVec3(-16 * DEG_TO_RAD, -48 * DEG_TO_RAD) },
+  { title: "Lago Principal", vec3: sphericalToVec3(21 * DEG_TO_RAD, -40.5 * DEG_TO_RAD) },
+  { title: "Portería / Acceso", vec3: sphericalToVec3(16.4 * DEG_TO_RAD, -30 * DEG_TO_RAD) },
+  {
+    title: "Canchas de Tenis / Club",
+    vec3: sphericalToVec3(11.7 * DEG_TO_RAD, -32.6 * DEG_TO_RAD),
+  },
+  { title: "Ronda del Río / Arroyo", vec3: sphericalToVec3(53 * DEG_TO_RAD, -34 * DEG_TO_RAD) },
   { title: "Reserva Norte", vec3: sphericalToVec3(-115 * DEG_TO_RAD, -32 * DEG_TO_RAD) },
-  { title: "Acceso", vec3: sphericalToVec3(48 * DEG_TO_RAD, -29 * DEG_TO_RAD) },
 ];
 
 export function sphericalToVec3(yaw: number, pitch: number): Vec3 {
@@ -291,102 +295,99 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
 
-  // 1. Render water and road context layers (matching Recorrido de Terreno / ProjectLocationMap)
+  // 1. Render water (rivers and lakes) and road context layers (matching Recorrido de Terreno)
   if (contextLayers) {
-    const pathWater = new Path2D();
+    const pathWaterStroke = new Path2D();
+    const pathWaterFill = new Path2D();
     let hasWater = false;
+
     for (let wIdx = 0; wIdx < contextLayers.water3D.length; wIdx++) {
       const ring = contextLayers.water3D[wIdx];
-      const pts: [number, number][] = [];
-      let minX = Infinity,
-        maxX = -Infinity,
-        minY = Infinity,
-        maxY = -Infinity;
-      let behind = false;
-      for (let v = 0; v < ring.length; v++) {
-        const pt = ring[v];
+      let inStroke = false;
+      let firstX = 0;
+      let firstY = 0;
+      let segPts = 0;
+
+      for (let v = 0; v <= ring.length; v++) {
+        const pt = ring[v % ring.length];
         const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
-        if (w <= 0.15) {
-          behind = true;
-          break;
+        if (w <= 0.12) {
+          inStroke = false;
+          continue;
         }
         const invW = 1 / w;
         const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
         const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
-        pts.push([sx, sy]);
-        if (sx < minX) minX = sx;
-        if (sx > maxX) maxX = sx;
-        if (sy < minY) minY = sy;
-        if (sy > maxY) maxY = sy;
+
+        if (sx < -width * 0.25 || sx > width * 1.25 || sy < -height * 0.25 || sy > height * 1.25) {
+          inStroke = false;
+          continue;
+        }
+
+        if (!inStroke) {
+          pathWaterStroke.moveTo(sx, sy);
+          if (segPts === 0) {
+            firstX = sx;
+            firstY = sy;
+            pathWaterFill.moveTo(sx, sy);
+          }
+          inStroke = true;
+        } else {
+          pathWaterStroke.lineTo(sx, sy);
+          pathWaterFill.lineTo(sx, sy);
+          hasWater = true;
+        }
+        segPts++;
       }
-      if (
-        !behind &&
-        pts.length >= 3 &&
-        maxX >= 0 &&
-        minX <= width &&
-        maxY >= 0 &&
-        minY <= height &&
-        maxX - minX < width * 1.4
-      ) {
-        hasWater = true;
-        pathWater.moveTo(pts[0][0], pts[0][1]);
-        for (let v = 1; v < pts.length; v++) pathWater.lineTo(pts[v][0], pts[v][1]);
-        pathWater.closePath();
+      if (segPts > 2) {
+        pathWaterFill.lineTo(firstX, firstY);
       }
     }
+
     if (hasWater) {
-      ctx.fillStyle = "rgba(2, 132, 199, 0.22)";
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.82)";
-      ctx.lineWidth = 1.5;
-      ctx.fill(pathWater);
-      ctx.stroke(pathWater);
+      ctx.fillStyle = "rgba(2, 132, 199, 0.20)";
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.88)";
+      ctx.lineWidth = 1.6;
+      ctx.fill(pathWaterFill);
+      ctx.stroke(pathWaterStroke);
     }
 
     const pathRoads = new Path2D();
     let hasRoads = false;
     for (let rIdx = 0; rIdx < contextLayers.roads3D.length; rIdx++) {
       const ring = contextLayers.roads3D[rIdx];
-      const pts: [number, number][] = [];
-      let minX = Infinity,
-        maxX = -Infinity,
-        minY = Infinity,
-        maxY = -Infinity;
-      let behind = false;
+      let inPath = false;
       for (let v = 0; v < ring.length; v++) {
         const pt = ring[v];
         const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
-        if (w <= 0.25) {
-          behind = true;
-          break;
+        if (w <= 0.15) {
+          inPath = false;
+          continue;
         }
         const invW = 1 / w;
         const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
         const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
-        pts.push([sx, sy]);
-        if (sx < minX) minX = sx;
-        if (sx > maxX) maxX = sx;
-        if (sy < minY) minY = sy;
-        if (sy > maxY) maxY = sy;
-      }
-      if (
-        !behind &&
-        pts.length >= 3 &&
-        maxX >= 0 &&
-        minX <= width &&
-        maxY >= 0 &&
-        minY <= height &&
-        maxX - minX < width * 1.3
-      ) {
-        hasRoads = true;
-        pathRoads.moveTo(pts[0][0], pts[0][1]);
-        for (let v = 1; v < pts.length; v++) pathRoads.lineTo(pts[v][0], pts[v][1]);
+
+        if (sx < -width * 0.2 || sx > width * 1.2 || sy < -height * 0.2 || sy > height * 1.2) {
+          inPath = false;
+          continue;
+        }
+
+        if (!inPath) {
+          pathRoads.moveTo(sx, sy);
+          inPath = true;
+        } else {
+          pathRoads.lineTo(sx, sy);
+          hasRoads = true;
+        }
       }
     }
+
     if (hasRoads) {
       ctx.save();
-      ctx.strokeStyle = "rgba(248, 250, 252, 0.45)";
-      ctx.lineWidth = 1.0;
-      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.52)";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 4]);
       ctx.stroke(pathRoads);
       ctx.restore();
     }
