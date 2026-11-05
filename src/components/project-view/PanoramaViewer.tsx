@@ -227,14 +227,44 @@ export default function PanoramaViewer({
 
   const lotById = useMemo(() => {
     const map = new Map<string, Lot>();
-    for (const l of lots) map.set(l.id, l);
+    for (const l of lots) {
+      map.set(l.id, l);
+      map.set(l.id.toLowerCase(), l);
+      const clean = l.id.replace(/^L-?/i, "");
+      if (clean) {
+        map.set(clean, l);
+        map.set(`L-${clean}`, l);
+      }
+      if (typeof l.lotNumber === "number") {
+        map.set(String(l.lotNumber), l);
+        map.set(`L-${l.lotNumber}`, l);
+      }
+      if (typeof (l as { numero?: number }).numero === "number") {
+        map.set(String((l as { numero?: number }).numero), l);
+        map.set(`L-${(l as { numero?: number }).numero}`, l);
+      }
+    }
     return map;
   }, [lots]);
 
-  const selectedLot = useMemo(
-    () => (selectedLotId ? (lotById.get(selectedLotId) ?? null) : null),
-    [lotById, selectedLotId],
-  );
+  const canonicalSelectedLotId = useMemo(() => {
+    if (!selectedLotId) return undefined;
+    const cleanDigits = selectedLotId.trim().replace(/^L-?/i, "");
+    const found = mergedPanoramaLots.find(
+      (l) =>
+        l.id === selectedLotId ||
+        l.id.toLowerCase() === selectedLotId.toLowerCase() ||
+        l.id.replace(/^L-?/i, "") === cleanDigits ||
+        String(l.lotNumber) === cleanDigits,
+    );
+    return found ? found.id : selectedLotId;
+  }, [selectedLotId, mergedPanoramaLots]);
+
+  const selectedLot = useMemo(() => {
+    if (!selectedLotId) return null;
+    const clean = selectedLotId.trim().replace(/^L-?/i, "");
+    return lotById.get(selectedLotId) ?? lotById.get(clean) ?? lotById.get(`L-${clean}`) ?? null;
+  }, [lotById, selectedLotId]);
 
   const preparedLots = useMemo(
     () => prepareCanvasLots(mergedPanoramaLots, lotById),
@@ -255,7 +285,7 @@ export default function PanoramaViewer({
     showLots,
     visualStyle,
     statusFilter,
-    selectedLotId,
+    selectedLotId: canonicalSelectedLotId,
   });
   renderStateRef.current = {
     preparedLots,
@@ -263,7 +293,7 @@ export default function PanoramaViewer({
     showLots,
     visualStyle,
     statusFilter,
-    selectedLotId,
+    selectedLotId: canonicalSelectedLotId,
   };
 
   const drawLotsCanvas = useCallback(() => {
@@ -284,7 +314,7 @@ export default function PanoramaViewer({
 
   useEffect(() => {
     drawLotsCanvas();
-  }, [preparedLots, showLots, visualStyle, statusFilter, selectedLotId, drawLotsCanvas]);
+  }, [preparedLots, showLots, visualStyle, statusFilter, canonicalSelectedLotId, drawLotsCanvas]);
 
   const onSelectLotRef = useRef(onSelectLot);
   onSelectLotRef.current = onSelectLot;
@@ -445,7 +475,15 @@ export default function PanoramaViewer({
 
   useEffect(() => {
     if (!selectedLotId || status !== "ready" || !viewerRef.current) return;
-    const target = mergedPanoramaLots.find((l) => l.id === selectedLotId);
+    const cleanId = selectedLotId.trim();
+    const cleanDigits = cleanId.replace(/^L-?/i, "");
+    const target = mergedPanoramaLots.find(
+      (l) =>
+        l.id === cleanId ||
+        l.id.toLowerCase() === cleanId.toLowerCase() ||
+        l.id.replace(/^L-?/i, "") === cleanDigits ||
+        String(l.lotNumber) === cleanDigits,
+    );
     if (!target) return;
 
     const viewer = viewerRef.current;
@@ -454,7 +492,7 @@ export default function PanoramaViewer({
     if (dYaw > Math.PI) dYaw = Math.abs(2 * Math.PI - dYaw);
     const dPitch = Math.abs(pos.pitch - target.labelRad[1]);
 
-    if (dYaw > 0.2 || dPitch > 0.16) {
+    if (dYaw > 0.15 || dPitch > 0.12) {
       viewer.animate({
         yaw: target.labelRad[0],
         pitch: Math.max(

@@ -764,7 +764,15 @@ function ProjectView() {
                 lots={projectLots}
                 selectedLotId={selectedLot?.id}
                 onSelectLot={(lotId) => {
-                  const found = projectLots.find((l) => l.id === lotId);
+                  const clean = lotId.trim().replace(/^L-?/i, "");
+                  const found = projectLots.find(
+                    (l) =>
+                      l.id === lotId ||
+                      l.id === `L-${clean}` ||
+                      l.id.replace(/^L-?/i, "") === clean ||
+                      String(l.lotNumber) === clean ||
+                      String((l as { numero?: number }).numero) === clean,
+                  );
                   if (found) selectLot(found);
                 }}
                 onInspectLot={(lot) => {

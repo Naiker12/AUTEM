@@ -30,42 +30,15 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 }
 
 /**
- * Parche temporal para la entrada suroeste (L-1..L-45-A) y la orilla suroccidental del Lago Principal.
- * Aplica una corrección continua de elevación y elongación normal hacia el acceso vial.
- * TODO: Reemplazar cuando se agreguen más puntos de control fotogramétricos en este sector.
+ * Corrección de terreno para la entrada suroeste y Lago Principal.
+ * Mantiene la proyección fotogramétrica pura y calibrada sin deformaciones artificiales
+ * que desplacen lotes (ej. L-42..L-45-A) fuera de sus linderos reales sobre construcciones vecinas.
  */
 export function applySouthwestEntranceTerrainPatch(
   dE: number,
   dN: number,
   dU: number,
 ): { dE: number; dN: number; dU: number } {
-  // Outward normal U = (-0.661, -0.751) pointing across L-1..L-45 toward the SW entrance road
-  // Tangent T = (-0.751, +0.661) running from L-1 (t ~ -198m) to L-43 (t ~ +85m)
-  const ux = -0.661;
-  const uy = -0.751;
-  const tx = -0.751;
-  const ty = 0.661;
-  const s = dE * ux + dN * uy;
-  const t = dE * tx + dN * ty;
-
-  if (s > 215 && t > -260 && t < 185) {
-    const wSE = smoothstep(-255, -195, t);
-    const wNW = 1 - 0.42 * smoothstep(-15, 75, t) - 0.58 * smoothstep(75, 175, t);
-    const wT = wSE * Math.max(0, wNW);
-
-    const u = Math.max(0, (s - 215) / (365 - 215));
-    const stretchS = (24 * Math.pow(u, 1.35) + 46 * Math.pow(u, 2.5)) * wT;
-    const riseU = (12 * Math.pow(u, 1.35) + 25 * Math.pow(u, 2.35)) * wT;
-    const seBoost = smoothstep(-70, -195, t) * Math.pow(u, 1.15) * wSE;
-    const stretchT = -18 * seBoost;
-
-    return {
-      dE: dE + ux * stretchS + tx * stretchT,
-      dN: dN + uy * stretchS + ty * stretchT,
-      dU: dU + riseU,
-    };
-  }
-
   return { dE, dN, dU };
 }
 
