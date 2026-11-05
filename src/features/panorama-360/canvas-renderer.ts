@@ -10,8 +10,14 @@ export interface Vec3 {
   z: number;
 }
 
+export interface WaterQuad3D {
+  v: [Vec3, Vec3, Vec3, Vec3];
+}
+
 export interface PreparedContextLayers {
-  water3D: Vec3[][];
+  waterLakes3D: Vec3[][];
+  riverQuads3D: WaterQuad3D[];
+  riverBanks3D: Vec3[][];
   roads3D: Vec3[][];
 }
 
@@ -49,12 +55,12 @@ interface LandmarkPin {
 
 const LANDMARKS: LandmarkPin[] = [
   { title: "Lago Principal", vec3: sphericalToVec3(21 * DEG_TO_RAD, -40.5 * DEG_TO_RAD) },
-  { title: "Portería / Acceso", vec3: sphericalToVec3(16.4 * DEG_TO_RAD, -30 * DEG_TO_RAD) },
+  { title: "Portería / Acceso", vec3: sphericalToVec3(12.5 * DEG_TO_RAD, -28.5 * DEG_TO_RAD) },
   {
     title: "Canchas de Tenis / Club",
     vec3: sphericalToVec3(11.7 * DEG_TO_RAD, -32.6 * DEG_TO_RAD),
   },
-  { title: "Ronda del Río / Arroyo", vec3: sphericalToVec3(53 * DEG_TO_RAD, -34 * DEG_TO_RAD) },
+  { title: "Ronda del Río / Arroyo", vec3: sphericalToVec3(76 * DEG_TO_RAD, -48 * DEG_TO_RAD) },
   { title: "Reserva Norte", vec3: sphericalToVec3(-115 * DEG_TO_RAD, -32 * DEG_TO_RAD) },
 ];
 
@@ -67,16 +73,57 @@ export function sphericalToVec3(yaw: number, pitch: number): Vec3 {
   };
 }
 
+function interpRad(p1: [number, number], p2: [number, number], f: number): [number, number] {
+  return [p1[0] + (p2[0] - p1[0]) * f, p1[1] + (p2[1] - p1[1]) * f];
+}
+
 export function prepareCanvasContextLayers(layers?: PanoramaContextLayers): PreparedContextLayers {
-  const water3D: Vec3[][] = [];
+  const waterLakes3D: Vec3[][] = [];
+  const riverQuads3D: WaterQuad3D[] = [];
+  const riverBanks3D: Vec3[][] = [];
   const roads3D: Vec3[][] = [];
+
   if (layers?.water) {
     for (const ring of layers.water) {
-      if (ring.length >= 3) {
-        water3D.push(ring.map(([y, p]) => sphericalToVec3(y, p)));
+      if (ring.length < 3) continue;
+
+      if (ring.length > 100) {
+        // River / arroyo channel: split into quads and two bank lines
+        const bank1 = ring.slice(0, 71);
+        const bank2 = ring.slice(71).reverse();
+        riverBanks3D.push(bank1.map(([y, p]) => sphericalToVec3(y, p)));
+        riverBanks3D.push(bank2.map(([y, p]) => sphericalToVec3(y, p)));
+
+        const N = 85;
+        for (let s = 0; s < N; s++) {
+          const t0 = s / N;
+          const t1 = (s + 1) / N;
+          const i1_0 = t0 * (bank1.length - 1);
+          const i1_1 = t1 * (bank1.length - 1);
+          const i2_0 = t0 * (bank2.length - 1);
+          const i2_1 = t1 * (bank2.length - 1);
+
+          const p1_0 = interpRad(bank1[Math.floor(i1_0)], bank1[Math.ceil(i1_0)], i1_0 % 1);
+          const p1_1 = interpRad(bank1[Math.floor(i1_1)], bank1[Math.ceil(i1_1)], i1_1 % 1);
+          const p2_0 = interpRad(bank2[Math.floor(i2_0)], bank2[Math.ceil(i2_0)], i2_0 % 1);
+          const p2_1 = interpRad(bank2[Math.floor(i2_1)], bank2[Math.ceil(i2_1)], i2_1 % 1);
+
+          riverQuads3D.push({
+            v: [
+              sphericalToVec3(p1_0[0], p1_0[1]),
+              sphericalToVec3(p1_1[0], p1_1[1]),
+              sphericalToVec3(p2_1[0], p2_1[1]),
+              sphericalToVec3(p2_0[0], p2_0[1]),
+            ],
+          });
+        }
+      } else {
+        // Lakes (closed water bodies)
+        waterLakes3D.push(ring.map(([y, p]) => sphericalToVec3(y, p)));
       }
     }
   }
+
   if (layers?.roads) {
     for (const ring of layers.roads) {
       if (ring.length >= 3) {
@@ -84,7 +131,8 @@ export function prepareCanvasContextLayers(layers?: PanoramaContextLayers): Prep
       }
     }
   }
-  return { water3D, roads3D };
+
+  return { waterLakes3D, riverQuads3D, riverBanks3D, roads3D };
 }
 
 export function prepareCanvasLots(
@@ -297,98 +345,190 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
 
   // 1. Render water (rivers and lakes) and road context layers (matching Recorrido de Terreno)
   if (contextLayers) {
-    const pathWaterStroke = new Path2D();
-    const pathWaterFill = new Path2D();
-    let hasWater = false;
+    // 1a. Lakes (Closed water bodies)
+    if (contextLayers.waterLakes3D?.length) {
+      for (let lIdx = 0; lIdx < contextLayers.waterLakes3D.length; lIdx++) {
+        const lake = contextLayers.waterLakes3D[lIdx];
+        if (lake.length < 3) continue;
+        let allInFront = true;
+        const pts: [number, number][] = [];
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
 
-    for (let wIdx = 0; wIdx < contextLayers.water3D.length; wIdx++) {
-      const ring = contextLayers.water3D[wIdx];
-      let inStroke = false;
-      let firstX = 0;
-      let firstY = 0;
-      let segPts = 0;
-
-      for (let v = 0; v <= ring.length; v++) {
-        const pt = ring[v % ring.length];
-        const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
-        if (w <= 0.12) {
-          inStroke = false;
-          continue;
-        }
-        const invW = 1 / w;
-        const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
-        const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
-
-        if (sx < -width * 0.25 || sx > width * 1.25 || sy < -height * 0.25 || sy > height * 1.25) {
-          inStroke = false;
-          continue;
-        }
-
-        if (!inStroke) {
-          pathWaterStroke.moveTo(sx, sy);
-          if (segPts === 0) {
-            firstX = sx;
-            firstY = sy;
-            pathWaterFill.moveTo(sx, sy);
+        for (let v = 0; v < lake.length; v++) {
+          const pt = lake[v];
+          const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
+          if (w <= 0.05) {
+            allInFront = false;
+            break;
           }
-          inStroke = true;
-        } else {
-          pathWaterStroke.lineTo(sx, sy);
-          pathWaterFill.lineTo(sx, sy);
-          hasWater = true;
+          const invW = 1 / w;
+          const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
+          const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
+          pts.push([sx, sy]);
+          if (sx < minX) minX = sx;
+          if (sx > maxX) maxX = sx;
+          if (sy < minY) minY = sy;
+          if (sy > maxY) maxY = sy;
         }
-        segPts++;
-      }
-      if (segPts > 2) {
-        pathWaterFill.lineTo(firstX, firstY);
-      }
-    }
 
-    if (hasWater) {
-      ctx.fillStyle = "rgba(2, 132, 199, 0.20)";
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.88)";
-      ctx.lineWidth = 1.6;
-      ctx.fill(pathWaterFill);
-      ctx.stroke(pathWaterStroke);
-    }
-
-    const pathRoads = new Path2D();
-    let hasRoads = false;
-    for (let rIdx = 0; rIdx < contextLayers.roads3D.length; rIdx++) {
-      const ring = contextLayers.roads3D[rIdx];
-      let inPath = false;
-      for (let v = 0; v < ring.length; v++) {
-        const pt = ring[v];
-        const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
-        if (w <= 0.15) {
-          inPath = false;
-          continue;
-        }
-        const invW = 1 / w;
-        const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
-        const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
-
-        if (sx < -width * 0.2 || sx > width * 1.2 || sy < -height * 0.2 || sy > height * 1.2) {
-          inPath = false;
+        if (
+          !allInFront ||
+          pts.length < 3 ||
+          maxX < 0 ||
+          minX > width ||
+          maxY < 0 ||
+          minY > height
+        ) {
           continue;
         }
 
-        if (!inPath) {
-          pathRoads.moveTo(sx, sy);
-          inPath = true;
-        } else {
-          pathRoads.lineTo(sx, sy);
-          hasRoads = true;
+        const lakePath = new Path2D();
+        lakePath.moveTo(pts[0][0], pts[0][1]);
+        for (let v = 1; v < pts.length; v++) {
+          lakePath.lineTo(pts[v][0], pts[v][1]);
+        }
+        lakePath.closePath();
+
+        ctx.fillStyle = "rgba(2, 132, 199, 0.42)";
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
+        ctx.lineWidth = 1.6;
+        ctx.fill(lakePath);
+        ctx.stroke(lakePath);
+      }
+    }
+
+    // 1b. River Channel Quads (Smooth Water Ribbon)
+    if (contextLayers.riverQuads3D?.length) {
+      ctx.fillStyle = "rgba(2, 132, 199, 0.40)";
+      for (let qIdx = 0; qIdx < contextLayers.riverQuads3D.length; qIdx++) {
+        const quad = contextLayers.riverQuads3D[qIdx].v;
+        let inFront = true;
+        const qPts: [number, number][] = [];
+
+        for (let v = 0; v < 4; v++) {
+          const pt = quad[v];
+          const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
+          if (w <= 0.1) {
+            inFront = false;
+            break;
+          }
+          const invW = 1 / w;
+          const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
+          const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
+          qPts.push([sx, sy]);
+        }
+        if (!inFront || qPts.length < 4) continue;
+
+        const maxDiag = Math.max(
+          Math.hypot(qPts[0][0] - qPts[2][0], qPts[0][1] - qPts[2][1]),
+          Math.hypot(qPts[1][0] - qPts[3][0], qPts[1][1] - qPts[3][1]),
+        );
+        if (maxDiag > Math.min(width, height) * 0.45) continue;
+
+        ctx.beginPath();
+        ctx.moveTo(qPts[0][0], qPts[0][1]);
+        ctx.lineTo(qPts[1][0], qPts[1][1]);
+        ctx.lineTo(qPts[2][0], qPts[2][1]);
+        ctx.lineTo(qPts[3][0], qPts[3][1]);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // 1c. River Banks (Crisp Shoreline Outline)
+    if (contextLayers.riverBanks3D?.length) {
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
+      ctx.lineWidth = 1.5;
+
+      for (let bIdx = 0; bIdx < contextLayers.riverBanks3D.length; bIdx++) {
+        const bank = contextLayers.riverBanks3D[bIdx];
+        let prevSx = 0;
+        let prevSy = 0;
+        let hasPrev = false;
+
+        for (let v = 0; v < bank.length; v++) {
+          const pt = bank[v];
+          const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
+          if (w <= 0.1) {
+            hasPrev = false;
+            continue;
+          }
+          const invW = 1 / w;
+          const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
+          const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
+
+          if (
+            sx < -width * 0.25 ||
+            sx > width * 1.25 ||
+            sy < -height * 0.25 ||
+            sy > height * 1.25
+          ) {
+            hasPrev = false;
+            continue;
+          }
+
+          if (hasPrev) {
+            const stepDist = Math.hypot(sx - prevSx, sy - prevSy);
+            if (stepDist < Math.min(width, height) * 0.25) {
+              ctx.beginPath();
+              ctx.moveTo(prevSx, prevSy);
+              ctx.lineTo(sx, sy);
+              ctx.stroke();
+            }
+          }
+          prevSx = sx;
+          prevSy = sy;
+          hasPrev = true;
         }
       }
     }
 
-    if (hasRoads) {
+    // 1d. Roads (Vías)
+    if (contextLayers.roads3D?.length) {
       ctx.save();
       ctx.strokeStyle = "rgba(255, 255, 255, 0.52)";
       ctx.lineWidth = 1.2;
       ctx.setLineDash([4, 4]);
-      ctx.stroke(pathRoads);
+
+      for (let rIdx = 0; rIdx < contextLayers.roads3D.length; rIdx++) {
+        const road = contextLayers.roads3D[rIdx];
+        let prevSx = 0;
+        let prevSy = 0;
+        let hasPrev = false;
+
+        for (let v = 0; v < road.length; v++) {
+          const pt = road[v];
+          const w = m[3] * pt.x + m[7] * pt.y + m[11] * pt.z + m[15];
+          if (w <= 0.12) {
+            hasPrev = false;
+            continue;
+          }
+          const invW = 1 / w;
+          const sx = ((m[0] * pt.x + m[4] * pt.y + m[8] * pt.z + m[12]) * invW + 1) * halfW;
+          const sy = (1 - (m[1] * pt.x + m[5] * pt.y + m[9] * pt.z + m[13]) * invW) * halfH;
+
+          if (sx < -width * 0.2 || sx > width * 1.2 || sy < -height * 0.2 || sy > height * 1.2) {
+            hasPrev = false;
+            continue;
+          }
+
+          if (hasPrev) {
+            const stepDist = Math.hypot(sx - prevSx, sy - prevSy);
+            if (stepDist < Math.min(width, height) * 0.25) {
+              ctx.beginPath();
+              ctx.moveTo(prevSx, prevSy);
+              ctx.lineTo(sx, sy);
+              ctx.stroke();
+            }
+          }
+          prevSx = sx;
+          prevSy = sy;
+          hasPrev = true;
+        }
+      }
       ctx.restore();
     }
   }

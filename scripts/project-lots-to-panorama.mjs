@@ -69,14 +69,14 @@ const config = {
   camera: {
     lat: 10.437897,
     lng: -75.356053,
-    heightAboveGroundM: 204.0,
-    offsetEastM: 6.0,
-    offsetNorthM: 56.4,
+    heightAboveGroundM: 204.1,
+    offsetEastM: -9.2,
+    offsetNorthM: 37.0,
   },
-  yawOffsetDeg: 176.29,
+  yawOffsetDeg: 176.3,
   tilt: {
-    pitchDeg: -5.99,
-    rollDeg: -0.31,
+    pitchDeg: -5.25,
+    rollDeg: 0.08,
   },
   panoDataDesktop: {
     fullWidth: 8192,
@@ -99,7 +99,7 @@ const config = {
     maxPitchDeg: 33.1,
     defaultYawDeg: -16,
     defaultPitchDeg: -45,
-    defaultZoomLvl: 22,
+    defaultZoomLvl: 26,
   },
 };
 

@@ -175,7 +175,7 @@ export default function PanoramaViewer({
             defaultYawDeg: data.default_yaw_deg ?? defaultPanoramaData.config.limits.defaultYawDeg,
             defaultPitchDeg:
               data.default_pitch_deg ?? defaultPanoramaData.config.limits.defaultPitchDeg,
-            defaultZoomLvl: defaultPanoramaData.config.limits.defaultZoomLvl ?? 22,
+            defaultZoomLvl: defaultPanoramaData.config.limits.defaultZoomLvl ?? 26,
           },
         };
 
@@ -367,11 +367,11 @@ export default function PanoramaViewer({
           panorama: initialUrl,
           panoData: initialPanoData,
           navbar: false,
-          minFov: 12,
-          maxFov: 84,
+          minFov: 16,
+          maxFov: 68,
           defaultYaw: `${activeConfig.limits.defaultYawDeg}deg`,
           defaultPitch: `${activeConfig.limits.defaultPitchDeg}deg`,
-          defaultZoomLvl: activeConfig.limits.defaultZoomLvl ?? 22,
+          defaultZoomLvl: activeConfig.limits.defaultZoomLvl ?? 26,
           touchmoveTwoFingers: false,
           mousewheelCtrlKey: false,
           moveSpeed: 1.25,
@@ -597,7 +597,7 @@ export default function PanoramaViewer({
     viewerRef.current?.animate({
       yaw: `${activeConfig.limits.defaultYawDeg}deg`,
       pitch: `${activeConfig.limits.defaultPitchDeg}deg`,
-      zoom: activeConfig.limits.defaultZoomLvl ?? 22,
+      zoom: activeConfig.limits.defaultZoomLvl ?? 26,
       speed: 800,
     });
   }, [activeConfig.limits]);

@@ -30,15 +30,40 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 }
 
 /**
- * Corrección de terreno para la entrada suroeste y Lago Principal.
- * Mantiene la proyección fotogramétrica pura y calibrada sin deformaciones artificiales
- * que desplacen lotes (ej. L-42..L-45-A) fuera de sus linderos reales sobre construcciones vecinas.
+ * Corrección de terreno para la elevación de la entrada suroeste (L-1..L-45-A).
+ * Compensa la pendiente ascendente del terreno real hacia la linde suroccidental
+ * para que los lotes alcancen su cerca/línea de árboles natural sin dejar franjas vacías.
  */
 export function applySouthwestEntranceTerrainPatch(
   dE: number,
   dN: number,
   dU: number,
 ): { dE: number; dN: number; dU: number } {
+  const ux = -0.661;
+  const uy = -0.751;
+  const tx = -0.751;
+  const ty = 0.661;
+  const s = dE * ux + dN * uy;
+  const t = dE * tx + dN * ty;
+
+  if (s > 215 && t > -260 && t < 185) {
+    const wSE = smoothstep(-255, -195, t);
+    const wNW = 1 - 0.42 * smoothstep(-15, 75, t) - 0.58 * smoothstep(75, 175, t);
+    const wT = wSE * Math.max(0, wNW);
+
+    const u = Math.max(0, (s - 215) / (365 - 215));
+    // Desplazamiento horizontal rasante sobre el suelo (dU se mantiene 100% plano a nivel de tierra para que no se vea levantado ni flotando)
+    const stretchS = (14 * Math.pow(u, 1.2) + 22 * Math.pow(u, 2.0)) * wT;
+    const seBoost = smoothstep(-70, -195, t) * Math.pow(u, 1.15) * wSE;
+    const stretchT = -12 * seBoost;
+
+    return {
+      dE: dE + ux * stretchS + tx * stretchT,
+      dN: dN + uy * stretchS + ty * stretchT,
+      dU, // Mantener dU intacto sobre el nivel de terreno: cero elevación artificial para evitar efecto 'levantado'
+    };
+  }
+
   return { dE, dN, dU };
 }
 
