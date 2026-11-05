@@ -61,7 +61,13 @@ export default function ProjectHeader({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => window.history.back()}
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = "/";
+            }
+          }}
           className="hidden shrink-0 rounded-full h-8 px-2 sm:px-3 lg:inline-flex"
           aria-label="Volver atrás"
         >

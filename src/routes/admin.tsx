@@ -47,7 +47,7 @@ function AdminRoute() {
   }, []);
 
   if (accessState === null) {
-    return <Navigate to="/login-admin" replace />;
+    return <Navigate to="/login-admin" search={{ redirect: pathname }} replace />;
   }
 
   if (accessState === "checking") {

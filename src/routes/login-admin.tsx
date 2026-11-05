@@ -5,7 +5,14 @@ import { LoaderCircle } from "lucide-react";
 import { AdminLogin } from "@/components/admin/auth/AdminLogin";
 import { getCurrentAdminAccess, signInToAdmin } from "@/lib/admin-auth";
 
+type LoginAdminSearch = {
+  redirect?: string;
+};
+
 export const Route = createFileRoute("/login-admin")({
+  validateSearch: (search: Record<string, unknown>): LoginAdminSearch => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   head: () => ({
     meta: [{ title: "Login Admin | AUTEM" }],
   }),
@@ -14,6 +21,9 @@ export const Route = createFileRoute("/login-admin")({
 
 function LoginAdminRoute() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const redirectTarget =
+    search.redirect && search.redirect.startsWith("/admin") ? search.redirect : "/admin";
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
@@ -22,7 +32,7 @@ function LoginAdminRoute() {
       .then((access) => {
         if (!active) return;
         if (access) {
-          void navigate({ to: "/admin", replace: true });
+          void navigate({ to: redirectTarget, replace: true });
           return;
         }
         setCheckingSession(false);
@@ -33,11 +43,11 @@ function LoginAdminRoute() {
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, redirectTarget]);
 
   const handleSignIn = async (email: string, password: string) => {
     await signInToAdmin(email, password);
-    void navigate({ to: "/admin" });
+    void navigate({ to: redirectTarget });
   };
 
   if (checkingSession) {

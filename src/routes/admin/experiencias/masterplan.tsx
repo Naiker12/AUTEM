@@ -65,7 +65,22 @@ function MasterplanExperiencePage() {
   );
 
   const [lots, setLots] = useState<Lot[]>([]);
-  const [selectedLotId, setSelectedLotId] = useState<string>("");
+  const [selectedLotId, setSelectedLotId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("autem_admin_masterplan_lot") || "";
+    }
+    return "";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (selectedLotId) {
+        sessionStorage.setItem("autem_admin_masterplan_lot", selectedLotId);
+      } else {
+        sessionStorage.removeItem("autem_admin_masterplan_lot");
+      }
+    }
+  }, [selectedLotId]);
   const [pendingStatus, setPendingStatus] = useState<LotStatus>("Disponible");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [manzanaFilter, setManzanaFilter] = useState<string>("todas");

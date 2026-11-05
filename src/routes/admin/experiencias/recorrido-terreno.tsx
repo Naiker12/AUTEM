@@ -21,7 +21,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -65,12 +65,24 @@ function TerrainSurveyPage() {
   const projectId = project?.id ?? "00000000-0000-0000-0000-000000000101";
   const { lots } = usePublishedLots(projectId, "villa-paraiso");
 
-  // Destino seleccionado para la ruta
-  const [selectedLotId, setSelectedLotId] = useState<string>("302");
+  // Destino seleccionado para la ruta (persiste en recarga)
+  const [selectedLotId, setSelectedLotId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("autem_admin_recorrido_lot");
+      if (saved) return saved;
+    }
+    return "302";
+  });
   const [travelMode, setTravelMode] = useState<"walking" | "driving">("walking");
   const [showGeodeticMarkers, setShowGeodeticMarkers] = useState(true);
   const [focusRequest, setFocusRequest] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  useEffect(() => {
+    if (selectedLotId && typeof window !== "undefined") {
+      sessionStorage.setItem("autem_admin_recorrido_lot", selectedLotId);
+    }
+  }, [selectedLotId]);
 
   // Ubicación GPS en vivo (opcional para pruebas en obra)
   const [liveGps, setLiveGps] = useState<GeolocationCoordinates | null>(null);

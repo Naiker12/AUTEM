@@ -37,7 +37,52 @@ import {
 
 const InteractivePanorama = lazy(() => import("@/components/project-view/InteractivePanorama"));
 
+type ProjectSearch = {
+  vista?: string;
+  mode?: string;
+  lote?: string;
+  lot?: string;
+};
+
+function modeToVistaParam(m: ViewMode): string {
+  switch (m) {
+    case "perspective":
+      return "localizacion";
+    case "terrain":
+      return "recorrido";
+    case "gallery":
+      return "galeria";
+    case "lot":
+    default:
+      return "plano";
+  }
+}
+
+function normalizeMode(val?: string | null): ViewMode | null {
+  if (!val) return null;
+  const lower = val.toLowerCase().trim();
+  if (lower === "localizacion" || lower === "perspective" || lower === "360" || lower === "tour") {
+    return "perspective";
+  }
+  if (lower === "recorrido" || lower === "terreno" || lower === "terrain") {
+    return "terrain";
+  }
+  if (lower === "galeria" || lower === "conoce" || lower === "gallery") {
+    return "gallery";
+  }
+  if (lower === "plano" || lower === "urbanistico" || lower === "lot") {
+    return "lot";
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/proyecto/$slug")({
+  validateSearch: (search: Record<string, unknown>): ProjectSearch => ({
+    vista: typeof search.vista === "string" ? search.vista : undefined,
+    mode: typeof search.mode === "string" ? search.mode : undefined,
+    lote: typeof search.lote === "string" ? search.lote : undefined,
+    lot: typeof search.lot === "string" ? search.lot : undefined,
+  }),
   head: () => {
     return {
       meta: [
@@ -56,16 +101,53 @@ export const Route = createFileRoute("/proyecto/$slug")({
 
 function ProjectView() {
   const { slug } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { project: property, loading: isProjectLoading } = usePublishedProject(slug);
   const { lots: projectLots, loading: areLotsLoading } = usePublishedLots(
     property?.id,
     property?.slug ?? slug,
   );
-  const [mode, setMode] = useState<ViewMode>("lot");
+
+  // Modo de visualización: URL search param > sessionStorage > "lot" por defecto
+  const [mode, setMode] = useState<ViewMode>(() => {
+    const fromSearch = normalizeMode(search.vista || search.mode);
+    if (fromSearch) return fromSearch;
+    if (typeof window !== "undefined") {
+      const fromSession = normalizeMode(sessionStorage.getItem(`autem_active_mode_${slug}`));
+      if (fromSession) return fromSession;
+    }
+    return "lot";
+  });
+
+  // Mantener mode sincronizado si cambia el search param exterior (ej. historial del navegador)
+  useEffect(() => {
+    const parsed = normalizeMode(search.vista || search.mode);
+    if (parsed && parsed !== mode) {
+      setMode(parsed);
+    }
+  }, [search.vista, search.mode, mode]);
+
   const [mapLayer, setMapLayer] = useState<"vector" | "satellite">("vector");
   const { georeference } = useProjectGeoreference(property?.slug ?? slug);
-  const [introReady, setIntroReady] = useState(false);
-  const finishIntro = useCallback(() => setIntroReady(true), []);
+
+  // Si ya vio el intro en esta sesión o si recargó en una vista específica (ej. Localización), no bloquear con la splash screen
+  const [introReady, setIntroReady] = useState(() => {
+    if (typeof window !== "undefined") {
+      const alreadySeen = Boolean(sessionStorage.getItem(`autem_intro_${slug}`));
+      const specificMode = Boolean(search.vista || search.mode);
+      return alreadySeen || specificMode;
+    }
+    return false;
+  });
+
+  const finishIntro = useCallback(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(`autem_intro_${slug}`, "true");
+    }
+    setIntroReady(true);
+  }, [slug]);
+
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(
     () => typeof window === "undefined" || window.innerWidth >= 1024,
@@ -74,12 +156,37 @@ function ProjectView() {
   const [viewSettings, setViewSettings] = useState<ProjectViewSettings>(
     DEFAULT_PROJECT_VIEW_SETTINGS,
   );
-  const [selectedLotId, setSelectedLotId] = useState("");
+
+  // Lote seleccionado: URL search param > sessionStorage > ""
+  const [selectedLotId, setSelectedLotId] = useState<string>(() => {
+    const fromSearch = (search.lote || search.lot || "").trim();
+    if (fromSearch) return fromSearch;
+    if (typeof window !== "undefined") {
+      return (sessionStorage.getItem(`autem_selected_lot_${slug}`) || "").trim();
+    }
+    return "";
+  });
+
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = useMemo(
-    () => (selectedLotId ? (projectLots.find((lot) => lot.id === selectedLotId) ?? null) : null),
+    () =>
+      selectedLotId
+        ? (projectLots.find(
+            (lot) =>
+              lot.id === selectedLotId ||
+              lot.id === `L-${selectedLotId}` ||
+              lot.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, ""),
+          ) ?? null)
+        : null,
     [projectLots, selectedLotId],
   );
+
+  // Auto-focalizar lote al recargar si venía en la URL o sesión
+  useEffect(() => {
+    if (selectedLotId && projectLots.length > 0) {
+      setLotFocusRequest((prev) => (prev === 0 ? 1 : prev));
+    }
+  }, [selectedLotId, projectLots.length]);
   const hasLots = projectLots.length > 0;
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 1024,
@@ -298,19 +405,61 @@ function ProjectView() {
 
   const selectLot = useCallback(
     (lot: (typeof projectLots)[number]) => {
+      const cleanId = lot.id.replace(/^L-/, "");
       setSelectedLotId(lot.id);
       setLotFocusRequest((request) => request + 1);
       if (!isMobile && mode === "lot") {
         setIsPanelOpen(true);
       }
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`autem_selected_lot_${slug}`, lot.id);
+      }
+      void navigate({
+        search: (prev: ProjectSearch) => ({
+          ...prev,
+          lote: cleanId,
+          lot: undefined,
+        }),
+        replace: true,
+      });
     },
-    [isMobile, mode],
+    [isMobile, mode, navigate, slug],
   );
 
-  const handleModeChange = useCallback((nextMode: ViewMode) => {
-    setMode(nextMode);
-    setIsPanelOpen(false);
-  }, []);
+  const handleClearSelectedLot = useCallback(() => {
+    setSelectedLotId("");
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(`autem_selected_lot_${slug}`);
+    }
+    void navigate({
+      search: (prev: ProjectSearch) => ({
+        ...prev,
+        lote: undefined,
+        lot: undefined,
+      }),
+      replace: true,
+    });
+  }, [navigate, slug]);
+
+  const handleModeChange = useCallback(
+    (nextMode: ViewMode) => {
+      setMode(nextMode);
+      setIsPanelOpen(false);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`autem_active_mode_${slug}`, nextMode);
+      }
+      const vistaParam = modeToVistaParam(nextMode);
+      void navigate({
+        search: (prev: ProjectSearch) => ({
+          ...prev,
+          vista: vistaParam === "plano" ? undefined : vistaParam,
+          mode: undefined,
+        }),
+        replace: true,
+      });
+    },
+    [navigate, slug],
+  );
   const handleView3D = useCallback(() => handleModeChange("perspective"), [handleModeChange]);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
 
@@ -369,13 +518,10 @@ function ProjectView() {
       onSettingsChange={updateViewSettings}
       onResetSettings={resetViewSettings}
       onClose={() => setIsPanelOpen(false)}
-      onSelectMode={(nextMode) => {
-        setMode(nextMode);
-        setIsPanelOpen(false);
-      }}
+      onSelectMode={handleModeChange}
       isMobile={isMobile}
       selectedLot={mode === "lot" ? selectedLot : null}
-      onClearSelectedLot={() => setSelectedLotId("")}
+      onClearSelectedLot={handleClearSelectedLot}
     />
   );
 
@@ -861,13 +1007,10 @@ function ProjectView() {
             onSettingsChange={updateViewSettings}
             onResetSettings={resetViewSettings}
             onClose={() => setIsPanelOpen(false)}
-            onSelectMode={(nextMode) => {
-              setMode(nextMode);
-              setIsPanelOpen(false);
-            }}
+            onSelectMode={handleModeChange}
             isMobile={false}
             selectedLot={mode === "lot" ? selectedLot : null}
-            onClearSelectedLot={() => setSelectedLotId("")}
+            onClearSelectedLot={handleClearSelectedLot}
           />
         </div>
       </aside>
