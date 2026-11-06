@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MasterplanSvgViewer from "@/components/project-view/MasterplanSvgViewer";
+import MasterplanSvgViewer from "@/components/project-view/masterplan/MasterplanSvgViewer";
 import {
   DEFAULT_PROJECT_VIEW_SETTINGS,
   type ProjectViewSettings,

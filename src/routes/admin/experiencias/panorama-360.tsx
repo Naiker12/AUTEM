@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MarkerConfig } from "@photo-sphere-viewer/markers-plugin";
-import PanoramaViewer from "@/components/project-view/PanoramaViewer";
+import PanoramaViewer from "@/components/project-view/panorama/PanoramaViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1119,7 +1119,7 @@ function PanoramaCalibrationAdminPage() {
                 }
                 selectedPieceIds={selectedPieceLotIds}
                 editScope={editScope}
-                onSelectLot={(id) => {
+                onSelectLot={(id: string) => {
                   if (editScope === "piece") {
                     toggleLotInPiece(id);
                   } else {
@@ -1128,7 +1128,7 @@ function PanoramaCalibrationAdminPage() {
                 }}
                 extraMarkers={extraMarkers}
                 dragMode={panoDragMode}
-                onHandDrag={(dYaw, dPitch) => moveDirectional(dYaw, dPitch)}
+                onHandDrag={(dYaw: number, dPitch: number) => moveDirectional(dYaw, dPitch)}
               />
 
               {/* HUD FLOTANTE SUPER CÓMODO: CONTROL DIRECTO EN LA FOTO 360 */}

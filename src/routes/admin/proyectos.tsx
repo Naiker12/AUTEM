@@ -303,15 +303,15 @@ function ProjectsPage() {
         ? await updateManagedProject(editingProject.id, input)
         : await createManagedProject(organizationId, input);
 
-      // 1. Subida de portada a Supabase Storage
+      // 1. Subida de portada
       if (coverFile) {
-        setSaveStatus("Subiendo portada a Supabase Storage…");
+        setSaveStatus("Subiendo imagen de portada…");
         await uploadProjectMedia(saved.id, coverFile, "cover", 0);
       }
 
-      // 1b. Subida de logotipo a Supabase Storage
+      // 1b. Subida de logotipo
       if (logoFile) {
-        setSaveStatus("Subiendo logotipo a Supabase Storage…");
+        setSaveStatus("Subiendo logotipo oficial…");
         await uploadProjectMedia(saved.id, logoFile, "logo", 0);
       }
 
@@ -331,7 +331,7 @@ function ProjectsPage() {
 
       // 3. Subida de plano urbanístico / masterplan
       if (pendingMasterplanFile) {
-        setSaveStatus("Subiendo plano urbanístico a Supabase Storage…");
+        setSaveStatus("Subiendo plano urbanístico…");
         await uploadProjectMedia(saved.id, pendingMasterplanFile, "masterplan", 0);
       }
 
@@ -376,7 +376,7 @@ function ProjectsPage() {
           </div>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
             {isSuperAdmin
-              ? "Gestiona los desarrollos y los recursos multimedia almacenados en Supabase Storage."
+              ? "Gestiona los desarrollos y los recursos multimedia del catálogo."
               : "Consulta y administra la información de los proyectos que tienes asignados."}
           </p>
         </div>

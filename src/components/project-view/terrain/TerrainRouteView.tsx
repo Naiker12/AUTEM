@@ -1,4 +1,4 @@
-import PanelResizeHandle from "./PanelResizeHandle";
+import PanelResizeHandle from "../shell/PanelResizeHandle";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   ChevronDown,
@@ -32,11 +32,11 @@ import {
   type ProjectAnchor,
 } from "@/features/terrain-navigation/use-terrain-location";
 import { cn } from "@/lib/utils";
-import MasterplanSvgViewer from "./MasterplanSvgViewer";
-import ProjectLocationMap from "./ProjectLocationMap";
-import LotDestinationSearch from "./terrain/LotDestinationSearch";
-import TerrainRouteOverlay from "./terrain/TerrainRouteOverlay";
-import type { ProjectViewSettings } from "./types";
+import MasterplanSvgViewer from "../masterplan/MasterplanSvgViewer";
+import ProjectLocationMap from "../location/ProjectLocationMap";
+import LotDestinationSearch from "./LotDestinationSearch";
+import TerrainRouteOverlay from "./TerrainRouteOverlay";
+import type { ProjectViewSettings } from "../types";
 
 interface TerrainRouteViewProps {
   lots: Lot[];

@@ -1,5 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
+import { PROJECT_VIEW_MODES, type ViewMode } from "../types";
 
 interface ModeSwitcherProps {
   activeMode: ViewMode;

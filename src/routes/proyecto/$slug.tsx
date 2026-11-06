@@ -1,6 +1,6 @@
 import PanelResizeHandle, {
   PANEL_DRAG_SENSITIVITY,
-} from "@/components/project-view/PanelResizeHandle";
+} from "@/components/project-view/shell/PanelResizeHandle";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -18,7 +18,7 @@ import {
   usePublishedProject,
   useProjectGeoreference,
 } from "@/lib/public-projects";
-import { filterAndSortLots, formatLotPrice, formatLotArea } from "@/data/lots";
+import { filterAndSortLots, formatLotPrice, formatLotArea, type Lot } from "@/data/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { useTheme } from "@/hooks/use-theme";
 import "@/components/project-view/project-editorial.css";
@@ -30,12 +30,15 @@ import {
   ProjectViewControlPanelContent,
   ProjectHeader,
   ProjectLoadingScreen,
+  ReserveLotDialog,
   TerrainRouteView,
   type ProjectViewSettings,
   type ViewMode,
 } from "@/components/project-view";
 
-const InteractivePanorama = lazy(() => import("@/components/project-view/InteractivePanorama"));
+const InteractivePanorama = lazy(
+  () => import("@/components/project-view/panorama/InteractivePanorama"),
+);
 
 type ProjectSearch = {
   vista?: string;
@@ -174,6 +177,14 @@ function ProjectView() {
         : null,
     [projectLots, selectedLotId],
   );
+
+  const [reserveDialogOpen, setReserveDialogOpen] = useState(false);
+  const [reserveLotTarget, setReserveLotTarget] = useState<Lot | null>(null);
+
+  const handleOpenReserve = useCallback((lot: Lot) => {
+    setReserveLotTarget(lot);
+    setReserveDialogOpen(true);
+  }, []);
 
   // Auto-focalizar lote al recargar si venía en la URL o sesión
   useEffect(() => {
@@ -708,6 +719,7 @@ function ProjectView() {
                       selectLot(lot);
                       setIsPanelOpen(true);
                     }}
+                    onReserveLot={handleOpenReserve}
                     onHide={() => {}}
                     isMobileSplit
                   />
@@ -733,6 +745,7 @@ function ProjectView() {
                   selectedId={selectedLot?.id ?? ""}
                   onSelect={selectLot}
                   onView3D={handleView3D}
+                  onReserveLot={handleOpenReserve}
                   onHide={handleHideDesktopPanel}
                 />
               </div>
@@ -1041,6 +1054,15 @@ function ProjectView() {
           <div className="min-h-0 flex-1">{controlPanel}</div>
         </section>
       )}
+
+      <ReserveLotDialog
+        open={reserveDialogOpen}
+        onOpenChange={setReserveDialogOpen}
+        lot={reserveLotTarget}
+        projectName={property.name}
+        projectId={property.id}
+        source={mode}
+      />
     </main>
   );
 }

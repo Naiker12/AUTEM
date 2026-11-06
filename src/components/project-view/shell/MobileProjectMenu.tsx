@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
+import { PROJECT_VIEW_MODES, type ViewMode } from "../types";
 
 interface Props {
   activeMode: ViewMode;

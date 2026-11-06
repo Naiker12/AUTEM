@@ -26,7 +26,7 @@ import type { Lot } from "@/data/lots";
 import { formatLotArea, formatLotPrice } from "@/data/lots";
 import layersData from "@/data/villa-paraiso-layers.json";
 import cadTiersData from "@/data/villa-paraiso-cad-tiers.json";
-import type { ProjectViewSettings } from "./types";
+import type { ProjectViewSettings } from "../types";
 
 interface MasterplanSvgViewerProps {
   settings?: ProjectViewSettings;

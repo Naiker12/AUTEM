@@ -40,7 +40,7 @@ import {
 } from "@/data/lots";
 import type { Property } from "@/data/properties";
 import { getProjectDocuments, type ProjectDocumentRecord } from "@/lib/project-repository";
-import type { ProjectViewSettings, ViewMode } from "./types";
+import type { ProjectViewSettings, ViewMode } from "../types";
 
 export interface ProjectViewControlPanelProps {
   property: Property;

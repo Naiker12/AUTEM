@@ -30,6 +30,7 @@ interface LotSelectionPanelProps {
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
   onInspectLot?: (lot: Lot) => void;
+  onReserveLot?: (lot: Lot) => void;
   onHide: () => void;
   mobileOpen?: boolean;
   isMobileSplit?: boolean;
@@ -52,6 +53,7 @@ export default function LotSelectionPanel({
   onSelect,
   onView3D,
   onInspectLot,
+  onReserveLot,
   onHide,
   mobileOpen = false,
   isMobileSplit = false,
@@ -131,6 +133,7 @@ export default function LotSelectionPanel({
             onSelect={onSelect}
             onView3D={onView3D}
             onInspectLot={onInspectLot}
+            onReserveLot={onReserveLot}
             contactUrl={contactUrl}
             isMobile
           />
@@ -162,6 +165,8 @@ export default function LotSelectionPanel({
           onClearAdvanced={handleClearAdvanced}
           onSelect={onSelect}
           onView3D={onView3D}
+          onInspectLot={onInspectLot}
+          onReserveLot={onReserveLot}
           contactUrl={contactUrl}
         />
       </div>
@@ -186,6 +191,7 @@ interface LotCardItemProps {
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
   onInspectLot?: (lot: Lot) => void;
+  onReserveLot?: (lot: Lot) => void;
   isMobile?: boolean;
 }
 
@@ -196,6 +202,7 @@ const LotCardItem = memo(
     onSelect,
     onView3D,
     onInspectLot,
+    onReserveLot,
     isMobile = false,
   }: LotCardItemProps) {
     const isSold = lot.status === "Vendido";
@@ -301,6 +308,21 @@ const LotCardItem = memo(
             className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center gap-1 animate-in fade-in duration-150`}
             onClick={(e) => e.stopPropagation()}
           >
+            {onReserveLot && !isSold && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(lot);
+                  onReserveLot(lot);
+                }}
+                title={`Reservar ${lot.id}`}
+                aria-label={`Reservar ${lot.id}`}
+                className="flex h-6 items-center gap-1 rounded-md bg-accent px-2 text-[8.5px] font-bold text-accent-foreground shadow-xs transition-all hover:bg-accent/90 active:scale-90 cursor-pointer"
+              >
+                <span>Reservar</span>
+              </button>
+            )}
             {isMobile && onInspectLot && (
               <button
                 type="button"
@@ -365,6 +387,7 @@ function LotCatalog({
   onSelect,
   onView3D,
   onInspectLot,
+  onReserveLot,
   contactUrl,
   isMobile = false,
 }: {
@@ -385,6 +408,7 @@ function LotCatalog({
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
   onInspectLot?: (lot: Lot) => void;
+  onReserveLot?: (lot: Lot) => void;
   contactUrl: string;
   isMobile?: boolean;
 }) {
@@ -607,6 +631,7 @@ function LotCatalog({
               onSelect={onSelect}
               onView3D={onView3D}
               onInspectLot={onInspectLot}
+              onReserveLot={onReserveLot}
               isMobile={isMobile}
             />
           ))}
@@ -626,15 +651,31 @@ function LotCatalog({
         </div>
       </ScrollArea>
       {!isMobile && (
-        <div className="border-t border-border dark:border-white/10 p-2.5 sm:px-3 sm:py-2.5">
-          <Button
-            asChild
-            className="h-8.5 sm:h-9 text-[10px] sm:text-[10.5px] w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold dark:shadow-[0_4px_16px_rgba(197,160,89,0.3)] dark:hover:brightness-110"
-          >
-            <a href={contactUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="size-3.5 mr-1.5" /> Solicitar asesoría
-            </a>
-          </Button>
+        <div className="border-t border-border dark:border-white/10 p-2.5 sm:px-3 sm:py-2.5 space-y-1.5">
+          {(() => {
+            const selectedLot = lots.find((l) => l.id === selectedId);
+            if (selectedLot && selectedLot.status !== "Vendido" && onReserveLot) {
+              return (
+                <Button
+                  type="button"
+                  onClick={() => onReserveLot(selectedLot)}
+                  className="h-9 text-xs w-full rounded-full bg-accent text-accent-foreground font-bold shadow-md hover:bg-accent/90 transition-all cursor-pointer"
+                >
+                  Reservar Lote {selectedLot.id.replace(/^L-/, "")}
+                </Button>
+              );
+            }
+            return (
+              <Button
+                asChild
+                className="h-8.5 sm:h-9 text-[10px] sm:text-[10.5px] w-full rounded-full border border-[#403a34] bg-[#403a34] font-medium uppercase tracking-[0.08em] text-[#f6f1eb] transition-all duration-300 hover:bg-[#2b2723] dark:border-transparent dark:bg-gradient-to-r dark:from-[#d4af37] dark:via-[#c5a059] dark:to-[#b38e44] dark:text-[#151413] dark:font-bold dark:shadow-[0_4px_16px_rgba(197,160,89,0.3)] dark:hover:brightness-110"
+              >
+                <a href={contactUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="size-3.5 mr-1.5" /> Solicitar asesoría
+                </a>
+              </Button>
+            );
+          })()}
         </div>
       )}
 

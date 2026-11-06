@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/use-theme";
 import ModeSwitcher from "./ModeSwitcher";
 import MobileProjectMenu from "./MobileProjectMenu";
 import ProjectBrandMark from "./ProjectBrandMark";
-import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
+import { PROJECT_VIEW_MODES, type ViewMode } from "../types";
 
 interface ProjectHeaderProps {
   propertyName?: string;
