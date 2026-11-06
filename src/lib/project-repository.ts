@@ -365,7 +365,7 @@ export async function uploadProjectMedia(
 
       const { data: proj } = await client
         .from("projects")
-        .select("cover_path, masterplan_path, logo_path")
+        .select("cover_path, masterplan_path")
         .eq("id", projectId)
         .maybeSingle();
 
@@ -374,7 +374,7 @@ export async function uploadProjectMedia(
           ? proj?.cover_path
           : mediaType === "masterplan"
             ? proj?.masterplan_path
-            : proj?.logo_path;
+            : null;
       if (existingPath) {
         const directOldPath = extractStoragePath(existingPath, bucket);
         if (directOldPath) {
@@ -410,13 +410,8 @@ export async function uploadProjectMedia(
     throw mediaError;
   }
 
-  if (mediaType === "cover" || mediaType === "masterplan" || mediaType === "logo") {
-    const column =
-      mediaType === "cover"
-        ? "cover_path"
-        : mediaType === "masterplan"
-          ? "masterplan_path"
-          : "logo_path";
+  if (mediaType === "cover" || mediaType === "masterplan") {
+    const column = mediaType === "cover" ? "cover_path" : "masterplan_path";
     const updates: Record<string, unknown> = { [column]: storagePath };
     if (mediaType === "masterplan") {
       updates.masterplan_version = new Date().toISOString().slice(0, 7).replace(/-/g, ".");
@@ -426,6 +421,25 @@ export async function uploadProjectMedia(
       .update(updates)
       .eq("id", projectId);
     if (projectError) throw projectError;
+  }
+
+  if (mediaType === "logo") {
+    try {
+      const { data: proj } = await client
+        .from("projects")
+        .select("metadata")
+        .eq("id", projectId)
+        .maybeSingle();
+      const currentMeta = proj?.metadata && typeof proj.metadata === "object" ? proj.metadata : {};
+      await client
+        .from("projects")
+        .update({
+          metadata: { ...currentMeta, logoPath: storagePath },
+        })
+        .eq("id", projectId);
+    } catch (metaErr) {
+      console.warn("Aviso al guardar logo en metadata:", metaErr);
+    }
   }
 
   // Registrar auditoría de subida de medio
@@ -468,7 +482,7 @@ export async function deleteProjectMedia(
     try {
       const { data: proj } = await client
         .from("projects")
-        .select("cover_path, masterplan_path, logo_path")
+        .select("cover_path, masterplan_path")
         .eq("id", projectId)
         .maybeSingle();
 
@@ -476,7 +490,6 @@ export async function deleteProjectMedia(
         const updates: Partial<{
           cover_path: string | null;
           masterplan_path: string | null;
-          logo_path: string | null;
         }> = {};
         if (
           mediaType === "cover" ||
@@ -491,14 +504,23 @@ export async function deleteProjectMedia(
         ) {
           updates.masterplan_path = null;
         }
-        if (
-          mediaType === "logo" ||
-          (proj.logo_path && (proj.logo_path === storagePath || proj.logo_path === cleanPath))
-        ) {
-          updates.logo_path = null;
-        }
         if (Object.keys(updates).length > 0) {
           await client.from("projects").update(updates).eq("id", projectId);
+        }
+      }
+      if (mediaType === "logo") {
+        try {
+          const { data: p } = await client
+            .from("projects")
+            .select("metadata")
+            .eq("id", projectId)
+            .maybeSingle();
+          if (p?.metadata && typeof p.metadata === "object") {
+            const { logoPath: _, ...cleanMeta } = p.metadata as Record<string, unknown>;
+            await client.from("projects").update({ metadata: cleanMeta }).eq("id", projectId);
+          }
+        } catch {
+          /* ignore */
         }
       }
     } catch (columnUpdateError) {

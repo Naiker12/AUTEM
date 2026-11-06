@@ -10,10 +10,10 @@ import {
   UsersRound,
 } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
+import { NavMain } from "./NavMain";
+import { NavProjects } from "./NavProjects";
+import { NavUser } from "./NavUser";
+import { TeamSwitcher } from "./TeamSwitcher";
 import { canAccessAdminPath, type AdminAccess } from "@/lib/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 import {
