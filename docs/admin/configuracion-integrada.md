@@ -6,4 +6,4 @@ Localización: configuración y catálogo comparten el contenedor inferior; el c
 
 Mejoras visuales: pestaña Interfaz al abrir desde móvil, un solo cierre de 44 px, botones Restaurar y Volver a la vista, interruptores sin reducción de escala, filas legibles y foto compacta en Proyecto. Se utiliza un mismo contenido para los diferentes contenedores y no se bloquea el resto de la pantalla mediante un fondo modal.
 
-Capturas reales: propuestas/configuracion-integrada-1.png a configuracion-integrada-5.png. Código sincronizado también en D:/AUTEM.
+Capturas reales: docs/mockups/configuracion-integrada-1.png a configuracion-integrada-5.png. Código sincronizado también en D:/AUTEM.

@@ -109,7 +109,7 @@ Se solicita una lámina de mockups con computador, tablet y móvil, basada en la
 
 Generación mediante la herramienta integrada imagegen. La lámina es una propuesta de interfaz, no un levantamiento topográfico ni una captura de funcionalidades ya implementadas.
 
-Imagen: propuestas/recorrido-lote-45-responsive.png. La generación modificó algunos números y geometrías de parcelas y añadió una ramificación visual; debe evaluarse solo la distribución de la interfaz. La implementación conservará el SVG original y dibujará exclusivamente el trayecto calculado, sin ramificaciones ajenas a la ruta.
+Imagen: docs/mockups/recorrido-lote-45-responsive.png. La generación modificó algunos números y geometrías de parcelas y añadió una ramificación visual; debe evaluarse solo la distribución de la interfaz. La implementación conservará el SVG original y dibujará exclusivamente el trayecto calculado, sin ramificaciones ajenas a la ruta.
 
 ## Estado posterior a la propuesta
 

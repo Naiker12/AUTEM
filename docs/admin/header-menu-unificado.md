@@ -6,9 +6,9 @@ El menú reutiliza DropdownMenu de shadcn/Radix, con opciones de selección excl
 
 Validación: las cinco vistas en 320, 390 y 768 px; ausencia de navegación móvil duplicada, sin desbordamiento horizontal, cierre al seleccionar; pestañas visibles a 1440 px. Sin errores de página. TypeScript, ESLint de los componentes y build verificados.
 
-Imágenes reales: `propuestas/header-menu-abierto.png` y `propuestas/header-vista-1.png` a `header-vista-5.png`.
+Imágenes reales: `docs/mockups/header-menu-abierto.png` y `docs/mockups/header-vista-1.png` a `header-vista-5.png`.
 
-Propuesta generada: `propuestas/header-menu-cinco-vistas-concepto.png`. Herramienta integrada imagegen. Prompt: «Villa Paraíso AUTEM, tema oscuro cálido y dorado, un solo menú para las cinco vistas, encabezado compacto idéntico con nombre del proyecto, subtítulo de vista activa y botón hamburguesa, cinco pantallas con menú cerrado y una con menú abierto; opciones Localización, Plano Urbanístico, Galería, Recorrido en terreno y Conoce el proyecto, más tema, contacto y centro de control; sin barras flotantes ni navegación inferior».
+Propuesta generada: `docs/mockups/header-menu-cinco-vistas-concepto.png`. Herramienta integrada imagegen. Prompt: «Villa Paraíso AUTEM, tema oscuro cálido y dorado, un solo menú para las cinco vistas, encabezado compacto idéntico con nombre del proyecto, subtítulo de vista activa y botón hamburguesa, cinco pantallas con menú cerrado y una con menú abierto; opciones Localización, Plano Urbanístico, Galería, Recorrido en terreno y Conoce el proyecto, más tema, contacto y centro de control; sin barras flotantes ni navegación inferior».
 
 La propuesta generada es conceptual y alteró contenidos de las vistas. Las capturas reales reflejan el frontend implementado y conservan las funciones existentes; no se añadió navegación GPS ni una vista 3D.
 

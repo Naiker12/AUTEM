@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 const [inputPath, outputPath] = process.argv.slice(2);
 if (!inputPath || !outputPath) {
@@ -94,7 +94,7 @@ await writeFile(
   resolve(outputPath),
   `${JSON.stringify(
     {
-      source: "VILLA PARAISO_05092026_CAMPO.dxf",
+      source: basename(inputPath),
       extractedAt: new Date().toISOString(),
       status: "pending_field_validation",
       coordinateSystem: "CAD drawing coordinates; requires GPS-to-SVG calibration before routing",

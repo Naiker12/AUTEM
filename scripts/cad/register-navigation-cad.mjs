@@ -8,7 +8,7 @@ const compiled = ts.transpileModule(source, {
 const { fitAffineTransform, applyAffineTransform } = await import(
   "data:text/javascript;base64," + Buffer.from(compiled).toString("base64")
 );
-const cad = JSON.parse(await readFile("cad/villa-paraiso-navigation-candidates.json", "utf8"));
+const cad = JSON.parse(await readFile("cad/villa-paraiso_navigation-candidates.json", "utf8"));
 const layers = JSON.parse(await readFile("src/data/villa-paraiso/layers.json", "utf8"));
 const controls = [];
 for (const [layer, key] of [

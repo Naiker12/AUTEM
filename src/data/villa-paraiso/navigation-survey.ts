@@ -3,7 +3,7 @@
  * used as GPS coordinates until the field calibration is completed.
  */
 export const villaParaisoNavigationSurvey = {
-  source: "VILLA PARAISO_05092026_CAMPO.dxf",
+  source: "villa-paraiso_campo_2026-09-05.dxf",
   primaryEntrance: {
     label: "ACCESO PRINCIPAL",
     cadPoint: { x: 859894.9872612, y: 1645954.774992162 },
