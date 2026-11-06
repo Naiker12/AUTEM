@@ -82,7 +82,8 @@ function toProperty(row: PublicProjectRow): Property {
   const masterplan =
     mediaUrl(row.masterplan_path) ??
     mediaUrl(media.find((item) => item.media_type === "masterplan")?.storage_path ?? null);
-  const fallbackTour = row.slug === "villa-paraiso" ? "/tours/villa-paraiso/index.htm" : undefined;
+  const fallbackTour =
+    row.slug === "villa-paraiso" ? "/panoramas/villa-paraiso/pano-8192.v1.webp" : undefined;
   const tour =
     row.tour_url?.trim() ||
     fallbackTour ||

@@ -206,6 +206,9 @@
 }
 .editorial-projects--single {
   grid-template-columns: 1fr;
+  max-width: 860px;
+  margin-inline: auto;
+  width: 100%;
 }
 .project-card__image {
   height: 512px;
@@ -214,7 +217,7 @@
   height: 583px;
 }
 .editorial-projects--single .project-card__image {
-  height: clamp(360px, 60vw, 680px);
+  height: clamp(240px, 30vw, 420px);
 }
 .project-card img {
   transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);

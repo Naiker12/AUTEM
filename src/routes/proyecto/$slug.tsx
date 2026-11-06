@@ -172,11 +172,11 @@ function ProjectView() {
     () =>
       selectedLotId
         ? (projectLots.find(
-            (lot) =>
-              lot.id === selectedLotId ||
-              lot.id === `L-${selectedLotId}` ||
-              lot.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, ""),
-          ) ?? null)
+          (lot) =>
+            lot.id === selectedLotId ||
+            lot.id === `L-${selectedLotId}` ||
+            lot.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, ""),
+        ) ?? null)
         : null,
     [projectLots, selectedLotId],
   );
@@ -590,11 +590,10 @@ function ProjectView() {
                       e.stopPropagation();
                       setMapLayer("vector");
                     }}
-                    className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      mapLayer === "vector"
+                    className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${mapLayer === "vector"
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     Plano Vectorial
                   </button>
@@ -604,11 +603,10 @@ function ProjectView() {
                       e.stopPropagation();
                       setMapLayer("satellite");
                     }}
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      mapLayer === "satellite"
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${mapLayer === "satellite"
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <span>Satélite HD</span>
                     {georeference?.status === "validated" && (
@@ -713,7 +711,7 @@ function ProjectView() {
                       selectLot(lot);
                       setIsPanelOpen(true);
                     }}
-                    onHide={() => {}}
+                    onHide={() => { }}
                     isMobileSplit
                   />
                 </div>
@@ -756,7 +754,7 @@ function ProjectView() {
                 sourceUrl={
                   property.tourUrl ||
                   (property.slug === "villa-paraiso"
-                    ? "/tours/villa-paraiso/index.htm"
+                    ? "/panoramas/villa-paraiso/pano-8192.v1.webp"
                     : property.tourImage || "/images/villa-paraiso-360.jpg")
                 }
                 projectName={property.name}
@@ -843,11 +841,10 @@ function ProjectView() {
                     fetchPriority={isActive ? "high" : "auto"}
                     decoding={isActive ? "sync" : "async"}
                     draggable={false}
-                    className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${
-                      isActive
+                    className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${isActive
                         ? "z-10 scale-100 opacity-100"
                         : "z-0 scale-[1.02] opacity-0 pointer-events-none"
-                    }`}
+                      }`}
                   />
                 );
               })
@@ -978,11 +975,10 @@ function ProjectView() {
                         onClick={() => setGalleryIndex(index)}
                         aria-label={`Ver imagen ${index + 1} de ${images.length}`}
                         aria-current={isCurrent ? "true" : undefined}
-                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                          isCurrent
+                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${isCurrent
                             ? "scale-105 border-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] opacity-100"
                             : "border-white/20 opacity-65 hover:opacity-95"
-                        }`}
+                          }`}
                       >
                         <img
                           src={image}
@@ -1003,9 +999,8 @@ function ProjectView() {
 
       {/* Panel lateral flotante en PC (estrictamente por debajo del header y oculto en Conoce el proyecto) */}
       <aside
-        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[350px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${
-          isRightPanelVisible ? "translate-x-0" : "translate-x-full pointer-events-none"
-        }`}
+        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[365px] xl:w-[380px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${isRightPanelVisible ? "translate-x-0" : "translate-x-full pointer-events-none"
+          }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border dark:border-white/10 bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] dark:shadow-[20px_20px_70px_rgba(0,0,0,.5)] backdrop-blur-2xl">
           <ProjectViewControlPanelContent

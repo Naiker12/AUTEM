@@ -3,6 +3,8 @@ import {
   ArrowLeft,
   Bird,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Compass,
   Download,
@@ -22,7 +24,7 @@ import {
   Waves,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -60,6 +62,139 @@ function formatFileSize(bytes: number | null | undefined): string {
 }
 
 type ProjectSection = "resumen" | "razones" | "amenidades" | "ubicacion" | "servicios";
+
+function DossierTabs({
+  sections,
+  activeSection,
+  onSelectSection,
+}: {
+  sections: Array<{ id: ProjectSection; label: string }>;
+  activeSection: ProjectSection;
+  onSelectSection: (id: ProjectSection) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragScrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 6);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll]);
+
+  const scrollByAmount = (amount: number) => {
+    if (!containerRef.current) return;
+    containerRef.current.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    dragStartXRef.current = e.pageX - containerRef.current.offsetLeft;
+    dragScrollLeftRef.current = containerRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !containerRef.current) return;
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - dragStartXRef.current) * 1.3;
+    if (Math.abs(walk) > 4) {
+      hasDraggedRef.current = true;
+      if (!isDragging) setIsDragging(true);
+      e.preventDefault();
+      containerRef.current.scrollLeft = dragScrollLeftRef.current - walk;
+    }
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0 && containerRef.current) {
+      containerRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  return (
+    <div className="relative group/tabs flex items-center my-1">
+      {/* Botón flecha izquierda en PC */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => scrollByAmount(-140)}
+          aria-label="Desplazar pestañas hacia la izquierda"
+          className="absolute -left-1 z-20 flex size-6.5 items-center justify-center rounded-full bg-background/95 border border-border/80 shadow-md text-foreground/80 hover:text-foreground hover:bg-background transition-all hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <ChevronLeft className="size-3.5" />
+        </button>
+      )}
+
+      {/* Contenedor deslizable / arrastrable */}
+      <div
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUpOrLeave}
+        onMouseLeave={handleMouseUpOrLeave}
+        onWheel={handleWheel}
+        className={`flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-none select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"
+          }`}
+        style={{ scrollBehavior: isDragging ? "auto" : "smooth" }}
+      >
+        {sections.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={(e) => {
+              if (hasDraggedRef.current) return;
+              onSelectSection(tab.id);
+              e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+            }}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11.5px] sm:text-[12px] font-semibold transition-all cursor-pointer ${activeSection === tab.id
+                ? "bg-accent text-accent-foreground shadow-xs font-bold ring-1 ring-accent/40"
+                : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Botón flecha derecha en PC */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => scrollByAmount(140)}
+          aria-label="Desplazar pestañas hacia la derecha"
+          className="absolute -right-1 z-20 flex size-6.5 items-center justify-center rounded-full bg-background/95 border border-border/80 shadow-md text-foreground/80 hover:text-foreground hover:bg-background transition-all hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <ChevronRight className="size-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 /**
  * Contenido interno estilizado, modular y con el dossier oficial completo del proyecto
@@ -107,8 +242,8 @@ export function ProjectViewControlPanelContent({
 
   const contactUrl = selectedLot
     ? `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
-        `Hola AUTEM, me interesa recibir asesoría y cotización del Lote ${selectedLot.id} (${formatLotArea(selectedLot.area)} - ${formatLotPrice(selectedLot.price)}) en ${property.name}.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179 (Santa Rosa de Lima a 1 km vía a Villanueva)`,
-      )}`
+      `Hola AUTEM, me interesa recibir asesoría y cotización del Lote ${selectedLot.id} (${formatLotArea(selectedLot.area)} - ${formatLotPrice(selectedLot.price)}) en ${property.name}.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179 (Santa Rosa de Lima a 1 km vía a Villanueva)`,
+    )}`
     : `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, deseo recibir asesoría e información oficial sobre ${property.name}.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179`)}`;
 
   const [activeTab, setActiveTab] = useState("project");
@@ -212,13 +347,12 @@ export function ProjectViewControlPanelContent({
                   </div>
                   <Badge
                     variant="outline"
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                      selectedLot.status === "Disponible"
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${selectedLot.status === "Disponible"
                         ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         : selectedLot.status === "Reservado"
                           ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                           : "border-slate-500/40 bg-slate-500/10 text-slate-500 dark:text-slate-400"
-                    }`}
+                      }`}
                   >
                     ● {selectedLot.status}
                   </Badge>
@@ -304,28 +438,17 @@ export function ProjectViewControlPanelContent({
               </div>
 
               {/* Sub-navegación rápida entre secciones del dossier */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {[
+              <DossierTabs
+                sections={[
                   { id: "resumen", label: "Resumen" },
                   { id: "razones", label: "¿Por qué comprar?" },
                   { id: "amenidades", label: "Amenidades (27)" },
                   { id: "ubicacion", label: "Ubicación" },
                   { id: "servicios", label: "Servicios" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setProjectSection(tab.id as ProjectSection)}
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-semibold transition-all ${
-                      projectSection === tab.id
-                        ? "bg-accent text-accent-foreground shadow-xs font-bold"
-                        : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+                ]}
+                activeSection={projectSection}
+                onSelectSection={setProjectSection}
+              />
 
               {/* SECCIÓN 1: RESUMEN Y ECOSISTEMA */}
               {projectSection === "resumen" && (
@@ -486,17 +609,17 @@ export function ProjectViewControlPanelContent({
                   {(meta?.whyBuyReasons && meta.whyBuyReasons.length > 0
                     ? meta.whyBuyReasons
                     : [
-                        "Fácil acceso a solo 1 km del Municipio en la vía Santa Rosa - Villanueva, con servicios públicos y viabilidad de gas domiciliario.",
-                        "Excelente topografía alta con tanque de 250.000 litros existente que suministra agua por gravedad garantizando gran ahorro energético.",
-                        "Estudio hidrológico radicado en Planeación que garantiza cero inundaciones gracias al arroyo natural que no se desborda y lagunas de amortiguación.",
-                        "Conjunto cerrado con portería de lujo 24 horas, cerramiento en limoncillo y malla galvanizada plastificada en PVC con tubos de 2”.",
-                        "Tres grandes lagos con 33.128 m² de espejo de agua para pesca deportiva y deportes náuticos.",
-                        "Más de 3.400 metros de senderos bajo frondosos árboles nativos escuchando el lindo canto de los pájaros.",
-                        "Hábitat natural protegido con más de 130 especies de aves y fauna silvestre libre (osos perezosos, monos aulladores, armadillos, etc.).",
-                        "5 senderos peatonales internos de 3 metros entre manzanas comunicando directamente con los senderos perimetrales.",
-                        "Alta valorización garantizada a solo 10 minutos de donde se construirá el nuevo Aeropuerto Internacional de Cartagena de Indias.",
-                        "Libertad de construcción con asesoría en conceptos bioclimáticos y sustentables que armonizan con la reserva.",
-                      ]
+                      "Fácil acceso a solo 1 km del Municipio en la vía Santa Rosa - Villanueva, con servicios públicos y viabilidad de gas domiciliario.",
+                      "Excelente topografía alta con tanque de 250.000 litros existente que suministra agua por gravedad garantizando gran ahorro energético.",
+                      "Estudio hidrológico radicado en Planeación que garantiza cero inundaciones gracias al arroyo natural que no se desborda y lagunas de amortiguación.",
+                      "Conjunto cerrado con portería de lujo 24 horas, cerramiento en limoncillo y malla galvanizada plastificada en PVC con tubos de 2”.",
+                      "Tres grandes lagos con 33.128 m² de espejo de agua para pesca deportiva y deportes náuticos.",
+                      "Más de 3.400 metros de senderos bajo frondosos árboles nativos escuchando el lindo canto de los pájaros.",
+                      "Hábitat natural protegido con más de 130 especies de aves y fauna silvestre libre (osos perezosos, monos aulladores, armadillos, etc.).",
+                      "5 senderos peatonales internos de 3 metros entre manzanas comunicando directamente con los senderos perimetrales.",
+                      "Alta valorización garantizada a solo 10 minutos de donde se construirá el nuevo Aeropuerto Internacional de Cartagena de Indias.",
+                      "Libertad de construcción con asesoría en conceptos bioclimáticos y sustentables que armonizan con la reserva.",
+                    ]
                   ).map((reason, index) => (
                     <div
                       key={index}

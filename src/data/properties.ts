@@ -145,8 +145,8 @@ export const properties: Property[] = [
     year: 2026,
     floorPlanImage: undefined,
     lotViewImage: undefined,
-    tourUrl: "/tours/villa-paraiso/index.htm",
-    tourImage: "/tours/villa-paraiso/index.htm",
+    tourUrl: "/panoramas/villa-paraiso/pano-8192.v1.webp",
+    tourImage: "/panoramas/villa-paraiso/pano-8192.v1.webp",
     floorPlanPdf: undefined,
     images: [],
     metadata: {

@@ -24,17 +24,20 @@ export interface PreparedContextLayers {
 export interface PreparedCanvasLot {
   id: string;
   label: string;
+  manzana?: string;
   status: LotStatus;
   area: number;
   price: number;
   vertices3D: Vec3[];
   center3D: Vec3;
   labelRad: [number, number];
+  polygonRad: [number, number][];
 }
 
 export interface VisibleScreenLot {
   id: string;
   label: string;
+  manzana?: string;
   status: LotStatus;
   area: number;
   price: number;
@@ -146,12 +149,14 @@ export function prepareCanvasLots(
     out.push({
       id: pLot.id,
       label: pLot.label.replace(/^L-/i, ""),
+      manzana: pLot.manzana,
       status: live?.status ?? "Disponible",
       area: live?.area ?? 0,
       price: live?.price ?? 0,
       vertices3D: pLot.polygonRad.map(([y, p]) => sphericalToVec3(y, p)),
       center3D: sphericalToVec3(pLot.labelRad[0], pLot.labelRad[1]),
       labelRad: pLot.labelRad,
+      polygonRad: pLot.polygonRad,
     });
   }
   return out;
@@ -259,16 +264,30 @@ export function hitTestPanoramaLots(
   return null;
 }
 
+export interface LiveDragOffset {
+  deltaYawRad: number;
+  deltaPitchRad: number;
+  scope: "global" | "manzana" | "piece" | "lot";
+  activeManzana?: string;
+  selectedPieceIds?: string[];
+  selectedLotId?: string;
+}
+
 export interface RenderLotsOptions {
   canvas: HTMLCanvasElement;
   viewer: unknown;
   lots: PreparedCanvasLot[];
   contextLayers?: PreparedContextLayers;
   showLots: boolean;
+  showContextLayers?: boolean;
+  showRoadsOnly?: boolean;
   visualStyle: "pins" | "filled";
   statusFilter: "ALL" | "Disponible" | "Reservado" | "Vendido";
   selectedLotId?: string;
   hoveredLotId?: string | null;
+  highlightManzana?: string;
+  highlightLotIds?: string[];
+  liveDragOffset?: LiveDragOffset | null;
 }
 
 export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreenLot[] {
@@ -277,10 +296,15 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
     lots,
     contextLayers,
     showLots,
+    showContextLayers = false,
+    showRoadsOnly = false,
     visualStyle,
     statusFilter,
     selectedLotId,
     hoveredLotId,
+    highlightManzana,
+    highlightLotIds,
+    liveDragOffset,
   } = opts;
   const viewer = opts.viewer as {
     state?: { size?: { width: number; height: number }; direction?: Vec3 };
@@ -344,9 +368,9 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
   ctx.lineCap = "round";
 
   // 1. Render water (rivers and lakes) and road context layers (matching Recorrido de Terreno)
-  if (contextLayers) {
-    // 1a. Lakes (Closed water bodies)
-    if (contextLayers.waterLakes3D?.length) {
+  if (contextLayers && (showContextLayers || showRoadsOnly)) {
+    // 1a. Lakes (Closed water bodies) - only if full context is requested
+    if (showContextLayers && !showRoadsOnly && contextLayers.waterLakes3D?.length) {
       for (let lIdx = 0; lIdx < contextLayers.waterLakes3D.length; lIdx++) {
         const lake = contextLayers.waterLakes3D[lIdx];
         if (lake.length < 3) continue;
@@ -392,17 +416,17 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
         }
         lakePath.closePath();
 
-        ctx.fillStyle = "rgba(2, 132, 199, 0.42)";
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
-        ctx.lineWidth = 1.6;
+        ctx.fillStyle = "rgba(2, 132, 199, 0.18)";
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.55)";
+        ctx.lineWidth = 1.2;
         ctx.fill(lakePath);
         ctx.stroke(lakePath);
       }
     }
 
     // 1b. River Channel Quads (Smooth Water Ribbon)
-    if (contextLayers.riverQuads3D?.length) {
-      ctx.fillStyle = "rgba(2, 132, 199, 0.40)";
+    if (showContextLayers && !showRoadsOnly && contextLayers.riverQuads3D?.length) {
+      ctx.fillStyle = "rgba(2, 132, 199, 0.16)";
       for (let qIdx = 0; qIdx < contextLayers.riverQuads3D.length; qIdx++) {
         const quad = contextLayers.riverQuads3D[qIdx].v;
         let inFront = true;
@@ -439,9 +463,9 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
     }
 
     // 1c. River Banks (Crisp Shoreline Outline)
-    if (contextLayers.riverBanks3D?.length) {
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
-      ctx.lineWidth = 1.5;
+    if (showContextLayers && !showRoadsOnly && contextLayers.riverBanks3D?.length) {
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.55)";
+      ctx.lineWidth = 1.1;
 
       for (let bIdx = 0; bIdx < contextLayers.riverBanks3D.length; bIdx++) {
         const bank = contextLayers.riverBanks3D[bIdx];
@@ -486,12 +510,11 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
       }
     }
 
-    // 1d. Roads (Vías)
+    // 1d. Roads (Vías) - Visualización arquitectónica clara de calles
     if (contextLayers.roads3D?.length) {
       ctx.save();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.52)";
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.lineWidth = 1.3;
 
       for (let rIdx = 0; rIdx < contextLayers.roads3D.length; rIdx++) {
         const road = contextLayers.roads3D[rIdx];
@@ -537,10 +560,12 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
   const pathAvailable = new Path2D();
   const pathReserved = new Path2D();
   const pathSold = new Path2D();
+  const pathManzanaHighlight = new Path2D();
   let hasAnyLot = false;
   let hasAvailable = false;
   let hasReserved = false;
   let hasSold = false;
+  let hasManzanaHighlight = false;
 
   let selectedScreenLot: VisibleScreenLot | null = null;
   let hoveredScreenLot: VisibleScreenLot | null = null;
@@ -550,11 +575,47 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
     const lot = lots[i];
     if (statusFilter !== "ALL" && lot.status !== statusFilter) continue;
 
+    // Verificar si aplica offset de arrastre en vivo a este lote
+    let isOffset = false;
+    if (
+      liveDragOffset &&
+      (Math.abs(liveDragOffset.deltaYawRad) > 1e-6 || Math.abs(liveDragOffset.deltaPitchRad) > 1e-6)
+    ) {
+      if (liveDragOffset.scope === "global") {
+        isOffset = true;
+      } else if (
+        liveDragOffset.scope === "piece" &&
+        liveDragOffset.selectedPieceIds &&
+        liveDragOffset.selectedPieceIds.includes(lot.id)
+      ) {
+        isOffset = true;
+      } else if (
+        liveDragOffset.scope === "manzana" &&
+        lot.manzana &&
+        lot.manzana === liveDragOffset.activeManzana
+      ) {
+        isOffset = true;
+      } else if (liveDragOffset.scope === "lot" && lot.id === liveDragOffset.selectedLotId) {
+        isOffset = true;
+      }
+    }
+
+    const center3D = isOffset
+      ? sphericalToVec3(
+          lot.labelRad[0] + liveDragOffset!.deltaYawRad,
+          lot.labelRad[1] + liveDragOffset!.deltaPitchRad,
+        )
+      : lot.center3D;
+
     const cDot =
-      (lot.center3D.x * dx + lot.center3D.y * dy + lot.center3D.z * dz) / PSV_SPHERE_RADIUS;
+      (center3D.x * dx + center3D.y * dy + center3D.z * dz) / PSV_SPHERE_RADIUS;
     if (cDot < 0.08) continue;
 
-    const verts = lot.vertices3D;
+    const verts = isOffset
+      ? (lot.polygonRad || []).map(([y, p]) =>
+          sphericalToVec3(y + liveDragOffset!.deltaYawRad, p + liveDragOffset!.deltaPitchRad),
+        )
+      : lot.vertices3D;
     if (verts.length < 3) continue;
 
     const pts: [number, number][] = [];
@@ -598,6 +659,7 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
     const screenLot: VisibleScreenLot = {
       id: lot.id,
       label: lot.label,
+      manzana: lot.manzana,
       status: lot.status,
       area: lot.area,
       price: lot.price,
@@ -618,6 +680,17 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
     }
     if (lot.id === hoveredLotId) {
       hoveredScreenLot = screenLot;
+    }
+
+    const isHighlighted =
+      (highlightLotIds && highlightLotIds.includes(lot.id)) ||
+      (highlightManzana && lot.manzana === highlightManzana);
+
+    if (isHighlighted) {
+      hasManzanaHighlight = true;
+      pathManzanaHighlight.moveTo(pts[0][0], pts[0][1]);
+      for (let v = 1; v < pts.length; v++) pathManzanaHighlight.lineTo(pts[v][0], pts[v][1]);
+      pathManzanaHighlight.closePath();
     }
 
     hasAnyLot = true;
@@ -641,45 +714,53 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
 
   if (visualStyle === "pins") {
     if (hasAvailable) {
-      ctx.fillStyle = "rgba(16, 185, 129, 0.14)";
+      ctx.fillStyle = "rgba(16, 185, 129, 0.08)";
       ctx.fill(pathAvailable);
     }
     if (hasReserved) {
-      ctx.fillStyle = "rgba(245, 158, 11, 0.18)";
+      ctx.fillStyle = "rgba(245, 158, 11, 0.12)";
       ctx.fill(pathReserved);
     }
     if (hasSold) {
-      ctx.fillStyle = "rgba(239, 68, 68, 0.18)";
+      ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
       ctx.fill(pathSold);
     }
     if (hasAnyLot) {
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.34)";
-      ctx.lineWidth = baseLineWidth + 0.9;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.20)";
+      ctx.lineWidth = baseLineWidth + 0.6;
       ctx.stroke(pathAllWhite);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.88)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.70)";
       ctx.lineWidth = baseLineWidth;
       ctx.stroke(pathAllWhite);
     }
   } else {
-    ctx.lineWidth = baseLineWidth;
+    ctx.lineWidth = Math.max(0.9, baseLineWidth * 0.9);
     if (hasAvailable) {
-      ctx.fillStyle = "rgba(16, 185, 129, 0.20)";
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.82)";
+      ctx.fillStyle = "rgba(16, 185, 129, 0.11)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
       ctx.fill(pathAvailable);
       ctx.stroke(pathAvailable);
     }
     if (hasReserved) {
-      ctx.fillStyle = "rgba(245, 158, 11, 0.25)";
-      ctx.strokeStyle = "rgba(253, 224, 71, 0.88)";
+      ctx.fillStyle = "rgba(245, 158, 11, 0.15)";
+      ctx.strokeStyle = "rgba(253, 224, 71, 0.75)";
       ctx.fill(pathReserved);
       ctx.stroke(pathReserved);
     }
     if (hasSold) {
-      ctx.fillStyle = "rgba(239, 68, 68, 0.24)";
-      ctx.strokeStyle = "rgba(252, 165, 165, 0.82)";
+      ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
+      ctx.strokeStyle = "rgba(252, 165, 165, 0.70)";
       ctx.fill(pathSold);
       ctx.stroke(pathSold);
     }
+  }
+
+  if (hasManzanaHighlight) {
+    ctx.fillStyle = "rgba(250, 204, 21, 0.12)";
+    ctx.strokeStyle = "rgba(250, 204, 21, 0.85)";
+    ctx.lineWidth = baseLineWidth + 0.8;
+    ctx.fill(pathManzanaHighlight);
+    ctx.stroke(pathManzanaHighlight);
   }
 
   if (hoveredScreenLot && hoveredScreenLot.id !== selectedLotId) {

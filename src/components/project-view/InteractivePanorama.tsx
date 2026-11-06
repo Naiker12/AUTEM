@@ -29,23 +29,15 @@ export default function InteractivePanorama({
   const canvasHostRef = useRef<HTMLDivElement>(null);
 
   const activeSource = useMemo(() => {
-    return sourceUrl || "/tours/villa-paraiso/index.htm";
+    return sourceUrl || "/panoramas/villa-paraiso/pano-8192.v1.webp";
   }, [sourceUrl]);
-
-  const forceLegacy3DVista = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("legacy3dvista") === "1";
-  }, []);
 
   // Decision order per Section 3.6:
   // Use native PSV PanoramaViewer with interactive lot polygons for Villa Paraíso
-  // unless an external third-party URL (Matterport, Kuula, etc.) is configured
-  // or ?legacy3dvista=1 is present.
+  // unless an external third-party URL (Matterport, Kuula, etc.) is configured.
   const useNativePsvViewer = useMemo(() => {
-    if (forceLegacy3DVista) return false;
     const clean = activeSource.toLowerCase().trim();
     if (clean.includes("/panoramas/villa-paraiso/")) return true;
-    if (clean.includes("/tours/villa-paraiso/")) return true;
     if (
       (projectSlug === "villa-paraiso" || projectSlug === "lotes-360") &&
       (!clean.startsWith("http") || clean.includes("villa-paraiso"))
@@ -53,7 +45,7 @@ export default function InteractivePanorama({
       return true;
     }
     return false;
-  }, [activeSource, forceLegacy3DVista, projectSlug]);
+  }, [activeSource, projectSlug]);
 
   const isHtmlTour = useMemo(() => {
     if (!activeSource || useNativePsvViewer) return false;

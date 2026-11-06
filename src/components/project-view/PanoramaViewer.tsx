@@ -64,6 +64,14 @@ export interface PanoramaViewerProps {
   }) => void;
   extraMarkers?: MarkerConfig[];
   initialShowLots?: boolean;
+  dragMode?: "orbit" | "hand";
+  onHandDrag?: (deltaYawDeg: number, deltaPitchDeg: number) => void;
+  highlightManzana?: string;
+  highlightLotIds?: string[];
+  selectedPieceIds?: string[];
+  editScope?: "global" | "manzana" | "piece" | "lot";
+  activeManzana?: string;
+  initialShowRoads?: boolean;
 }
 
 const FILTER_OPTIONS = [
@@ -88,6 +96,14 @@ export default function PanoramaViewer({
   onPanoramaClick,
   extraMarkers = [],
   initialShowLots = true,
+  dragMode = "orbit",
+  onHandDrag,
+  highlightManzana,
+  highlightLotIds,
+  selectedPieceIds,
+  editScope = "global",
+  activeManzana = "M 1",
+  initialShowRoads = true,
 }: PanoramaViewerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -99,8 +115,18 @@ export default function PanoramaViewer({
   const hoveredLotIdRef = useRef<string | null>(null);
   const isPointerDownRef = useRef(false);
 
+  const [isHandDragging, setIsHandDragging] = useState(false);
+  const handDragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const handPointerDownPosRef = useRef<{ x: number; y: number } | null>(null);
+  const liveDragOffsetRef = useRef<{ deltaYawRad: number; deltaPitchRad: number } | null>(null);
+  const rafScheduledRef = useRef(false);
+  const onHandDragRef = useRef(onHandDrag);
+  onHandDragRef.current = onHandDrag;
+
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [showLots, setShowLots] = useState(initialShowLots);
+  const [showContextLayers, setShowContextLayers] = useState(false);
+  const [showRoads, setShowRoads] = useState(initialShowRoads);
   const [visualStyle, setVisualStyle] = useState<"pins" | "filled">("filled");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "Disponible" | "Reservado" | "Vendido">(
     "ALL",
@@ -283,17 +309,31 @@ export default function PanoramaViewer({
     preparedLots,
     preparedContextLayers,
     showLots,
+    showContextLayers,
+    showRoads,
     visualStyle,
     statusFilter,
     selectedLotId: canonicalSelectedLotId,
+    highlightManzana,
+    highlightLotIds,
+    selectedPieceIds,
+    editScope,
+    activeManzana,
   });
   renderStateRef.current = {
     preparedLots,
     preparedContextLayers,
     showLots,
+    showContextLayers,
+    showRoads,
     visualStyle,
     statusFilter,
     selectedLotId: canonicalSelectedLotId,
+    highlightManzana,
+    highlightLotIds,
+    selectedPieceIds,
+    editScope,
+    activeManzana,
   };
 
   const drawLotsCanvas = useCallback(() => {
@@ -305,16 +345,44 @@ export default function PanoramaViewer({
       lots: st.preparedLots,
       contextLayers: st.preparedContextLayers,
       showLots: st.showLots,
+      showContextLayers: st.showContextLayers,
+      showRoadsOnly: st.showRoads,
       visualStyle: st.visualStyle,
       statusFilter: st.statusFilter,
       selectedLotId: st.selectedLotId,
       hoveredLotId: hoveredLotIdRef.current,
+      highlightManzana: st.highlightManzana,
+      highlightLotIds: st.highlightLotIds,
+      liveDragOffset: liveDragOffsetRef.current
+        ? {
+            deltaYawRad: liveDragOffsetRef.current.deltaYawRad,
+            deltaPitchRad: liveDragOffsetRef.current.deltaPitchRad,
+            scope: st.editScope,
+            activeManzana: st.activeManzana,
+            selectedPieceIds: st.selectedPieceIds,
+            selectedLotId: st.selectedLotId,
+          }
+        : null,
     });
   }, []);
 
   useEffect(() => {
     drawLotsCanvas();
-  }, [preparedLots, showLots, visualStyle, statusFilter, canonicalSelectedLotId, drawLotsCanvas]);
+  }, [
+    preparedLots,
+    showLots,
+    showContextLayers,
+    showRoads,
+    visualStyle,
+    statusFilter,
+    canonicalSelectedLotId,
+    highlightManzana,
+    highlightLotIds,
+    selectedPieceIds,
+    editScope,
+    activeManzana,
+    drawLotsCanvas,
+  ]);
 
   const onSelectLotRef = useRef(onSelectLot);
   onSelectLotRef.current = onSelectLot;
@@ -472,6 +540,17 @@ export default function PanoramaViewer({
       // Ignore mid-transition
     }
   }, [extraMarkers, status]);
+
+  useEffect(() => {
+    if (!viewerRef.current || status !== "ready") return;
+    try {
+      viewerRef.current.setOptions({
+        mousemove: dragMode !== "hand",
+      });
+    } catch {
+      // Ignore
+    }
+  }, [dragMode, status]);
 
   useEffect(() => {
     if (!selectedLotId || status !== "ready" || !viewerRef.current) return;
@@ -644,6 +723,139 @@ export default function PanoramaViewer({
         className="pointer-events-none absolute inset-0 z-10 size-full"
       />
 
+      {/* Capa de arrastre interactivo con mano (el mapa/foto 360 NO se mueve) */}
+      {dragMode === "hand" && (
+        <div
+          className={`absolute inset-0 z-20 size-full select-none ${
+            isHandDragging ? "cursor-grabbing" : hoveredLot ? "cursor-pointer" : "cursor-grab"
+          }`}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            try {
+              (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            } catch {}
+            setIsHandDragging(true);
+            handDragStartRef.current = { x: e.clientX, y: e.clientY };
+            handPointerDownPosRef.current = { x: e.clientX, y: e.clientY };
+            liveDragOffsetRef.current = { deltaYawRad: 0, deltaPitchRad: 0 };
+          }}
+          onPointerMove={(e) => {
+            if (!isHandDragging || !handDragStartRef.current) {
+              // Si no está arrastrando, detectar si pasa sobre un lote
+              if (showLots) {
+                const rect = wrapperRef.current?.getBoundingClientRect();
+                if (rect) {
+                  const vx = e.clientX - rect.left;
+                  const vy = e.clientY - rect.top;
+                  const hit = hitTestPanoramaLots(vx, vy, visibleScreenLotsRef.current);
+                  if (hit && hit.id !== hoveredLotIdRef.current) {
+                    hoveredLotIdRef.current = hit.id;
+                    setHoveredLot({
+                      id: hit.id,
+                      label: hit.label,
+                      status: hit.status,
+                      area: hit.area,
+                      price: hit.price,
+                      x: vx,
+                      y: vy,
+                    });
+                    drawLotsCanvas();
+                  } else if (!hit && hoveredLotIdRef.current !== null) {
+                    hoveredLotIdRef.current = null;
+                    setHoveredLot(null);
+                    drawLotsCanvas();
+                  }
+                }
+              }
+              return;
+            }
+
+            e.stopPropagation();
+            e.preventDefault();
+            const dx = e.clientX - handDragStartRef.current.x;
+            const dy = e.clientY - handDragStartRef.current.y;
+            handDragStartRef.current = { x: e.clientX, y: e.clientY };
+
+            const v = viewerRef.current;
+            const zoom = v?.getZoomLevel() ?? 26;
+            const fovDeg = 85 - (zoom / 100) * 55;
+            const rect = wrapperRef.current?.getBoundingClientRect();
+            const w = rect?.width || 800;
+            const h = rect?.height || 600;
+
+            const degPerPixelX = fovDeg / w;
+            const degPerPixelY = (fovDeg * (h / w)) / h;
+
+            // Arrastre 1:1 con la mano:
+            // Mover mouse a la DERECHA (dx > 0) -> polígono se mueve a la DERECHA (yaw esférico disminuye)
+            const stepYawRad = (-dx * degPerPixelX * Math.PI) / 180;
+            // Mover mouse hacia ABAJO (dy > 0) -> polígono se mueve hacia ABAJO (pitch esférico disminuye)
+            const stepPitchRad = (-dy * degPerPixelY * Math.PI) / 180;
+
+            if (!liveDragOffsetRef.current) {
+              liveDragOffsetRef.current = { deltaYawRad: 0, deltaPitchRad: 0 };
+            }
+            liveDragOffsetRef.current.deltaYawRad += stepYawRad;
+            liveDragOffsetRef.current.deltaPitchRad += stepPitchRad;
+
+            // Redibujar en tiempo real con 0ms lag
+            if (!rafScheduledRef.current) {
+              rafScheduledRef.current = true;
+              requestAnimationFrame(() => {
+                rafScheduledRef.current = false;
+                drawLotsCanvas();
+              });
+            }
+          }}
+          onPointerUp={(e) => {
+            e.stopPropagation();
+            try {
+              (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+            } catch {}
+            const downPos = handPointerDownPosRef.current;
+            const dist = downPos ? Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) : 999;
+            const totalYawRad = liveDragOffsetRef.current?.deltaYawRad || 0;
+            const totalPitchRad = liveDragOffsetRef.current?.deltaPitchRad || 0;
+            liveDragOffsetRef.current = null;
+            setIsHandDragging(false);
+            handDragStartRef.current = null;
+            handPointerDownPosRef.current = null;
+
+            // Si fue un click rápido (sin arrastre mayor a 5px), seleccionar lote
+            if (dist < 6) {
+              const rect = wrapperRef.current?.getBoundingClientRect();
+              if (rect) {
+                const vx = e.clientX - rect.left;
+                const vy = e.clientY - rect.top;
+                const hit = hitTestPanoramaLots(vx, vy, visibleScreenLotsRef.current);
+                if (hit && onSelectLot) {
+                  onSelectLot(hit.id);
+                }
+              }
+            } else {
+              // Arrastre completado -> aplicar desplazamiento acumulado
+              const totalYawDeg = (totalYawRad * 180) / Math.PI;
+              const totalPitchDeg = (totalPitchRad * 180) / Math.PI;
+              if (Math.abs(totalYawDeg) > 0.0005 || Math.abs(totalPitchDeg) > 0.0005) {
+                onHandDragRef.current?.(totalYawDeg, totalPitchDeg);
+              }
+            }
+            drawLotsCanvas();
+          }}
+          onPointerCancel={(e) => {
+            try {
+              (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+            } catch {}
+            liveDragOffsetRef.current = null;
+            setIsHandDragging(false);
+            handDragStartRef.current = null;
+            handPointerDownPosRef.current = null;
+            drawLotsCanvas();
+          }}
+        />
+      )}
+
       {/* Tooltip editorial glassmorphic (mismo diseño que MasterplanSvgViewer) */}
       {hoveredLot && (
         <div
@@ -710,6 +922,32 @@ export default function PanoramaViewer({
               >
                 <Layers className="size-2.5" />
                 <span>{visualStyle === "pins" ? "Pines" : "Color"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowRoads((v) => !v)}
+                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
+                  showRoads
+                    ? "bg-amber-500/25 text-amber-300 font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Mostrar u ocultar el trazado de vías y calles que dividen las manzanas"
+              >
+                <span>Calles</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowContextLayers((v) => !v)}
+                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
+                  showContextLayers
+                    ? "bg-sky-500/25 text-sky-400 font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Mostrar u ocultar los lagos"
+              >
+                <span>Lagos</span>
               </button>
 
               <div className="mx-0.5 h-3 w-px bg-border/70" />

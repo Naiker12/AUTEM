@@ -496,11 +496,9 @@ function ContactUsSection() {
     service: "Arquitectura",
     projectType: "Residencial",
     location: "",
-    scale: "230 – 930 m²",
   });
 
   const projectTypes = ["Residencial", "Comercial"];
-  const projectScales = ["Menos de 230 m²", "230 – 930 m²", "930 – 4.650 m²", "Más de 4.650 m²"];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -510,8 +508,7 @@ function ContactUsSection() {
 - Teléfono: ${formData.phone || "N/A"}
 - Servicio: ${formData.service}
 - Tipo de proyecto: ${formData.projectType}
-- Ubicación: ${formData.location || "N/A"}
-- Área: ${formData.scale}`;
+- Ubicación: ${formData.location || "N/A"}`;
 
     window.open(`${WHATSAPP_BASE_URL}?text=${encodeURIComponent(text)}`, "_blank");
   };
@@ -667,28 +664,6 @@ function ContactUsSection() {
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   className="w-full bg-transparent border-b border-[#4f4742]/40 pb-3 text-[14px] text-[#4f4742] placeholder-[#57504b]/60 focus:border-[#4f4742] focus:outline-none transition-colors"
                 />
-              </div>
-
-              {/* Project Scale */}
-              <div className="space-y-3 pt-2">
-                <span className="block text-[13px] text-[#57504b]">Escala del proyecto</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {projectScales.map((scale) => (
-                    <button
-                      key={scale}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, scale: scale })}
-                      aria-pressed={formData.scale === scale}
-                      className={`py-3 px-4 text-center rounded-full text-[13px] font-normal transition-all duration-200 ${
-                        formData.scale === scale
-                          ? "bg-[#4f4742] text-[#f0ebe6]"
-                          : "bg-[#ded5c9] text-[#4f4742] hover:bg-[#d5cbbe]"
-                      }`}
-                    >
-                      {scale}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Submit */}

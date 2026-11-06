@@ -422,7 +422,7 @@ function MediaLibraryPage() {
               <Input
                 value={tourUrlInput}
                 onChange={(e) => setTourUrlInput(e.target.value)}
-                placeholder="Ej. /tours/villa-paraiso/index.htm o https://www.boristopografo.com/villaparaiso/"
+                placeholder="Ej. /panoramas/villa-paraiso/pano-8192.v1.webp o https://www.boristopografo.com/villaparaiso/"
                 className="bg-background text-sm font-mono"
               />
               <Button
@@ -442,10 +442,10 @@ function MediaLibraryPage() {
               <span>Sugerencias rápidas:</span>
               <button
                 type="button"
-                onClick={() => setTourUrlInput("/tours/villa-paraiso/index.htm")}
+                onClick={() => setTourUrlInput("/panoramas/villa-paraiso/pano-8192.v1.webp")}
                 className="rounded-lg bg-background px-2 py-0.5 border hover:bg-muted text-accent font-mono transition-colors cursor-pointer"
               >
-                /tours/villa-paraiso/index.htm
+                /panoramas/villa-paraiso/pano-8192.v1.webp
               </button>
               <button
                 type="button"

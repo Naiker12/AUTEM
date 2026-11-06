@@ -3,7 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 const TOUR_MEDIA_DIR = path.resolve(
-  "public/tours/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
+  "assets-source/3dvista/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
 );
 const OUT_DIR = path.resolve("public/panoramas/villa-paraiso");
 
@@ -270,7 +270,7 @@ async function main() {
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        source: "public/tours/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
+        source: "assets-source/3dvista/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
         cameraExif: {
           lat: 10.437897,
           lng: -75.356053,
