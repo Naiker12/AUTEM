@@ -1,1 +1,0 @@
-var e=`https://wa.me/573007200894`;export{e as t};

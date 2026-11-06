@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /ar/
-
-Sitemap: https://autem.es/sitemap.xml
