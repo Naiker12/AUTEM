@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import PiePagina from "@/components/pie-pagina/PiePagina";
 import { NosotrosPage } from "@/components/nosotros";
 import { BotonWhatsappFlotante } from "@/components/pie-pagina";
 
@@ -25,7 +25,7 @@ function Nosotros() {
       <main id="main-content">
         <NosotrosPage />
       </main>
-      <Footer />
+      <PiePagina />
       <BotonWhatsappFlotante />
     </div>
   );

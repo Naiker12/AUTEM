@@ -8,7 +8,19 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   // Generated previews and build artifacts are not application source code.
   // Keeping them out of lint prevents a temporary preview from breaking CI.
-  { ignores: ["dist", ".output", ".vinxi", "tmp", "public/**", "cad/**", "guia-uso/**"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      "tmp",
+      "public/**",
+      "cad/**",
+      "guia-uso/**",
+      "assets-source/**",
+      "scripts/archive/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

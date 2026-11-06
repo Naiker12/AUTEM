@@ -109,15 +109,11 @@ function ProjectView() {
     property?.slug ?? slug,
   );
 
-  // Modo de visualización: URL search param > sessionStorage > "lot" por defecto
+  // Modo de visualización: URL search param explícito > "perspective" (360°) por defecto
   const [mode, setMode] = useState<ViewMode>(() => {
     const fromSearch = normalizeMode(search.vista || search.mode);
     if (fromSearch) return fromSearch;
-    if (typeof window !== "undefined") {
-      const fromSession = normalizeMode(sessionStorage.getItem(`autem_active_mode_${slug}`));
-      if (fromSession) return fromSession;
-    }
-    return "lot";
+    return "perspective";
   });
 
   // Mantener mode sincronizado si cambia el search param exterior (ej. historial del navegador)
@@ -131,22 +127,14 @@ function ProjectView() {
   const [mapLayer, setMapLayer] = useState<"vector" | "satellite">("vector");
   const { georeference } = useProjectGeoreference(property?.slug ?? slug);
 
-  // Si ya vio el intro en esta sesión o si recargó en una vista específica (ej. Localización), no bloquear con la splash screen
+  // Mostrar siempre la intro animada al abrir un nuevo enlace limpio para generar el efecto WAOOO
   const [introReady, setIntroReady] = useState(() => {
-    if (typeof window !== "undefined") {
-      const alreadySeen = Boolean(sessionStorage.getItem(`autem_intro_${slug}`));
-      const specificMode = Boolean(search.vista || search.mode);
-      return alreadySeen || specificMode;
-    }
-    return false;
+    return Boolean(search.vista || search.mode);
   });
 
   const finishIntro = useCallback(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(`autem_intro_${slug}`, "true");
-    }
     setIntroReady(true);
-  }, [slug]);
+  }, []);
 
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(
@@ -157,26 +145,32 @@ function ProjectView() {
     DEFAULT_PROJECT_VIEW_SETTINGS,
   );
 
-  // Lote seleccionado: URL search param > sessionStorage > ""
+  // Lote seleccionado: únicamente si viene en la URL (?lote= / ?lot=) para enlaces limpios
   const [selectedLotId, setSelectedLotId] = useState<string>(() => {
-    const fromSearch = (search.lote || search.lot || "").trim();
-    if (fromSearch) return fromSearch;
-    if (typeof window !== "undefined") {
-      return (sessionStorage.getItem(`autem_selected_lot_${slug}`) || "").trim();
-    }
-    return "";
+    return (search.lote || search.lot || "").trim();
   });
+
+  // Precarga del panorama 360 durante la intro para que al terminar esté listo de inmediato
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isMobile = window.innerWidth < 768;
+    const preloadUrl = isMobile
+      ? "/panoramas/villa-paraiso/pano-4096.v1.webp"
+      : "/panoramas/villa-paraiso/pano-8192.v1.webp";
+    const img = new Image();
+    img.src = preloadUrl;
+  }, []);
 
   const [lotFocusRequest, setLotFocusRequest] = useState(0);
   const selectedLot = useMemo(
     () =>
       selectedLotId
         ? (projectLots.find(
-          (lot) =>
-            lot.id === selectedLotId ||
-            lot.id === `L-${selectedLotId}` ||
-            lot.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, ""),
-        ) ?? null)
+            (lot) =>
+              lot.id === selectedLotId ||
+              lot.id === `L-${selectedLotId}` ||
+              lot.id.replace(/^L-/, "") === selectedLotId.replace(/^L-/, ""),
+          ) ?? null)
         : null,
     [projectLots, selectedLotId],
   );
@@ -445,20 +439,18 @@ function ProjectView() {
     (nextMode: ViewMode) => {
       setMode(nextMode);
       setIsPanelOpen(false);
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(`autem_active_mode_${slug}`, nextMode);
-      }
       const vistaParam = modeToVistaParam(nextMode);
       void navigate({
         search: (prev: ProjectSearch) => ({
           ...prev,
-          vista: vistaParam === "plano" ? undefined : vistaParam,
+          // 360° ("perspective") es la vista principal por defecto. El plano urbanístico lleva ?vista=plano explícito.
+          vista: nextMode === "perspective" ? undefined : vistaParam,
           mode: undefined,
         }),
         replace: true,
       });
     },
-    [navigate, slug],
+    [navigate],
   );
   const handleView3D = useCallback(() => handleModeChange("perspective"), [handleModeChange]);
   const handleHideDesktopPanel = useCallback(() => setIsLotPanelVisible(false), []);
@@ -535,14 +527,17 @@ function ProjectView() {
         key={slug}
         projectName={property.name}
         projectLocation={property.location}
+        logoUrl={property.logoUrl}
         onFinish={finishIntro}
-        variant={property.id === "lotes-360" ? "dark-compact" : "default"}
-        minDuration={property.id === "lotes-360" ? 450 : 350}
+        variant="dark-compact"
+        minDuration={1800}
       />
 
       {/* Header fijo e intacto al 100% de ancho de la pantalla, sin encogerse ni moverse */}
       <ProjectHeader
         propertyName={property.name}
+        logoUrl={property.logoUrl}
+        showProjectBrand={viewSettings.showProjectBrand}
         onOpenInfo={() => {
           setIsPanelOpen((prev) => !prev);
         }}
@@ -590,10 +585,11 @@ function ProjectView() {
                       e.stopPropagation();
                       setMapLayer("vector");
                     }}
-                    className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${mapLayer === "vector"
+                    className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                      mapLayer === "vector"
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
-                      }`}
+                    }`}
                   >
                     Plano Vectorial
                   </button>
@@ -603,10 +599,11 @@ function ProjectView() {
                       e.stopPropagation();
                       setMapLayer("satellite");
                     }}
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${mapLayer === "satellite"
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                      mapLayer === "satellite"
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
-                      }`}
+                    }`}
                   >
                     <span>Satélite HD</span>
                     {georeference?.status === "validated" && (
@@ -711,7 +708,7 @@ function ProjectView() {
                       selectLot(lot);
                       setIsPanelOpen(true);
                     }}
-                    onHide={() => { }}
+                    onHide={() => {}}
                     isMobileSplit
                   />
                 </div>
@@ -841,10 +838,11 @@ function ProjectView() {
                     fetchPriority={isActive ? "high" : "auto"}
                     decoding={isActive ? "sync" : "async"}
                     draggable={false}
-                    className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${isActive
+                    className={`absolute inset-0 h-full w-full object-cover object-center contrast-[1.03] saturate-[1.04] transform-gpu transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] ${
+                      isActive
                         ? "z-10 scale-100 opacity-100"
                         : "z-0 scale-[1.02] opacity-0 pointer-events-none"
-                      }`}
+                    }`}
                   />
                 );
               })
@@ -959,6 +957,19 @@ function ProjectView() {
                       : `${property.m2.toLocaleString("es-CO")} m²`}{" "}
                   · {property.price}
                 </p>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <p className="text-xs sm:text-sm text-amber-300 font-serif italic">
+                    Tu paraíso existe. ¡Ven a conocerlo!
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleModeChange("lot")}
+                    className="rounded-full bg-accent text-accent-foreground text-xs font-bold hover:bg-accent/90 shadow-lg cursor-pointer"
+                  >
+                    Explorar plano y reservar
+                  </Button>
+                </div>
               </div>
               {images.length > 0 && (
                 <div
@@ -975,10 +986,11 @@ function ProjectView() {
                         onClick={() => setGalleryIndex(index)}
                         aria-label={`Ver imagen ${index + 1} de ${images.length}`}
                         aria-current={isCurrent ? "true" : undefined}
-                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${isCurrent
+                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                          isCurrent
                             ? "scale-105 border-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] opacity-100"
                             : "border-white/20 opacity-65 hover:opacity-95"
-                          }`}
+                        }`}
                       >
                         <img
                           src={image}
@@ -999,8 +1011,9 @@ function ProjectView() {
 
       {/* Panel lateral flotante en PC (estrictamente por debajo del header y oculto en Conoce el proyecto) */}
       <aside
-        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[365px] xl:w-[380px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${isRightPanelVisible ? "translate-x-0" : "translate-x-full pointer-events-none"
-          }`}
+        className={`fixed top-14 sm:top-16 lg:top-[72px] bottom-0 right-0 z-30 hidden w-[365px] xl:w-[380px] flex-col p-3 transition-transform duration-300 ease-out lg:flex ${
+          isRightPanelVisible ? "translate-x-0" : "translate-x-full pointer-events-none"
+        }`}
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-border dark:border-white/10 bg-background/94 text-foreground shadow-[20px_20px_70px_rgba(0,0,0,.32)] dark:shadow-[20px_20px_70px_rgba(0,0,0,.5)] backdrop-blur-2xl">
           <ProjectViewControlPanelContent

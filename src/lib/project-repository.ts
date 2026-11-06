@@ -493,8 +493,7 @@ export async function deleteProjectMedia(
         }
         if (
           mediaType === "logo" ||
-          (proj.logo_path &&
-            (proj.logo_path === storagePath || proj.logo_path === cleanPath))
+          (proj.logo_path && (proj.logo_path === storagePath || proj.logo_path === cleanPath))
         ) {
           updates.logo_path = null;
         }

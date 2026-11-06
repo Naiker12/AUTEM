@@ -864,9 +864,7 @@ function PanoramaCalibrationAdminPage() {
             size="sm"
             className="h-8 text-xs cursor-pointer text-muted-foreground hover:text-foreground"
             onClick={() =>
-              setWorkspaceHeight((h) =>
-                h === "tall" ? "full" : h === "full" ? "normal" : "tall",
-              )
+              setWorkspaceHeight((h) => (h === "tall" ? "full" : h === "full" ? "normal" : "tall"))
             }
             title="Expandir área de trabajo"
           >
@@ -1204,7 +1202,9 @@ function PanoramaCalibrationAdminPage() {
                     <div className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-xl text-xs">
                       <span className="font-mono text-amber-300 font-bold">
                         {selectedPieceLotIds.slice(0, 3).join(", ")}
-                        {selectedPieceLotIds.length > 3 ? ` +${selectedPieceLotIds.length - 3}` : ""}
+                        {selectedPieceLotIds.length > 3
+                          ? ` +${selectedPieceLotIds.length - 3}`
+                          : ""}
                       </span>
                       <button
                         type="button"
@@ -1331,7 +1331,9 @@ function PanoramaCalibrationAdminPage() {
                       type="button"
                       onClick={() => setNudgeStep(0.1)}
                       className={`px-1.5 py-0.5 rounded font-mono cursor-pointer ${
-                        nudgeStep === 0.1 ? "bg-amber-400 text-black font-bold" : "text-white/70 hover:text-white"
+                        nudgeStep === 0.1
+                          ? "bg-amber-400 text-black font-bold"
+                          : "text-white/70 hover:text-white"
                       }`}
                     >
                       0.1°
@@ -1340,7 +1342,9 @@ function PanoramaCalibrationAdminPage() {
                       type="button"
                       onClick={() => setNudgeStep(0.5)}
                       className={`px-1.5 py-0.5 rounded font-mono cursor-pointer ${
-                        nudgeStep === 0.5 ? "bg-amber-400 text-black font-bold" : "text-white/70 hover:text-white"
+                        nudgeStep === 0.5
+                          ? "bg-amber-400 text-black font-bold"
+                          : "text-white/70 hover:text-white"
                       }`}
                     >
                       0.5°
@@ -1349,7 +1353,9 @@ function PanoramaCalibrationAdminPage() {
                       type="button"
                       onClick={() => setNudgeStep(1.5)}
                       className={`px-1.5 py-0.5 rounded font-mono cursor-pointer ${
-                        nudgeStep === 1.5 ? "bg-amber-400 text-black font-bold" : "text-white/70 hover:text-white"
+                        nudgeStep === 1.5
+                          ? "bg-amber-400 text-black font-bold"
+                          : "text-white/70 hover:text-white"
                       }`}
                     >
                       1.5°

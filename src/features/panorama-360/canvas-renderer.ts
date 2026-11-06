@@ -607,8 +607,7 @@ export function renderPanoramaLotsCanvas(opts: RenderLotsOptions): VisibleScreen
         )
       : lot.center3D;
 
-    const cDot =
-      (center3D.x * dx + center3D.y * dy + center3D.z * dz) / PSV_SPHERE_RADIUS;
+    const cDot = (center3D.x * dx + center3D.y * dy + center3D.z * dz) / PSV_SPHERE_RADIUS;
     if (cDot < 0.08) continue;
 
     const verts = isOffset

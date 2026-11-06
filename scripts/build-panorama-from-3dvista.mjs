@@ -270,7 +270,8 @@ async function main() {
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        source: "assets-source/3dvista/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
+        source:
+          "assets-source/3dvista/villa-paraiso/media/panorama_A9011CBE_A2D5_B67E_41D6_1C74FF319BB0_0",
         cameraExif: {
           lat: 10.437897,
           lng: -75.356053,

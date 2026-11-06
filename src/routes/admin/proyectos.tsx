@@ -1203,7 +1203,9 @@ function ProjectDialog({
                 <FieldGroup className="grid gap-6 md:grid-cols-2">
                   {/* Logotipo del proyecto */}
                   <Field className="flex flex-col gap-2">
-                    <FieldLabel>Logotipo del proyecto (PNG o SVG con fondo transparente)</FieldLabel>
+                    <FieldLabel>
+                      Logotipo del proyecto (PNG o SVG con fondo transparente)
+                    </FieldLabel>
                     {logoPreview ? (
                       <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border bg-muted/30 p-6">
                         <img

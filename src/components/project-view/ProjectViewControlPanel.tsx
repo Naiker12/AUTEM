@@ -158,8 +158,9 @@ function DossierTabs({
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
         onWheel={handleWheel}
-        className={`flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-none select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"
-          }`}
+        className={`flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-none select-none ${
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
         style={{ scrollBehavior: isDragging ? "auto" : "smooth" }}
       >
         {sections.map((tab) => (
@@ -169,12 +170,17 @@ function DossierTabs({
             onClick={(e) => {
               if (hasDraggedRef.current) return;
               onSelectSection(tab.id);
-              e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+              e.currentTarget.scrollIntoView({
+                behavior: "smooth",
+                inline: "nearest",
+                block: "nearest",
+              });
             }}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11.5px] sm:text-[12px] font-semibold transition-all cursor-pointer ${activeSection === tab.id
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11.5px] sm:text-[12px] font-semibold transition-all cursor-pointer ${
+              activeSection === tab.id
                 ? "bg-accent text-accent-foreground shadow-xs font-bold ring-1 ring-accent/40"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+            }`}
           >
             {tab.label}
           </button>
@@ -242,8 +248,8 @@ export function ProjectViewControlPanelContent({
 
   const contactUrl = selectedLot
     ? `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(
-      `Hola AUTEM, me interesa recibir asesoría y cotización del Lote ${selectedLot.id} (${formatLotArea(selectedLot.area)} - ${formatLotPrice(selectedLot.price)}) en ${property.name}.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179 (Santa Rosa de Lima a 1 km vía a Villanueva)`,
-    )}`
+        `Hola AUTEM, me interesa recibir asesoría y cotización del Lote ${selectedLot.id} (${formatLotArea(selectedLot.area)} - ${formatLotPrice(selectedLot.price)}) en ${property.name}.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179 (Santa Rosa de Lima a 1 km vía a Villanueva)`,
+      )}`
     : `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(`Hola AUTEM, deseo recibir asesoría e información oficial sobre ${property.name}.\n\nUbicación en Google Maps: https://maps.google.com/?q=10.436829,-75.356179`)}`;
 
   const [activeTab, setActiveTab] = useState("project");
@@ -347,12 +353,13 @@ export function ProjectViewControlPanelContent({
                   </div>
                   <Badge
                     variant="outline"
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${selectedLot.status === "Disponible"
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                      selectedLot.status === "Disponible"
                         ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         : selectedLot.status === "Reservado"
                           ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                           : "border-slate-500/40 bg-slate-500/10 text-slate-500 dark:text-slate-400"
-                      }`}
+                    }`}
                   >
                     ● {selectedLot.status}
                   </Badge>
@@ -609,17 +616,17 @@ export function ProjectViewControlPanelContent({
                   {(meta?.whyBuyReasons && meta.whyBuyReasons.length > 0
                     ? meta.whyBuyReasons
                     : [
-                      "Fácil acceso a solo 1 km del Municipio en la vía Santa Rosa - Villanueva, con servicios públicos y viabilidad de gas domiciliario.",
-                      "Excelente topografía alta con tanque de 250.000 litros existente que suministra agua por gravedad garantizando gran ahorro energético.",
-                      "Estudio hidrológico radicado en Planeación que garantiza cero inundaciones gracias al arroyo natural que no se desborda y lagunas de amortiguación.",
-                      "Conjunto cerrado con portería de lujo 24 horas, cerramiento en limoncillo y malla galvanizada plastificada en PVC con tubos de 2”.",
-                      "Tres grandes lagos con 33.128 m² de espejo de agua para pesca deportiva y deportes náuticos.",
-                      "Más de 3.400 metros de senderos bajo frondosos árboles nativos escuchando el lindo canto de los pájaros.",
-                      "Hábitat natural protegido con más de 130 especies de aves y fauna silvestre libre (osos perezosos, monos aulladores, armadillos, etc.).",
-                      "5 senderos peatonales internos de 3 metros entre manzanas comunicando directamente con los senderos perimetrales.",
-                      "Alta valorización garantizada a solo 10 minutos de donde se construirá el nuevo Aeropuerto Internacional de Cartagena de Indias.",
-                      "Libertad de construcción con asesoría en conceptos bioclimáticos y sustentables que armonizan con la reserva.",
-                    ]
+                        "Fácil acceso a solo 1 km del Municipio en la vía Santa Rosa - Villanueva, con servicios públicos y viabilidad de gas domiciliario.",
+                        "Excelente topografía alta con tanque de 250.000 litros existente que suministra agua por gravedad garantizando gran ahorro energético.",
+                        "Estudio hidrológico radicado en Planeación que garantiza cero inundaciones gracias al arroyo natural que no se desborda y lagunas de amortiguación.",
+                        "Conjunto cerrado con portería de lujo 24 horas, cerramiento en limoncillo y malla galvanizada plastificada en PVC con tubos de 2”.",
+                        "Tres grandes lagos con 33.128 m² de espejo de agua para pesca deportiva y deportes náuticos.",
+                        "Más de 3.400 metros de senderos bajo frondosos árboles nativos escuchando el lindo canto de los pájaros.",
+                        "Hábitat natural protegido con más de 130 especies de aves y fauna silvestre libre (osos perezosos, monos aulladores, armadillos, etc.).",
+                        "5 senderos peatonales internos de 3 metros entre manzanas comunicando directamente con los senderos perimetrales.",
+                        "Alta valorización garantizada a solo 10 minutos de donde se construirá el nuevo Aeropuerto Internacional de Cartagena de Indias.",
+                        "Libertad de construcción con asesoría en conceptos bioclimáticos y sustentables que armonizan con la reserva.",
+                      ]
                   ).map((reason, index) => (
                     <div
                       key={index}

@@ -19,7 +19,6 @@ import { Route as ActualizarContrasenaRouteImport } from "./routes/actualizar-co
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as AdminIndexRouteImport } from "./routes/admin/index"
 import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
-import { Route as PropertiesIdRouteImport } from "./routes/properties/$id"
 import { Route as AdminProyectosRouteImport } from "./routes/admin/proyectos"
 import { Route as AdminPerfilRouteImport } from "./routes/admin/perfil"
 import { Route as AdminLotesUnidadesRouteImport } from "./routes/admin/lotes-unidades"
@@ -87,11 +86,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const ProyectoSlugRoute = ProyectoSlugRouteImport.update({
   id: "/proyecto/$slug",
   path: "/proyecto/$slug",
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PropertiesIdRoute = PropertiesIdRouteImport.update({
-  id: "/properties/$id",
-  path: "/properties/$id",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminProyectosRoute = AdminProyectosRouteImport.update({
@@ -210,7 +204,6 @@ export interface FileRoutesByFullPath {
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
-  "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin/": typeof AdminIndexRoute
   "/admin/configuracion/apariencia": typeof AdminConfiguracionAparienciaRoute
@@ -239,7 +232,6 @@ export interface FileRoutesByTo {
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
-  "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin": typeof AdminIndexRoute
   "/admin/configuracion/apariencia": typeof AdminConfiguracionAparienciaRoute
@@ -271,7 +263,6 @@ export interface FileRoutesById {
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
-  "/properties/$id": typeof PropertiesIdRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin/": typeof AdminIndexRoute
   "/admin/configuracion/apariencia": typeof AdminConfiguracionAparienciaRoute
@@ -304,7 +295,6 @@ export interface FileRouteTypes {
     | "/admin/lotes-unidades"
     | "/admin/perfil"
     | "/admin/proyectos"
-    | "/properties/$id"
     | "/proyecto/$slug"
     | "/admin/"
     | "/admin/configuracion/apariencia"
@@ -333,7 +323,6 @@ export interface FileRouteTypes {
     | "/admin/lotes-unidades"
     | "/admin/perfil"
     | "/admin/proyectos"
-    | "/properties/$id"
     | "/proyecto/$slug"
     | "/admin"
     | "/admin/configuracion/apariencia"
@@ -364,7 +353,6 @@ export interface FileRouteTypes {
     | "/admin/lotes-unidades"
     | "/admin/perfil"
     | "/admin/proyectos"
-    | "/properties/$id"
     | "/proyecto/$slug"
     | "/admin/"
     | "/admin/configuracion/apariencia"
@@ -389,7 +377,6 @@ export interface RootRouteChildren {
   NosotrosRoute: typeof NosotrosRoute
   PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
   RecuperarAccesoRoute: typeof RecuperarAccesoRoute
-  PropertiesIdRoute: typeof PropertiesIdRoute
   ProyectoSlugRoute: typeof ProyectoSlugRoute
 }
 
@@ -463,13 +450,6 @@ declare module "@tanstack/react-router" {
       path: "/proyecto/$slug"
       fullPath: "/proyecto/$slug"
       preLoaderRoute: typeof ProyectoSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    "/properties/$id": {
-      id: "/properties/$id"
-      path: "/properties/$id"
-      fullPath: "/properties/$id"
-      preLoaderRoute: typeof PropertiesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/admin/proyectos": {
@@ -666,7 +646,6 @@ const rootRouteChildren: RootRouteChildren = {
   NosotrosRoute: NosotrosRoute,
   PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
   RecuperarAccesoRoute: RecuperarAccesoRoute,
-  PropertiesIdRoute: PropertiesIdRoute,
   ProyectoSlugRoute: ProyectoSlugRoute,
 }
 export const routeTree = rootRouteImport

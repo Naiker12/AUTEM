@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import PiePagina from "@/components/pie-pagina/PiePagina";
 
 export const Route = createFileRoute("/politica-privacidad")({
   head: () => ({
@@ -118,7 +118,7 @@ function PoliticaPrivacidad() {
         </div>
       </main>
 
-      <Footer />
+      <PiePagina />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   Plus,
   RotateCcw,
   Shrink,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Viewer } from "@photo-sphere-viewer/core";
@@ -150,6 +151,14 @@ export default function PanoramaViewer({
     x: number;
     y: number;
   } | null>(null);
+
+  const [taglineExpanded, setTaglineExpanded] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTaglineExpanded(false);
+    }, 6500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Si viene configuración explícita por props (ej. modo calibración admin), no consultar Supabase
@@ -465,6 +474,34 @@ export default function PanoramaViewer({
           setStatus("ready");
           drawLotsCanvas();
 
+          // Auto-rotación suave inicial para generar dinamismo hasta que el usuario interactúe
+          let autoRotate = true;
+          let autoRotateTimer: number | null = null;
+          const stopAutoRotate = () => {
+            autoRotate = false;
+            if (autoRotateTimer) cancelAnimationFrame(autoRotateTimer);
+          };
+
+          const tickAutoRotate = () => {
+            if (!autoRotate || isDisposed || !viewerRef.current) return;
+            try {
+              const currentPos = viewerRef.current.getPosition();
+              viewerRef.current.rotate({ yaw: currentPos.yaw + 0.0006, pitch: currentPos.pitch });
+              autoRotateTimer = requestAnimationFrame(tickAutoRotate);
+            } catch {
+              // Ignore
+            }
+          };
+
+          setTimeout(() => {
+            if (autoRotate && !isDisposed) {
+              autoRotateTimer = requestAnimationFrame(tickAutoRotate);
+            }
+          }, 800);
+
+          hostRef.current?.addEventListener("pointerdown", stopAutoRotate, { once: true });
+          hostRef.current?.addEventListener("touchstart", stopAutoRotate, { once: true });
+
           if (
             isMobile &&
             maxTexSize >= 8192 &&
@@ -734,7 +771,9 @@ export default function PanoramaViewer({
             e.preventDefault();
             try {
               (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-            } catch {}
+            } catch {
+              /* ignore */
+            }
             setIsHandDragging(true);
             handDragStartRef.current = { x: e.clientX, y: e.clientY };
             handPointerDownPosRef.current = { x: e.clientX, y: e.clientY };
@@ -812,7 +851,9 @@ export default function PanoramaViewer({
             e.stopPropagation();
             try {
               (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-            } catch {}
+            } catch {
+              /* ignore */
+            }
             const downPos = handPointerDownPosRef.current;
             const dist = downPos ? Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) : 999;
             const totalYawRad = liveDragOffsetRef.current?.deltaYawRad || 0;
@@ -846,7 +887,9 @@ export default function PanoramaViewer({
           onPointerCancel={(e) => {
             try {
               (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-            } catch {}
+            } catch {
+              /* ignore */
+            }
             liveDragOffsetRef.current = null;
             setIsHandDragging(false);
             handDragStartRef.current = null;
@@ -1111,6 +1154,54 @@ export default function PanoramaViewer({
                 </button>
               )}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Banner / Tagline sobre la vista 360° abajo a la izquierda */}
+      {!selectedLot && (
+        <div
+          className="absolute bottom-3 left-3 sm:left-4 z-20 max-w-sm select-none animate-in fade-in slide-in-from-bottom-2 duration-700"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {taglineExpanded ? (
+            <div className="relative rounded-2xl border border-white/20 bg-black/70 p-4 text-white shadow-[0_12px_36px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={() => setTaglineExpanded(false)}
+                className="absolute right-2.5 top-2.5 rounded-full p-1 text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title="Minimizar mensaje"
+                aria-label="Minimizar mensaje"
+              >
+                <X className="size-3.5" />
+              </button>
+              <div className="flex items-center gap-1.5 text-[8px] uppercase tracking-[0.24em] text-accent font-semibold">
+                <span>Villa Paraíso</span>
+                <span>·</span>
+                <span>Reserva Campestre</span>
+              </div>
+              <h3 className="mt-1 font-serif text-sm sm:text-base font-medium leading-tight text-white tracking-tight">
+                DONDE LA NATURALEZA SE VUELVE HOGAR
+              </h3>
+              <p className="mt-1.5 text-[11px] sm:text-xs text-white/80 leading-relaxed font-light">
+                Despierta cada día rodeado de naturaleza. Tres grandes lagos, senderos y paisajes
+                extraordinarios.
+              </p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setTaglineExpanded(true)}
+              className="flex items-center gap-2 rounded-full border border-white/25 bg-black/60 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur-md hover:bg-black/80 transition-all cursor-pointer group"
+              title="Ver mensaje de bienvenida"
+            >
+              <span className="text-accent text-sm group-hover:scale-110 transition-transform">
+                🌿
+              </span>
+              <span className="font-serif text-[11px] sm:text-xs tracking-tight text-white/95">
+                Donde la naturaleza se vuelve hogar
+              </span>
+            </button>
           )}
         </div>
       )}
