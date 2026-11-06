@@ -587,91 +587,33 @@ function ProjectView() {
               }}
               className="relative w-full min-h-[130px] shrink-0 lg:!h-full lg:absolute lg:inset-0"
             >
-              {/* Selector de capa: Plano Vectorial vs Mapa Satelital */}
-              <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-30 select-none">
-                <div className="flex items-center gap-0.5 sm:gap-1 rounded-full border border-border/80 bg-background/90 p-0.5 sm:p-1 shadow-lg backdrop-blur-xl">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMapLayer("vector");
-                    }}
-                    className={`rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      mapLayer === "vector"
-                        ? "bg-accent text-accent-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Plano Vectorial
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMapLayer("satellite");
-                    }}
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 sm:px-3 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      mapLayer === "satellite"
-                        ? "bg-accent text-accent-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <span>Satélite HD</span>
-                    {georeference?.status === "validated" && (
-                      <span
-                        className="inline-block size-1.5 rounded-full bg-emerald-400"
-                        title="Georreferenciación validada"
-                      />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {mapLayer === "satellite" ? (
-                <ProjectLocationMap
-                  lat={property.lat}
-                  lng={property.lng}
-                  projectName={property.name}
-                  locationName={property.location}
-                  isDark={isDark}
-                  georeferenceStatus={georeference?.status}
-                  boundsGeo={georeference?.bounds_geo}
-                  projectSlug={property?.slug ?? slug}
-                  lots={projectLots}
-                  selectedLotId={selectedLot?.id}
-                  onSelectLot={selectLot}
-                  hideSurroundingsDrawer={true}
-                  hideGeoreferenceBadge={true}
-                />
-              ) : (
-                <MasterplanSvgViewer
-                  settings={viewSettings}
-                  lots={projectLots}
-                  filteredLots={filteredLots}
-                  isFilterActive={isFilterActive}
-                  filterRequest={filterRequest}
-                  onClearFilter={handleClearFilters}
-                  selectedLotId={selectedLot?.id ?? ""}
-                  focusRequest={lotFocusRequest}
-                  onSelectLot={(lotId) => {
-                    const cleanId = lotId.replace(/^lot-/, "");
-                    const lot = projectLots.find(
-                      (item) =>
-                        item.id === cleanId ||
-                        item.id === `L-${cleanId}` ||
-                        item.id.replace(/^L-/, "") === cleanId.replace(/^L-/, "") ||
-                        String(item.lotNumber) === cleanId.replace(/^L-/, ""),
-                    );
-                    if (lot) {
-                      selectLot(lot);
-                      setIsLotPanelVisible(true);
-                    }
-                  }}
-                  isDesktopSidebarOpen={isLotPanelVisible}
-                  isRightPanelOpen={!isMobile && isRightPanelVisible}
-                  isDark={isDark}
-                />
-              )}
+              <MasterplanSvgViewer
+                settings={viewSettings}
+                lots={projectLots}
+                filteredLots={filteredLots}
+                isFilterActive={isFilterActive}
+                filterRequest={filterRequest}
+                onClearFilter={handleClearFilters}
+                selectedLotId={selectedLot?.id ?? ""}
+                focusRequest={lotFocusRequest}
+                onSelectLot={(lotId) => {
+                  const cleanId = lotId.replace(/^lot-/, "");
+                  const lot = projectLots.find(
+                    (item) =>
+                      item.id === cleanId ||
+                      item.id === `L-${cleanId}` ||
+                      item.id.replace(/^L-/, "") === cleanId.replace(/^L-/, "") ||
+                      String(item.lotNumber) === cleanId.replace(/^L-/, ""),
+                  );
+                  if (lot) {
+                    selectLot(lot);
+                    setIsLotPanelVisible(true);
+                  }
+                }}
+                isDesktopSidebarOpen={isLotPanelVisible}
+                isRightPanelOpen={!isMobile && isRightPanelVisible}
+                isDark={isDark}
+              />
             </div>
 
             {/* Barra divisora táctil y dinámica para ajustar tamaño (solo móvil) */}

@@ -465,65 +465,7 @@ export default function MasterplanSvgViewer({
                 />
               ))}
 
-            {/* Geometría CAD detallada del Club House y Amenidades */}
-            {"cadAmenities" in layersData &&
-              Array.isArray(
-                (
-                  layersData as unknown as {
-                    cadAmenities: Array<{
-                      d: string;
-                      closed: boolean;
-                      layer: string;
-                      color: number | null;
-                    }>;
-                  }
-                ).cadAmenities,
-              ) &&
-              (
-                layersData as unknown as {
-                  cadAmenities: Array<{
-                    d: string;
-                    closed: boolean;
-                    layer: string;
-                    color: number | null;
-                  }>;
-                }
-              ).cadAmenities.map((item, i: number) => {
-                if (item.layer === "0") {
-                  return (
-                    <path
-                      key={`cad-amenity-0-${i}`}
-                      d={item.d}
-                      fill={
-                        item.closed
-                          ? isDark
-                            ? "rgba(255,255,255,0.06)"
-                            : "rgba(0,0,0,0.04)"
-                          : "none"
-                      }
-                      stroke={isDark ? "#78716c" : "#57534e"}
-                      strokeWidth={1.2}
-                      opacity={0.85}
-                    />
-                  );
-                }
-                return (
-                  <path
-                    key={`cad-amenity-${i}`}
-                    d={item.d}
-                    fill={
-                      item.closed
-                        ? isDark
-                          ? "rgba(255,255,255,0.05)"
-                          : "rgba(0,0,0,0.03)"
-                        : "none"
-                    }
-                    stroke={isDark ? "#854d0e" : "#78350f"}
-                    strokeWidth={1.2}
-                    opacity={0.8}
-                  />
-                );
-              })}
+
           </g>
         )}
 
