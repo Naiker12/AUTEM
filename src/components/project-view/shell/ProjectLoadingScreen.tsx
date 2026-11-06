@@ -52,15 +52,12 @@ export default function ProjectLoadingScreen({
     >
       <div className="project-intro__content max-w-2xl px-6 flex flex-col items-center text-center">
         {logoUrl ? (
-          <div className="mb-4 flex flex-col items-center gap-1.5 animate-in fade-in zoom-in-95 duration-1000">
+          <div className="mb-4 flex flex-col items-center animate-in fade-in zoom-in-95 duration-1000">
             <img
               src={logoUrl}
               alt={projectName}
               className="h-12 sm:h-16 md:h-20 w-auto max-w-[280px] sm:max-w-[340px] object-contain brightness-0 invert drop-shadow-[0_4px_20px_rgba(0,0,0,0.85)]"
             />
-            <span className="text-[7.5px] sm:text-[8px] uppercase tracking-[0.28em] text-white/50 font-medium">
-              by AUTEM
-            </span>
           </div>
         ) : (
           <p className="project-intro__eyebrow">AUTEM · Arquitectura y territorio</p>

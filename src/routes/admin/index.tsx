@@ -6,8 +6,10 @@ import {
   ImageIcon,
   Inbox,
   LayoutPanelTop,
+  MessageCircle,
   Settings2,
   ShieldAlert,
+  Sparkles,
   UsersRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -40,6 +42,12 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
+import {
+  buildWhatsAppReserveUrl,
+  LEAD_STATUS_CONFIG,
+  listLeads,
+  type LeadRecord,
+} from "@/lib/repositories/leads-repository";
 import { usePublishedProjects } from "@/lib/repositories/public-projects";
 
 export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
@@ -109,12 +117,24 @@ function AdminDashboard() {
   const { projects } = usePublishedProjects();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string>("administrador");
+  const [recentLeads, setRecentLeads] = useState<LeadRecord[]>([]);
+  const [leadsMetrics, setLeadsMetrics] = useState({ total: 0, nuevas: 0 });
 
   useEffect(() => {
-    void getCurrentAdminAccess().then((access) => {
+    void getCurrentAdminAccess().then(async (access) => {
       if (access) {
         setIsSuperAdmin(access.isSuperAdmin);
         setUserRole(access.role);
+        try {
+          const leads = await listLeads(access.organizationId);
+          setRecentLeads(leads.slice(0, 5));
+          setLeadsMetrics({
+            total: leads.length,
+            nuevas: leads.filter((l) => l.status === "new").length,
+          });
+        } catch {
+          /* ignore error */
+        }
       }
     });
   }, []);
@@ -133,27 +153,27 @@ function AdminDashboard() {
   ];
   const metrics = [
     {
-      title: "Proyectos configurados",
+      title: "Proyectos en catálogo",
       value: projects.length,
-      description: "Proyectos en la base de datos.",
+      description: "Desarrollos activos en la plataforma.",
       icon: FolderKanban,
     },
     {
-      title: "Secciones públicas",
-      value: publicSections,
-      description: "Áreas mapeadas en el sitio actual.",
-      icon: LayoutPanelTop,
+      title: "Solicitudes de reserva",
+      value: leadsMetrics.total,
+      description: `${leadsMetrics.nuevas} nuevas por contactar.`,
+      icon: Inbox,
     },
     {
       title: "Medios del catálogo",
       value: catalogImages,
-      description: "Imágenes asociadas a los proyectos.",
+      description: "Imágenes y planos vinculados.",
       icon: ImageIcon,
     },
     {
-      title: "Ajustes disponibles",
+      title: "Módulos disponibles",
       value: settingsModules,
-      description: "Módulos actuales del panel.",
+      description: "Catálogo, lotes, medios y accesos.",
       icon: Settings2,
     },
   ];
@@ -255,6 +275,123 @@ function AdminDashboard() {
             </Card>
           ))}
         </section>
+
+        {/* Solicitudes recientes de reserva y CRM */}
+        <Card className="rounded-2xl">
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="font-serif text-2xl">Solicitudes recientes de lotes</CardTitle>
+              <CardDescription>
+                Clientes interesados en separar lotes o agendar visitas a Villa Paraíso.
+              </CardDescription>
+            </div>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link to="/admin/solicitudes">
+                Ver todas en CRM ({leadsMetrics.total}) <ArrowUpRight className="ml-1 size-3.5" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {recentLeads.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-8 text-center">
+                <Inbox className="size-8 text-muted-foreground/60" />
+                <p className="text-sm font-medium text-foreground">
+                  Aún no hay solicitudes registradas
+                </p>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  Cuando los clientes hagan clic en "Reservar este lote" desde el plano urbanístico
+                  o catálogo, aparecerán aquí con su contacto directo.
+                </p>
+                <Button asChild size="sm" variant="outline" className="mt-2 rounded-full text-xs">
+                  <a
+                    href="/proyecto/villa-paraiso?vista=plano"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Probar reserva en plano <ArrowUpRight className="ml-1 size-3" />
+                  </a>
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Teléfono / WhatsApp</TableHead>
+                      <TableHead>Lote</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acción</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentLeads.map((lead) => {
+                      const statusCfg = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.new;
+                      const waUrl = buildWhatsAppReserveUrl({
+                        fullName: lead.full_name,
+                        phone: lead.phone,
+                        lotNumber: lead.lot_number || lead.lot_external_id || undefined,
+                        projectName: lead.project_name || "Villa Paraíso",
+                      });
+                      return (
+                        <TableRow key={lead.id}>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(lead.created_at).toLocaleDateString("es-CO", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {lead.full_name}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs">{lead.phone}</span>
+                              <a
+                                href={waUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-full bg-emerald-500/10 p-1 text-emerald-600 hover:bg-emerald-500/20"
+                                title="Contactar por WhatsApp"
+                              >
+                                <MessageCircle className="size-3" />
+                              </a>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {lead.lot_number || lead.lot_external_id ? (
+                              <Badge variant="outline" className="font-mono text-xs">
+                                Lote {lead.lot_number || lead.lot_external_id}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">General</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={`text-xs ${statusCfg.badgeClass}`}>
+                              {statusCfg.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              asChild
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs rounded-full"
+                            >
+                              <Link to="/admin/solicitudes">Gestionar</Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(19rem,0.75fr)]">
           <Card className="min-w-0">

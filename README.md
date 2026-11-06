@@ -194,7 +194,7 @@ AUTEM/
 
 ### Prerrequisitos
 - **Node.js**: v20 o superior
-- **Gestor de paquetes**: `npm`, `pnpm` o `bun`
+- **Gestor de paquetes**: `pnpm` (v10 o superior)
 
 ### 1. Clonar el repositorio
 ```bash
@@ -211,12 +211,12 @@ VITE_SUPABASE_ANON_KEY=tu-clave-anonima-publica
 
 ### 3. Instalar dependencias
 ```bash
-npm install
+pnpm install
 ```
 
 ### 4. Iniciar el servidor local
 ```bash
-npm run dev
+pnpm dev
 ```
 La aplicación estará disponible de forma predeterminada en `http://localhost:5173`.
 
@@ -226,15 +226,16 @@ La aplicación estará disponible de forma predeterminada en `http://localhost:5
 
 | Comando | Descripción |
 | :--- | :--- |
-| `npm run dev` | Inicia el servidor de desarrollo Vite con TanStack Router. |
-| `npm run build` | Compila la aplicación para producción y genera el fallback `404.html`. |
-| `npm run preview` | Previsualiza el build de producción localmente. |
-| `npm run typecheck` | Ejecuta la verificación estricta de tipos de TypeScript (`tsc --noEmit`). |
-| `npm run lint` | Analiza el código fuente con ESLint. |
-| `npm run format` | Da formato a todo el código con Prettier. |
-| `npm run navigation:extract` | Extrae polígonos y rutas desde archivos CAD `.dxf` a GeoJSON. |
-| `npm run panorama:project` | Proyecta matemáticamente los vértices de los lotes sobre el panorama 360°. |
-| `npm run images:home` | Optimiza las imágenes del home mediante Sharp (conversión WebP). |
+| `pnpm dev` | Inicia el servidor de desarrollo Vite con TanStack Router. |
+| `pnpm build` | Compila la aplicación para producción y genera el fallback `404.html`. |
+| `pnpm preview` | Previsualiza el build de producción localmente. |
+| `pnpm typecheck` | Ejecuta la verificación estricta de tipos de TypeScript (`tsc --noEmit`). |
+| `pnpm lint` | Analiza el código fuente con ESLint. |
+| `pnpm format` | Da formato a todo el código con Prettier. |
+| `pnpm test:navigation` | Audita la red topológica, conectividad y esquemas de navegación en terreno. |
+| `pnpm navigation:extract` | Extrae polígonos y rutas desde archivos CAD `.dxf` a GeoJSON. |
+| `pnpm panorama:project` | Proyecta matemáticamente los vértices de los lotes sobre el panorama 360°. |
+| `pnpm images:home` | Optimiza las imágenes del home mediante Sharp (conversión WebP). |
 
 ---
 

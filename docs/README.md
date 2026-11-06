@@ -35,3 +35,4 @@
 
 ## 5. Contenido (`docs/content/`)
 - [Guía de Imágenes de Servicios](content/imagenes-servicios.md) – Requisitos y especificaciones para recursos gráficos de servicios.
+
