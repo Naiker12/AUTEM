@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { evaluatePasswordRules } from "@/lib/password-security";
+import { evaluatePasswordRules } from "@/lib/auth/password-security";
 import { requireSupabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 

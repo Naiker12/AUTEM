@@ -15,7 +15,7 @@ import { NavMain } from "./NavMain";
 import { NavProjects } from "./NavProjects";
 import { NavUser } from "./NavUser";
 import { TeamSwitcher } from "./TeamSwitcher";
-import { canAccessAdminPath, type AdminAccess } from "@/lib/admin-auth";
+import { canAccessAdminPath, type AdminAccess } from "@/lib/auth/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 import {
   Sidebar,

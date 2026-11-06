@@ -14,7 +14,7 @@ import {
   type LotMetadata,
   type LotStatus,
 } from "@/features/lots";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1255,7 +1255,12 @@ function LotDetailSheet({
                 <UserRound className="size-4 text-accent" />
                 <p className="font-medium">Gestión comercial</p>
               </div>
-              <Button asChild variant="ghost" size="sm" className="h-7 text-xs text-accent hover:text-accent">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-accent hover:text-accent"
+              >
                 <Link to="/admin/solicitudes">
                   <Inbox className="size-3 mr-1" /> Ver solicitudes
                 </Link>

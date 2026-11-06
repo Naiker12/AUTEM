@@ -5,7 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { signOutFromAdmin } from "@/lib/admin-auth";
+import { signOutFromAdmin } from "@/lib/auth/admin-auth";
 import { AdminBreadcrumbs } from "./AdminBreadcrumbs";
 
 interface AdminHeaderProps {

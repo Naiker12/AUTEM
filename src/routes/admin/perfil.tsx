@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { evaluatePasswordRules } from "@/lib/password-security";
+import { evaluatePasswordRules } from "@/lib/auth/password-security";
 import { requireSupabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/perfil")({

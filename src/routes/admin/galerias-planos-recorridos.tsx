@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
 import {
   cleanupOrphanedProjectMedia,
   deleteProjectMedia,
@@ -65,7 +65,7 @@ import {
   type ProjectMediaRecord,
   updateManagedProject,
   uploadProjectMedia,
-} from "@/lib/project-repository";
+} from "@/lib/repositories/project-repository";
 
 export const Route = createFileRoute("/admin/galerias-planos-recorridos")({
   component: MediaLibraryPage,

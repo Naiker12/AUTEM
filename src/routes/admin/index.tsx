@@ -39,8 +39,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
-import { usePublishedProjects } from "@/lib/public-projects";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
+import { usePublishedProjects } from "@/lib/repositories/public-projects";
 
 export const Route = createFileRoute("/admin/")({ component: AdminDashboard });
 

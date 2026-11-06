@@ -71,7 +71,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 import { Spinner } from "@/components/ui/spinner";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
 import {
   createManagedProject,
   deleteProjectMedia,
@@ -83,7 +83,7 @@ import {
   uploadProjectMedia,
   type ManagedProjectRecord,
   type ProjectMediaRecord,
-} from "@/lib/project-repository";
+} from "@/lib/repositories/project-repository";
 
 export const Route = createFileRoute("/admin/proyectos")({ component: ProjectsPage });
 

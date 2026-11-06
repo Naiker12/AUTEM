@@ -6,7 +6,7 @@ import appCss from "../styles.css?url";
 import ScrollProgress from "@/components/common/ScrollProgress";
 import PageTransition from "@/components/common/PageTransition";
 import { Toaster } from "@/components/ui/sonner";
-import { publicSiteMediaUrl } from "@/lib/site-repository";
+import { publicSiteMediaUrl } from "@/lib/repositories/site-repository";
 
 const socialImage = publicSiteMediaUrl(
   "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",

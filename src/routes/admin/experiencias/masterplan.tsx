@@ -46,7 +46,7 @@ import {
   type LotStatus,
 } from "@/features/lots";
 import layersData from "@/data/villa-paraiso/layers.json";
-import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
+import { usePublishedLots, usePublishedProject } from "@/lib/repositories/public-projects";
 import { requireSupabase, supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 

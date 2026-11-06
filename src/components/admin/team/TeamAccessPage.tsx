@@ -61,8 +61,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
-import { listManagedProjects } from "@/lib/project-repository";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
+import { listManagedProjects } from "@/lib/repositories/project-repository";
 import { requireSupabase } from "@/lib/supabase";
 import {
   Table,

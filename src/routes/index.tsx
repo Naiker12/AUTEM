@@ -23,7 +23,7 @@ import EntryLoader3D, {
 } from "@/components/entry-loader";
 import HomeHeroSection from "@/components/home/HomeHeroSection";
 import EditorialHomeSections from "@/components/home/EditorialHomeSections";
-import { publicSiteMediaUrl } from "@/lib/site-repository";
+import { publicSiteMediaUrl } from "@/lib/repositories/site-repository";
 
 const socialImage = publicSiteMediaUrl(
   "00000000-0000-0000-0000-000000000001/images/autem-hero-approved-scene-v2.png",

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import { usePublishedProjects } from "@/lib/public-projects";
+import { usePublishedProjects } from "@/lib/repositories/public-projects";
 
 export default function SiteFooter() {
   const marqueeText = "AUTEM · ARQUITECTURA Y TERRITORIO · ";

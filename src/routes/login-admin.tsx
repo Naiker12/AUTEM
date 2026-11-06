@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { AdminLogin } from "@/components/admin/auth/AdminLogin";
-import { getCurrentAdminAccess, signInToAdmin } from "@/lib/admin-auth";
+import { getCurrentAdminAccess, signInToAdmin } from "@/lib/auth/admin-auth";
 
 type LoginAdminSearch = {
   redirect?: string;

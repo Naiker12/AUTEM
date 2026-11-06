@@ -8,7 +8,7 @@ import {
   clearAdminAccessCache,
   getCurrentAdminAccess,
   type AdminAccess,
-} from "@/lib/admin-auth";
+} from "@/lib/auth/admin-auth";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin")({

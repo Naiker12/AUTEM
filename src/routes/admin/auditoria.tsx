@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/auditoria")({ component: AuditLogsPage });

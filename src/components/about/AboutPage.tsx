@@ -1,6 +1,6 @@
 import { ArrowUpRight, MoveRight } from "lucide-react";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/site-repository";
+import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/repositories/site-repository";
 import "@/components/home/editorial.css";
 
 const pillars = [

@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AdminContentTransition } from "./AdminContentTransition";
 import { AdminHeader } from "./AdminHeader";
 import { AppSidebar } from "./sidebar/AppSidebar";
-import type { AdminAccess } from "@/lib/admin-auth";
+import type { AdminAccess } from "@/lib/auth/admin-auth";
 
 export function AdminShell({ children, access }: { children: ReactNode; access: AdminAccess }) {
   const [isDark, setIsDark] = useState(() => localStorage.getItem("autem-theme") === "dark");

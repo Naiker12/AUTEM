@@ -26,8 +26,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { publicProjectMediaUrl } from "@/lib/project-repository";
-import { publicSiteMediaUrl } from "@/lib/site-repository";
+import { publicProjectMediaUrl } from "@/lib/repositories/project-repository";
+import { publicSiteMediaUrl } from "@/lib/repositories/site-repository";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 

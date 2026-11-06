@@ -17,7 +17,7 @@ import {
   usePublishedLots,
   usePublishedProject,
   useProjectGeoreference,
-} from "@/lib/public-projects";
+} from "@/lib/repositories/public-projects";
 import { filterAndSortLots, formatLotPrice, formatLotArea, type Lot } from "@/features/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { useTheme } from "@/hooks/use-theme";

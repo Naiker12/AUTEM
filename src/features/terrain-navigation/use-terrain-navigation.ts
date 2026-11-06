@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { loadPublishedNavigation } from "@/lib/navigation-repository";
+import { loadPublishedNavigation } from "@/lib/repositories/navigation-repository";
 import { resolveTerrainNavigation } from "./navigation-session";
 import type { TravelMode } from "./types";
 

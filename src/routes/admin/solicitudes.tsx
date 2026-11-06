@@ -62,7 +62,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { getCurrentAdminAccess } from "@/lib/admin-auth";
+import { getCurrentAdminAccess } from "@/lib/auth/admin-auth";
 import {
   addLeadEvent,
   buildWhatsAppReserveUrl,
@@ -73,8 +73,11 @@ import {
   type LeadEventKind,
   type LeadRecord,
   type LeadStatus,
-} from "@/lib/leads-repository";
-import { listManagedProjects, type ManagedProjectRecord } from "@/lib/project-repository";
+} from "@/lib/repositories/leads-repository";
+import {
+  listManagedProjects,
+  type ManagedProjectRecord,
+} from "@/lib/repositories/project-repository";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/solicitudes")({

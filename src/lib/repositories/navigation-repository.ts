@@ -2,7 +2,7 @@ import {
   renderedMasterplanVersion,
   masterplanBounds,
 } from "@/features/terrain-navigation/masterplan-version";
-import { requireSupabase } from "./supabase";
+import { requireSupabase } from "@/lib/supabase";
 import { validateNavigationBundle } from "@/features/terrain-navigation/navigation-schema";
 
 export async function loadPublishedNavigation(
@@ -76,14 +76,16 @@ export async function auditNavigation(projectId: string) {
   ]);
   if (nodes.error) throw nodes.error;
   if (edges.error) throw edges.error;
-  const ids = new Set(nodes.data.map((n) => n.id));
+  const ids = new Set(nodes.data.map((n: { id: string }) => n.id));
   return {
     role: membership.role,
     masterplanVersion: project.masterplan_version,
     nodes: nodes.data,
     edges: edges.data,
-    invalidEdges: edges.data.filter((e) => !ids.has(e.from_node_id) || !ids.has(e.to_node_id))
-      .length,
+    invalidEdges: edges.data.filter(
+      (e: { from_node_id: string; to_node_id: string }) =>
+        !ids.has(e.from_node_id) || !ids.has(e.to_node_id),
+    ).length,
   };
 }
 export async function saveNavigationDraft(projectId: string, payload: unknown) {

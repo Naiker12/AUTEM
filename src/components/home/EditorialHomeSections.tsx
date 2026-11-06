@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useScrollFrame } from "@/hooks/use-scroll-frame";
 import { AnimatedHeading, Reveal } from "./EditorialMotion";
-import { usePublishedProjects } from "@/lib/public-projects";
-import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/site-repository";
+import { usePublishedProjects } from "@/lib/repositories/public-projects";
+import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/repositories/site-repository";
 import "./editorial.css";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
@@ -368,22 +368,22 @@ function ProjectResourcesSection() {
   const gallery = villaParaiso?.images ?? [];
   const resources = [
     {
+      title: "Localización 360° inmersiva",
+      image: gallery[0] ?? villaParaiso?.image ?? "",
+      text: "Perspectiva panorámica táctil sobre los tres lagos y la reserva natural protegida.",
+      status: "Experiencia 360°",
+    },
+    {
       title: "Plano urbanístico",
       image: villaParaiso?.floorPlanImage ?? "",
-      text: "Consulta la organización del proyecto y localiza sus lotes en el plano.",
-      status: "Exploración del proyecto",
+      text: "Consulta la organización del proyecto, cotiza y reserva tu lote en tiempo real.",
+      status: "Masterplan interactivo",
     },
     {
-      title: "Imágenes de la propuesta",
-      image: gallery[0] ?? "",
-      text: "Comprende la intención de diseño del acceso y su relación con el entorno. Las imágenes son representaciones, no fotografías de obra terminada.",
-      status: "Visualización conceptual",
-    },
-    {
-      title: "Entorno y paisaje",
-      image: gallery[1] ?? "",
-      text: "Revisa las referencias visuales del paisaje y plantea tus preguntas sobre el lote que te interesa.",
-      status: "Referencia visual",
+      title: "Entorno y amenidades",
+      image: gallery[1] ?? gallery[0] ?? "",
+      text: "Senderos ecológicos, más de 100.000 m² de zonas verdes y Florida Country Club.",
+      status: "Galería de diseño",
     },
   ];
   return (
@@ -394,8 +394,8 @@ function ProjectResourcesSection() {
             CONOCE EL PROYECTO ANTES DE DECIDIR
           </AnimatedHeading>
           <p className="mt-4 text-sm max-w-xl mx-auto leading-relaxed">
-            Villa Paraíso reúne planos y recursos visuales para ayudarte a entender la propuesta y
-            conversar con nuestro equipo.
+            Villa Paraíso reúne visualización 360°, plano interactivo y reserva directa de lotes
+            para ayudarte a tomar la mejor decisión de inversión.
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
@@ -421,13 +421,12 @@ function ProjectResourcesSection() {
           <Link
             to="/proyecto/$slug"
             params={{ slug: villaParaiso?.slug ?? "villa-paraiso" }}
-            className="inline-flex rounded-full bg-[#4f4742] text-white px-6 py-3 text-sm"
+            className="inline-flex rounded-full bg-[#4f4742] text-white px-6 py-3 text-sm font-medium hover:bg-black transition-colors"
           >
             Explorar Villa Paraíso <ArrowUpRight className="ml-2" size={18} />
           </Link>
-          <p className="mt-4 text-xs text-[#57504b]">
-            El recorrido 360° está en preparación. Consulta con el equipo el estado, disponibilidad
-            y alcance de cada propuesta.
+          <p className="mt-4 text-xs font-serif italic text-[#57504b]">
+            Tu paraíso existe. ¡Ven a conocerlo! Descubre Villa Paraíso Reserva Campestre.
           </p>
         </div>
       </div>
