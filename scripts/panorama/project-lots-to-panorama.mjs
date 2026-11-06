@@ -22,7 +22,7 @@ proj4.defs(
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(__dirname, "../..");
 
 // If executed by plain `node` without TypeScript loader, delegate transparently to `npx tsx`
 if (!process.env.AUTEM_TSX_ACTIVE && !process.execArgv.some((a) => a.includes("tsx"))) {

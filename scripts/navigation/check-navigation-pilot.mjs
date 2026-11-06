@@ -23,7 +23,7 @@ async function loadUrl(file) {
   return result;
 }
 const load = async (file) =>
-  import(await loadUrl("../src/features/terrain-navigation/" + file + ".ts"));
+  import(await loadUrl("../../src/features/terrain-navigation/" + file + ".ts"));
 const { validateNavigationBundle } = await load("navigation-schema");
 const { resolveTerrainNavigation } = await load("navigation-session");
 const { matchRoad } = await load("road-matching");

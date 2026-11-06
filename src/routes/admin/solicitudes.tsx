@@ -191,7 +191,8 @@ export function SolicitudesAdminPage() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProjectId, selectedStatus]);
 
   // Open detail sheet

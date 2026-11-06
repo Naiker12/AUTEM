@@ -9,7 +9,7 @@ async function moduleUrl(file) {
   const resolved = outputText.includes('from "./coordinate-transform"')
     ? outputText.replace(
         'from "./coordinate-transform"',
-        `from "${await moduleUrl("../src/features/terrain-navigation/coordinate-transform.ts")}"`,
+        `from "${await moduleUrl("../../src/features/terrain-navigation/coordinate-transform.ts")}"`,
       )
     : outputText;
   return `data:text/javascript;base64,${Buffer.from(resolved).toString("base64")}`;
@@ -18,16 +18,16 @@ async function load(file) {
   return import(await moduleUrl(file));
 }
 const { findInternalRoute, findRenderableInternalRoute } = await load(
-  "../src/features/terrain-navigation/route-graph.ts",
+  "../../src/features/terrain-navigation/route-graph.ts",
 );
 const { matchDestinationLots } = await load(
-  "../src/features/terrain-navigation/destination-search.ts",
+  "../../src/features/terrain-navigation/destination-search.ts",
 );
 const { evaluateCalibration, hasValidSvgPoint, hasUsableGpsCapture } = await load(
-  "../src/features/terrain-navigation/calibration.ts",
+  "../../src/features/terrain-navigation/calibration.ts",
 );
 const { fitAffineTransform, applyAffineTransform } = await load(
-  "../src/features/terrain-navigation/coordinate-transform.ts",
+  "../../src/features/terrain-navigation/coordinate-transform.ts",
 );
 const bounds = { width: 2400, height: 2324 };
 assert.equal(hasValidSvgPoint({ svgX: "", svgY: "" }, bounds), false);
