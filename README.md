@@ -40,8 +40,8 @@
 El ecosistema está desacoplado en una arquitectura modular de alta fidelidad compuesta por **Frontend Inmersivo (SPA)**, **Backend en la Nube (Supabase BaaS)**, **Pipeline de Ingesta Topográfica CAD** y una capa global de **Edge & CDN**:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Naiker12/AUTEM/limpieza-360/public/images/architecture/architecture-diagram.png#gh-light-mode-only" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
-  <img src="https://raw.githubusercontent.com/Naiker12/AUTEM/limpieza-360/public/images/architecture/architecture-diagram-dark.png#gh-dark-mode-only" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
+  <img src="https://raw.githubusercontent.com/Naiker12/AUTEM/main/public/images/architecture/architecture-diagram.png#gh-light-mode-only" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
+  <img src="https://raw.githubusercontent.com/Naiker12/AUTEM/main/public/images/architecture/architecture-diagram-dark.png#gh-dark-mode-only" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
 </p>
 
 <p align="center"><em>Diagrama de infraestructura generado con especificación oficial de arquitectura de ingeniería.</em></p>
