@@ -27,6 +27,7 @@ type PublicProjectRow = {
   cover_path: string | null;
   masterplan_path: string | null;
   masterplan_version: string | null;
+  logo_path?: string | null;
   tour_url: string | null;
   metadata?: import("@/data/properties").ProjectDossierMetadata | null;
   project_media?: PublicMediaRow[];
@@ -34,7 +35,7 @@ type PublicProjectRow = {
 
 type PublicMediaRow = {
   storage_path: string;
-  media_type: "cover" | "gallery" | "masterplan" | "document" | "tour";
+  media_type: "cover" | "gallery" | "masterplan" | "document" | "tour" | "logo";
   sort_order: number;
 };
 
@@ -82,6 +83,19 @@ function toProperty(row: PublicProjectRow): Property {
   const masterplan =
     mediaUrl(row.masterplan_path) ??
     mediaUrl(media.find((item) => item.media_type === "masterplan")?.storage_path ?? null);
+
+  const rawLogo =
+    (row.logo_path && !isDeprecatedOrDeletedMedia(row.logo_path)
+      ? mediaUrl(row.logo_path)
+      : null) ?? mediaUrl(media.find((item) => item.media_type === "logo")?.storage_path ?? null);
+
+  const fallbackLogo =
+    row.slug === "villa-paraiso" || row.slug?.includes("paraiso")
+      ? "/images/villa-paraiso-logo.png"
+      : undefined;
+
+  const logoUrl = rawLogo || fallbackLogo;
+
   const fallbackTour =
     row.slug === "villa-paraiso" ? "/panoramas/villa-paraiso/pano-8192.v1.webp" : undefined;
   const tour =
@@ -120,6 +134,7 @@ function toProperty(row: PublicProjectRow): Property {
     tourUrl: tour ?? undefined,
     tourImage: tour ?? undefined,
     images: safeImages,
+    logoUrl,
     metadata:
       row.metadata ??
       properties.find(

@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import ModeSwitcher from "./ModeSwitcher";
 import MobileProjectMenu from "./MobileProjectMenu";
+import ProjectBrandMark from "./ProjectBrandMark";
 import { PROJECT_VIEW_MODES, type ViewMode } from "./types";
 
 interface ProjectHeaderProps {
   propertyName?: string;
+  logoUrl?: string;
+  showProjectBrand?: boolean;
   onOpenInfo: () => void;
   contactUrl: string;
   activeMode: ViewMode;
@@ -21,6 +24,8 @@ interface ProjectHeaderProps {
 
 export default function ProjectHeader({
   propertyName = "Villa Paraíso",
+  logoUrl,
+  showProjectBrand = true,
   onOpenInfo,
   contactUrl,
   activeMode,
@@ -38,24 +43,33 @@ export default function ProjectHeader({
   return (
     <header className="absolute inset-x-0 top-0 z-40 h-14 sm:h-16 lg:h-[72px] border-b border-border bg-background/94 text-foreground shadow-2xl backdrop-blur-2xl">
       <div className="relative flex h-full items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-7">
-        <Link
-          to="/"
-          className="flex shrink-0 items-center gap-2 sm:gap-2.5"
-          aria-label="Volver a AUTEM"
-        >
-          <AutemBrandIcon size={24} />
-          <div className="min-w-0">
-            <strong className="block max-w-[180px] sm:max-w-[280px] md:max-w-[380px] truncate text-sm sm:text-base md:text-lg font-serif font-medium leading-none tracking-tight text-foreground">
-              {propertyName}
-            </strong>
-            <span className="mt-1 hidden text-[7px] sm:text-[7.5px] uppercase tracking-[0.22em] text-muted-foreground lg:block">
-              AUTEM · Proyecto
-            </span>
-            <span className="mt-1 block text-[11px] text-muted-foreground lg:hidden">
-              {activeView?.shortLabel ?? activeView?.label}
-            </span>
-          </div>
-        </Link>
+        {showProjectBrand && logoUrl ? (
+          <ProjectBrandMark
+            projectName={propertyName}
+            logoUrl={logoUrl}
+            isDark={isDark}
+            withBackLink
+          />
+        ) : (
+          <Link
+            to="/"
+            className="flex shrink-0 items-center gap-2 sm:gap-2.5"
+            aria-label="Volver a AUTEM"
+          >
+            <AutemBrandIcon size={24} />
+            <div className="min-w-0">
+              <strong className="block max-w-[180px] sm:max-w-[280px] md:max-w-[380px] truncate text-sm sm:text-base md:text-lg font-serif font-medium leading-none tracking-tight text-foreground">
+                {propertyName}
+              </strong>
+              <span className="mt-1 hidden text-[7px] sm:text-[7.5px] uppercase tracking-[0.22em] text-muted-foreground lg:block">
+                AUTEM · Proyecto
+              </span>
+              <span className="mt-1 block text-[11px] text-muted-foreground lg:hidden">
+                {activeView?.shortLabel ?? activeView?.label}
+              </span>
+            </div>
+          </Link>
+        )}
 
         <Button
           type="button"

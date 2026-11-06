@@ -96,6 +96,7 @@ type ManagedProject = {
   location: string;
   type: PropertyType;
   image: string;
+  logo: string;
   galleryCount: number;
   lotCount: number;
   status: ProjectStatus;
@@ -137,6 +138,7 @@ function mapProjectRecord(record: ManagedProjectRecord): ManagedProject {
     location: record.location,
     type: record.property_type,
     image: publicProjectMediaUrl(record.cover_path) ?? "",
+    logo: record.logo_path ? (publicProjectMediaUrl(record.logo_path) ?? "") : "",
     galleryCount: record.gallery_count ?? 0,
     lotCount: record.lot_count ?? 0,
     status: record.status === "published" ? "Publicado" : "Borrador",
@@ -162,6 +164,8 @@ function ProjectsPage() {
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string>("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
   const [pendingGalleryFiles, setPendingGalleryFiles] = useState<File[]>([]);
   const [pendingMasterplanFile, setPendingMasterplanFile] = useState<File | null>(null);
   const [pendingDocumentFiles, setPendingDocumentFiles] = useState<File[]>([]);
@@ -217,6 +221,8 @@ function ProjectsPage() {
     setDraft(emptyDraft);
     setCoverFile(null);
     setCoverPreview("");
+    setLogoFile(null);
+    setLogoPreview("");
     setPendingGalleryFiles([]);
     setPendingMasterplanFile(null);
     setPendingDocumentFiles([]);
@@ -239,6 +245,8 @@ function ProjectsPage() {
     });
     setCoverFile(null);
     setCoverPreview(project.image);
+    setLogoFile(null);
+    setLogoPreview(project.logo);
     setPendingGalleryFiles([]);
     setPendingMasterplanFile(null);
     setPendingDocumentFiles([]);
@@ -299,6 +307,12 @@ function ProjectsPage() {
       if (coverFile) {
         setSaveStatus("Subiendo portada a Supabase Storage…");
         await uploadProjectMedia(saved.id, coverFile, "cover", 0);
+      }
+
+      // 1b. Subida de logotipo a Supabase Storage
+      if (logoFile) {
+        setSaveStatus("Subiendo logotipo a Supabase Storage…");
+        await uploadProjectMedia(saved.id, logoFile, "logo", 0);
       }
 
       // 2. Subida de galería
@@ -437,6 +451,7 @@ function ProjectsPage() {
         existingMedia={existingMedia}
         loadingMedia={loadingMedia}
         coverPreview={coverPreview}
+        logoPreview={logoPreview}
         pendingGalleryFiles={pendingGalleryFiles}
         pendingMasterplanFile={pendingMasterplanFile}
         pendingDocumentFiles={pendingDocumentFiles}
@@ -464,6 +479,28 @@ function ProjectsPage() {
           } else {
             setCoverPreview("");
           }
+        }}
+        onSelectLogo={(file) => {
+          setLogoFile(file);
+          setLogoPreview((prev) => {
+            if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return URL.createObjectURL(file);
+          });
+        }}
+        onRemoveLogo={async () => {
+          if (logoFile) {
+            setLogoFile(null);
+            setLogoPreview((prev) => {
+              if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+              return editingProject?.logo ?? "";
+            });
+            return;
+          }
+          const existingLogo = existingMedia.find((m) => m.media_type === "logo");
+          if (existingLogo && editingProject) {
+            await handleDeleteExistingMedia(existingLogo);
+          }
+          setLogoPreview("");
         }}
         onAddGalleryFiles={(files) => setPendingGalleryFiles((prev) => [...prev, ...files])}
         onRemovePendingGalleryFile={(index) =>
@@ -658,12 +695,15 @@ type ProjectDialogProps = {
   existingMedia: ProjectMediaRecord[];
   loadingMedia: boolean;
   coverPreview: string;
+  logoPreview: string;
   pendingGalleryFiles: File[];
   pendingMasterplanFile: File | null;
   pendingDocumentFiles: File[];
   onDraftChange: <Key extends keyof ProjectDraft>(key: Key, value: ProjectDraft[Key]) => void;
   onSelectCover: (file: File) => void;
   onRemoveCover: () => void | Promise<void>;
+  onSelectLogo: (file: File) => void;
+  onRemoveLogo: () => void | Promise<void>;
   onAddGalleryFiles: (files: File[]) => void;
   onRemovePendingGalleryFile: (index: number) => void;
   onSelectMasterplan: (file: File) => void;
@@ -684,12 +724,15 @@ function ProjectDialog({
   existingMedia,
   loadingMedia,
   coverPreview,
+  logoPreview,
   pendingGalleryFiles,
   pendingMasterplanFile,
   pendingDocumentFiles,
   onDraftChange,
   onSelectCover,
   onRemoveCover,
+  onSelectLogo,
+  onRemoveLogo,
   onAddGalleryFiles,
   onRemovePendingGalleryFile,
   onSelectMasterplan,
@@ -1158,6 +1201,58 @@ function ProjectDialog({
                 )}
 
                 <FieldGroup className="grid gap-6 md:grid-cols-2">
+                  {/* Logotipo del proyecto */}
+                  <Field className="flex flex-col gap-2">
+                    <FieldLabel>Logotipo del proyecto (PNG o SVG con fondo transparente)</FieldLabel>
+                    {logoPreview ? (
+                      <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border bg-muted/30 p-6">
+                        <img
+                          src={logoPreview}
+                          alt="Vista previa del logotipo"
+                          className="max-h-24 max-w-[85%] object-contain"
+                        />
+                        <div className="absolute right-2 top-2 flex gap-1">
+                          <label
+                            htmlFor="project-logo-replace"
+                            className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full bg-background/90 px-2.5 text-xs font-medium shadow-md hover:bg-background"
+                            title="Reemplazar logotipo"
+                          >
+                            <RefreshCw className="size-3" /> Reemplazar
+                            <input
+                              id="project-logo-replace"
+                              type="file"
+                              accept="image/png,image/svg+xml,image/webp"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) onSelectLogo(f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="rounded-full shadow-md"
+                            onClick={onRemoveLogo}
+                            title="Eliminar logotipo"
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <MediaDropzone
+                        id="project-logo"
+                        accept="image/png,image/svg+xml,image/webp"
+                        title="Logotipo oficial"
+                        description="PNG o SVG con fondo transparente. Aparece en el visualizador, 360° y fichas."
+                        onFilesSelected={(files) => files[0] && onSelectLogo(files[0])}
+                      />
+                    )}
+                  </Field>
+
                   {/* Portada */}
                   <Field className="flex flex-col gap-2">
                     <FieldLabel>Imagen de portada</FieldLabel>

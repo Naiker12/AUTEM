@@ -81,6 +81,7 @@ export interface Property {
   tourImage?: string;
   tourUrl?: string;
   images?: string[];
+  logoUrl?: string;
   metadata?: ProjectDossierMetadata;
 }
 

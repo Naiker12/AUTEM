@@ -85,6 +85,7 @@ type MediaAsset = {
 };
 
 const kindByMediaType: Record<ProjectMediaRecord["media_type"], AssetKind> = {
+  logo: "Imagen",
   cover: "Imagen",
   gallery: "Imagen",
   masterplan: "Plano",

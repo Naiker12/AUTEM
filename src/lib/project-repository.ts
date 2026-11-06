@@ -22,6 +22,7 @@ export interface ManagedProjectRecord {
   cover_path: string | null;
   masterplan_path: string | null;
   masterplan_version: string | null;
+  logo_path?: string | null;
   tour_url: string | null;
   published_at: string | null;
   created_at: string;
@@ -42,6 +43,7 @@ export interface ProjectInput {
   description?: string | null;
   longDescription?: string | null;
   tourUrl?: string | null;
+  logoPath?: string | null;
   metadata?: ProjectDossierMetadata;
 }
 
@@ -51,6 +53,7 @@ export type ProjectMediaType =
   | "masterplan"
   | "document"
   | "tour"
+  | "logo"
   | "cad_source"
   | "masterplan_vector"
   | "georef";
@@ -113,6 +116,9 @@ function toProjectPayload(input: ProjectInput) {
     tour_url: sanitizeHttpUrl(input.tourUrl),
     published_at: input.status === "published" ? new Date().toISOString() : null,
   };
+  if (input.logoPath !== undefined) {
+    payload.logo_path = input.logoPath;
+  }
   if (input.metadata !== undefined) {
     payload.metadata = input.metadata;
   }
@@ -337,8 +343,8 @@ export async function uploadProjectMedia(
   const bucket = getStorageBucketForMedia(mediaType, extension);
   const client = requireSupabase();
 
-  // Si se sube una nueva portada o masterplan, eliminamos el archivo anterior del bucket y BD para no ocupar espacio
-  if (mediaType === "cover" || mediaType === "masterplan") {
+  // Si se sube una nueva portada, masterplan o logotipo, eliminamos el archivo anterior del bucket y BD para no ocupar espacio
+  if (mediaType === "cover" || mediaType === "masterplan" || mediaType === "logo") {
     try {
       const { data: oldMedia } = await client
         .from("project_media")
@@ -359,11 +365,16 @@ export async function uploadProjectMedia(
 
       const { data: proj } = await client
         .from("projects")
-        .select("cover_path, masterplan_path")
+        .select("cover_path, masterplan_path, logo_path")
         .eq("id", projectId)
         .maybeSingle();
 
-      const existingPath = mediaType === "cover" ? proj?.cover_path : proj?.masterplan_path;
+      const existingPath =
+        mediaType === "cover"
+          ? proj?.cover_path
+          : mediaType === "masterplan"
+            ? proj?.masterplan_path
+            : proj?.logo_path;
       if (existingPath) {
         const directOldPath = extractStoragePath(existingPath, bucket);
         if (directOldPath) {
@@ -399,8 +410,13 @@ export async function uploadProjectMedia(
     throw mediaError;
   }
 
-  if (mediaType === "cover" || mediaType === "masterplan") {
-    const column = mediaType === "cover" ? "cover_path" : "masterplan_path";
+  if (mediaType === "cover" || mediaType === "masterplan" || mediaType === "logo") {
+    const column =
+      mediaType === "cover"
+        ? "cover_path"
+        : mediaType === "masterplan"
+          ? "masterplan_path"
+          : "logo_path";
     const updates: Record<string, unknown> = { [column]: storagePath };
     if (mediaType === "masterplan") {
       updates.masterplan_version = new Date().toISOString().slice(0, 7).replace(/-/g, ".");
@@ -452,12 +468,16 @@ export async function deleteProjectMedia(
     try {
       const { data: proj } = await client
         .from("projects")
-        .select("cover_path, masterplan_path")
+        .select("cover_path, masterplan_path, logo_path")
         .eq("id", projectId)
         .maybeSingle();
 
       if (proj) {
-        const updates: Partial<{ cover_path: string | null; masterplan_path: string | null }> = {};
+        const updates: Partial<{
+          cover_path: string | null;
+          masterplan_path: string | null;
+          logo_path: string | null;
+        }> = {};
         if (
           mediaType === "cover" ||
           (proj.cover_path && (proj.cover_path === storagePath || proj.cover_path === cleanPath))
@@ -470,6 +490,13 @@ export async function deleteProjectMedia(
             (proj.masterplan_path === storagePath || proj.masterplan_path === cleanPath))
         ) {
           updates.masterplan_path = null;
+        }
+        if (
+          mediaType === "logo" ||
+          (proj.logo_path &&
+            (proj.logo_path === storagePath || proj.logo_path === cleanPath))
+        ) {
+          updates.logo_path = null;
         }
         if (Object.keys(updates).length > 0) {
           await client.from("projects").update(updates).eq("id", projectId);

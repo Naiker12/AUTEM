@@ -9,6 +9,7 @@ export {
   ProjectViewControlPanelContent,
 } from "./ProjectViewControlPanel";
 export { default as ProjectHeader } from "./ProjectHeader";
+export { default as ProjectBrandMark } from "./ProjectBrandMark";
 export { default as ProjectLoadingScreen } from "./ProjectLoadingScreen";
 export {
   DEFAULT_PROJECT_VIEW_SETTINGS,
