@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
-import AutemBrandIcon from "@/components/AutemBrandIcon";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 
 export function AdminContentTransition({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });

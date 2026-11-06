@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useContactForm } from "@/hooks/useContactForm";
-import { useModalA11y } from "@/hooks/useModalA11y";
+import { useContactForm } from "@/hooks/use-contact-form";
+import { useModalA11y } from "@/hooks/use-modal-a11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import {
   contactSchema,
@@ -11,9 +11,10 @@ import {
   type ContactFormData,
   type BrochureFormData,
 } from "@/lib/validation";
-import Navbar from "@/components/Navbar";
-import PiePagina, { BotonWhatsappFlotante } from "@/components/pie-pagina";
-import MagneticButton from "@/components/MagneticButton";
+import SiteNavbar from "@/components/site/SiteNavbar";
+import SiteFooter from "@/components/site/SiteFooter";
+import FloatingWhatsAppButton from "@/components/site/FloatingWhatsAppButton";
+import MagneticButton from "@/components/common/MagneticButton";
 import EntryLoader3D, {
   LoaderOverlay,
   SCENE_VISIBLE_DURATION_MS,
@@ -194,7 +195,7 @@ function Index() {
       />
 
       {/* Navigation */}
-      <Navbar variant="home" />
+      <SiteNavbar variant="home" />
 
       <main id="main-content">
         <HomeHeroSection visible={hideModel} />
@@ -202,10 +203,10 @@ function Index() {
       </main>
 
       {/* Footer / Pie de Página */}
-      <PiePagina />
+      <SiteFooter />
 
       {/* Botón Flotante de WhatsApp VIP */}
-      <BotonWhatsappFlotante />
+      <FloatingWhatsAppButton />
 
       {/* Exit Intent Popup */}
       {showExitPopup && (

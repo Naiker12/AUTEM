@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ChevronsUpDown, Plus } from "lucide-react";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 
 import {
   DropdownMenu,

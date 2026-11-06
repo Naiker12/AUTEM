@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 
-export default function BotonWhatsappFlotante() {
+export default function FloatingWhatsAppButton() {
   const [showTooltip, setShowTooltip] = useState(true);
 
   useEffect(() => {

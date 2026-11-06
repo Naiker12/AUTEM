@@ -4,7 +4,7 @@ import { ArrowLeft, Clock3, LoaderCircle, MailCheck, RefreshCw, ShieldCheck } fr
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { toast } from "sonner";
 
-import AutemBrandIcon from "@/components/AutemBrandIcon";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

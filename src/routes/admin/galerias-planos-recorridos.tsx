@@ -15,7 +15,7 @@ import {
 import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import AutemBrandIcon from "@/components/AutemBrandIcon";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

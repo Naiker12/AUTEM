@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useScrollFrame } from "@/hooks/useScrollFrame";
+import { useScrollFrame } from "@/hooks/use-scroll-frame";
 import { AnimatedHeading, Reveal } from "./EditorialMotion";
 import { usePublishedProjects } from "@/lib/public-projects";
 import { publicSiteMediaUrl, usePublicSiteMedia } from "@/lib/site-repository";

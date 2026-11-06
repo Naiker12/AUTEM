@@ -1,14 +1,14 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactSchema, type ContactFormData } from "@/lib/validation";
-import { useContactForm } from "@/hooks/useContactForm";
+import { useContactForm } from "@/hooks/use-contact-form";
 import { Send, User, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function FormularioContacto() {
+export default function ContactForm() {
   const contactForm = useContactForm();
   const {
     register,

@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
-import { useScrollFrame } from "@/hooks/useScrollFrame";
+import { useScrollFrame } from "@/hooks/use-scroll-frame";
 import { publicSiteMediaUrl } from "@/lib/site-repository";
 
 interface HomeHeroSectionProps {

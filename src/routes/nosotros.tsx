@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Navbar from "@/components/Navbar";
-import PiePagina from "@/components/pie-pagina/PiePagina";
-import { NosotrosPage } from "@/components/nosotros";
-import { BotonWhatsappFlotante } from "@/components/pie-pagina";
+import SiteNavbar from "@/components/site/SiteNavbar";
+import SiteFooter from "@/components/site/SiteFooter";
+import AboutPage from "@/components/about/AboutPage";
+import FloatingWhatsAppButton from "@/components/site/FloatingWhatsAppButton";
 
 export const Route = createFileRoute("/nosotros")({
   component: Nosotros,
@@ -21,12 +21,12 @@ export const Route = createFileRoute("/nosotros")({
 function Nosotros() {
   return (
     <div className="min-h-screen font-sans bg-[#f0ebe6] text-[#4f4742] selection:bg-[#4f4742]/15">
-      <Navbar variant="about" />
+      <SiteNavbar variant="about" />
       <main id="main-content">
-        <NosotrosPage />
+        <AboutPage />
       </main>
-      <PiePagina />
-      <BotonWhatsappFlotante />
+      <SiteFooter />
+      <FloatingWhatsAppButton />
     </div>
   );
 }

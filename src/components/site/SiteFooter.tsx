@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { usePublishedProjects } from "@/lib/public-projects";
 
-export default function PiePagina() {
+export default function SiteFooter() {
   const marqueeText = "AUTEM · ARQUITECTURA Y TERRITORIO · ";
   const { projects } = usePublishedProjects();
   const featuredProject =

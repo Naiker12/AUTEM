@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useScrollFrame } from "@/hooks/useScrollFrame";
+import { useScrollFrame } from "@/hooks/use-scroll-frame";
 
 export default function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);

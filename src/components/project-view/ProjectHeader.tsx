@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, MessageCircle, Moon, MoreVertical, Sun } from "lucide-react";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
 import ModeSwitcher from "./ModeSwitcher";

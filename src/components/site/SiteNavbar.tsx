@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useModalA11y } from "@/hooks/useModalA11y";
+import { useModalA11y } from "@/hooks/use-modal-a11y";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { X } from "lucide-react";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
-import Container from "@/components/layout/Container";
-import { useScrollFrame } from "@/hooks/useScrollFrame";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
+import Container from "@/components/common/Container";
+import { useScrollFrame } from "@/hooks/use-scroll-frame";
 
 interface NavbarProps {
   variant: "home" | "inner" | "about";
@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { id: "servicios", href: `${import.meta.env.BASE_URL}#servicios`, label: "SERVICIOS" },
 ];
 
-export default function Navbar({ variant }: NavbarProps) {
+export default function SiteNavbar({ variant }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useModalA11y(menuOpen, () => setMenuOpen(false));
   const [activeSection, setActiveSection] = useState<string>("");

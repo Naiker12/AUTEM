@@ -2,7 +2,7 @@ import { Clock, ShieldCheck, MessageCircle, MapPin } from "lucide-react";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function TarjetaBeneficios() {
+export default function BenefitCard() {
   const whatsappUrl =
     `${WHATSAPP_BASE_URL}?text=` +
     encodeURIComponent(

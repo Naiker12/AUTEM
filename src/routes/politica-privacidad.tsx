@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Navbar from "@/components/Navbar";
-import PiePagina from "@/components/pie-pagina/PiePagina";
+import SiteNavbar from "@/components/site/SiteNavbar";
+import SiteFooter from "@/components/site/SiteFooter";
 
 export const Route = createFileRoute("/politica-privacidad")({
   head: () => ({
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/politica-privacidad")({
 function PoliticaPrivacidad() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
-      <Navbar variant="inner" />
+      <SiteNavbar variant="inner" />
 
       <main id="main-content" className="mx-auto max-w-3xl px-6 pt-32 pb-20 md:px-8">
         <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Legal</span>
@@ -118,7 +118,7 @@ function PoliticaPrivacidad() {
         </div>
       </main>
 
-      <PiePagina />
+      <SiteFooter />
     </div>
   );
 }

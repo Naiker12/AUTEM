@@ -139,7 +139,7 @@ const tickerItems = [
   "VISUALIZACIÓN INMERSIVA 3D",
 ];
 
-export function NosotrosPage() {
+export function AboutPage() {
   const { byPlacement } = usePublicSiteMedia();
   const whatsappUrl = `${WHATSAPP_BASE_URL}?text=${encodeURIComponent("Hola AUTEM, me gustaría conversar sobre un proyecto.")}`;
   const heroScene = publicSiteMediaUrl(
@@ -649,4 +649,4 @@ export function NosotrosPage() {
   );
 }
 
-export default NosotrosPage;
+export default AboutPage;

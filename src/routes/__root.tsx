@@ -3,8 +3,8 @@ import { Outlet, Link, createRootRoute, useRouter, HeadContent } from "@tanstack
 import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
-import ScrollProgress from "../components/ScrollProgress";
-import PageTransition from "../components/PageTransition";
+import ScrollProgress from "@/components/common/ScrollProgress";
+import PageTransition from "@/components/common/PageTransition";
 import { Toaster } from "@/components/ui/sonner";
 import { publicSiteMediaUrl } from "@/lib/site-repository";
 

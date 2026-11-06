@@ -1,10 +1,10 @@
-import TarjetaBeneficios from "./TarjetaBeneficios";
-import FormularioContacto from "./FormularioContacto";
+import BenefitCard from "./BenefitCard";
+import ContactForm from "./ContactForm";
 import { Card, CardContent } from "@/components/ui/card";
-import SectionMeasureLine from "@/components/SectionMeasureLine";
-import Container from "@/components/layout/Container";
+import SectionMeasureLine from "@/components/common/SectionMeasureLine";
+import Container from "@/components/common/Container";
 
-export default function SeccionContacto() {
+export default function ContactSection() {
   return (
     <section
       id="contacto"
@@ -24,10 +24,10 @@ export default function SeccionContacto() {
           </div>
           <CardContent className="grid p-0 lg:grid-cols-12">
             <div className="border-b border-border/70 p-6 sm:p-8 lg:col-span-5 lg:border-b-0 lg:border-r lg:p-10 xl:p-12">
-              <TarjetaBeneficios />
+              <BenefitCard />
             </div>
             <div className="p-6 sm:p-8 lg:col-span-7 lg:p-10 xl:p-12">
-              <FormularioContacto />
+              <ContactForm />
             </div>
           </CardContent>
         </Card>

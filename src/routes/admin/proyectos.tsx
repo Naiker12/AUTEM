@@ -69,7 +69,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import AutemBrandIcon from "@/components/AutemBrandIcon";
+import AutemBrandIcon from "@/components/brand/AutemBrandIcon";
 import { Spinner } from "@/components/ui/spinner";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import {
@@ -790,8 +790,7 @@ function ProjectDialog({
             {editingProject ? `Editar ${editingProject.name}` : "Nuevo proyecto"}
           </DialogTitle>
           <DialogDescription>
-            Configura la ficha y sube los recursos visuales que se almacenan directamente en
-            Supabase Storage.
+            Configura la ficha técnica, logotipo, planos y recursos visuales del proyecto.
           </DialogDescription>
         </DialogHeader>
 
@@ -1183,15 +1182,7 @@ function ProjectDialog({
 
             <TabsContent value="medios">
               <FieldSet>
-                <FieldLegend>Portada, galería y planos (Supabase Storage)</FieldLegend>
-                <Alert className="border-accent/30 bg-accent/5">
-                  <CloudUpload className="size-4 text-accent" />
-                  <AlertTitle>Almacenamiento persistente en Supabase</AlertTitle>
-                  <AlertDescription>
-                    Los archivos se suben al bucket <code>project-media</code> y se vinculan
-                    permanentemente al proyecto.
-                  </AlertDescription>
-                </Alert>
+                <FieldLegend>Identidad visual y recursos multimedia</FieldLegend>
 
                 {loadingMedia && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1203,9 +1194,7 @@ function ProjectDialog({
                 <FieldGroup className="grid gap-6 md:grid-cols-2">
                   {/* Logotipo del proyecto */}
                   <Field className="flex flex-col gap-2">
-                    <FieldLabel>
-                      Logotipo del proyecto (PNG o SVG con fondo transparente)
-                    </FieldLabel>
+                    <FieldLabel>Logotipo del proyecto</FieldLabel>
                     {logoPreview ? (
                       <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border bg-muted/30 p-6">
                         <img
@@ -1249,7 +1238,7 @@ function ProjectDialog({
                         id="project-logo"
                         accept="image/png,image/svg+xml,image/webp"
                         title="Logotipo oficial"
-                        description="PNG o SVG con fondo transparente. Aparece en el visualizador, 360° y fichas."
+                        description="Formato PNG o SVG con fondo transparente."
                         onFilesSelected={(files) => files[0] && onSelectLogo(files[0])}
                       />
                     )}
