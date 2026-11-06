@@ -16,7 +16,7 @@ const SE_LNG = -75.35280461922072;
 const ZOOM = 19;
 
 function latLngToWorldPixel(lat, lng, zoom) {
-  const scale = 256 * (2 ** zoom);
+  const scale = 256 * 2 ** zoom;
   const x = ((lng + 180) / 360) * scale;
   const latRad = (lat * Math.PI) / 180;
   const y = ((1 - Math.asinh(Math.tan(latRad)) / Math.PI) / 2) * scale;
@@ -51,20 +51,22 @@ function fetchTile(x, y, z) {
         if (res.statusCode !== 200) {
           // Fallback to Esri
           const esriUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
-          https.get(esriUrl, { headers: { "User-Agent": "Mozilla/5.0" } }, (resEsri) => {
-            if (resEsri.statusCode !== 200) {
-              return reject(new Error(`Failed tile ${x},${y}: ${resEsri.statusCode}`));
-            }
-            const chunks = [];
-            resEsri.on("data", (c) => chunks.push(c));
-            resEsri.on("end", () => resolve(Buffer.concat(chunks)));
-          }).on("error", reject);
+          https
+            .get(esriUrl, { headers: { "User-Agent": "Mozilla/5.0" } }, (resEsri) => {
+              if (resEsri.statusCode !== 200) {
+                return reject(new Error(`Failed tile ${x},${y}: ${resEsri.statusCode}`));
+              }
+              const chunks = [];
+              resEsri.on("data", (c) => chunks.push(c));
+              resEsri.on("end", () => resolve(Buffer.concat(chunks)));
+            })
+            .on("error", reject);
           return;
         }
         const chunks = [];
         res.on("data", (c) => chunks.push(c));
         res.on("end", () => resolve(Buffer.concat(chunks)));
-      }
+      },
     );
     req.on("error", reject);
   });
@@ -112,10 +114,12 @@ async function build() {
   const cropWidth = Math.round(sePixel.x - nwPixel.x);
   const cropHeight = Math.round(sePixel.y - nwPixel.y);
 
-  console.log(`Cropping to bounds: left=${cropLeft}, top=${cropTop}, width=${cropWidth}, height=${cropHeight}`);
+  console.log(
+    `Cropping to bounds: left=${cropLeft}, top=${cropTop}, width=${cropWidth}, height=${cropHeight}`,
+  );
 
   const outputPath = path.resolve("public/images/villa-paraiso-terrain-satellite.webp");
-  
+
   await sharp(stitched)
     .extract({
       left: Math.max(0, cropLeft),
@@ -127,8 +131,9 @@ async function build() {
     .webp({ quality: 88, effort: 4 })
     .toFile(outputPath);
 
-  console.log(`✓ High-res terrain background saved to: ${outputPath} (${fs.statSync(outputPath).size} bytes)`);
+  console.log(
+    `✓ High-res terrain background saved to: ${outputPath} (${fs.statSync(outputPath).size} bytes)`,
+  );
 }
 
 build().catch(console.error);
-

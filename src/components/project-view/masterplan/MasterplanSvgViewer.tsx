@@ -464,8 +464,6 @@ export default function MasterplanSvgViewer({
                   strokeWidth={1.2}
                 />
               ))}
-
-
           </g>
         )}
 

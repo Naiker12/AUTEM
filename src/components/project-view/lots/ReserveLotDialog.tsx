@@ -14,12 +14,7 @@ import {
 import { formatLotPrice, type Lot } from "@/features/lots";
 import { buildWhatsAppReserveUrl, submitLead } from "@/lib/repositories/leads-repository";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -144,7 +139,8 @@ export default function ReserveLotDialog({
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-2xl border border-border/60 bg-muted/30">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground truncate">
-                  {manzanaLabel ? `${manzanaLabel.toUpperCase()} · ` : ""}{ubicacion.toUpperCase()}
+                  {manzanaLabel ? `${manzanaLabel.toUpperCase()} · ` : ""}
+                  {ubicacion.toUpperCase()}
                 </div>
                 <div className="font-serif text-base sm:text-lg font-bold text-foreground mt-0.5">
                   Lote {lotDisplay}
