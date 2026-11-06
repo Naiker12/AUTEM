@@ -12,6 +12,12 @@
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
       "computedHash": "d04e43ec01e921558b93bb8046c14a42a22556689a2827243df900825a4e1604"
+    },
+    "stack-diagram": {
+      "source": "caru-ini/stack-diagram",
+      "sourceType": "github",
+      "skillPath": "skills/stack-diagram/SKILL.md",
+      "computedHash": "ac95596533e9640479a514591daacf9b75d7a9c66584aa7fabc40aba818f887d"
     }
   }
 }

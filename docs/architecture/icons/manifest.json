@@ -1,0 +1,118 @@
+{
+  "react": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/react_light.svg",
+    "file": "react.svg",
+    "bytes": 6534,
+    "dark_file": "react_dark.svg",
+    "dark_url": "https://svgl.app/library/react_dark.svg"
+  },
+  "typescript": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/typescript.svg",
+    "file": "typescript.svg",
+    "bytes": 1744
+  },
+  "vite": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/vite.svg",
+    "file": "vite.svg",
+    "bytes": 10132
+  },
+  "tailwindcss": {
+    "source": "devicon",
+    "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/tailwindcss/tailwindcss-original.svg",
+    "file": "tailwindcss.svg",
+    "bytes": 689
+  },
+  "threejs": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/threejs-light.svg",
+    "file": "threejs.svg",
+    "bytes": 886,
+    "dark_file": "threejs_dark.svg",
+    "dark_url": "https://svgl.app/library/threejs-dark.svg"
+  },
+  "leaflet": {
+    "source": "gilbarbara",
+    "url": "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/leaflet.svg",
+    "file": "leaflet.svg",
+    "bytes": 8400
+  },
+  "supabase": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/supabase.svg",
+    "file": "supabase.svg",
+    "bytes": 1082
+  },
+  "postgresql": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/postgresql.svg",
+    "file": "postgresql.svg",
+    "bytes": 3944
+  },
+  "cloudflare": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/cloudflare.svg",
+    "file": "cloudflare.svg",
+    "bytes": 1473
+  },
+  "github": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/github_light.svg",
+    "file": "github.svg",
+    "bytes": 997,
+    "dark_file": "github_dark.svg",
+    "dark_url": "https://svgl.app/library/github_dark.svg"
+  },
+  "nodejs": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/nodejs.svg",
+    "file": "nodejs.svg",
+    "bytes": 2491
+  },
+  "tanstack": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/tanstack_light.svg",
+    "file": "tanstack.svg",
+    "bytes": 1660,
+    "dark_file": "tanstack_dark.svg",
+    "dark_url": "https://svgl.app/library/tanstack_dark.svg"
+  },
+  "webar": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/scan-eye.svg",
+    "file": "webar.svg",
+    "bytes": 584
+  },
+  "pano": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/orbit.svg",
+    "file": "pano.svg",
+    "bytes": 491
+  },
+  "cad": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/drafting-compass.svg",
+    "file": "cad.svg",
+    "bytes": 474
+  },
+  "storage": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/hard-drive.svg",
+    "file": "storage.svg",
+    "bytes": 537
+  },
+  "auth": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/shield-check.svg",
+    "file": "auth.svg",
+    "bytes": 495
+  },
+  "sharp": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/sparkles.svg",
+    "file": "sharp.svg",
+    "bytes": 643
+  }
+}
