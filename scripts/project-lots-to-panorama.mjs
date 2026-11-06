@@ -3,7 +3,7 @@
  * Projects the 338 lots of Villa Paraíso onto the 360° equirectangular panorama
  * using calibrated camera parameters (yawOffsetDeg, heightAboveGroundM, tilt,
  * and drone horizontal refinement) and outputs:
- *   src/data/generated/villa-paraiso-panorama-lots.json
+ *   src/data/villa-paraiso/generated/panorama-lots.json
  *
  * Uses the unified projection & adaptive densification logic from:
  *   src/features/panorama-360/project-lots.ts
@@ -43,15 +43,15 @@ const {
 } = await import("../src/features/panorama-360/project-lots.ts");
 
 const lots = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-lots.json"), "utf8"),
+  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso/lots.json"), "utf8"),
 );
 const rawLayers = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-layers.json"), "utf8"),
+  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso/layers.json"), "utf8"),
 );
 const cadRef = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso-cad-reference.json"), "utf8"),
+  fs.readFileSync(path.join(ROOT, "src/data/villa-paraiso/cad-reference.json"), "utf8"),
 );
-const outPath = path.join(ROOT, "src/data/generated/villa-paraiso-panorama-lots.json");
+const outPath = path.join(ROOT, "src/data/villa-paraiso/generated/panorama-lots.json");
 
 const t = cadRef.transform;
 const det = t.a * t.e - t.b * t.d;

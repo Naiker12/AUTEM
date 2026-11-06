@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import { formatLotArea, formatLotPrice, type Lot } from "@/features/lots";
 
 interface LotSearchDialogProps {
   open: boolean;

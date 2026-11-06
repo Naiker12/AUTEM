@@ -1,4 +1,4 @@
-import type { Lot } from "@/data/lots";
+import type { Lot } from "@/features/lots";
 
 export function matchDestinationLots(lots: Lot[], query: string) {
   const number = query.replace(/\D/g, "");

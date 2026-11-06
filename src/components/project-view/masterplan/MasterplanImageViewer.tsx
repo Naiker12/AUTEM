@@ -1,6 +1,6 @@
 import { Compass, Expand, Minus, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { Lot } from "@/data/lots";
+import type { Lot } from "@/features/lots";
 
 interface MasterplanImageViewerProps {
   image: string;

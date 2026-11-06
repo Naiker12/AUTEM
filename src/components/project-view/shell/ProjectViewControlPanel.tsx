@@ -37,8 +37,8 @@ import {
   getLotFinancing,
   getLotsSummary,
   type Lot,
-} from "@/data/lots";
-import type { Property } from "@/data/properties";
+} from "@/features/lots";
+import type { Property } from "@/data/projects";
 import { getProjectDocuments, type ProjectDocumentRecord } from "@/lib/project-repository";
 import type { ProjectViewSettings, ViewMode } from "../types";
 
@@ -627,7 +627,7 @@ export function ProjectViewControlPanelContent({
                         "Alta valorización garantizada a solo 10 minutos de donde se construirá el nuevo Aeropuerto Internacional de Cartagena de Indias.",
                         "Libertad de construcción con asesoría en conceptos bioclimáticos y sustentables que armonizan con la reserva.",
                       ]
-                  ).map((reason, index) => (
+                  ).map((reason: string, index: number) => (
                     <div
                       key={index}
                       className="rounded-xl border border-border/80 dark:border-white/10 bg-card/90 dark:bg-stone-900/85 p-2.5 flex items-start gap-2.5 text-left text-[11px] leading-relaxed"

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CheckCircle2, MessageSquare, Send, ShieldCheck, X } from "lucide-react";
-import { formatLotPrice, type Lot } from "@/data/lots";
+import { formatLotPrice, type Lot } from "@/features/lots";
 import { buildWhatsAppReserveUrl, submitLead } from "@/lib/leads-repository";
 import { Button } from "@/components/ui/button";
 import {

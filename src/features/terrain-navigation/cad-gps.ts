@@ -1,5 +1,5 @@
 import proj4 from "proj4";
-import cad from "@/data/villa-paraiso-cad-reference.json";
+import cad from "@/data/villa-paraiso/cad-reference.json";
 import { UNITS_PER_METER } from "./geo-constants";
 
 // MAGNA-SIRGAS / Colombia Bogotá zone (EPSG:3116)

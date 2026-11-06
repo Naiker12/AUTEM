@@ -9,7 +9,7 @@ const { fitAffineTransform, applyAffineTransform } = await import(
   "data:text/javascript;base64," + Buffer.from(compiled).toString("base64")
 );
 const cad = JSON.parse(await readFile("cad/villa-paraiso-navigation-candidates.json", "utf8"));
-const layers = JSON.parse(await readFile("src/data/villa-paraiso-layers.json", "utf8"));
+const layers = JSON.parse(await readFile("src/data/villa-paraiso/layers.json", "utf8"));
 const controls = [];
 for (const [layer, key] of [
   ["A-VIA", "roads"],
@@ -49,7 +49,7 @@ const reference = {
   note: "Registro CAD→SVG; no es calibración GPS. La anotación puede estar desplazada respecto al acceso físico.",
 };
 await writeFile(
-  "src/data/villa-paraiso-cad-reference.json",
+  "src/data/villa-paraiso/cad-reference.json",
   JSON.stringify(reference, null, 2) + "\n",
 );
 await mkdir("docs/navigation", { recursive: true });

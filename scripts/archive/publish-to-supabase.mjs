@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const baseDir = path.resolve(__dirname, "../..");
-const bundlePath = path.resolve(baseDir, "src/data/generated/villa-paraiso-navigation-bundle.json");
+const bundlePath = path.resolve(baseDir, "src/data/villa-paraiso/generated/navigation-bundle.json");
 const bundle = JSON.parse(fs.readFileSync(bundlePath, "utf8"));
 
 console.log("Preparing SQL query to insert validated navigation bundle into Supabase...");

@@ -44,8 +44,8 @@ import {
   mapUiLotStatusToDb,
   type Lot,
   type LotStatus,
-} from "@/data/lots";
-import layersData from "@/data/villa-paraiso-layers.json";
+} from "@/features/lots";
+import layersData from "@/data/villa-paraiso/layers.json";
 import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
 import { requireSupabase, supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";

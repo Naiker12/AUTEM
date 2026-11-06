@@ -29,7 +29,7 @@ export async function loadPublishedNavigation(
   }
 
   if (!payload && targetSlug === "villa-paraiso") {
-    const bundled = await import("@/data/generated/villa-paraiso-navigation-bundle.json");
+    const bundled = await import("@/data/villa-paraiso/generated/navigation-bundle.json");
     payload = bundled.default ?? bundled;
   }
 

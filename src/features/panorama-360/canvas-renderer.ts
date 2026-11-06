@@ -1,4 +1,4 @@
-import type { Lot, LotStatus } from "@/data/lots";
+import type { Lot, LotStatus } from "@/features/lots";
 import type { PanoramaContextLayers, ProjectedPanoramaLot } from "./types";
 
 const PSV_SPHERE_RADIUS = 10;

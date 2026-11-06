@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Eye, Pencil, Search, UserRound } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle2, Eye, Inbox, Pencil, Search, UserRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ import {
   type Lot,
   type LotMetadata,
   type LotStatus,
-} from "@/data/lots";
+} from "@/features/lots";
 import { getCurrentAdminAccess } from "@/lib/admin-auth";
 import { requireSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -1250,9 +1250,16 @@ function LotDetailSheet({
             </Field>
           </FieldGroup>
           <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4">
-            <div className="flex items-center gap-2">
-              <UserRound className="size-4 text-accent" />
-              <p className="font-medium">Gestión comercial</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserRound className="size-4 text-accent" />
+                <p className="font-medium">Gestión comercial</p>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="h-7 text-xs text-accent hover:text-accent">
+                <Link to="/admin/solicitudes">
+                  <Inbox className="size-3 mr-1" /> Ver solicitudes
+                </Link>
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground">
               Reserva temporal predeterminada: 48 horas. Al cambiar el estado, se actualizará

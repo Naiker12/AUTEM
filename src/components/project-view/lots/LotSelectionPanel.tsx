@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
-import { filterAndSortLots, formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
+import { filterAndSortLots, formatLotArea, formatLotPrice, type Lot } from "@/features/lots";
 
 interface LotSelectionPanelProps {
   lots: Lot[];

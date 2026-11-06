@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { properties, type Property } from "@/data/properties";
+import { properties, type Property } from "@/data/projects";
 import {
   formatLotDetail,
   mapDatabaseLotStatus,
   sanitizePublicLotMetadata,
   type Lot,
   type LotMetadata,
-} from "@/data/lots";
-import villaParaisoCadLots from "@/data/villa-paraiso-lots.json";
+} from "@/features/lots";
+import villaParaisoCadLots from "@/data/villa-paraiso/lots.json";
 import { supabase } from "@/lib/supabase";
 
 type PublicProjectRow = {
@@ -29,7 +29,7 @@ type PublicProjectRow = {
   masterplan_version: string | null;
   logo_path?: string | null;
   tour_url: string | null;
-  metadata?: import("@/data/properties").ProjectDossierMetadata | null;
+  metadata?: import("@/data/projects").ProjectDossierMetadata | null;
   project_media?: PublicMediaRow[];
 };
 

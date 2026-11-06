@@ -1,4 +1,4 @@
-import type { PropertyType, ProjectDossierMetadata } from "@/data/properties";
+import type { PropertyType, ProjectDossierMetadata } from "@/data/projects";
 import { requireSupabase } from "@/lib/supabase";
 
 export type ProjectStatus = "draft" | "published" | "archived";

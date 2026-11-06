@@ -19,6 +19,7 @@ import { Route as ActualizarContrasenaRouteImport } from "./routes/actualizar-co
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as AdminIndexRouteImport } from "./routes/admin/index"
 import { Route as ProyectoSlugRouteImport } from "./routes/proyecto/$slug"
+import { Route as AdminSolicitudesRouteImport } from "./routes/admin/solicitudes"
 import { Route as AdminProyectosRouteImport } from "./routes/admin/proyectos"
 import { Route as AdminPerfilRouteImport } from "./routes/admin/perfil"
 import { Route as AdminLotesUnidadesRouteImport } from "./routes/admin/lotes-unidades"
@@ -87,6 +88,11 @@ const ProyectoSlugRoute = ProyectoSlugRouteImport.update({
   id: "/proyecto/$slug",
   path: "/proyecto/$slug",
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSolicitudesRoute = AdminSolicitudesRouteImport.update({
+  id: "/solicitudes",
+  path: "/solicitudes",
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminProyectosRoute = AdminProyectosRouteImport.update({
   id: "/proyectos",
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
+  "/admin/solicitudes": typeof AdminSolicitudesRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin/": typeof AdminIndexRoute
   "/admin/configuracion/apariencia": typeof AdminConfiguracionAparienciaRoute
@@ -232,6 +239,7 @@ export interface FileRoutesByTo {
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
+  "/admin/solicitudes": typeof AdminSolicitudesRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin": typeof AdminIndexRoute
   "/admin/configuracion/apariencia": typeof AdminConfiguracionAparienciaRoute
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   "/admin/lotes-unidades": typeof AdminLotesUnidadesRoute
   "/admin/perfil": typeof AdminPerfilRoute
   "/admin/proyectos": typeof AdminProyectosRoute
+  "/admin/solicitudes": typeof AdminSolicitudesRoute
   "/proyecto/$slug": typeof ProyectoSlugRoute
   "/admin/": typeof AdminIndexRoute
   "/admin/configuracion/apariencia": typeof AdminConfiguracionAparienciaRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | "/admin/lotes-unidades"
     | "/admin/perfil"
     | "/admin/proyectos"
+    | "/admin/solicitudes"
     | "/proyecto/$slug"
     | "/admin/"
     | "/admin/configuracion/apariencia"
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | "/admin/lotes-unidades"
     | "/admin/perfil"
     | "/admin/proyectos"
+    | "/admin/solicitudes"
     | "/proyecto/$slug"
     | "/admin"
     | "/admin/configuracion/apariencia"
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | "/admin/lotes-unidades"
     | "/admin/perfil"
     | "/admin/proyectos"
+    | "/admin/solicitudes"
     | "/proyecto/$slug"
     | "/admin/"
     | "/admin/configuracion/apariencia"
@@ -451,6 +463,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/proyecto/$slug"
       preLoaderRoute: typeof ProyectoSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    "/admin/solicitudes": {
+      id: "/admin/solicitudes"
+      path: "/solicitudes"
+      fullPath: "/admin/solicitudes"
+      preLoaderRoute: typeof AdminSolicitudesRouteImport
+      parentRoute: typeof AdminRoute
     }
     "/admin/proyectos": {
       id: "/admin/proyectos"
@@ -610,6 +629,7 @@ interface AdminRouteChildren {
   AdminLotesUnidadesRoute: typeof AdminLotesUnidadesRoute
   AdminPerfilRoute: typeof AdminPerfilRoute
   AdminProyectosRoute: typeof AdminProyectosRoute
+  AdminSolicitudesRoute: typeof AdminSolicitudesRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContenidoSectionRoute: typeof AdminContenidoSectionRoute
   AdminContenidoPortadaRoute: typeof AdminContenidoPortadaRoute
@@ -626,6 +646,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLotesUnidadesRoute: AdminLotesUnidadesRoute,
   AdminPerfilRoute: AdminPerfilRoute,
   AdminProyectosRoute: AdminProyectosRoute,
+  AdminSolicitudesRoute: AdminSolicitudesRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminContenidoSectionRoute: AdminContenidoSectionRoute,
   AdminContenidoPortadaRoute: AdminContenidoPortadaRoute,

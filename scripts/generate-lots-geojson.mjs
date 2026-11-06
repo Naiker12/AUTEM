@@ -11,11 +11,11 @@ proj4.defs(
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const baseDir = path.resolve(__dirname, "..");
-const cadRefPath = path.resolve(baseDir, "src/data/villa-paraiso-cad-reference.json");
-const lotsPath = path.resolve(baseDir, "src/data/villa-paraiso-lots.json");
-const layersPath = path.resolve(baseDir, "src/data/villa-paraiso-layers.json");
-const cuadroAreasPath = path.resolve(baseDir, "src/data/cuadro_areas_full.json");
-const outputPath = path.resolve(baseDir, "src/data/generated/villa-paraiso-geojson.json");
+const cadRefPath = path.resolve(baseDir, "src/data/villa-paraiso/cad-reference.json");
+const lotsPath = path.resolve(baseDir, "src/data/villa-paraiso/lots.json");
+const layersPath = path.resolve(baseDir, "src/data/villa-paraiso/layers.json");
+const cuadroAreasPath = path.resolve(baseDir, "cad/tablas/villa-paraiso_cuadro-areas.json");
+const outputPath = path.resolve(baseDir, "src/data/villa-paraiso/generated/geojson.json");
 
 const cadRef = JSON.parse(fs.readFileSync(cadRefPath, "utf8"));
 const lots = JSON.parse(fs.readFileSync(lotsPath, "utf8"));

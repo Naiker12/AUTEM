@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   Boxes,
   FileImage,
+  Inbox,
   LayoutDashboard,
   MapPinned,
   PanelTop,
@@ -28,6 +29,11 @@ const teams = [{ name: "AUTEM", plan: "Administración" }];
 
 const navBase = [
   { title: "Inicio", url: "/admin", icon: LayoutDashboard, isActive: true },
+  {
+    title: "Solicitudes y reservas",
+    url: "/admin/solicitudes",
+    icon: Inbox,
+  },
   {
     title: "Proyectos",
     url: "/admin/proyectos",

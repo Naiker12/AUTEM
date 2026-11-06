@@ -42,9 +42,9 @@ import {
   DEFAULT_PROJECT_VIEW_SETTINGS,
   type ProjectViewSettings,
 } from "@/components/project-view/types";
-import { formatLotArea, formatLotPrice, type Lot } from "@/data/lots";
-import cadReference from "@/data/villa-paraiso-cad-reference.json";
-import rawNavigationBundle from "@/data/generated/villa-paraiso-navigation-bundle.json";
+import { formatLotArea, formatLotPrice, type Lot } from "@/features/lots";
+import cadReference from "@/data/villa-paraiso/cad-reference.json";
+import rawNavigationBundle from "@/data/villa-paraiso/generated/navigation-bundle.json";
 import { useTerrainNavigation } from "@/features/terrain-navigation/use-terrain-navigation";
 import { usePublishedLots, usePublishedProject } from "@/lib/public-projects";
 import { requireSupabase, supabase } from "@/lib/supabase";

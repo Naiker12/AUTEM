@@ -18,12 +18,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Viewer } from "@photo-sphere-viewer/core";
 import type { MarkerConfig, MarkersPlugin } from "@photo-sphere-viewer/markers-plugin";
 import type { GyroscopePlugin } from "@photo-sphere-viewer/gyroscope-plugin";
-import type { Lot, LotStatus } from "@/data/lots";
-import { formatLotPrice } from "@/data/lots";
-import rawLots from "@/data/villa-paraiso-lots.json";
-import rawLayers from "@/data/villa-paraiso-layers.json";
-import rawPanoramaLotsData from "@/data/generated/villa-paraiso-panorama-lots.json";
-import rawPanoramaOverrides from "@/data/villa-paraiso-panorama-overrides.json";
+import type { Lot, LotStatus } from "@/features/lots";
+import { formatLotPrice } from "@/features/lots";
+import rawLots from "@/data/villa-paraiso/lots.json";
+import rawLayers from "@/data/villa-paraiso/layers.json";
+import rawPanoramaLotsData from "@/data/villa-paraiso/generated/panorama-lots.json";
+import rawPanoramaOverrides from "@/data/villa-paraiso/panorama-overrides.json";
 import {
   hitTestPanoramaLots,
   mergePanoramaLotsWithOverrides,

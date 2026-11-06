@@ -4,6 +4,7 @@ import {
   Boxes,
   FolderKanban,
   ImageIcon,
+  Inbox,
   LayoutPanelTop,
   Settings2,
   ShieldAlert,
@@ -167,6 +168,12 @@ function AdminDashboard() {
             <h1 className="text-3xl font-medium text-foreground sm:text-4xl">Panel de control</h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/admin/solicitudes">
+                <Inbox className="size-4 text-accent" />
+                <span>Solicitudes y CRM</span>
+              </Link>
+            </Button>
             {isSuperAdmin && (
               <>
                 <Button asChild variant="outline" className="gap-2 border-accent/40">
@@ -201,8 +208,8 @@ function AdminDashboard() {
                 </span>
                 <h2 className="font-serif text-2xl text-foreground mt-1">Gestión de tu Proyecto</h2>
                 <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-                  Tienes acceso asignado para editar información, subir archivos y gestionar el
-                  inventario de lotes de tu desarrollo.
+                  Tienes acceso asignado para gestionar solicitudes de clientes, editar información
+                  y administrar el inventario de lotes.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -211,6 +218,9 @@ function AdminDashboard() {
                   size="sm"
                   className="bg-accent text-accent-foreground hover:bg-accent/90"
                 >
+                  <Link to="/admin/solicitudes">Solicitudes y CRM</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
                   <Link to="/admin/lotes-unidades">Lotes y Unidades</Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">

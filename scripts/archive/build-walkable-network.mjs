@@ -13,9 +13,9 @@ const UNITS_PER_METER = 3.0054;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const baseDir = path.resolve(__dirname, "../..");
-const layersPath = path.resolve(baseDir, "src/data/villa-paraiso-layers.json");
-const lotsPath = path.resolve(baseDir, "src/data/villa-paraiso-lots.json");
-const cadPath = path.resolve(baseDir, "src/data/villa-paraiso-cad-reference.json");
+const layersPath = path.resolve(baseDir, "src/data/villa-paraiso/layers.json");
+const lotsPath = path.resolve(baseDir, "src/data/villa-paraiso/lots.json");
+const cadPath = path.resolve(baseDir, "src/data/villa-paraiso/cad-reference.json");
 
 const layers = JSON.parse(fs.readFileSync(layersPath, "utf8"));
 const lots = JSON.parse(fs.readFileSync(lotsPath, "utf8"));
@@ -793,7 +793,7 @@ const bundle = {
   destinations,
 };
 
-const outputPath = path.resolve(baseDir, "src/data/generated/villa-paraiso-navigation-bundle.json");
+const outputPath = path.resolve(baseDir, "src/data/villa-paraiso/generated/navigation-bundle.json");
 fs.writeFileSync(outputPath, JSON.stringify(bundle, null, 2), "utf8");
 
 console.log(`NavigationBundle generated successfully!`);

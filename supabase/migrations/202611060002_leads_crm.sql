@@ -109,3 +109,4 @@ create policy "members can insert lead events"
         and membership.user_id = auth.uid()
     )
   );
+

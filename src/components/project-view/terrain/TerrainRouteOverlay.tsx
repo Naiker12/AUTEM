@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Lot } from "@/data/lots";
+import type { Lot } from "@/features/lots";
 import type { RenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
 
 export default function TerrainRouteOverlay({

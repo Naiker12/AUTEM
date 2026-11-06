@@ -40,10 +40,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import rawLots from "@/data/villa-paraiso-lots.json";
-import rawLayers from "@/data/villa-paraiso-layers.json";
-import rawPanoramaLotsData from "@/data/generated/villa-paraiso-panorama-lots.json";
-import rawPanoramaOverrides from "@/data/villa-paraiso-panorama-overrides.json";
+import rawLots from "@/data/villa-paraiso/lots.json";
+import rawLayers from "@/data/villa-paraiso/layers.json";
+import rawPanoramaLotsData from "@/data/villa-paraiso/generated/panorama-lots.json";
+import rawPanoramaOverrides from "@/data/villa-paraiso/panorama-overrides.json";
 import { svgToGpsViaCad } from "@/features/terrain-navigation/cad-gps";
 import {
   calibratePanoramaCamera,

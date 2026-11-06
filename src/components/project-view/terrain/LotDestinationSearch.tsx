@@ -1,6 +1,6 @@
 import { useId, useMemo, useState } from "react";
 import { Check, Search, X } from "lucide-react";
-import { formatLotArea, formatManzanaLabel, type Lot } from "@/data/lots";
+import { formatLotArea, formatManzanaLabel, type Lot } from "@/features/lots";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { matchDestinationLots } from "@/features/terrain-navigation/destination-search";

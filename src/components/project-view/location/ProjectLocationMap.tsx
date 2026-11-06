@@ -19,15 +19,15 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatLotArea, formatLotDetail, formatLotPrice, type Lot } from "@/data/lots";
-import cadReference from "@/data/villa-paraiso-cad-reference.json";
-import villaParaisoGeoJson from "@/data/generated/villa-paraiso-geojson.json";
+import { formatLotArea, formatLotDetail, formatLotPrice, type Lot } from "@/features/lots";
+import cadReference from "@/data/villa-paraiso/cad-reference.json";
+import villaParaisoGeoJson from "@/data/villa-paraiso/generated/geojson.json";
 import {
   VILLA_PARAISO_SURROUNDINGS,
   POI_CATEGORIES,
   type PointOfInterest,
   type PoiCategoryFilter,
-} from "@/data/villa-paraiso-surroundings";
+} from "@/data/villa-paraiso/surroundings";
 import type { TravelMode } from "@/features/terrain-navigation/types";
 import type { RenderableInternalRoute } from "@/features/terrain-navigation/route-graph";
 import proj4 from "proj4";

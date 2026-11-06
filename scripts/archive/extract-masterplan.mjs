@@ -3,8 +3,8 @@ import path from "node:path";
 import readline from "node:readline";
 
 const DXF_PATH = path.resolve("cad/ACAD-PRY_VILLA PARAISO_U-001_30102026.dxf");
-const OUTPUT_LAYERS = path.resolve("src/data/villa-paraiso-layers.json");
-const OUTPUT_LOTS = path.resolve("src/data/villa-paraiso-lots.json");
+const OUTPUT_LAYERS = path.resolve("src/data/villa-paraiso/layers.json");
+const OUTPUT_LOTS = path.resolve("src/data/villa-paraiso/lots.json");
 const OUTPUT_SQL = path.resolve(
   "supabase/migrations/202610310001_update_villa_paraiso_masterplan_338_lots.sql",
 );

@@ -522,8 +522,8 @@ function MediaLibraryPage() {
           <DialogHeader>
             <DialogTitle>¿Eliminar recurso?</DialogTitle>
             <DialogDescription>
-              El archivo "{deletingAsset?.name}" se eliminará definitivamente de Supabase Storage y
-              de la base de datos para liberar espacio. Esta acción es permanente.
+              El archivo "{deletingAsset?.name}" se eliminará de forma permanente del sistema. Esta
+              acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:space-x-0">

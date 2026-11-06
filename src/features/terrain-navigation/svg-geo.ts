@@ -1,5 +1,5 @@
 import proj4 from "proj4";
-import cadReference from "@/data/villa-paraiso-cad-reference.json";
+import cadReference from "@/data/villa-paraiso/cad-reference.json";
 
 // MAGNA-SIRGAS / Colombia Bogotá zone (sistema de coordenadas del plano CAD)
 proj4.defs(

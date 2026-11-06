@@ -18,7 +18,7 @@ import {
   usePublishedProject,
   useProjectGeoreference,
 } from "@/lib/public-projects";
-import { filterAndSortLots, formatLotPrice, formatLotArea, type Lot } from "@/data/lots";
+import { filterAndSortLots, formatLotPrice, formatLotArea, type Lot } from "@/features/lots";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { useTheme } from "@/hooks/use-theme";
 import "@/components/project-view/project-editorial.css";
@@ -971,8 +971,12 @@ function ProjectView() {
                   · {property.price}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <p className="text-xs sm:text-sm text-amber-300 font-serif italic">
-                    Tu paraíso existe. ¡Ven a conocerlo!
+                  <p className="text-xs sm:text-sm text-amber-300 font-serif italic max-w-xl">
+                    {safeGalleryIndex === 0
+                      ? "Despierta cada día rodeado de naturaleza. Tres grandes lagos, senderos y paisajes extraordinarios."
+                      : safeGalleryIndex === images.length - 1
+                        ? "Tu paraíso existe. ¡Ven a conocerlo! Descubre Villa Paraíso Reserva Campestre."
+                        : "Donde la naturaleza se vuelve hogar."}
                   </p>
                   <Button
                     type="button"
@@ -980,7 +984,7 @@ function ProjectView() {
                     onClick={() => handleModeChange("lot")}
                     className="rounded-full bg-accent text-accent-foreground text-xs font-bold hover:bg-accent/90 shadow-lg cursor-pointer"
                   >
-                    Explorar plano y reservar
+                    Explorar plano y reservar lote
                   </Button>
                 </div>
               </div>

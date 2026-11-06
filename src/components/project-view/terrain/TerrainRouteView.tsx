@@ -20,8 +20,8 @@ import {
   Globe,
   Map as MapIcon,
 } from "lucide-react";
-import { formatLotArea, formatLotPrice, formatManzanaLabel, type Lot } from "@/data/lots";
-import cadReference from "@/data/villa-paraiso-cad-reference.json";
+import { formatLotArea, formatLotPrice, formatManzanaLabel, type Lot } from "@/features/lots";
+import cadReference from "@/data/villa-paraiso/cad-reference.json";
 import { useTerrainNavigation } from "@/features/terrain-navigation/use-terrain-navigation";
 import { estimateMinutes, PROJECT_ANCHOR } from "@/features/terrain-navigation/geo-constants";
 import { Badge } from "@/components/ui/badge";

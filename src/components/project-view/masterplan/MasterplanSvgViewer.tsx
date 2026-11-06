@@ -22,10 +22,10 @@ import {
   MapPin,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Lot } from "@/data/lots";
-import { formatLotArea, formatLotPrice } from "@/data/lots";
-import layersData from "@/data/villa-paraiso-layers.json";
-import cadTiersData from "@/data/villa-paraiso-cad-tiers.json";
+import type { Lot } from "@/features/lots";
+import { formatLotArea, formatLotPrice } from "@/features/lots";
+import layersData from "@/data/villa-paraiso/layers.json";
+import cadTiersData from "@/data/villa-paraiso/cad-tiers.json";
 import type { ProjectViewSettings } from "../types";
 
 interface MasterplanSvgViewerProps {

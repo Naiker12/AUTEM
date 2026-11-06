@@ -1,7 +1,7 @@
 import { Expand } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import type { Lot } from "@/data/lots";
+import type { Lot } from "@/features/lots";
 import PanoramaViewer from "./PanoramaViewer";
 
 interface InteractivePanoramaProps {

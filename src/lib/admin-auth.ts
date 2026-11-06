@@ -42,6 +42,7 @@ export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
     return (
       pathname.startsWith("/admin/proyectos") ||
       pathname.startsWith("/admin/lotes-unidades") ||
+      pathname.startsWith("/admin/solicitudes") ||
       pathname.startsWith("/admin/galerias-planos-recorridos") ||
       pathname.startsWith("/admin/contenido") ||
       pathname.startsWith("/admin/experiencias") ||
@@ -58,8 +59,12 @@ export function canAccessAdminPath(role: OrganizationRole, pathname: string) {
     );
   }
 
-  // Comercial: solo proyectos y lotes asignados
-  return pathname.startsWith("/admin/proyectos") || pathname.startsWith("/admin/lotes-unidades");
+  // Comercial: proyectos, lotes asignados y solicitudes/CRM
+  return (
+    pathname.startsWith("/admin/proyectos") ||
+    pathname.startsWith("/admin/lotes-unidades") ||
+    pathname.startsWith("/admin/solicitudes")
+  );
 }
 
 export async function signInToAdmin(email: string, password: string) {

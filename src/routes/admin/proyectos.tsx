@@ -28,7 +28,7 @@ import {
   type ProjectDossierMetadata,
   type ProjectEcology,
   type ProjectMetrics,
-} from "@/data/properties";
+} from "@/data/projects";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,7 +128,8 @@ const emptyDraft: ProjectDraft = {
 };
 
 const humanizeType = (type: PropertyType) =>
-  PROPERTY_TYPES.find((item) => item.value === type)?.label ?? type;
+  PROPERTY_TYPES.find((item: { value: PropertyType; label: string }) => item.value === type)
+    ?.label ?? type;
 
 function mapProjectRecord(record: ManagedProjectRecord): ManagedProject {
   return {
@@ -845,7 +846,7 @@ function ProjectDialog({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {PROPERTY_TYPES.map((type) => (
+                          {PROPERTY_TYPES.map((type: { value: PropertyType; label: string }) => (
                             <SelectItem key={type.value} value={type.value}>
                               {type.label}
                             </SelectItem>

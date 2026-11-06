@@ -1,4 +1,4 @@
-import layers from "@/data/villa-paraiso-layers.json";
+import layers from "@/data/villa-paraiso/layers.json";
 export const masterplanBounds = layers.dimensions;
 /** Identifies the actual vector background rendered by MasterplanSvgViewer. */
 export async function renderedMasterplanVersion() {
