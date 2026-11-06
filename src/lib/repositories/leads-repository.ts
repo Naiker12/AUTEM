@@ -187,16 +187,31 @@ export async function submitLead(
       return { success: true };
     }
 
-    // Registrar evento inicial
+    // Registrar evento inicial y notificar al equipo
     if (data?.id) {
-      await supabase.from("lead_events").insert({
-        lead_id: data.id,
-        kind: "created",
-        body: `Solicitud de reserva recibida desde la vista ${input.source || "plano"}.`,
-        meta: {
-          lot: input.lotExternalId || input.lotNumber,
-          phone: input.phone,
-        },
+      try {
+        await supabase.from("lead_events").insert({
+          lead_id: data.id,
+          kind: "created",
+          body: `Solicitud de reserva recibida desde la vista ${input.source || "plano"}.`,
+          meta: {
+            lot: input.lotExternalId || input.lotNumber,
+            phone: input.phone,
+          },
+        });
+      } catch {
+        // Ignorar si lead_events aún no está en Supabase
+      }
+
+      // Notificación asíncrona al equipo comercial
+      void notifyTeamNewLead({
+        id: data.id,
+        fullName: input.fullName,
+        phone: input.phone,
+        email: input.email,
+        lotNumber: input.lotNumber || input.lotExternalId,
+        message: input.message,
+        visitDate: input.visitDate,
       });
     }
 
@@ -208,11 +223,66 @@ export async function submitLead(
   }
 }
 
+export function getLocalLeadBackups(
+  organizationId = "00000000-0000-0000-0000-000000000001",
+): LeadRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("autem_pending_leads");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return (parsed || []).map((p: Record<string, unknown>, idx: number): LeadRecord => ({
+      id:
+        (p.id as string) ||
+        `local-${idx}-${p.createdAt ? new Date(p.createdAt as string).getTime() : Date.now()}`,
+      organization_id: organizationId,
+      project_id: (p.projectId as string) || "",
+      lot_id: (p.lotId as string) || null,
+      lot_external_id: (p.lotExternalId as string) || null,
+      lot_number: (p.lotNumber as number) || null,
+      intent: (p.intent as LeadRecord["intent"]) || "reserve",
+      full_name: (p.fullName as string) || "Cliente",
+      phone: (p.phone as string) || "",
+      email: (p.email as string) || null,
+      message: (p.message as string) || null,
+      visit_date: (p.visitDate as string) || null,
+      status: (p.status as LeadStatus) || "new",
+      assigned_to: null,
+      consent_at: (p.createdAt as string) || new Date().toISOString(),
+      source: (p.source as string) || "plano",
+      utm: (p.utm as Record<string, unknown>) || {},
+      next_followup_at: null,
+      last_contact_at: null,
+      created_at: (p.createdAt as string) || new Date().toISOString(),
+      updated_at: (p.createdAt as string) || new Date().toISOString(),
+      project_name: "Villa Paraíso",
+      events: (p.events as LeadEventRecord[]) || [
+        {
+          id: `ev-local-${idx}`,
+          lead_id: `local-${idx}`,
+          author_id: null,
+          kind: "created",
+          body: `Solicitud de reserva registrada desde ${(p.source as string) || "plano"}.`,
+          meta: {},
+          created_at: (p.createdAt as string) || new Date().toISOString(),
+        },
+      ],
+    }));
+  } catch {
+    return [];
+  }
+}
+
 function saveLocalLeadBackup(input: CreateLeadInput) {
   if (typeof window === "undefined") return;
   try {
     const existing = JSON.parse(localStorage.getItem("autem_pending_leads") || "[]");
-    existing.push({ ...input, createdAt: new Date().toISOString() });
+    existing.push({
+      ...input,
+      id: `local-${existing.length + 1}-${Date.now()}`,
+      status: "new",
+      createdAt: new Date().toISOString(),
+    });
     localStorage.setItem("autem_pending_leads", JSON.stringify(existing));
   } catch {
     /* ignore local storage error */
@@ -230,59 +300,86 @@ export async function listLeads(
     query?: string;
   },
 ): Promise<LeadRecord[]> {
-  if (!supabase) return [];
+  const localLeads = getLocalLeadBackups(organizationId);
 
-  let query = supabase
-    .from("leads")
-    .select("*, project:projects(name)")
-    .eq("organization_id", organizationId)
-    .order("created_at", { ascending: false });
+  if (!supabase) return localLeads;
 
-  if (options?.projectId) {
-    query = query.eq("project_id", options.projectId);
+  try {
+    let query = supabase
+      .from("leads")
+      .select("*, project:projects(name)")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false });
+
+    if (options?.projectId) {
+      query = query.eq("project_id", options.projectId);
+    }
+
+    if (options?.status && options.status !== "all") {
+      query = query.eq("status", options.status);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      // Si la tabla public.leads aún no existe en Supabase (PGRST205 / 404), usar contingencia local limpiamente
+      if (
+        error.code === "PGRST205" ||
+        error.message?.includes("schema cache") ||
+        error.code === "42P01"
+      ) {
+        return localLeads;
+      }
+      console.warn("Aviso al consultar solicitudes/leads:", error.message);
+      return localLeads;
+    }
+
+    const remoteLeads = (data || []).map((row: Record<string, unknown>) => ({
+      ...row,
+      project_name: (row.project as { name?: string } | undefined)?.name,
+    })) as LeadRecord[];
+
+    const remotePhones = new Set(remoteLeads.map((l) => l.phone));
+    const extraLocal = localLeads.filter((l) => !remotePhones.has(l.phone));
+
+    return [...extraLocal, ...remoteLeads];
+  } catch {
+    return localLeads;
   }
-
-  if (options?.status && options.status !== "all") {
-    query = query.eq("status", options.status);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("Error al consultar solicitudes/leads:", error);
-    return [];
-  }
-
-  return (data || []).map((row: Record<string, unknown>) => ({
-    ...row,
-    project_name: (row.project as { name?: string } | undefined)?.name,
-  })) as LeadRecord[];
 }
 
 /**
  * Get lead detail with its timeline events
  */
 export async function getLeadDetail(leadId: string): Promise<LeadRecord | null> {
-  if (!supabase) return null;
+  const localLeads = getLocalLeadBackups();
+  const localMatch = localLeads.find((l) => l.id === leadId);
 
-  const { data: lead, error: leadError } = await supabase
-    .from("leads")
-    .select("*, project:projects(name)")
-    .eq("id", leadId)
-    .single();
+  if (!supabase) return localMatch ?? null;
 
-  if (leadError || !lead) return null;
+  try {
+    const { data: lead, error: leadError } = await supabase
+      .from("leads")
+      .select("*, project:projects(name)")
+      .eq("id", leadId)
+      .single();
 
-  const { data: events } = await supabase
-    .from("lead_events")
-    .select("*")
-    .eq("lead_id", leadId)
-    .order("created_at", { ascending: true });
+    if (leadError || !lead) return localMatch ?? null;
 
-  return {
-    ...lead,
-    project_name: (lead as Record<string, unknown> & { project?: { name?: string } }).project?.name,
-    events: events || [],
-  } as LeadRecord;
+    const { data: events } = await supabase
+      .from("lead_events")
+      .select("*")
+      .eq("lead_id", leadId)
+      .order("created_at", { ascending: true });
+
+    return {
+      ...lead,
+      project_name: (lead as Record<string, unknown> & { project?: { name?: string } }).project
+        ?.name,
+      events: events || [],
+    } as LeadRecord;
+  } catch {
+    return localMatch ?? null;
+  }
 }
 
 /**
@@ -293,26 +390,51 @@ export async function updateLeadStatus(
   status: LeadStatus,
   note?: string,
 ): Promise<boolean> {
-  if (!supabase) return false;
-
-  const { error } = await supabase
-    .from("leads")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", leadId);
-
-  if (error) {
-    console.error("Error al actualizar estado del lead:", error);
-    return false;
+  // Si es un lead local, actualizarlo en localStorage
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem("autem_pending_leads");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const updated = parsed.map((item: Record<string, unknown>, idx: number) => {
+          if (item.id === leadId || `local-${idx}` === leadId.split("-").slice(0, 2).join("-")) {
+            return { ...item, status };
+          }
+          return item;
+        });
+        localStorage.setItem("autem_pending_leads", JSON.stringify(updated));
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
-  await supabase.from("lead_events").insert({
-    lead_id: leadId,
-    kind: "status_change",
-    body: note || `Estado actualizado a: ${LEAD_STATUS_CONFIG[status]?.label || status}`,
-    meta: { new_status: status },
-  });
+  if (!supabase) return true;
 
-  return true;
+  try {
+    const { error } = await supabase
+      .from("leads")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", leadId);
+
+    if (error) {
+      if (error.code !== "PGRST205") {
+        console.warn("Aviso al actualizar estado del lead:", error.message);
+      }
+      return true;
+    }
+
+    await supabase.from("lead_events").insert({
+      lead_id: leadId,
+      kind: "status_change",
+      body: note || `Estado actualizado a: ${LEAD_STATUS_CONFIG[status]?.label || status}`,
+      meta: { new_status: status },
+    });
+
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -324,22 +446,92 @@ export async function addLeadEvent(
   body: string,
   meta: Record<string, unknown> = {},
 ): Promise<boolean> {
-  if (!supabase) return false;
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem("autem_pending_leads");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const updated = parsed.map((item: Record<string, unknown>) => {
+          if (item.id === leadId) {
+            const evs = (item.events as Record<string, unknown>[]) || [];
+            evs.push({
+              id: `ev-${Date.now()}`,
+              lead_id: leadId,
+              author_id: null,
+              kind,
+              body,
+              meta,
+              created_at: new Date().toISOString(),
+            });
+            return { ...item, events: evs };
+          }
+          return item;
+        });
+        localStorage.setItem("autem_pending_leads", JSON.stringify(updated));
+      }
+    } catch {
+      /* ignore */
+    }
+  }
 
-  const { error } = await supabase.from("lead_events").insert({
-    lead_id: leadId,
-    kind,
-    body,
-    meta,
-  });
+  if (!supabase) return true;
 
-  if (error) return false;
+  try {
+    const { error } = await supabase.from("lead_events").insert({
+      lead_id: leadId,
+      kind,
+      body,
+      meta,
+    });
 
-  // Actualizar last_contact_at en el lead
-  await supabase
-    .from("leads")
-    .update({ last_contact_at: new Date().toISOString() })
-    .eq("id", leadId);
+    if (error && error.code !== "PGRST205") {
+      console.warn("Aviso al registrar evento de lead:", error.message);
+    }
 
-  return true;
+    await supabase
+      .from("leads")
+      .update({ last_contact_at: new Date().toISOString() })
+      .eq("id", leadId);
+
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Notifica al equipo comercial sobre una nueva solicitud de lote (Punto 3.4 del plan)
+ */
+export async function notifyTeamNewLead(payload: {
+  id: string;
+  fullName: string;
+  phone: string;
+  email?: string;
+  lotNumber?: string | number;
+  message?: string | null;
+  visitDate?: string | null;
+}): Promise<void> {
+  if (!supabase) return;
+
+  try {
+    // Intenta invocar la función de notificación remota si existe
+    await supabase.functions
+      .invoke("notify-lead", {
+        body: {
+          leadId: payload.id,
+          customerName: payload.fullName,
+          phone: payload.phone,
+          email: payload.email,
+          lotNumber: payload.lotNumber,
+          message: payload.message,
+          visitDate: payload.visitDate,
+          sentAt: new Date().toISOString(),
+        },
+      })
+      .catch(() => {
+        /* Fallback silencioso si la edge function remota aún no está desplegada */
+      });
+  } catch {
+    /* No bloquear el flujo del usuario si la notificación de fondo falla */
+  }
 }

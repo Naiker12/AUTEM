@@ -160,8 +160,10 @@ export async function createManagedProject(organizationId: string, input: Projec
     .select()
     .single();
 
-  if (error && error.message?.includes("metadata") && payload.metadata !== undefined) {
-    const { metadata: _unused, ...safePayload } = payload;
+  if (error && (error.message?.includes("logo_path") || error.message?.includes("metadata"))) {
+    const safePayload: Record<string, unknown> = { ...payload };
+    if (error.message?.includes("logo_path")) delete safePayload.logo_path;
+    if (error.message?.includes("metadata")) delete safePayload.metadata;
     const retry = await client
       .from("projects")
       .insert({ organization_id: organizationId, ...safePayload })
@@ -195,8 +197,10 @@ export async function updateManagedProject(projectId: string, input: ProjectInpu
     .select()
     .single();
 
-  if (error && error.message?.includes("metadata") && payload.metadata !== undefined) {
-    const { metadata: _unused, ...safePayload } = payload;
+  if (error && (error.message?.includes("logo_path") || error.message?.includes("metadata"))) {
+    const safePayload: Record<string, unknown> = { ...payload };
+    if (error.message?.includes("logo_path")) delete safePayload.logo_path;
+    if (error.message?.includes("metadata")) delete safePayload.metadata;
     const retry = await client
       .from("projects")
       .update(safePayload)
@@ -261,17 +265,35 @@ export interface ProjectMediaRecord {
 }
 
 export async function listProjectMedia(projectId: string): Promise<ProjectMediaRecord[]> {
-  const { data, error } = await requireSupabase()
-    .from("project_media")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-  if (error) throw error;
-  return (data || []).map((item) => ({
-    ...item,
-    url: publicProjectMediaUrl(item.storage_path),
-  })) as ProjectMediaRecord[];
+  try {
+    const { data, error } = await requireSupabase()
+      .from("project_media")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) {
+      if (
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        error.message?.includes("not find the table") ||
+        error.message?.includes("schema cache")
+      ) {
+        return [];
+      }
+      throw error;
+    }
+    return (data || []).map((item) => ({
+      ...item,
+      url: publicProjectMediaUrl(item.storage_path),
+    })) as ProjectMediaRecord[];
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("PGRST205") || msg.includes("schema cache") || msg.includes("42P01")) {
+      return [];
+    }
+    throw err;
+  }
 }
 
 const ALLOWED_PROJECT_MEDIA_MIME_TYPES = new Set([

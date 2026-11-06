@@ -18,8 +18,8 @@ import {
   RefreshCw,
   Route as RouteIcon,
   ShieldCheck,
-  Sparkles,
   Target,
+  Upload,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -464,7 +464,7 @@ function TerrainSurveyPage() {
             {isPublishing ? (
               <RefreshCw className="size-3.5 animate-spin" />
             ) : (
-              <Sparkles className="size-3.5" />
+              <Upload className="size-3.5" />
             )}
             Sincronizar red con Supabase
           </Button>

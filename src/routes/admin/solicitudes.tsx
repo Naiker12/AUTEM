@@ -3,6 +3,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   Eye,
   Filter,
@@ -17,9 +18,9 @@ import {
   RefreshCw,
   Search,
   Send,
-  Sparkles,
   Table as TableIcon,
   User,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -92,7 +93,7 @@ const KANBAN_COLUMNS: { status: LeadStatus; label: string; dotClass: string }[] 
   { status: "reserved", label: "Reservadas", dotClass: "bg-emerald-500" },
 ];
 
-export function SolicitudesAdminPage() {
+function SolicitudesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [projects, setProjects] = useState<ManagedProjectRecord[]>([]);
@@ -137,51 +138,7 @@ export function SolicitudesAdminPage() {
       ]);
 
       setProjects(projs);
-
-      // Merge local contingency leads if any exist
-      let localLeads: LeadRecord[] = [];
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("autem_pending_leads");
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            localLeads = (parsed || []).map(
-              (p: Record<string, unknown>, idx: number): LeadRecord => ({
-                id: `local-${idx}-${Date.now()}`,
-                organization_id: access.organizationId,
-                project_id: (p.projectId as string) || "",
-                lot_id: (p.lotId as string) || null,
-                lot_external_id: (p.lotExternalId as string) || null,
-                lot_number: (p.lotNumber as number) || null,
-                intent: (p.intent as LeadRecord["intent"]) || "reserve",
-                full_name: (p.fullName as string) || "Cliente",
-                phone: (p.phone as string) || "",
-                email: (p.email as string) || null,
-                message: (p.message as string) || null,
-                visit_date: (p.visitDate as string) || null,
-                status: "new",
-                assigned_to: null,
-                consent_at: (p.createdAt as string) || new Date().toISOString(),
-                source: (p.source as string) || "plano",
-                utm: (p.utm as Record<string, unknown>) || {},
-                next_followup_at: null,
-                last_contact_at: null,
-                created_at: (p.createdAt as string) || new Date().toISOString(),
-                updated_at: (p.createdAt as string) || new Date().toISOString(),
-                project_name: "Villa Paraíso",
-              }),
-            );
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-
-      // Evitar duplicados si ya están en base de datos
-      const existingPhones = new Set(leadsData.map((l) => l.phone));
-      const cleanLocal = localLeads.filter((l) => !existingPhones.has(l.phone));
-
-      setLeads([...cleanLocal, ...leadsData]);
+      setLeads(leadsData);
     } catch (err) {
       console.error("Error al cargar solicitudes:", err);
       toast.error("No se pudieron cargar las solicitudes comerciales.");
@@ -200,26 +157,9 @@ export function SolicitudesAdminPage() {
     setSelectedLead(lead);
     setDetailLoading(true);
     try {
-      if (lead.id.startsWith("local-")) {
-        setSelectedLead({
-          ...lead,
-          events: [
-            {
-              id: "ev-local-1",
-              lead_id: lead.id,
-              author_id: null,
-              kind: "created",
-              body: "Solicitud registrada localmente desde el catálogo.",
-              meta: {},
-              created_at: lead.created_at,
-            },
-          ],
-        });
-      } else {
-        const fullDetail = await getLeadDetail(lead.id);
-        if (fullDetail) {
-          setSelectedLead(fullDetail);
-        }
+      const fullDetail = await getLeadDetail(lead.id);
+      if (fullDetail) {
+        setSelectedLead(fullDetail);
       }
     } catch (err) {
       console.error("Error al cargar detalle del lead:", err);
@@ -364,6 +304,55 @@ export function SolicitudesAdminPage() {
     return { total, nuevas, enSeguimiento, reservadas };
   }, [leads]);
 
+  // Export to CSV
+  const handleExportCSV = () => {
+    if (filteredLeads.length === 0) {
+      toast.info("No hay solicitudes para exportar con los filtros actuales.");
+      return;
+    }
+
+    const headers = [
+      "Fecha",
+      "Cliente",
+      "Telefono",
+      "Email",
+      "Lote",
+      "Proyecto",
+      "Estado",
+      "Fecha Visita",
+      "Mensaje",
+      "Origen",
+    ];
+
+    const rows = filteredLeads.map((l) => [
+      new Date(l.created_at).toISOString().split("T")[0],
+      `"${(l.full_name || "").replace(/"/g, '""')}"`,
+      `"${l.phone}"`,
+      `"${l.email || ""}"`,
+      `"${l.lot_number || l.lot_external_id || "General"}"`,
+      `"${l.project_name || "Villa Paraíso"}"`,
+      `"${LEAD_STATUS_CONFIG[l.status]?.label || l.status}"`,
+      `"${l.visit_date || ""}"`,
+      `"${(l.message || "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
+      `"${l.source || "web"}"`,
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `solicitudes_autem_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Archivo CSV generado y descargado correctamente.");
+  };
+
   return (
     <main className="w-full p-4 sm:p-6 lg:p-8 2xl:p-10">
       {/* Header */}
@@ -387,6 +376,16 @@ export function SolicitudesAdminPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="rounded-full"
+            title="Descargar lista en formato CSV para Excel"
+          >
+            <Download className="size-3.5 mr-1" />
+            Exportar CSV
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -423,7 +422,7 @@ export function SolicitudesAdminPage() {
             <span className="font-serif text-3xl font-semibold text-blue-900 dark:text-blue-100">
               {metrics.nuevas}
             </span>
-            <Sparkles className="size-5 text-blue-600 dark:text-blue-400" />
+            <UserPlus className="size-5 text-blue-600 dark:text-blue-400" />
           </div>
           <p className="mt-1 text-xs text-blue-600/80 dark:text-blue-400/80">
             Requieren primer contacto

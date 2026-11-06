@@ -3,12 +3,12 @@ import {
   CheckCircle2,
   ExternalLink,
   FileText,
+  HardDrive,
   ImageIcon,
   Map,
   Play,
   Plus,
   Search,
-  Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -376,7 +376,7 @@ function MediaLibraryPage() {
             {isCleaning ? (
               <Spinner data-icon="inline-start" />
             ) : (
-              <Sparkles data-icon="inline-start" />
+              <HardDrive data-icon="inline-start" />
             )}
             {isCleaning ? "Limpiando espacio…" : "Optimizar almacenamiento"}
           </Button>

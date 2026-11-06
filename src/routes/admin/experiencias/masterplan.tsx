@@ -510,7 +510,7 @@ function MasterplanExperiencePage() {
                 focusRequest={focusRequest}
                 onSelectLot={handleSelectLot}
                 isDesktopSidebarOpen={false}
-                isRightPanelOpen={Boolean(selectedLot)}
+                isRightPanelOpen={false}
                 settings={viewSettings}
               />
             ) : (

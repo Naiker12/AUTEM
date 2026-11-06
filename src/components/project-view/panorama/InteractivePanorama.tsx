@@ -12,7 +12,9 @@ interface InteractivePanoramaProps {
   selectedLotId?: string;
   onSelectLot?: (lotId: string) => void;
   onInspectLot?: (lot?: Lot) => void;
+  onReserveLot?: (lot: Lot) => void;
   onSwitchToPlan?: () => void;
+  isRightPanelOpen?: boolean;
 }
 
 export default function InteractivePanorama({
@@ -23,7 +25,9 @@ export default function InteractivePanorama({
   selectedLotId,
   onSelectLot,
   onInspectLot,
+  onReserveLot,
   onSwitchToPlan,
+  isRightPanelOpen = false,
 }: InteractivePanoramaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasHostRef = useRef<HTMLDivElement>(null);
@@ -229,7 +233,9 @@ export default function InteractivePanorama({
         selectedLotId={selectedLotId}
         onSelectLot={onSelectLot}
         onInspectLot={onInspectLot}
+        onReserveLot={onReserveLot}
         onSwitchToPlan={onSwitchToPlan}
+        isRightPanelOpen={isRightPanelOpen}
       />
     );
   }

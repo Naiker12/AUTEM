@@ -1519,8 +1519,8 @@ export default function MasterplanSvgViewer({
       <div
         style={{ display: settings?.showMapControls === false ? "none" : undefined }}
         className={`no-drag absolute ${
-          isRightPanelOpen ? "right-3 md:right-[356px]" : "right-3 lg:right-4"
-        } top-1/2 -translate-y-1/2 lg:top-[92px] lg:translate-y-0 flex flex-col items-center gap-2 z-30 select-none transition-[right] duration-300 ease-out`}
+          isRightPanelOpen ? "right-3 lg:right-[384px] xl:right-[404px]" : "right-3 lg:right-4"
+        } top-1/2 -translate-y-1/2 lg:top-[92px] lg:translate-y-0 flex flex-col items-center gap-2 z-20 select-none transition-[right] duration-300 ease-out`}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}

@@ -745,6 +745,10 @@ function ProjectView() {
                   selectedId={selectedLot?.id ?? ""}
                   onSelect={selectLot}
                   onView3D={handleView3D}
+                  onInspectLot={(lot) => {
+                    selectLot(lot);
+                    setIsPanelOpen(true);
+                  }}
                   onReserveLot={handleOpenReserve}
                   onHide={handleHideDesktopPanel}
                 />
@@ -787,7 +791,9 @@ function ProjectView() {
                   if (lot) selectLot(lot);
                   setIsPanelOpen(true);
                 }}
+                onReserveLot={handleOpenReserve}
                 onSwitchToPlan={() => handleModeChange("lot")}
+                isRightPanelOpen={!isMobile && isRightPanelVisible}
               />
             </Suspense>
           </div>

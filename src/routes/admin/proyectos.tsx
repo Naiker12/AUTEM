@@ -13,7 +13,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Sparkles,
   Trash2,
   Trees,
   Upload,
@@ -401,7 +400,7 @@ function ProjectsPage() {
             <CardTitle className="font-serif text-2xl">Catálogo de proyectos</CardTitle>
             <CardDescription>
               Cada proyecto reúne su ficha técnica, portada, galería, plano urbanístico y
-              experiencia digital con persistencia en Supabase.
+              experiencia digital, catálogo y recorridos interactivos.
             </CardDescription>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -903,19 +902,19 @@ function ProjectDialog({
                 <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="size-4 text-accent shrink-0" />
+                      <FileText className="size-4 text-accent shrink-0" />
                       <span className="font-semibold text-xs text-foreground">
                         Pegar contenido de la ficha técnica o PDF
                       </span>
                     </div>
                     <Badge variant="outline" className="text-[10px] border-accent/40 text-accent">
-                      Importador inteligente
+                      Importador de ficha
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Pega el texto del documento o folleto oficial del proyecto. Nuestro analizador
                     identificará automáticamente el concepto ecológico, número de lotes, amenidades,
-                    razones de compra y servicios para guardarlos en la base de datos de Supabase.
+                    razones de compra y servicios para estructurarlos y guardarlos en el proyecto.
                   </p>
                   <Textarea
                     rows={6}
@@ -931,7 +930,7 @@ function ProjectDialog({
                       onClick={handleParseDossier}
                       className="gap-1.5 font-medium text-xs rounded-lg cursor-pointer"
                     >
-                      <Sparkles className="size-3.5" />
+                      <FileText className="size-3.5" />
                       Analizar y estructurar información
                     </Button>
                     {draft.metadata && (
@@ -1578,10 +1577,10 @@ function ProjectDialog({
                 </FieldGroup>
                 <Alert>
                   <CheckCircle2 />
-                  <AlertTitle>Conexión a Supabase activa</AlertTitle>
+                  <AlertTitle>Sincronización en tiempo real activa</AlertTitle>
                   <AlertDescription>
-                    La ficha y los archivos multimedia asociados quedan disponibles tanto en la
-                    administración como en el catálogo y vistas públicas del proyecto.
+                    La ficha y los recursos multimedia quedan disponibles al instante tanto en el
+                    panel administrativo como en las vistas públicas y el catálogo comercial.
                   </AlertDescription>
                 </Alert>
               </FieldSet>
@@ -1596,7 +1595,7 @@ function ProjectDialog({
               </span>
             ) : (
               <span className="text-xs text-muted-foreground">
-                Los cambios se guardan directamente en Supabase.
+                Los cambios se sincronizan en tiempo real.
               </span>
             )}
             <div className="flex items-center gap-2">

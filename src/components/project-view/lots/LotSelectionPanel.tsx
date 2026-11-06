@@ -2,13 +2,16 @@ import { memo, useEffect, useMemo, useState } from "react";
 import {
   Box,
   FileText,
+  Heart,
   MessageCircle,
   PanelLeftClose,
   Ruler,
   Search,
+  Share2,
   SlidersHorizontal,
   Trees,
 } from "lucide-react";
+import { toast } from "sonner";
 import LotSearchDialog from "./LotSearchDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +26,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WHATSAPP_BASE_URL } from "@/data/constants";
 import { filterAndSortLots, formatLotArea, formatLotPrice, type Lot } from "@/features/lots";
+import { useFavoriteLots } from "@/hooks/use-favorite-lots";
 
 interface LotSelectionPanelProps {
   lots: Lot[];
@@ -175,7 +179,7 @@ export default function LotSelectionPanel({
         variant="ghost"
         size="icon"
         onClick={onHide}
-        className="absolute right-5 top-[84px] rounded-full border border-border bg-background/90 text-foreground hover:bg-muted hover:text-accent lg:-right-2 lg:top-1/2"
+        className="absolute right-5 top-[84px] rounded-full border border-border bg-background/90 text-foreground hover:bg-muted hover:text-accent lg:-right-2.5 lg:top-1/2 lg:-translate-y-1/2 shadow-md"
         aria-label="Ocultar catálogo"
         title="Ocultar catálogo"
       >
@@ -188,6 +192,9 @@ export default function LotSelectionPanel({
 interface LotCardItemProps {
   lot: Lot;
   isSelected: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (lot: Lot) => void;
+  onShareLot?: (lot: Lot) => void;
   onSelect: (lot: Lot) => void;
   onView3D: () => void;
   onInspectLot?: (lot: Lot) => void;
@@ -199,6 +206,9 @@ const LotCardItem = memo(
   function LotCardItem({
     lot,
     isSelected,
+    isFavorite = false,
+    onToggleFavorite,
+    onShareLot,
     onSelect,
     onView3D,
     onInspectLot,
@@ -256,7 +266,7 @@ const LotCardItem = memo(
         <button
           type="button"
           onClick={() => onSelect(lot)}
-          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5" : "py-2 px-3"} ${isSelected ? (isMobile ? (onInspectLot ? "pr-[68px]" : "pr-[36px]") : "pr-[40px]") : ""}`}
+          className={`w-full text-left ${isMobile ? "py-1.5 px-2.5" : "py-2 px-3"}`}
         >
           {/* Fila 1: ID, Estado y Precio en una sola línea compacta */}
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -302,56 +312,95 @@ const LotCardItem = memo(
           </div>
         </button>
 
-        {/* Acciones de lote: ficha técnica y botón 3D activos cuando el lote está seleccionado */}
+        {/* Acciones de lote cuando está seleccionado (Fila dedicada sin tapar el precio) */}
         {isSelected && (
           <div
-            className={`absolute ${isMobile ? "right-1.5" : "right-2"} top-1/2 -translate-y-1/2 flex items-center gap-1 animate-in fade-in duration-150`}
+            className={`flex items-center justify-between border-t border-border/60 bg-muted/20 ${
+              isMobile ? "px-2.5 py-1" : "px-3 py-1.5"
+            } animate-in fade-in duration-150`}
             onClick={(e) => e.stopPropagation()}
           >
-            {onReserveLot && !isSold && (
+            <div className="flex items-center gap-1.5">
+              {onReserveLot && !isSold && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(lot);
+                    onReserveLot(lot);
+                  }}
+                  title={`Reservar ${lot.id}`}
+                  aria-label={`Reservar ${lot.id}`}
+                  className="flex h-6 items-center gap-1 rounded-md bg-accent px-2.5 text-[9px] font-bold text-accent-foreground shadow-xs transition-all hover:bg-accent/90 active:scale-95 cursor-pointer"
+                >
+                  <span>Reservar</span>
+                </button>
+              )}
+              {onInspectLot && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(lot);
+                    onInspectLot(lot);
+                  }}
+                  title={`Ver ficha técnica y cuotas de ${lot.id}`}
+                  aria-label={`Ver ficha técnica de ${lot.id}`}
+                  className="flex h-6 items-center gap-1 rounded-md border border-border bg-background/95 px-2 text-[9px] font-bold text-foreground shadow-xs transition-all hover:bg-muted active:scale-95 cursor-pointer"
+                >
+                  <FileText size={10} className="text-accent" />
+                  <span>Ficha</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1">
+              {onShareLot && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShareLot(lot);
+                  }}
+                  title={`Compartir enlace directo del ${lot.id}`}
+                  aria-label={`Compartir ${lot.id}`}
+                  className="flex size-6 items-center justify-center rounded-md border border-border bg-background/95 text-muted-foreground shadow-xs transition-all hover:text-foreground active:scale-90 cursor-pointer"
+                >
+                  <Share2 size={10} />
+                </button>
+              )}
+              {onToggleFavorite && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(lot);
+                  }}
+                  title={isFavorite ? "Quitar de favoritos" : "Guardar en favoritos"}
+                  aria-label={isFavorite ? "Quitar de favoritos" : "Guardar en favoritos"}
+                  className={`flex size-6 items-center justify-center rounded-md border border-border bg-background/95 shadow-xs transition-all active:scale-90 cursor-pointer ${
+                    isFavorite
+                      ? "text-rose-500 border-rose-500/30 bg-rose-500/10"
+                      : "text-muted-foreground hover:text-rose-500"
+                  }`}
+                >
+                  <Heart size={10} className={isFavorite ? "fill-rose-500 text-rose-500" : ""} />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelect(lot);
-                  onReserveLot(lot);
+                  onView3D();
                 }}
-                title={`Reservar ${lot.id}`}
-                aria-label={`Reservar ${lot.id}`}
-                className="flex h-6 items-center gap-1 rounded-md bg-accent px-2 text-[8.5px] font-bold text-accent-foreground shadow-xs transition-all hover:bg-accent/90 active:scale-90 cursor-pointer"
+                title={`Ver ${lot.id} en 3D`}
+                aria-label={`Ver ${lot.id} en 3D`}
+                className="flex size-6 items-center justify-center rounded-md bg-accent text-accent-foreground shadow-xs transition-all hover:bg-accent/90 active:scale-90 cursor-pointer"
               >
-                <span>Reservar</span>
+                <Box size={11} />
               </button>
-            )}
-            {isMobile && onInspectLot && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelect(lot);
-                  onInspectLot(lot);
-                }}
-                title={`Ver ficha y cuotas de ${lot.id}`}
-                aria-label={`Ver ficha y cuotas de ${lot.id}`}
-                className="flex h-6 items-center gap-1 rounded-md border border-border bg-background/95 px-1.5 text-[8.5px] font-bold text-foreground shadow-xs transition-all hover:bg-muted active:scale-90 cursor-pointer"
-              >
-                <FileText size={10} className="text-accent" />
-                <span>Ficha</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(lot);
-                onView3D();
-              }}
-              title={`Ver ${lot.id} en 3D`}
-              aria-label={`Ver ${lot.id} en 3D`}
-              className={`flex ${isMobile ? "size-6 rounded-md" : "size-6.5 rounded-lg"} items-center justify-center bg-accent text-accent-foreground shadow-xs transition-all hover:bg-accent/90 active:scale-90 cursor-pointer`}
-            >
-              <Box size={isMobile ? 11 : 12.5} />
-            </button>
+            </div>
           </div>
         )}
       </article>
@@ -362,6 +411,7 @@ const LotCardItem = memo(
       prev.lot.id === next.lot.id &&
       prev.isSelected === next.isSelected &&
       prev.isMobile === next.isMobile &&
+      prev.isFavorite === next.isFavorite &&
       prev.lot.status === next.lot.status &&
       prev.lot.price === next.lot.price &&
       prev.lot.metadata === next.lot.metadata
@@ -416,6 +466,34 @@ function LotCatalog({
   const totalLotsCount = lots.length || 340;
   const [visibleLimit, setVisibleLimit] = useState(30);
 
+  const { favoriteLotIds, favoritesCount, isFavorite, toggleFavorite } = useFavoriteLots();
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+
+  const handleShareLot = (lot: Lot) => {
+    const lotNum = lot.id.replace(/^L-/, "");
+    const url = new URL(window.location.href);
+    url.searchParams.set("vista", "plano");
+    url.searchParams.set("lote", lotNum);
+    const shareUrl = url.toString();
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator
+        .share({
+          title: `Lote ${lotNum} · Villa Paraíso`,
+          text: `Mira este lote en Villa Paraíso Reserva Campestre: Lote ${lotNum} (${formatLotArea(lot.area)} - ${formatLotPrice(lot.price)})`,
+          url: shareUrl,
+        })
+        .catch(() => {
+          /* share cancelled */
+        });
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success(`Enlace directo del Lote ${lotNum} copiado`, {
+        description: "Pégalo en WhatsApp o compártelo con quien quieras.",
+      });
+    }
+  };
+
   // Reiniciar límite visible cuando cambian los filtros
   useEffect(() => {
     setVisibleLimit(30);
@@ -432,10 +510,15 @@ function LotCatalog({
     }
   }, [selectedId, isMobile, filteredLots, visibleLimit]);
 
+  const finalFilteredLots = useMemo(() => {
+    if (!onlyFavorites) return filteredLots;
+    return filteredLots.filter((l) => favoriteLotIds.includes(l.id));
+  }, [filteredLots, onlyFavorites, favoriteLotIds]);
+
   const displayedLots = useMemo(() => {
-    if (!isMobile) return filteredLots;
-    return filteredLots.slice(0, visibleLimit);
-  }, [filteredLots, isMobile, visibleLimit]);
+    if (!isMobile) return finalFilteredLots;
+    return finalFilteredLots.slice(0, visibleLimit);
+  }, [finalFilteredLots, isMobile, visibleLimit]);
 
   const handleSelectFromSearch = (lot: Lot) => {
     // Si el lote tiene un estado comercial diferente al filtro activo, cambiar a "Todos"
@@ -544,6 +627,25 @@ function LotCatalog({
             <SlidersHorizontal className={isMobile ? "size-3 mr-1" : "size-3.5 mr-1"} />
             <span>{advancedOpen ? "Ocultar" : "Filtros"}</span>
           </Button>
+
+          {favoritesCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setOnlyFavorites((prev) => !prev)}
+              className={`flex items-center gap-1 rounded-xl px-2 font-bold transition-all shadow-xs cursor-pointer ${
+                onlyFavorites
+                  ? "bg-rose-500 text-white"
+                  : "border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
+              } ${isMobile ? "h-6 text-[8px]" : "h-8 px-2.5 text-[9.5px]"}`}
+              title="Filtrar por mis lotes guardados en favoritos"
+            >
+              <Heart
+                size={isMobile ? 10 : 12}
+                className={onlyFavorites ? "fill-white text-white" : "fill-rose-500 text-rose-500"}
+              />
+              <span>{onlyFavorites ? "Todos" : `(${favoritesCount})`}</span>
+            </button>
+          )}
         </div>
         {advancedOpen && (
           <div className="mt-2 space-y-2 rounded-xl border border-border bg-muted/40 p-2.5">
@@ -599,7 +701,13 @@ function LotCatalog({
 
       <div className="hidden lg:flex items-center justify-between px-5 pb-2 pt-3">
         <strong className={isMobile ? "text-xs font-bold" : "text-sm"}>
-          {filteredLots.length} lotes
+          {onlyFavorites ? (
+            <span className="text-rose-600 dark:text-rose-400">
+              {finalFilteredLots.length} guardado{finalFilteredLots.length === 1 ? "" : "s"}
+            </span>
+          ) : (
+            `${finalFilteredLots.length} lotes`
+          )}
         </strong>
         <span className="text-[7.5px] sm:text-[8px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {sort === "lot-asc"
@@ -618,16 +726,31 @@ function LotCatalog({
         <div
           className={`${isMobile ? "grid grid-cols-1 md:grid-cols-2 gap-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-w-4xl mx-auto" : "space-y-1.5 pb-2.5"}`}
         >
-          {filteredLots.length === 0 && (
-            <p className="col-span-full rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs leading-5 text-muted-foreground">
-              No hay lotes que cumplan estos filtros.
-            </p>
+          {finalFilteredLots.length === 0 && (
+            <div className="col-span-full rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs leading-5 text-muted-foreground">
+              {onlyFavorites ? (
+                <div className="flex flex-col items-center gap-1.5 py-4">
+                  <Heart className="size-6 text-rose-500/50" />
+                  <p className="font-medium text-foreground">
+                    No tienes lotes guardados en favoritos
+                  </p>
+                  <p className="text-[11px] text-muted-foreground max-w-xs">
+                    Toca el icono del corazón en cualquier lote para guardarlo aquí y comparar.
+                  </p>
+                </div>
+              ) : (
+                "No hay lotes que cumplan estos filtros."
+              )}
+            </div>
           )}
           {displayedLots.map((lot) => (
             <LotCardItem
               key={lot.id}
               lot={lot}
               isSelected={lot.id === selectedId}
+              isFavorite={isFavorite(lot.id)}
+              onToggleFavorite={() => toggleFavorite(lot.id, lot.id.replace(/^L-/, ""))}
+              onShareLot={handleShareLot}
               onSelect={onSelect}
               onView3D={onView3D}
               onInspectLot={onInspectLot}
@@ -635,7 +758,7 @@ function LotCatalog({
               isMobile={isMobile}
             />
           ))}
-          {isMobile && filteredLots.length > visibleLimit && (
+          {isMobile && finalFilteredLots.length > visibleLimit && (
             <div className="col-span-full pt-1.5 pb-2">
               <Button
                 type="button"
@@ -644,7 +767,7 @@ function LotCatalog({
                 onClick={() => setVisibleLimit((prev) => prev + 30)}
                 className="w-full h-8 text-[11px] font-semibold rounded-xl border-accent/40 text-accent hover:bg-accent hover:text-accent-foreground"
               >
-                Cargar más lotes ({filteredLots.length - visibleLimit} restantes)
+                Cargar más lotes ({finalFilteredLots.length - visibleLimit} restantes)
               </Button>
             </div>
           )}
@@ -656,13 +779,45 @@ function LotCatalog({
             const selectedLot = lots.find((l) => l.id === selectedId);
             if (selectedLot && selectedLot.status !== "Vendido" && onReserveLot) {
               return (
-                <Button
-                  type="button"
-                  onClick={() => onReserveLot(selectedLot)}
-                  className="h-9 text-xs w-full rounded-full bg-accent text-accent-foreground font-bold shadow-md hover:bg-accent/90 transition-all cursor-pointer"
-                >
-                  Reservar Lote {selectedLot.id.replace(/^L-/, "")}
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    onClick={() => onReserveLot(selectedLot)}
+                    className="h-9 text-xs flex-1 rounded-full bg-accent text-accent-foreground font-bold shadow-md hover:bg-accent/90 transition-all cursor-pointer"
+                  >
+                    Reservar Lote {selectedLot.id.replace(/^L-/, "")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleShareLot(selectedLot)}
+                    title="Compartir enlace de este lote"
+                    className="size-9 shrink-0 rounded-full border-border hover:bg-muted cursor-pointer"
+                  >
+                    <Share2 className="size-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      toggleFavorite(selectedLot.id, selectedLot.id.replace(/^L-/, ""))
+                    }
+                    title={
+                      isFavorite(selectedLot.id) ? "Quitar de favoritos" : "Guardar en favoritos"
+                    }
+                    className={`size-9 shrink-0 rounded-full border-border hover:bg-muted cursor-pointer ${
+                      isFavorite(selectedLot.id)
+                        ? "text-rose-500 border-rose-500/30 bg-rose-500/5"
+                        : ""
+                    }`}
+                  >
+                    <Heart
+                      className={`size-3.5 ${isFavorite(selectedLot.id) ? "fill-rose-500 text-rose-500" : ""}`}
+                    />
+                  </Button>
+                </div>
               );
             }
             return (

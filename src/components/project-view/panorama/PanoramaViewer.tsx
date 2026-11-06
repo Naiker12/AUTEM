@@ -1,6 +1,7 @@
 import "@photo-sphere-viewer/core/index.css";
 import "@photo-sphere-viewer/markers-plugin/index.css";
 import {
+  Calendar,
   Compass,
   Expand,
   Eye,
@@ -56,6 +57,7 @@ export interface PanoramaViewerProps {
   selectedLotId?: string;
   onSelectLot?: (lotId: string) => void;
   onInspectLot?: (lot?: Lot) => void;
+  onReserveLot?: (lot: Lot) => void;
   onSwitchToPlan?: () => void;
   onPanoramaClick?: (pos: {
     yawRad: number;
@@ -73,6 +75,7 @@ export interface PanoramaViewerProps {
   editScope?: "global" | "manzana" | "piece" | "lot";
   activeManzana?: string;
   initialShowRoads?: boolean;
+  isRightPanelOpen?: boolean;
 }
 
 const FILTER_OPTIONS = [
@@ -93,6 +96,7 @@ export default function PanoramaViewer({
   selectedLotId,
   onSelectLot,
   onInspectLot,
+  onReserveLot,
   onSwitchToPlan,
   onPanoramaClick,
   extraMarkers = [],
@@ -105,6 +109,7 @@ export default function PanoramaViewer({
   editScope = "global",
   activeManzana = "M 1",
   initialShowRoads = true,
+  isRightPanelOpen = false,
 }: PanoramaViewerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -1025,7 +1030,9 @@ export default function PanoramaViewer({
 
       {/* Cápsula vertical derecha de controles (idéntica a MasterplanSvgViewer) */}
       <div
-        className="absolute right-3 lg:right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1 rounded-full border border-white/35 bg-background/88 p-1 lg:p-1.5 text-foreground/80 shadow-xl backdrop-blur-xl select-none"
+        className={`absolute ${
+          isRightPanelOpen ? "right-3 lg:right-[384px] xl:right-[404px]" : "right-3 lg:right-4"
+        } top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1 rounded-full border border-white/35 bg-background/88 p-1 lg:p-1.5 text-foreground/80 shadow-xl backdrop-blur-xl select-none transition-[right] duration-300 ease-out`}
         onPointerDown={(e) => e.stopPropagation()}
       >
         <button
@@ -1131,27 +1138,48 @@ export default function PanoramaViewer({
             )}
           </div>
 
-          {(onInspectLot || onSwitchToPlan) && (
-            <div className="mt-3 flex items-center gap-2">
-              {onInspectLot && (
+          {((onReserveLot && selectedLot.status !== "Vendido") ||
+            onInspectLot ||
+            onSwitchToPlan) && (
+            <div className="mt-3 flex flex-col gap-2">
+              {onReserveLot && selectedLot.status !== "Vendido" && (
                 <button
                   type="button"
-                  onClick={() => onInspectLot(selectedLot)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-accent px-3.5 py-2 text-xs font-bold text-accent-foreground shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+                  onClick={() => onReserveLot(selectedLot)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full bg-accent px-3.5 py-2 text-xs font-bold text-accent-foreground shadow-sm hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer"
                 >
-                  <FileText className="size-3.5" />
-                  <span>Ver ficha</span>
+                  <Calendar className="size-3.5" />
+                  <span>Reservar lote {selectedLot.id.replace(/^L-/, "")}</span>
                 </button>
               )}
-              {onSwitchToPlan && (
-                <button
-                  type="button"
-                  onClick={onSwitchToPlan}
-                  className="flex items-center justify-center gap-1.5 rounded-full border border-border bg-muted/60 px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
-                >
-                  <MapIcon className="size-3.5" />
-                  <span>Plano 2D</span>
-                </button>
+
+              {(onInspectLot || onSwitchToPlan) && (
+                <div className="flex items-center gap-2">
+                  {onInspectLot && (
+                    <button
+                      type="button"
+                      onClick={() => onInspectLot(selectedLot)}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-full ${
+                        onReserveLot && selectedLot.status !== "Vendido"
+                          ? "border border-border bg-muted/60 text-foreground hover:bg-muted"
+                          : "bg-accent text-accent-foreground shadow-sm hover:opacity-90"
+                      } px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer`}
+                    >
+                      <FileText className="size-3.5" />
+                      <span>Ver ficha</span>
+                    </button>
+                  )}
+                  {onSwitchToPlan && (
+                    <button
+                      type="button"
+                      onClick={onSwitchToPlan}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-muted/60 px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      <MapIcon className="size-3.5" />
+                      <span>Plano 2D</span>
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}

@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Settings2,
   ShieldAlert,
-  Sparkles,
   UsersRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";

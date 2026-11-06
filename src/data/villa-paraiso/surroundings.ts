@@ -15,7 +15,7 @@ export interface PointOfInterest {
 }
 
 export const POI_CATEGORIES = [
-  { id: "all", label: "Todos", icon: "sparkles" },
+  { id: "all", label: "Todos", icon: "layers" },
   { id: "nature", label: "Naturaleza", icon: "trees" },
   { id: "airport", label: "Aeropuerto", icon: "plane" },
   { id: "transport", label: "Movilidad & Vías", icon: "car" },

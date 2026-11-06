@@ -27,7 +27,6 @@ import {
   Ruler,
   Save,
   Sliders,
-  Sparkles,
   Trash2,
   Unlock,
   ZoomIn,
@@ -1682,7 +1681,7 @@ function PanoramaCalibrationAdminPage() {
               Parámetros de Cámara Dron (GPS & Rumbo)
             </span>
             <Button size="sm" className="h-7 text-xs cursor-pointer" onClick={handleRunSolver}>
-              <Sparkles className="mr-1.5 size-3.5" />
+              <Sliders className="mr-1.5 size-3.5" />
               Auto-calibrar Dron
             </Button>
           </div>
