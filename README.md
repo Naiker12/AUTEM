@@ -24,7 +24,7 @@
 
 </div>
 
-## 🏛️ Descripción General
+## Descripción General
 
 **AUTEM** es una solución tecnológica integral diseñada para el desarrollo, comercialización y gestión de proyectos inmobiliarios campestres y urbanísticos exclusivos. Fusiona un diseño editorial sofisticado con motores gráficos de última generación, permitiendo a clientes, inversores y administradores:
 
@@ -35,36 +35,31 @@
 
 ---
 
-## 📐 Arquitectura del Sistema
+## Arquitectura del Sistema
 
 El ecosistema está desacoplado en una arquitectura modular de alta fidelidad compuesta por **Frontend Inmersivo (SPA)**, **Backend en la Nube (Supabase BaaS)**, **Pipeline de Ingesta Topográfica CAD** y una capa global de **Edge & CDN**:
 
-<div align="center">
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="public/images/architecture/architecture-diagram-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="public/images/architecture/architecture-diagram.png">
-  <img src="public/images/architecture/architecture-diagram.png" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
-</picture>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Naiker12/AUTEM/limpieza-360/public/images/architecture/architecture-diagram.png#gh-light-mode-only" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
+  <img src="https://raw.githubusercontent.com/Naiker12/AUTEM/limpieza-360/public/images/architecture/architecture-diagram-dark.png#gh-dark-mode-only" alt="Diagrama de Arquitectura de AUTEM" width="100%" />
+</p>
 
 <p align="center"><em>Diagrama de infraestructura generado con especificación oficial de arquitectura de ingeniería.</em></p>
-
-</div>
 
 ### Flujo de Interacción y Servicios
 
 ```mermaid
 flowchart LR
-    subgraph Clientes["🌐 Clientes"]
+    subgraph Clientes["Clientes"]
         Desktop["Navegador Desktop"]
         Mobile["Dispositivo Móvil (WebAR)"]
     end
 
-    subgraph CDN["☁️ Edge & CDN"]
+    subgraph CDN["Edge & CDN"]
         Edge["Cloudflare / Host SPA Fallback"]
     end
 
-    subgraph Frontend["⚡ AUTEM Frontend (React 19 + TanStack)"]
+    subgraph Frontend["AUTEM Frontend (React 19 + TanStack)"]
         direction TB
         Core["React 19 + TanStack Router + Vite 8"]
         Engine3D["Three.js + Google Model-Viewer"]
@@ -73,14 +68,14 @@ flowchart LR
         Admin["Backoffice de Calibración & CMS"]
     end
 
-    subgraph Backend["🛡️ Supabase Cloud BaaS"]
+    subgraph Backend["Supabase Cloud BaaS"]
         direction TB
         Auth["Supabase Auth (JWT & Roles)"]
         DB[("PostgreSQL con RLS")]
         Storage["Cloud Storage (GLB, WebP 360°, SVG)"]
     end
 
-    subgraph Pipeline["⚙️ Pipeline CAD & Ingesta"]
+    subgraph Pipeline["Pipeline CAD & Ingesta"]
         CAD["Archivos Topográficos DXF"]
         Scripts["Scripts Node.js / Proj4"]
         Sharp["Optimizador Sharp"]
@@ -100,43 +95,43 @@ flowchart LR
 
 ---
 
-## 🌟 Funcionalidades y Módulos Principales
+## Funcionalidades y Módulos Principales
 
-### 1. 🥽 Visor Panorámico 360° y Calibración Equirrectangular
+### 1. Visor Panorámico 360° y Calibración Equirrectangular
 - **Superposición Vectorial en Tiempo Real**: Renderizado en canvas HTML5 a 60 FPS mediante proyección esférica y matriz de rotación yaw/pitch/roll.
 - **Calibración Intuitiva de Terrenos**:
-  - **🌐 Modo Todo el Plano (340 Lotes)**: Ajuste en bloque de escala, rumbo, inclinación y deriva angular sin deformar la geometría urbanística.
-  - **🧩 Modo Por Pedazos**: Selección táctil en pantalla de bloques contiguos o hileras de lotes para adaptarlos a las curvas y desniveles del terreno.
-  - **🎯 Modo Solo Lote**: Microajuste individual de coordenadas para encaje perfecto.
+  - **Modo Todo el Plano (340 Lotes)**: Ajuste en bloque de escala, rumbo, inclinación y deriva angular sin deformar la geometría urbanística.
+  - **Modo Por Pedazos**: Selección táctil en pantalla de bloques contiguos o hileras de lotes para adaptarlos a las curvas y desniveles del terreno.
+  - **Modo Solo Lote**: Microajuste individual de coordenadas para encaje perfecto.
 - **HUD Flotante Táctil**: Control Pad con pasos de precisión (`0.1°`, `0.5°`, `2.0°`), rotación y zoom integrado directamente sobre la vista panorámica.
 - **Arrastre Fluido con Puntero / Touch**: Soporte `setPointerCapture` con respuesta instantánea libre de latencia.
 
-### 2. 🕶️ 3D Inmersivo y Realidad Aumentada (WebAR)
+### 2. 3D Inmersivo y Realidad Aumentada (WebAR)
 - **Three.js**: Visualizador interactivo 3D con iluminación basada en imagen (IBL), control de órbita y sombras proyectadas.
-- **Google `@google/model-viewer`**: Acceso directo a WebAR en smartphones:
+- **Google Model-Viewer**: Acceso directo a WebAR en smartphones:
   - **iOS**: Apple AR Quick Look nativo (`.usdz` / `.glb`).
   - **Android**: Google Scene Viewer nativo.
   - Sin necesidad de descargar aplicaciones de la App Store o Google Play.
 
-### 3. 🗺️ Motor Cartográfico & Topografía GIS
+### 3. Motor Cartográfico & Topografía GIS
 - **Sincronización CAD Real**: Conversión de coordenadas geodésicas oficiales del sistema **Magna-Sirgas / Colombia Origen Único (EPSG:3116)** a coordenadas geográficas globales (WGS84).
 - **Cartografía Interactiva**: Integración de Leaflet con rotación de mapa (`leaflet-rotate`), capas vectoriales de lotes, zonificación, vías, lagos y amenidades.
 - **Cotizador Dinámico de Lotes**: Selección de parcelas con estado de disponibilidad en tiempo real, cálculo de metraje cuadrado y cotización instantánea.
 
-### 4. 🛡️ Backend & Seguridad (Supabase Cloud BaaS)
+### 4. Backend & Seguridad (Supabase Cloud BaaS)
 - **PostgreSQL 16**: Esquemas relacionales con migraciones versionadas para proyectos, lotes, galerías, contenidos del sitio y metadatos de calibración de dron.
 - **Row Level Security (RLS) Endurecido**: Políticas de acceso granular que garantizan lectura pública optimizada y mutaciones restringidas únicamente a personal autenticado con roles de administración.
 - **Supabase Auth**: Sesiones persistentes basadas en tokens JWT y perfiles administrativos protegidos.
 - **Supabase Storage**: CDN global para la entrega eficiente de modelos 3D (`.glb`), imágenes panorámicas de alta densidad en WebP y planos vectoriales.
 
-### 5. 🎛️ Backoffice Administrativo (`/admin`)
+### 5. Backoffice Administrativo (/admin)
 - **Gestor Editorial**: Administración visual de portadas, textos, llamadas a la acción e imágenes del home.
 - **Calibrador 360°**: Entorno gráfico especializado para alinear los levantamientos CAD con las tomas de dron.
 - **Inventario y Disponibilidad**: Control del estado de venta de cada unidad (disponible, reservado, vendido).
 
 ---
 
-## 🛠️ Stack Tecnológico Detallado
+## Stack Tecnológico Detallado
 
 | Capa | Tecnologías | Propósito |
 | :--- | :--- | :--- |
@@ -154,7 +149,7 @@ flowchart LR
 
 ---
 
-## 📂 Estructura del Repositorio
+## Estructura del Repositorio
 
 ```text
 AUTEM/
@@ -195,7 +190,7 @@ AUTEM/
 
 ---
 
-## 🚀 Instalación y Puesta en Marcha
+## Instalación y Puesta en Marcha
 
 ### Prerrequisitos
 - **Node.js**: v20 o superior
@@ -227,7 +222,7 @@ La aplicación estará disponible de forma predeterminada en `http://localhost:5
 
 ---
 
-## 📜 Scripts y Comandos Disponibles
+## Scripts y Comandos Disponibles
 
 | Comando | Descripción |
 | :--- | :--- |
@@ -243,7 +238,7 @@ La aplicación estará disponible de forma predeterminada en `http://localhost:5
 
 ---
 
-## 📄 Licencia y Derechos
+## Licencia y Derechos
 
 Desarrollado para **AUTEM — Real Estate & Visualización Arquitectónica**.  
 Todos los derechos reservados © 2026.
