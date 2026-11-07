@@ -19,7 +19,13 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatLotArea, formatLotDetail, formatLotPrice, type Lot } from "@/features/lots";
+import {
+  formatLotArea,
+  formatLotDetail,
+  formatLotPrice,
+  LOT_STYLE,
+  type Lot,
+} from "@/features/lots";
 import cadReference from "@/data/villa-paraiso/cad-reference.json";
 import villaParaisoGeoJson from "@/data/villa-paraiso/generated/geojson.json";
 import {
@@ -468,28 +474,19 @@ export default function ProjectLocationMap({
       }
 
       const s = status.toLowerCase();
-      let fillColor = "#10b981"; // Disponible
-      let strokeColor = "#059669";
-      let fillOpacity = 0.22 * opacityMultiplier;
-
+      let token = LOT_STYLE.Disponible;
       if (s.includes("vend")) {
-        fillColor = "#ef4444"; // Vendido
-        strokeColor = "#dc2626";
-        fillOpacity = 0.25 * opacityMultiplier;
+        token = LOT_STYLE.Vendido;
       } else if (s.includes("res")) {
-        fillColor = "#f59e0b"; // Reservado
-        strokeColor = "#d97706";
-        fillOpacity = 0.28 * opacityMultiplier;
+        token = LOT_STYLE.Reservado;
       } else if (s.includes("conf") || s.includes("hid")) {
-        fillColor = "#94a3b8"; // Por confirmar
-        strokeColor = "#64748b";
-        fillOpacity = 0.16 * opacityMultiplier;
+        token = LOT_STYLE["Por confirmar"];
       }
 
       return {
-        fillColor,
-        fillOpacity: Math.min(1, fillOpacity),
-        color: strokeColor,
+        fillColor: token.baseHex,
+        fillOpacity: Math.min(1, token.fillAlpha * opacityMultiplier),
+        color: token.strokeColor,
         weight: 1.3,
         opacity: Math.min(1, 0.85 * opacityMultiplier),
       };
@@ -1390,7 +1387,7 @@ export default function ProjectLocationMap({
                 onClick={() => switchLayer("satellite")}
                 className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   activeLayer === "satellite"
-                    ? "bg-accent/20 text-accent font-semibold"
+                    ? "bg-muted text-foreground font-semibold"
                     : "hover:bg-muted text-foreground"
                 }`}
               >
@@ -1402,7 +1399,7 @@ export default function ProjectLocationMap({
                 onClick={() => switchLayer("hybrid")}
                 className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   activeLayer === "hybrid"
-                    ? "bg-accent/20 text-accent font-semibold"
+                    ? "bg-muted text-foreground font-semibold"
                     : "hover:bg-muted text-foreground"
                 }`}
               >
@@ -1414,7 +1411,7 @@ export default function ProjectLocationMap({
                 onClick={() => switchLayer("streets")}
                 className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   activeLayer === "streets"
-                    ? "bg-accent/20 text-accent font-semibold"
+                    ? "bg-muted text-foreground font-semibold"
                     : "hover:bg-muted text-foreground"
                 }`}
               >
@@ -1435,7 +1432,7 @@ export default function ProjectLocationMap({
                   onClick={() => setShowMasterplan((prev) => !prev)}
                   className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                     showMasterplan
-                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold"
+                      ? "bg-muted text-foreground font-semibold"
                       : "hover:bg-muted text-muted-foreground"
                   }`}
                 >
@@ -1456,7 +1453,7 @@ export default function ProjectLocationMap({
                   onClick={() => setShowLotNumbers((prev) => !prev)}
                   className={`mt-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                     showLotNumbers
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold"
+                      ? "bg-muted text-foreground font-semibold"
                       : "hover:bg-muted text-muted-foreground"
                   }`}
                 >
@@ -1474,7 +1471,7 @@ export default function ProjectLocationMap({
                     onClick={() => setShowSurroundings((prev) => !prev)}
                     className={`mt-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                       showSurroundings
-                        ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 font-semibold"
+                        ? "bg-muted text-foreground font-semibold"
                         : "hover:bg-muted text-muted-foreground"
                     }`}
                   >
@@ -1503,7 +1500,7 @@ export default function ProjectLocationMap({
                           onClick={() => setMasterplanOpacity(preset.val)}
                           className={`rounded-md py-1 text-[10px] font-semibold transition-all ${
                             Math.abs(masterplanOpacity - preset.val) < 0.1
-                              ? "bg-primary text-primary-foreground shadow-xs"
+                              ? "bg-foreground text-background shadow-xs"
                               : "bg-muted/60 text-muted-foreground hover:bg-muted"
                           }`}
                         >
@@ -1520,10 +1517,10 @@ export default function ProjectLocationMap({
 
         {/* Toolbar buttons */}
         <div
-          className={`flex flex-col items-center gap-1 rounded-full p-1 sm:p-1.5 shadow-2xl backdrop-blur-xl transition-colors ${
+          className={`flex flex-col items-center gap-1 rounded-xl p-1 sm:p-1.5 shadow-lg backdrop-blur-xl transition-colors ${
             isDark
-              ? "border border-white/10 bg-stone-900/85 text-stone-200"
-              : "border border-white/35 bg-white/70 text-foreground/80"
+              ? "border border-white/10 bg-stone-900/90 text-stone-200"
+              : "border border-border/80 bg-background/95 text-foreground/80"
           }`}
         >
           {/* Compass / Heading toggle (Uber mode vs North up) */}
@@ -1535,9 +1532,9 @@ export default function ProjectLocationMap({
               setIsUserPanning(false);
               setNavBearingMode((prev) => (prev === "heading" ? "north" : "heading"));
             }}
-            className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
+            className={`size-7 sm:size-8 rounded-lg cursor-pointer transition-colors ${
               navBearingMode === "heading"
-                ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                ? "bg-foreground text-background hover:bg-foreground/90 hover:text-background"
                 : "hover:bg-muted text-muted-foreground"
             }`}
             title={
@@ -1559,7 +1556,11 @@ export default function ProjectLocationMap({
             variant="ghost"
             size="icon"
             onClick={() => setIsLayerMenuOpen((prev) => !prev)}
-            className="size-7 sm:size-8 rounded-full hover:bg-muted cursor-pointer"
+            className={`size-7 sm:size-8 rounded-lg cursor-pointer transition-colors ${
+              isLayerMenuOpen
+                ? "bg-foreground text-background hover:bg-foreground/90 hover:text-background"
+                : "hover:bg-muted text-muted-foreground"
+            }`}
             title="Capas del mapa"
             aria-label="Capas del mapa"
           >
@@ -1573,9 +1574,9 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={() => setShowMasterplan((prev) => !prev)}
-              className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
+              className={`size-7 sm:size-8 rounded-lg cursor-pointer transition-colors ${
                 showMasterplan
-                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30"
+                  ? "bg-foreground text-background hover:bg-foreground/90 hover:text-background"
                   : "hover:bg-muted text-muted-foreground"
               }`}
               title={
@@ -1596,9 +1597,9 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={() => setShowLotNumbers((prev) => !prev)}
-              className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
+              className={`size-7 sm:size-8 rounded-lg cursor-pointer transition-colors ${
                 showLotNumbers
-                  ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30"
+                  ? "bg-foreground text-background hover:bg-foreground/90 hover:text-background"
                   : "hover:bg-muted text-muted-foreground"
               }`}
               title={showLotNumbers ? "Ocultar números de lote" : "Mostrar números de lote"}
@@ -1615,9 +1616,9 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={() => setShowSurroundings((prev) => !prev)}
-              className={`size-7 sm:size-8 rounded-full cursor-pointer transition-colors ${
+              className={`size-7 sm:size-8 rounded-lg cursor-pointer transition-colors ${
                 showSurroundings
-                  ? "bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/30"
+                  ? "bg-foreground text-background hover:bg-foreground/90 hover:text-background"
                   : "hover:bg-muted text-muted-foreground"
               }`}
               title={
@@ -1639,7 +1640,7 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={handleZoomIn}
-              className="size-8 rounded-full hover:bg-muted cursor-pointer"
+              className="size-8 rounded-lg hover:bg-muted cursor-pointer"
               title="Acercar"
               aria-label="Acercar mapa"
             >
@@ -1650,7 +1651,7 @@ export default function ProjectLocationMap({
               variant="ghost"
               size="icon"
               onClick={handleZoomOut}
-              className="size-8 rounded-full hover:bg-muted cursor-pointer"
+              className="size-8 rounded-lg hover:bg-muted cursor-pointer"
               title="Alejar"
               aria-label="Alejar mapa"
             >
@@ -1669,7 +1670,7 @@ export default function ProjectLocationMap({
               setIsUserPanning(false);
               handleRecenter();
             }}
-            className="size-7 sm:size-8 rounded-full hover:bg-muted cursor-pointer"
+            className="size-7 sm:size-8 rounded-lg hover:bg-muted cursor-pointer"
             title="Centrar en el recorrido"
             aria-label="Centrar en el recorrido"
           >
@@ -1687,21 +1688,16 @@ export default function ProjectLocationMap({
               : "bottom-3 left-3 right-3 sm:left-6 sm:right-6 lg:left-8 lg:right-8"
           }`}
         >
-          <div className="rounded-2xl border border-border/80 bg-background/92 p-3 shadow-2xl backdrop-blur-2xl">
+          <div className="rounded-xl border border-border/80 bg-background/95 p-3 shadow-xl backdrop-blur-xl">
             {/* Drawer header */}
             <div className="flex items-center justify-between gap-2 pb-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="flex size-7 items-center justify-center rounded-lg bg-purple-500/20 text-purple-500">
-                  <Compass className="size-4" />
-                </div>
-                <div className="min-w-0">
-                  <strong className="block truncate text-xs sm:text-sm font-bold text-foreground">
-                    Lugares cercanos y puntos de interés
-                  </strong>
-                  <span className="text-[10.5px] text-muted-foreground">
-                    {filteredPois.length} sitios clave alrededor de Villa Paraíso
-                  </span>
-                </div>
+              <div className="min-w-0">
+                <strong className="block truncate text-xs sm:text-sm font-semibold text-foreground">
+                  Lugares cercanos y puntos de interés
+                </strong>
+                <span className="text-[10.5px] text-muted-foreground">
+                  {filteredPois.length} sitios clave alrededor de Villa Paraíso
+                </span>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
