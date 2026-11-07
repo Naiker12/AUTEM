@@ -4,19 +4,28 @@ import type { PanoramaCameraConfig, PanoramaControlPoint } from "./types";
 export interface CalibrationFitOptions {
   fitDroneOffset?: boolean;
   fitTilt?: boolean;
+  fitGroundSlope?: boolean;
   maxIterations?: number;
 }
 
 export interface CalibrationFitResult {
   config: PanoramaCameraConfig;
   rmsErrorDeg: number;
+  rmsErrorMeters: number;
+  meanErrorMeters: number;
   pointErrorsDeg: {
     id: string;
     label: string;
     yawErrorDeg: number;
     pitchErrorDeg: number;
     angularErrorDeg: number;
+    errorMeters: number;
   }[];
+}
+
+export interface LeaveOneOutResult {
+  looRmsErrorDeg: number;
+  looMeanErrorMeters: number;
 }
 
 function wrapAngleDeg(deg: number): number {
@@ -27,19 +36,44 @@ function wrapAngleDeg(deg: number): number {
 }
 
 /**
- * Computes per-control-point angular errors (in degrees) and RMS error for a given config.
+ * Estimates ground-plane error in meters from angular error (degrees) at a given
+ * downward pitch angle and camera height above ground.
+ */
+export function estimateGroundErrorMeters(
+  angularErrorDeg: number,
+  pitchDeg: number,
+  heightAboveGroundM: number,
+): number {
+  const clampedPitchDeg = Math.min(-4, Math.max(-88, pitchDeg));
+  const sinDepr = Math.sin(Math.abs(clampedPitchDeg) * (Math.PI / 180));
+  const slantDistanceM = Math.max(heightAboveGroundM, heightAboveGroundM / Math.max(0.08, sinDepr));
+  const angularErrorRad = (angularErrorDeg * Math.PI) / 180;
+  return Math.round(slantDistanceM * angularErrorRad * 10) / 10;
+}
+
+/**
+ * Computes per-control-point angular errors (in degrees and meters) and RMS error for a given config.
  */
 export function evaluateCalibration(
   config: PanoramaCameraConfig,
   controlPoints: PanoramaControlPoint[],
 ): CalibrationFitResult {
   if (controlPoints.length === 0) {
-    return { config, rmsErrorDeg: 0, pointErrorsDeg: [] };
+    return {
+      config,
+      rmsErrorDeg: 0,
+      rmsErrorMeters: 0,
+      meanErrorMeters: 0,
+      pointErrorsDeg: [],
+    };
   }
 
   let weightedSqSum = 0;
+  let weightedSqSumMeters = 0;
+  let weightedSumMeters = 0;
   let totalWeight = 0;
   const pointErrorsDeg: CalibrationFitResult["pointErrorsDeg"] = [];
+  const heightM = Math.max(10, config.camera.heightAboveGroundM);
 
   for (const cp of controlPoints) {
     const [predYawRad, predPitchRad] = projectGpsPointToPanoramaRad(
@@ -54,9 +88,12 @@ export function evaluateCalibration(
     const pitchErrorDeg = predPitchDeg - obsPitchDeg;
     const cosPitch = Math.cos((obsPitchDeg * Math.PI) / 180);
     const angularErrorDeg = Math.hypot(yawErrorDeg * cosPitch, pitchErrorDeg);
+    const errorMeters = estimateGroundErrorMeters(angularErrorDeg, obsPitchDeg, heightM);
 
     const w = cp.weight ?? 1;
     weightedSqSum += w * angularErrorDeg * angularErrorDeg;
+    weightedSqSumMeters += w * errorMeters * errorMeters;
+    weightedSumMeters += w * errorMeters;
     totalWeight += w;
 
     pointErrorsDeg.push({
@@ -65,23 +102,30 @@ export function evaluateCalibration(
       yawErrorDeg: Math.round(yawErrorDeg * 100) / 100,
       pitchErrorDeg: Math.round(pitchErrorDeg * 100) / 100,
       angularErrorDeg: Math.round(angularErrorDeg * 100) / 100,
+      errorMeters,
     });
   }
 
   const rmsErrorDeg =
     totalWeight > 0 ? Math.round(Math.sqrt(weightedSqSum / totalWeight) * 100) / 100 : 0;
+  const rmsErrorMeters =
+    totalWeight > 0 ? Math.round(Math.sqrt(weightedSqSumMeters / totalWeight) * 10) / 10 : 0;
+  const meanErrorMeters =
+    totalWeight > 0 ? Math.round((weightedSumMeters / totalWeight) * 10) / 10 : 0;
 
   return {
     config,
     rmsErrorDeg,
+    rmsErrorMeters,
+    meanErrorMeters,
     pointErrorsDeg,
   };
 }
 
 /**
- * Fits camera parameters (`yawOffsetDeg`, `heightAboveGroundM`, `tilt`, and optional
- * horizontal drone offset `offsetEastM`/`offsetNorthM`) from control points using
- * coordinate-descent with step decay and mild regularization.
+ * Fits camera parameters (`yawOffsetDeg`, `heightAboveGroundM`, `tilt`, optional
+ * horizontal drone offset `offsetEastM`/`offsetNorthM`, and optional ground slope)
+ * from control points using coordinate-descent with step decay and mild regularization.
  */
 export function calibratePanoramaCamera(
   initialConfig: PanoramaCameraConfig,
@@ -92,7 +136,12 @@ export function calibratePanoramaCamera(
     return evaluateCalibration(initialConfig, controlPoints);
   }
 
-  const { fitDroneOffset = false, fitTilt = true, maxIterations = 250 } = options;
+  const {
+    fitDroneOffset = false,
+    fitTilt = true,
+    fitGroundSlope = false,
+    maxIterations = 250,
+  } = options;
 
   let best: PanoramaCameraConfig = {
     ...initialConfig,
@@ -105,6 +154,14 @@ export function calibratePanoramaCamera(
       pitchDeg: initialConfig.tilt?.pitchDeg ?? 0,
       rollDeg: initialConfig.tilt?.rollDeg ?? 0,
     },
+    groundSlope: fitGroundSlope
+      ? {
+          enabled: true,
+          slopeEast: initialConfig.groundSlope?.slopeEast ?? 0,
+          slopeNorth: initialConfig.groundSlope?.slopeNorth ?? 0,
+          curvature: initialConfig.groundSlope?.curvature ?? 0,
+        }
+      : initialConfig.groundSlope,
   };
 
   function objective(cfg: PanoramaCameraConfig): number {
@@ -113,7 +170,12 @@ export function calibratePanoramaCamera(
     const dN = cfg.camera.offsetNorthM ?? 0;
     const pitch = cfg.tilt.pitchDeg;
     const roll = cfg.tilt.rollDeg;
-    const reg = 0.0025 * (dE * dE + dN * dN) + 0.04 * (pitch * pitch + roll * roll);
+    const se = cfg.groundSlope?.enabled ? (cfg.groundSlope.slopeEast ?? 0) : 0;
+    const sn = cfg.groundSlope?.enabled ? (cfg.groundSlope.slopeNorth ?? 0) : 0;
+    const reg =
+      0.0025 * (dE * dE + dN * dN) +
+      0.04 * (pitch * pitch + roll * roll) +
+      12.0 * (se * se + sn * sn);
     return evalRes.rmsErrorDeg * evalRes.rmsErrorDeg + reg;
   }
 
@@ -124,6 +186,8 @@ export function calibratePanoramaCamera(
     rollDeg: 0.5,
     offsetEastM: 2.0,
     offsetNorthM: 2.0,
+    slopeEast: 0.015,
+    slopeNorth: 0.015,
   };
 
   function mutate(
@@ -150,6 +214,23 @@ export function calibratePanoramaCamera(
         tilt: { ...cfg.tilt, [key]: Math.round(nextTilt * 100) / 100 },
       };
     }
+    if (key === "slopeEast" || key === "slopeNorth") {
+      const prevSlope = cfg.groundSlope ?? {
+        enabled: true,
+        slopeEast: 0,
+        slopeNorth: 0,
+        curvature: 0,
+      };
+      const nextVal = Math.max(-0.15, Math.min(0.15, (prevSlope[key] ?? 0) + delta));
+      return {
+        ...cfg,
+        groundSlope: {
+          ...prevSlope,
+          enabled: true,
+          [key]: Math.round(nextVal * 10000) / 10000,
+        },
+      };
+    }
     const nextOff = Math.max(-45, Math.min(45, (cfg.camera[key] ?? 0) + delta));
     return {
       ...cfg,
@@ -164,13 +245,16 @@ export function calibratePanoramaCamera(
   if (fitDroneOffset && controlPoints.length >= 6) {
     activeKeys.push("offsetEastM", "offsetNorthM");
   }
+  if (fitGroundSlope && controlPoints.length >= 6) {
+    activeKeys.push("slopeEast", "slopeNorth");
+  }
 
   for (let iter = 0; iter < maxIterations; iter++) {
     let improved = false;
     for (const k of activeKeys) {
       const curLoss = objective(best);
       const step = steps[k];
-      if (step < 1e-3) continue;
+      if (step < 1e-4) continue;
       const cPlus = mutate(best, k, step);
       const cMinus = mutate(best, k, -step);
       const lPlus = objective(cPlus);
@@ -195,4 +279,44 @@ export function calibratePanoramaCamera(
   }
 
   return evaluateCalibration(best, controlPoints);
+}
+
+/**
+ * Leave-One-Out (LOO) cross-validation to check whether adding extra model degrees
+ * of freedom (like ground slope) genuinely improves out-of-sample accuracy.
+ */
+export function evaluateLeaveOneOutCalibration(
+  initialConfig: PanoramaCameraConfig,
+  controlPoints: PanoramaControlPoint[],
+  options: CalibrationFitOptions = {},
+): LeaveOneOutResult {
+  if (controlPoints.length < 4) {
+    const evalRes = evaluateCalibration(initialConfig, controlPoints);
+    return {
+      looRmsErrorDeg: evalRes.rmsErrorDeg,
+      looMeanErrorMeters: evalRes.meanErrorMeters,
+    };
+  }
+
+  let sqDegSum = 0;
+  let metersSum = 0;
+
+  for (let i = 0; i < controlPoints.length; i++) {
+    const train = controlPoints.filter((_, idx) => idx !== i);
+    const heldOut = controlPoints[i];
+    const fitted = calibratePanoramaCamera(initialConfig, train, {
+      ...options,
+      maxIterations: 120,
+    });
+    const heldEval = evaluateCalibration(fitted.config, [heldOut]);
+    const errDeg = heldEval.pointErrorsDeg[0]?.angularErrorDeg ?? 0;
+    const errMeters = heldEval.pointErrorsDeg[0]?.errorMeters ?? 0;
+    sqDegSum += errDeg * errDeg;
+    metersSum += errMeters;
+  }
+
+  return {
+    looRmsErrorDeg: Math.round(Math.sqrt(sqDegSum / controlPoints.length) * 100) / 100,
+    looMeanErrorMeters: Math.round((metersSum / controlPoints.length) * 10) / 10,
+  };
 }

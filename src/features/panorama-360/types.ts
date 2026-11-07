@@ -28,6 +28,42 @@ export interface PanoramaCameraLimits {
   defaultZoomLvl?: number;
 }
 
+/**
+ * Parámetros configurables del parche de terreno para la entrada suroeste (L-1..L-45-A).
+ * Por defecto reproduce exactamente el comportamiento calibrado actual.
+ */
+export interface SouthwestTerrainPatchConfig {
+  enabled: boolean;
+  /** Eje principal hacia el suroeste [ux, uy] */
+  axisU?: [number, number];
+  /** Eje transversal [tx, ty] */
+  axisT?: [number, number];
+  /** Distancia umbral de inicio en el eje S (m) */
+  sStartM?: number;
+  /** Distancia de normalización en el eje S (m) */
+  sEndM?: number;
+  /** Rango transversal [tMinM, tMaxM] */
+  tRangeM?: [number, number];
+  /** Coeficientes de estiramiento longitudinal [linear, quadratic] */
+  stretchLinear?: number;
+  stretchQuadratic?: number;
+  /** Empuje transversal hacia el sureste (m) */
+  seTransverseBoost?: number;
+}
+
+/**
+ * Modelo opcional de pendiente suave de terreno (Fase A5).
+ */
+export interface PanoramaGroundSlopeConfig {
+  enabled: boolean;
+  /** Pendiente este-oeste (m de elevación por m horizontal) */
+  slopeEast?: number;
+  /** Pendiente norte-sur (m de elevación por m horizontal) */
+  slopeNorth?: number;
+  /** Curvatura cuadrática radial (1/m) */
+  curvature?: number;
+}
+
 export interface PanoramaCameraConfig {
   camera: PanoramaCameraPosition;
   yawOffsetDeg: number;
@@ -35,6 +71,12 @@ export interface PanoramaCameraConfig {
   panoDataDesktop: PanoramaPanoData;
   panoDataMobile: PanoramaPanoData;
   limits: PanoramaCameraLimits;
+  /** Factor de expansión visual global de lotes alrededor de su centroide (ej. 1.00 - 1.25) */
+  visualScale?: number;
+  /** Configuración explícita y desactivable del parche de terreno suroeste */
+  terrainPatch?: SouthwestTerrainPatchConfig;
+  /** Modelo opcional de terreno inclinado */
+  groundSlope?: PanoramaGroundSlopeConfig;
 }
 
 export interface PanoramaControlPoint {
@@ -68,6 +110,10 @@ export interface ProjectedPanoramaLot {
   verticesRad: [number, number][];
   /** Centroid position in spherical radians [yawRad, pitchRad] for label/camera focus */
   labelRad: [number, number];
+  /** True if the lot has a locked/validated override */
+  locked?: boolean;
+  /** Angular distance (degrees) to the nearest control point */
+  nearestControlPointDeg?: number;
 }
 
 export interface PanoramaContextLayers {
@@ -85,12 +131,43 @@ export interface PanoramaLotsData {
   layers?: PanoramaContextLayers;
 }
 
+export interface PanoramaLotDelta {
+  dYawRad: number;
+  dPitchRad: number;
+  scale: number;
+  rotateRad: number;
+  scaleX?: number;
+  scaleY?: number;
+  /** Desplazamiento en metros en el plano del suelo CAD (Este) */
+  offsetEastM?: number;
+  /** Desplazamiento en metros en el plano del suelo CAD (Norte) */
+  offsetNorthM?: number;
+}
+
 export interface PanoramaLotOverride {
   /** Overridden corner vertices in spherical radians [[yawRad, pitchRad], ...] */
-  verticesRad: [number, number][];
+  verticesRad?: [number, number][];
+  /** Parametric delta transformation (ground-plane or spherical) */
+  delta?: PanoramaLotDelta;
   /** Optional overridden label position [yawRad, pitchRad] */
   labelRad?: [number, number];
+  /** Marks that this lot has been visually verified by the admin */
+  locked?: boolean;
+  /** Optional note from admin */
+  note?: string;
   updatedAt?: string;
+  updatedBy?: string;
 }
 
 export type PanoramaLotOverridesMap = Record<string, PanoramaLotOverride>;
+
+export interface PanoramaVersionSnapshot {
+  version: number;
+  savedAt: string;
+  savedBy?: string;
+  note?: string;
+  config: PanoramaCameraConfig;
+  controlPoints: PanoramaControlPoint[];
+  overridesCount: number;
+  overrides: PanoramaLotOverridesMap;
+}

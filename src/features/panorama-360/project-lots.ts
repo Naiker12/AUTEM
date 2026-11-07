@@ -2,15 +2,52 @@ import { gpsToCad, svgToCad } from "../terrain-navigation/cad-gps";
 import type {
   PanoramaCameraConfig,
   PanoramaContextLayers,
+  PanoramaLotOverride,
   PanoramaLotOverridesMap,
   ProjectedPanoramaLot,
+  SouthwestTerrainPatchConfig,
 } from "./types";
 
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
 
+/**
+ * Configuración por defecto del parche de terreno de la entrada suroeste (L-1..L-45-A).
+ * Documenta cada parámetro calibrado que compensa la pendiente ascendente hacia la linde SO.
+ */
+export const DEFAULT_SOUTHWEST_TERRAIN_PATCH: Required<SouthwestTerrainPatchConfig> = {
+  enabled: true,
+  /** Vector unitario longitudinal hacia el acceso suroeste (aprox. azimut 221°) */
+  axisU: [-0.661, -0.751],
+  /** Vector unitario transversal ortogonal hacia el noroeste */
+  axisT: [-0.751, 0.661],
+  /** Distancia desde el dron a partir de la cual inicia la rampa suroeste (metros) */
+  sStartM: 215,
+  /** Distancia de referencia donde la rampa alcanza su factor nominal (metros) */
+  sEndM: 365,
+  /** Ventana transversal activa [mínimo SE, máximo NO] en metros */
+  tRangeM: [-260, 185],
+  /** Término lineal de estiramiento longitudinal en metros */
+  stretchLinear: 14,
+  /** Término cuadrático de estiramiento longitudinal en metros */
+  stretchQuadratic: 22,
+  /** Corrección transversal hacia el sureste para alinear el borde de portería (metros) */
+  seTransverseBoost: -12,
+};
+
 export function roundRad(value: number): number {
   return Math.round(value * 1e5) / 1e5;
+}
+
+export function wrapYawRad(yawRad: number): number {
+  let y = yawRad;
+  while (y > Math.PI) y -= 2 * Math.PI;
+  while (y < -Math.PI) y += 2 * Math.PI;
+  return y;
+}
+
+export function clampPitchRad(pitchRad: number): number {
+  return Math.max(-Math.PI / 2 + 1e-4, Math.min(Math.PI / 2 - 1e-4, pitchRad));
 }
 
 export function radToDegPair([yawRad, pitchRad]: [number, number]): [number, number] {
@@ -33,34 +70,45 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
  * Corrección de terreno para la elevación de la entrada suroeste (L-1..L-45-A).
  * Compensa la pendiente ascendente del terreno real hacia la linde suroccidental
  * para que los lotes alcancen su cerca/línea de árboles natural sin dejar franjas vacías.
+ * Puede desactivarse o ajustarse mediante `config.terrainPatch`.
  */
 export function applySouthwestEntranceTerrainPatch(
   dE: number,
   dN: number,
   dU: number,
+  patchConfig?: SouthwestTerrainPatchConfig,
 ): { dE: number; dN: number; dU: number } {
-  const ux = -0.661;
-  const uy = -0.751;
-  const tx = -0.751;
-  const ty = 0.661;
+  if (patchConfig && patchConfig.enabled === false) {
+    return { dE, dN, dU };
+  }
+
+  const cfg = {
+    ...DEFAULT_SOUTHWEST_TERRAIN_PATCH,
+    ...patchConfig,
+  };
+
+  const [ux, uy] = cfg.axisU;
+  const [tx, ty] = cfg.axisT;
+  const [tMin, tMax] = cfg.tRangeM;
   const s = dE * ux + dN * uy;
   const t = dE * tx + dN * ty;
 
-  if (s > 215 && t > -260 && t < 185) {
+  if (s > cfg.sStartM && t > tMin && t < tMax) {
     const wSE = smoothstep(-255, -195, t);
     const wNW = 1 - 0.42 * smoothstep(-15, 75, t) - 0.58 * smoothstep(75, 175, t);
     const wT = wSE * Math.max(0, wNW);
 
-    const u = Math.max(0, (s - 215) / (365 - 215));
-    // Desplazamiento horizontal rasante sobre el suelo (dU se mantiene 100% plano a nivel de tierra para que no se vea levantado ni flotando)
-    const stretchS = (14 * Math.pow(u, 1.2) + 22 * Math.pow(u, 2.0)) * wT;
+    const spanS = Math.max(1, cfg.sEndM - cfg.sStartM);
+    const u = Math.max(0, (s - cfg.sStartM) / spanS);
+    const stretchS =
+      (cfg.stretchLinear * Math.pow(u, 1.2) + cfg.stretchQuadratic * Math.pow(u, 2.0)) * wT;
     const seBoost = smoothstep(-70, -195, t) * Math.pow(u, 1.15) * wSE;
-    const stretchT = -12 * seBoost;
+    const stretchT = cfg.seTransverseBoost * seBoost;
 
     return {
       dE: dE + ux * stretchS + tx * stretchT,
       dN: dN + uy * stretchS + ty * stretchT,
-      dU, // Mantener dU intacto sobre el nivel de terreno: cero elevación artificial para evitar efecto 'levantado'
+      dU,
     };
   }
 
@@ -86,7 +134,15 @@ export function projectCadPointToPanoramaRad(
   let dN = northM - camN;
   let dU = -Math.max(1, config.camera.heightAboveGroundM);
 
-  const patched = applySouthwestEntranceTerrainPatch(dE, dN, dU);
+  if (config.groundSlope?.enabled) {
+    const se = config.groundSlope.slopeEast ?? 0;
+    const sn = config.groundSlope.slopeNorth ?? 0;
+    const curv = config.groundSlope.curvature ?? 0;
+    const distSq = dE * dE + dN * dN;
+    dU += dE * se + dN * sn + curv * distSq;
+  }
+
+  const patched = applySouthwestEntranceTerrainPatch(dE, dN, dU, config.terrainPatch);
   dE = patched.dE;
   dN = patched.dN;
   dU = patched.dU;
@@ -121,6 +177,57 @@ export function projectCadPointToPanoramaRad(
 }
 
 /**
+ * Inverse projection: Given spherical [yawRad, pitchRad] on the panorama, intersects
+ * the viewing ray with the ground plane at `-heightAboveGroundM` and returns the
+ * corresponding CAD [eastM, northM] coordinates in EPSG:3116 meters.
+ */
+export function unprojectPanoramaRadToCadPoint(
+  yawRad: number,
+  pitchRad: number,
+  config: PanoramaCameraConfig,
+): [number, number] {
+  const camCad = gpsToCad(config.camera.lat, config.camera.lng);
+  const camE = camCad.x + (config.camera.offsetEastM ?? 0);
+  const camN = camCad.y + (config.camera.offsetNorthM ?? 0);
+  const H = Math.max(1, config.camera.heightAboveGroundM);
+
+  const clampedPitch = Math.min(-0.015, pitchRad);
+  const cosP = Math.cos(clampedPitch);
+  let right = cosP * Math.sin(yawRad);
+  let fwd = cosP * Math.cos(yawRad);
+  let up = Math.sin(clampedPitch);
+
+  const tiltPitchRad = (config.tilt?.pitchDeg ?? 0) * DEG_TO_RAD;
+  const tiltRollRad = (config.tilt?.rollDeg ?? 0) * DEG_TO_RAD;
+
+  // Invert roll
+  if (tiltRollRad !== 0) {
+    const r0 = right * Math.cos(-tiltRollRad) - up * Math.sin(-tiltRollRad);
+    const u0 = right * Math.sin(-tiltRollRad) + up * Math.cos(-tiltRollRad);
+    right = r0;
+    up = u0;
+  }
+
+  // Invert pitch
+  if (tiltPitchRad !== 0) {
+    const f0 = fwd * Math.cos(-tiltPitchRad) - up * Math.sin(-tiltPitchRad);
+    const u0 = fwd * Math.sin(-tiltPitchRad) + up * Math.cos(-tiltPitchRad);
+    fwd = f0;
+    up = u0;
+  }
+
+  const scale = -H / Math.min(-1e-4, up);
+  const fwdM = fwd * scale;
+  const rightM = right * scale;
+
+  const az0 = config.yawOffsetDeg * DEG_TO_RAD;
+  const dE = fwdM * Math.sin(az0) + rightM * Math.cos(az0);
+  const dN = fwdM * Math.cos(az0) - rightM * Math.sin(az0);
+
+  return [camE + dE, camN + dN];
+}
+
+/**
  * Projects a GPS [lng, lat] point to spherical [yawRad, pitchRad].
  */
 export function projectGpsPointToPanoramaRad(
@@ -146,8 +253,7 @@ export function projectSvgPointToPanoramaRad(
 
 /**
  * Subdivides a closed polygon in EPSG:3116 meters so no segment exceeds `maxStepM`
- * meters before spherical projection. This ensures straight ground lines curve
- * naturally in the equirectangular / spherical view, especially near the nadir.
+ * meters before spherical projection.
  */
 export function densifyCadPolygon(ringEN: [number, number][], maxStepM = 2.5): [number, number][] {
   if (ringEN.length < 3) return ringEN;
@@ -244,23 +350,47 @@ export interface RawMasterplanLotInput {
 }
 
 /**
+ * Scales a CAD polygon around its centroid by `scaleFactor`.
+ */
+export function scaleCadPolygonAroundCentroid(
+  cadPts: [number, number][],
+  scaleFactor: number,
+): [number, number][] {
+  if (Math.abs(scaleFactor - 1) < 1e-4 || cadPts.length < 3) return cadPts;
+  let cx = 0;
+  let cy = 0;
+  for (const [x, y] of cadPts) {
+    cx += x;
+    cy += y;
+  }
+  cx /= cadPts.length;
+  cy /= cadPts.length;
+  return cadPts.map(([x, y]) => [cx + (x - cx) * scaleFactor, cy + (y - cy) * scaleFactor]);
+}
+
+/**
  * Projects an array of raw masterplan lots into equirectangular spherical lots.
+ * Respects `config.visualScale` (Fase B) when != 1.
  */
 export function projectMasterplanLots(
   rawLots: RawMasterplanLotInput[],
   config: PanoramaCameraConfig,
 ): ProjectedPanoramaLot[] {
   const projectedLots: ProjectedPanoramaLot[] = [];
+  const visualScale = config.visualScale && config.visualScale !== 1 ? config.visualScale : 1;
 
   for (const lot of rawLots) {
     if (!lot.pathD) continue;
     const svgPts = parseSvgPath(lot.pathD);
     if (svgPts.length < 3) continue;
 
-    const cadPts = svgPts.map(([x, y]) => {
+    const baseCadPts = svgPts.map(([x, y]) => {
       const c = svgToCad(x, y);
       return [c.x, c.y] as [number, number];
     });
+    const cadPts =
+      visualScale !== 1 ? scaleCadPolygonAroundCentroid(baseCadPts, visualScale) : baseCadPts;
+
     const verticesRad = cadPts.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config));
     const denseCad = densifyCadPolygonAdaptive(cadPts, config);
     const polygonRad = denseCad.map(([e, n]) => projectCadPointToPanoramaRad(e, n, config));
@@ -361,7 +491,94 @@ export function densifySphericalVerticesRad(
 }
 
 /**
- * Applies manual per-lot vertex overrides on top of projected lots.
+ * Pure function (Fase A1): computes the overridden corner vertices `[yawRad, pitchRad][]`
+ * from `baseVertices` and a `PanoramaLotOverride`.
+ * - If `override` has explicit `verticesRad` and no `delta`, returns `override.verticesRad` (100% backward compatible).
+ * - If `override` has `delta`, applies parametric `scaleX/scaleY/scale`, `rotateRad`, and `(dYawRad, dPitchRad)`
+ *   around the polygon centroid.
+ */
+export function applyOverride(
+  baseVertices: [number, number][],
+  override?: PanoramaLotOverride | null,
+): [number, number][] {
+  if (!override) return baseVertices;
+
+  const startVerts =
+    Array.isArray(override.verticesRad) && override.verticesRad.length >= 3
+      ? override.verticesRad
+      : baseVertices;
+
+  if (!override.delta) {
+    return startVerts;
+  }
+
+  const { dYawRad = 0, dPitchRad = 0, scale = 1, rotateRad = 0, scaleX, scaleY } = override.delta;
+
+  const sx = scaleX ?? scale;
+  const sy = scaleY ?? scale;
+
+  const isIdentity =
+    Math.abs(dYawRad) < 1e-7 &&
+    Math.abs(dPitchRad) < 1e-7 &&
+    Math.abs(sx - 1) < 1e-7 &&
+    Math.abs(sy - 1) < 1e-7 &&
+    Math.abs(rotateRad) < 1e-7;
+
+  if (isIdentity) {
+    return startVerts;
+  }
+
+  const count = startVerts.length;
+  if (count === 0) return startVerts;
+
+  // Compute centroid with circular mean for yaw to handle +-PI wrap
+  let sumSin = 0;
+  let sumCos = 0;
+  let sumPitch = 0;
+  for (const [y, p] of startVerts) {
+    sumSin += Math.sin(y);
+    sumCos += Math.cos(y);
+    sumPitch += p;
+  }
+  const avgYaw = Math.atan2(sumSin / count, sumCos / count);
+  const avgPitch = sumPitch / count;
+
+  const cosR = Math.cos(rotateRad);
+  const sinR = Math.sin(rotateRad);
+
+  return startVerts.map(([yaw, pitch]) => {
+    const dy = wrapYawRad(yaw - avgYaw) * sx;
+    const dp = (pitch - avgPitch) * sy;
+    const rotY = dy * cosR - dp * sinR;
+    const rotP = dy * sinR + dp * cosR;
+    const finalYaw = wrapYawRad(avgYaw + rotY + dYawRad);
+    const finalPitch = clampPitchRad(avgPitch + rotP + dPitchRad);
+    return [roundRad(finalYaw), roundRad(finalPitch)];
+  });
+}
+
+/**
+ * Computes spherical centroid `[yawRad, pitchRad]` of a vertex ring.
+ */
+export function computeSphericalCentroidRad(verticesRad: [number, number][]): [number, number] {
+  if (verticesRad.length === 0) return [0, 0];
+  let sumX = 0;
+  let sumY = 0;
+  let sumZ = 0;
+  for (const [yaw, pitch] of verticesRad) {
+    const cosP = Math.cos(pitch);
+    sumX += cosP * Math.sin(yaw);
+    sumY += cosP * Math.cos(yaw);
+    sumZ += Math.sin(pitch);
+  }
+  const avgYaw = Math.atan2(sumX, sumY);
+  const avgPitch = Math.atan2(sumZ, Math.hypot(sumX, sumY));
+  return [roundRad(avgYaw), roundRad(avgPitch)];
+}
+
+/**
+ * Applies manual per-lot vertex overrides (both absolute `verticesRad` and parametric `delta`)
+ * on top of projected lots. Preserves 100% exact output for existing overrides.
  */
 export function mergePanoramaLotsWithOverrides(
   lots: ProjectedPanoramaLot[],
@@ -373,32 +590,30 @@ export function mergePanoramaLotsWithOverrides(
 
   return lots.map((lot) => {
     const ov = overrides[lot.id];
-    if (!ov || !Array.isArray(ov.verticesRad) || ov.verticesRad.length < 3) {
+    if (!ov) return lot;
+
+    const hasVertices = Array.isArray(ov.verticesRad) && ov.verticesRad.length >= 3;
+    const hasDelta = Boolean(ov.delta);
+
+    if (!hasVertices && !hasDelta) {
+      if (ov.locked !== undefined) {
+        return { ...lot, locked: ov.locked };
+      }
       return lot;
     }
 
-    const polygonRad = densifySphericalVerticesRad(ov.verticesRad, 2);
-    let labelRad = ov.labelRad;
-    if (!labelRad) {
-      let sumX = 0;
-      let sumY = 0;
-      let sumZ = 0;
-      for (const [yaw, pitch] of ov.verticesRad) {
-        const cosP = Math.cos(pitch);
-        sumX += cosP * Math.sin(yaw);
-        sumY += cosP * Math.cos(yaw);
-        sumZ += Math.sin(pitch);
-      }
-      const avgYaw = Math.atan2(sumX, sumY);
-      const avgPitch = Math.atan2(sumZ, Math.hypot(sumX, sumY));
-      labelRad = [roundRad(avgYaw), roundRad(avgPitch)];
-    }
+    const finalVerticesRad = applyOverride(lot.verticesRad, ov);
+    if (finalVerticesRad.length < 3) return lot;
+
+    const polygonRad = densifySphericalVerticesRad(finalVerticesRad, 2);
+    const labelRad = ov.labelRad ?? computeSphericalCentroidRad(finalVerticesRad);
 
     return {
       ...lot,
-      verticesRad: ov.verticesRad,
+      verticesRad: finalVerticesRad,
       polygonRad,
       labelRad,
+      locked: ov.locked,
     };
   });
 }
