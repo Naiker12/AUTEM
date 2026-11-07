@@ -940,91 +940,97 @@ export default function PanoramaViewer({
         </div>
       )}
 
-      {/* Barra superior izquierda ultracompacta (ocupa ~45% menos espacio) */}
-      <div
-        className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-20 flex flex-wrap items-center gap-1 select-none"
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-0.5 rounded-full border border-border/80 bg-background/90 p-0.5 shadow-md backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => setShowLots((v) => !v)}
-            className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
-              showLots
-                ? "bg-accent text-accent-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            title={showLots ? "Ocultar lotes" : "Mostrar lotes"}
-          >
-            {showLots ? <Eye className="size-2.5" /> : <EyeOff className="size-2.5" />}
-            <span>Lotes</span>
-          </button>
+      {/* Barra superior izquierda ultracompacta y responsiva (desplazable en móvil sin desbordar la pantalla) */}
+      <div className="absolute top-2 left-2 right-2 sm:right-auto sm:top-2.5 sm:left-2.5 z-20 select-none pointer-events-none">
+        <div
+          className="pointer-events-auto flex items-center max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden touch-pan-x py-0.5"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 rounded-full border border-border/80 bg-background/95 p-0.5 sm:p-1 shadow-md backdrop-blur-xl">
+            <button
+              type="button"
+              onClick={() => setShowLots((v) => !v)}
+              className={`flex items-center gap-1 shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
+                showLots
+                  ? "bg-accent text-accent-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title={showLots ? "Ocultar lotes" : "Mostrar lotes"}
+            >
+              {showLots ? <Eye className="size-2.5" /> : <EyeOff className="size-2.5" />}
+              <span>Lotes</span>
+            </button>
 
-          {showLots && (
-            <>
-              <button
-                type="button"
-                onClick={() => setVisualStyle((s) => (s === "pins" ? "filled" : "pins"))}
-                className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title="Cambiar entre pines numerados o relleno de color"
-              >
-                <Layers className="size-2.5" />
-                <span>{visualStyle === "pins" ? "Pines" : "Color"}</span>
-              </button>
+            {showLots && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setVisualStyle((s) => (s === "pins" ? "filled" : "pins"))}
+                  className={`flex items-center gap-1 shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-colors cursor-pointer ${
+                    visualStyle === "filled"
+                      ? "bg-muted text-foreground font-bold shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Cambiar entre pines numerados o relleno de color"
+                >
+                  <Layers className="size-2.5" />
+                  <span>{visualStyle === "pins" ? "Pines" : "Color"}</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setShowRoads((v) => !v)}
-                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
-                  showRoads
-                    ? "bg-amber-500/25 text-amber-300 font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Mostrar u ocultar el trazado de vías y calles que dividen las manzanas"
-              >
-                <span>Calles</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRoads((v) => !v)}
+                  className={`flex items-center gap-1 shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
+                    showRoads
+                      ? "bg-amber-400 text-amber-950 dark:bg-amber-500/30 dark:text-amber-200 border border-amber-500/60 font-bold shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Mostrar u ocultar el trazado de vías y calles que dividen las manzanas"
+                >
+                  <span>Calles</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setShowContextLayers((v) => !v)}
-                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
-                  showContextLayers
-                    ? "bg-sky-500/25 text-sky-400 font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Mostrar u ocultar los lagos"
-              >
-                <span>Lagos</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowContextLayers((v) => !v)}
+                  className={`flex items-center gap-1 shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
+                    showContextLayers
+                      ? "bg-sky-400 text-sky-950 dark:bg-sky-500/30 dark:text-sky-200 border border-sky-500/60 font-bold shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Mostrar u ocultar los lagos"
+                >
+                  <span>Lagos</span>
+                </button>
 
-              <div className="mx-0.5 h-3 w-px bg-border/70" />
+                <div className="mx-0.5 h-3 w-px bg-border/70 shrink-0" />
 
-              {FILTER_OPTIONS.map((item) => {
-                const active = statusFilter === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setStatusFilter(item.id)}
-                    className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
-                      active
-                        ? "bg-accent text-accent-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <span
-                      className={`size-1.5 rounded-full ${
-                        active && item.id === "ALL" ? "bg-accent-foreground" : item.dot
+                {FILTER_OPTIONS.map((item) => {
+                  const active = statusFilter === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setStatusFilter(item.id)}
+                      className={`flex items-center gap-1 shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-all cursor-pointer ${
+                        active
+                          ? "bg-accent text-accent-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
-                    />
-                    <span className="md:hidden">{item.short}</span>
-                    <span className="hidden md:inline">{item.label}</span>
-                  </button>
-                );
-              })}
-            </>
-          )}
+                    >
+                      <span
+                        className={`size-1.5 rounded-full shrink-0 ${
+                          active && item.id === "ALL" ? "bg-accent-foreground" : item.dot
+                        }`}
+                      />
+                      <span className="md:hidden">{item.short}</span>
+                      <span className="hidden md:inline">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
