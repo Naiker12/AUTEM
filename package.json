@@ -17,7 +17,9 @@
     "geojson:generate": "node scripts/cad/generate-lots-geojson.mjs",
     "panorama:build": "node scripts/panorama/build-panorama-from-3dvista.mjs",
     "panorama:project": "node scripts/panorama/project-lots-to-panorama.mjs",
-    "test:navigation": "node scripts/navigation/verify-network.mjs && npx tsx scripts/navigation/test-schema-validation.mjs"
+    "panorama:report": "npx tsx scripts/panorama/report-calibration.mjs",
+    "test:panorama": "npx tsx scripts/panorama/test-panorama-360.mjs",
+    "test:navigation": "node scripts/navigation/verify-network.mjs && npx tsx scripts/navigation/test-schema-validation.mjs && npx tsx scripts/panorama/test-panorama-360.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",
